@@ -1,0 +1,223 @@
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Contains Generic Startup Architecture Normal State command lists
+// 
+//
+
+#include <ssm/ssmcmd.rh>
+#include <ssm/ssmsubstates.hrh>
+#include <ssm/clayerdlldatadefs.rh>
+#include <ssm/conditionresourcetypes.rh>
+
+UID2 KUidSsmCommandListResourceFile
+
+// SSM_COMMAND_LIST_ROOT must be the first resource in a command list resource file.
+// The SSM relies on this having a resource ID of 1.
+RESOURCE SSM_COMMAND_LIST_ROOT
+	{
+	command_list_mapping = r_command_list_mapping;
+	}
+
+RESOURCE SSM_COMMAND_LIST_MAPPING r_command_list_mapping
+	{
+	mappings =
+		{
+		SSM_COMMANDLISTID_TO_RESOURCEID
+			{
+			command_list_id = ESsmNormalSubState;
+			resource_id = r_normal_command;
+			},
+		//Below substates are valid only for RM-RIM410-1620 requirement. This has been introduced to enable the graceful offline
+		//notification feature. This feature will be used only when patchable constant KSsmGracefulOffline is enabled
+		// Substate for RF ON
+		SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmNormalRfOnSubState;
+            resource_id = r_normal_rf_on_command;
+            },
+        // Substate for RF OFF
+		SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmNormalRfOffSubState;
+            resource_id = r_normal_rf_off_command;
+            }		
+		};
+	}
+
+RESOURCE SSM_COMMAND_LIST r_normal_command
+   	{
+	commands =
+		{
+		r_rendezvous_with_estart
+		, r_command_publish_state
+		};
+	}
+
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_command_publish_state
+	{
+	severity = ECmdCriticalSeverity;
+	}
+
+RESOURCE SSM_START_CUSTOM_COMMAND r_rendezvous_with_estart
+	{
+	severity = ECmdCriticalSeverity;
+	dllname = "cmncustomcmds.dll";
+	ordinal = 2; // Rendezvous with estart custom command is at ordinal 2
+	}
+
+RESOURCE SSM_COMMAND_LIST r_normal_rf_on_command
+    {
+    commands =
+        {        
+        r_cmd_sastate_rfon
+        , r_cmd_psstate_rfon
+        , r_command_publish_state
+        };
+    }
+
+RESOURCE SSM_COMMAND_LIST r_normal_rf_off_command
+    {
+    commands =
+        {
+        r_command_publish_state_rfoff
+        ,r_cmd_sastate_rfoff
+        , r_cmd_psstate_rfoff
+        };
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_rfon
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_rfon
+    {
+    conditional_information = r_cond_state_not_rfon;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_rfon;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_publish_rfon
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_publish_rfon
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 109;        // ESwStateNormalRfOn
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_state_not_rfon
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_NOT r_cond_state_not_rfon
+    {
+    sub_condition = r_cond_publish_rfon;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_rfon
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_rfon
+    {
+    mainstate = 1;    // ESsmNormal
+    substate = 0x19;  // Substate transition to ESwStateNormalRfOn
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_rfon
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_rfon
+    {
+    conditional_information = r_cond_state_not_rfon;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 109;        // ESwStateNormalRfOn
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_rfoff
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_rfoff
+    {
+    conditional_information = r_cond_state_not_rfoff;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_rfoff;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_publish_rfoff
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_publish_rfoff
+    {    
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 110;        // ESwStateNormalRfOff
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_state_not_rfoff
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_NOT r_cond_state_not_rfoff
+    {
+    sub_condition = r_cond_publish_rfoff;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_rfoff
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_rfoff
+    {
+    mainstate = 1;      // ESsmNormal
+    substate = 0x1A;    //substate transition to ESwStateNormalRfOff
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_rfoff
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_rfoff
+    {
+    conditional_information = r_cond_state_not_rfoff;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 110;        // ESwStateNormalRfOff
+    }
+
+// ---------------------------------------------------------------------------
+// r_command_publish_state_rfoff
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_command_publish_state_rfoff
+    {
+    severity = ECmdCriticalSeverity; 
+    direction = 1;  // ETraverseChildrenFirst, Transition children first for offline.
+    }

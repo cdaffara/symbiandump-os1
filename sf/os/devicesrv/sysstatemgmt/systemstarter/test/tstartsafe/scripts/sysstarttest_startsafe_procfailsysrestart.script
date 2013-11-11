@@ -1,0 +1,41 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run StartSafe test 
+
+LOAD_SUITE tstartsafe_test_server
+
+START_TESTCASE 			DEVSRVS-SYSSTART-STARTSAFE-0013
+//! @SYMTestCaseID 		DEVSRVS-SYSSTART-STARTSAFE-0013
+//! @SYMPREQ 			PREQ1089
+//! @SYMTestType		UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc		System should restart if process could not be started and ERestartOS were chosen.
+//! @SYMTestActions		The test step should derive from MSaveObserver, so that while notifying SaveL() 					function gets called. 
+//! 				Threading is required because StartSafe will block the thread calling StartL
+//! 				until the restart takes place (or max 5 seconds).
+//! 				1. thread1: Create CSaveNotifier
+//! 				2. thread1: Create a new thread
+//! 				3. thread1: Resume the new thread	
+//! 				4. thread2: Using StartSafe, start KTestAppNoRv with ERestartOS and retries=0 (will block)
+//! 				5. thread1: Start scheduler and wait for callback
+//! 				6. thread1: Receive MSaveObserver callback, stop scheduler
+//! 				7. thread1: Do assertions
+//! 				8. thread1: Cancel reboot
+//! @SYMTestExpectedResults 	SaveL() should get called within 10 sec.
+RUN_TEST_STEP 100 tstartsafe_test_server ProcFailSysRestart
+END_TESTCASE 			DEVSRVS-SYSSTART-STARTSAFE-0013
+

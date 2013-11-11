@@ -1,0 +1,1101 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         LBS-SIMULATIONPSY
+//! @SYMScriptTestEnvironment TestExecute with LBS-SIMULATIONPSY
+//
+// Copyright (c) Symbian Software Ltd 2008-2009.  All rights reserved.
+//
+
+PRINT Run all Simulation PSY tests
+
+LOAD_SUITE SimulationPSYTests -SharedData
+
+
+//Before we start LBS provide a config file for the SIM TSY
+PREFIX RUN_UTILS
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+PRINT START LBS 
+RUN_TEST_STEP 020 SimulationPSYTests LbsStep_StartLbs
+
+
+
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0000
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0000
+//!@SYMTestCaseDesc            SimPSY, NMEA raw data
+//!
+//! TP115-0
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions
+//!1.	Open an RPositioner in NMEA mode. Request a position using TPositionInfo object. 
+//! Request a position using a HPositionGenericInfo object. 
+//! The NMEA raw data set in the HPositionGenericInfo object is compared with the
+//! sentences in the NMEA sentence file (read by the test client). Repeat this for all 
+//! supported NMEA GPS types.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	All request should return position data successfully.
+//!	Sentences read from the position object should correspond to sentences found in 
+//!	the NMEA sentence data  file.
+//!
+//!@SYMPREQ                    PREQ 2043
+//!@SYMREQ                     8891 8892
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-0
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0000 
+
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0001
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0001
+//!@SYMTestCaseDesc            SimPSY, power-up
+//!
+//! TP115-1
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions
+//!1.	Open an RPositioner in Simulation mode. Check the power up time.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	The power-up time for the PSY should match the number set in the Simulation data file.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-1
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0001
+
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0002
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0002
+//!@SYMTestCaseDesc            SimPSY, time to fix
+//!
+//! TP115-2
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Opens an RPositioner in Simulation mode. Time of fix in the Simulation data file 
+//! is set to the random values between Nmin - Nmax. Makes a location request 5 times. 
+//! Measured Timeto fix should be within valid range (Nmin – Nmax).
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1. 	All request should return position data successfully, and the time to fix 
+//! for the PSY should match the number set in the Simulation data file.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8891 8893 
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-2
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0002
+
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0003
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0003
+//!@SYMTestCaseDesc            SimPSY, deterministic failure
+//!
+//! TP115-3
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Opens an RPositioner in Simulation mode. Deterministic failure probability 
+//!(fail on every n:th attempt) is set to n by the Simulation data file. 
+//!2.	Requests a number of locations. Every n:th request should fail with error code.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	Every n:th location request should fail.
+//!2.	~n% of all location requests should fail (depends heavily on random number 
+//!	generator).
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-3
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0003
+
+//START_TESTCASE                 LBS-SIMULATIONPSY-0004
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0004
+//!@SYMTestCaseDesc            SimPSY, random failure
+//!
+//! TP115-4
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Opens an RPositioner in Simulation mode. Random failure probability (fail on n% 
+//! of all attempts) is set to n by the Simulation data file. Requests a number of locations.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	~n% of all requests should fail with error code.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8891 8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+//RUN_TEST_STEP -1 SimulationPSYTests TP115-4
+
+//END_TESTCASE                   LBS-SIMULATIONPSY-0004
+
+//START_TESTCASE                 LBS-SIMULATIONPSY-0005
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0005
+//!@SYMTestCaseDesc            SimPSY, altitude
+//!
+//! TP115-5
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Open an RPositioner in Simulation mode. Run over a period of time and verify that
+//! the mean altitude is 0 and that the standard deviation of the error is the same as 
+//!	the vertical accuracy in the Simulation data file.
+//!
+//!@SYMTestExpectedResults
+//!1.	The mean altitude should be 0 and the standard deviation of the error should 
+//!	correspond to the vertical accuracy setting in the Simulation data file.	
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+//RUN_TEST_STEP -1 SimulationPSYTests TP115-5
+
+//END_TESTCASE                   LBS-SIMULATIONPSY-0005
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0006
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0006
+//!@SYMTestCaseDesc            SimPSY, latitude and longitude
+//!
+//! TP115-6
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Open an RPositioner in Simulation mode (speed = 0 in simulation data file). Run 
+//! over a period of time and verify that the mean position is the same as starting 
+//! position and that the standard deviation of the error is the same as horizontal 
+//! accuracy in the Simulation data file.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	The mean position should be the same as the starting position and the standard 
+//! deviation of the error should correspond to the horizontal accuracy setting in the 
+//! Simulation data file.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP -1 SimulationPSYTests TP115-6
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0006
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0007
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0007
+//!@SYMTestCaseDesc            SimPSY, movement
+//!
+//! TP115-7
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Open an RPositioner in Simulation mode (horiz. accuracy = 0 in simulation data 
+//! file). Run over a period of time and verify that the position is what it should be. 
+//! Also run a number of requests and check position after each request.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	The position should be according to previous calculations (depending on speed 
+//! and heading).
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-7
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0007
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0008
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0008
+//!@SYMTestCaseDesc            SimPSY, bad input parameters
+//!
+//! TP115-8
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions
+//!1.	Changes the Simulation data file so that it does not conform with the syntax of a 
+//! Simulation data files. Opens an RPositioner in Simulation mode. Errors should occur 
+//! during opening due to syntax errors. Opens an RPositioner in NMEA mode. Check that 
+//! the Simulation PSY restarts reading from the beginning in the NMEA data file when 
+//! EOF is reached. Requests locations over a period of time with a suitable NMEA data 
+//! file. Correct positions or a KPositionQualityLoss error should be passed to the 
+//! client from the Simulation PSY.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	Errors should be returned where there are syntax errors in the Simulation data 
+//! file.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8891 8892 8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-8
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0008
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0009
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0009
+//!@SYMTestCaseDesc            Extended1 NMEA raw data
+//!
+//! TP115-9
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Opens an RPositioner in NMEA mode. Requests a position using a HPositionGenericInfo 
+//!	object. Test function IsFieldAvailable on the returned object. The function must return 
+//!	true for each field set with SetRequestedField before the position request.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	Correct positions or a KPositionQualityLoss error should be passed to the client
+//! from the Simulation PSY.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-9
+
+END_TESTCASE                   LBS-SIMULATIONPSY-0009
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00010
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00010
+//!@SYMTestCaseDesc            Extended2 NMEA raw data
+//!
+//! TP115-10
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Open an RPositioner in NMEA mode. Check that the Simulation PSY will deliver 
+//! the correct fix when reading from NMEA sentences. The first “fix burst” should also 
+//! be the one that is delivered to the client.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	Longitude, Latitude, Altitude, Vertical Accuracy and Horizontal Accuracy should 
+//! match the value included in every “fix burst”.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8892
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Not implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-10
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00010
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00011
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00011
+//!@SYMTestCaseDesc            SimPSY, NMEA file wrap around, reading more fixes than exists in the file
+//!
+//! TP115-11
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions  
+//!1. Open an RPositioner in NMEA mode. Request a position using a TPositionInfo 
+//!	object one more time than number of fixes in the file. A correct fix should be returned in all cases.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1. A correct position update is returned.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8892 8895
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-11
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00011
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00012
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00012
+//!@SYMTestCaseDesc            SimPSY, correct timing after cancel
+//!
+//! TP115-12
+//! TC133
+//! UCREQ030, UCREQ171, UCREQ172, UCREQ173, UCREQ174, UCREQ175, 
+//! UCREQ194, UCREQ195,  SSREQ035
+//!
+//!@SYMTestActions		
+//!1.	Open an RPositioner in Simulation mode. Make a position request and cancel the 
+//! request. Make another position request and verify that the request completes between 
+//! Time_to_fix_min and Time_to_fix_max set in the Simulation data file.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!13.	The second position request completes between Time_to_fix_min and Time_to_fix_max.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8891 8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP115-12
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00012
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00013
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00013
+//!@SYMTestCaseDesc            Reset of incoming request
+//!
+//! TP221
+//! TC263
+//! Error report ESLI-5RUAKF
+//!
+//!@SYMTestActions		
+//!1.	Opens a sub-session to position server using the Simulation Psy. Simulation Psy 
+//!should be in NMEA mode.
+//!2.	A HPositionGenericInfo object is created. Update type is set to EPositionUpdateUnknown.
+//! Values in fields EPositionFieldSatelliteNumUsed and EPositionFieldHorizontalSpeed 
+//!are also set.
+//!3.	A position request is made using the HPositionGenericInfo object.
+//!4.	The returned position object is checked.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	A sub-session is opened with no errors.
+//!2.	The position object is created and modified with no errors.
+//!3.	The position request returns with KErrNone.
+//!4.	The update type should be set to EPositionUpdateGeneral. The values in the fields
+//! EPositionFieldSatelliteNumUsed and EPositionFieldHorizontalSpeed should be reset.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8895
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP221
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00013
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00014
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00014
+//!@SYMTestCaseDesc            NMEA Satellite support
+//!
+//! TP242
+//! TC274
+//! UCREQ194, UCREQ195
+//!
+//!@SYMTestActions		
+//!1.	Sets the Simulation PSYs settings file to an NMEA sentences file containing 
+//! satellite, compass and course data and open a sub-session to the simulationPSY.  
+//!2.	Make position requests with supported position info classes and HGenericInfo 
+//! class with Satellite, Compass and speed set.
+//!3.	Sets the Simulation PSYs settings file to an NMEA sentences file containing 
+//! satellite, compass and course data and open a sub-session to the simulationPSY. 
+//! The NMEA sentence file does not contain any value for pDoP.
+//!4.	Make a position request with the class Satellite.
+//!5.	Sets the Simulation PSYs settings file to an NMEA sentences file containing empty 
+//!fields and open a sub-session to the simulationPSY.  
+//!6.	Make positioning requests with position info classes.
+//!7.	Make positioning requests with Simulation PSYs settings file set to all supported
+//! NMEA sentence files.  
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	A sub-session is opened with no errors.
+//!2.	The position requests return without errors and the classes contains the correct
+//! values.
+//!3.	A sub-session is opened with no errors. 
+//!4.	Verify that the PdoP value is calculated as sqrt(vdop^2+hdop^2).
+//!5.	A sub-session is opened with no errors.
+//!6.	The position requests return without errors and the classes contains the correct
+//! values.
+//!7.	The position requests return without errors.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8891 8892 8895
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP242
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00014
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00015
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00015
+//!@SYMTestCaseDesc            Partial update 
+//!
+//! TP254
+//! TC254
+//! UCREQ022, UCREQ236
+//!
+//!@SYMTestActions		
+//!1.	A client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! a partial fix and opens a sub-session to the simulation PSY.
+//!2.	The client specifies a timeout and requests a location from the simulation PSY.
+//!3.	The client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! a full fix and opens a sub-session to the simulation PSY.
+//!4.	The client specifies that partial update is allowed and requests a location from 
+//!	the simulation PSY.
+//!5.	The client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! a fix without longitude and opens a sub-session to the simulation PSY.
+//!6.	Requests a location from the simulation PSY.
+//!7.	The client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! a fix without latitude and opens a sub-session to the simulation PSY.
+//!8.	The client specifies that partial update is allowed and requests a location from 
+//!	the simulation PSY.
+//!9.	The client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! a full fix and opens a sub-session to the simulation PSY.
+//!10.	The client specifies that partial update is allowed and requests a location from
+//! the simulation PSY.
+//!11.	The client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! a fix without longitude and latitude and opens a sub-session to the simulation PSY.
+//!12.	The client specifies that partial update is allowed and requests a location from
+//! the simulation PSY.
+//!13.	The client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! a fix without longitude, latitude and time stamp and opens a sub-session to the simulation
+//! PSY.
+//!14.	The client specifies that partial update is allowed and requests a location from 
+//!the simulation PSY.
+//!15.	The client sets the Simulation PSYs settings file to a NMEA sentence file containing
+//! four partial fixes (including fixes with a complete NMEA sentence missing) and four full fixes and opens a sub-session to the simulation PSY.
+//!16.	The client specifies that partial update is allowed and requests eight locations 
+//!	from the simulation PSY.
+//!17.	The client specifies a timeout and that partial update is not allowed and requests
+//! two locations from the simulation PSY.
+//!18.	The client specifies that partial update is allowed and requests two locations 
+//!	from the simulation PSY.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	The sub-session is opened with no errors.
+//!2.	An error (KErrTimedOut) is returned.
+//!3.	The sub-session is opened with no errors.
+//!4.	The partial update option is set and a full fix is returned with no errors.
+//!5.	The sub-session is opened with no errors.
+//!6.	The partial update option is set and a partial fix is returned with the error 
+//!	code for partial update.
+//!7.	The sub-session is opened with no errors.
+//!8.	The partial update option is set and a partial fix is returned with the error 
+//!	code for partial update.
+//!9.	The sub-session is opened with no errors.
+//!10.	The partial update option is set and a full fix is returned with no errors.
+//!11.	The sub-session is opened with no errors.
+//!12.	The partial update option is set and a partial fix is returned with the error 
+//!	code for partial update.
+//!13.	The sub-session is opened with no errors.
+//!14.	The partial update option is set and a partial fix is returned with the error 
+//!	code for partial update.
+//!15.	The sub-session is opened with no errors.
+//!16.	The partial update option is set and four full fixes are returned with no errors 
+//!	and four partial fixes are returned with the error code for partial.
+//!17.	The partial update option is set and two full fixes are returned with no errors 
+//!	(one fix is skipped by the Simulation PSY since it is partial).
+//!18.	The partial update option is set and two partial fixes are returned with the 
+//!	error code for partial.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8892 8895
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP254
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00015
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00016
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00016
+//!@SYMTestCaseDesc            Measure TimeToFix for SimPSY
+//!
+//! TP256
+//! TC256
+//! Error report for ESLI-65KCDT
+//!
+//!@SYMTestActions		
+//!1.	The client measures the time it takes for the Simulation PSY to perform a position
+//! update when using simulated movement (SPS) files.
+//!2.	The client verifies that the time stamp set for the position is set to when the 
+//!position was set (and not as before when the position request was started).
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	The time is measured.
+//!2.	The time stamp is correct set.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8891 8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP256
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00016
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00017
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00017
+//!@SYMTestCaseDesc            Status events
+//!
+//! TP262
+//! TC298
+//! UCREQ239, GPPREQ030 , GPPREQ031
+//!
+//!@SYMTestActions		
+//!1.	The simulation psy is set up to be used in Simulation mode. 
+//!2.	One client, c2 connects to Position_Server and starts requesting for status events. The 
+//!     request is renewed as soon as a event as been received. Another client c1 performs 
+//!     the following step.
+//!3.	Connects to Position_Server.
+//!4.	Opens the Simulation PSY.
+//!5.	Request a position from the Simulation PSY.
+//!6.	Closes the Simulation PSY.
+//!7.	Delete the “simulation data input”/NMEA  file.
+//!8.	Opens the Simulation PSY.
+//!9.	Copies a corrupted simulation data input file 
+//!     (contains values that are out of range).
+//!10.	Opens the Simulation PSY.
+//!11.	The simulation psy is set up to be used in NMEA mode.
+//!12.	The test is repeated for NMEA mode (step 3-8, except)
+//!13.	The simulation settings file is deleted.
+//!14.	Opens the Simulation PSY.
+//!
+//!@SYMTestExpectedResults
+//! Note ? Each result corresponds to a matching item in SYMTestActions
+//!1.	The target position is calculated based on the Grand Arc method, see UCREQ223 for reference.
+//!2.	The target position is calculated based on the Grand Arc method, see UCREQ223 for reference. 
+//!     The altitude should not have any effect on the calculated value.
+//!3.	The following case will generate an error code to the client; If the starting point is on a pole. 
+//!     If the value for longitude or latitude is not set.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8892 8893
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 100 SimulationPSYTests TP262
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00017
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0300
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0300
+//!@SYMTestCaseDesc            Two clients simultaneously request position in Simulated Movement mode.
+//!@SYMTestActions             First client makes several SPS requests, and stores results. Second client makes several SPS requests. First and second clients start at staggered times. Compare the received data.
+//!@SYMTestExpectedResults     The difference between client requests should be insignificant.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8897
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP300-0
+END_TESTCASE                   LBS-SIMULATIONPSY-0300 
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0301
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0301
+//!@SYMTestCaseDesc            Two clients simultaneously request position in NMEA mode.
+//!@SYMTestActions             First client makes several NMEA requests, and stores results. Second client makes several NMEA requests. First and second clients start at staggered times. Compare the received data.
+//!@SYMTestExpectedResults     Client positions should be identical.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8897
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP300-1
+END_TESTCASE                   LBS-SIMULATIONPSY-0301
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0302
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0302
+//!@SYMTestCaseDesc            Test cancelling behaviour for SPS and multiple clients.
+//!@SYMTestActions             First client makes several SPS requests.  Second client connects.  First client cancels. Second client makes several SPS requests. Compare the received data.
+//!@SYMTestExpectedResults     The difference between client request should be insignificant.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8897
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP300-2
+END_TESTCASE                   LBS-SIMULATIONPSY-0302
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0303
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0303
+//!@SYMTestCaseDesc            Test cancelling behaviour for NMEA and multiple clients.
+//!@SYMTestActions             First client makes several NMEA requests.  Second client connects.  First client cancels. Second client makes several NMEA requests. Compare the received data.
+//!@SYMTestExpectedResults     Client positions should be identical.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8897
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP300-3
+END_TESTCASE                   LBS-SIMULATIONPSY-0303
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0304
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0304
+//!@SYMTestCaseDesc            Powerup Time and Fix Time test in SPS mode for multiple clients.
+//!@SYMTestActions             Measure Powerup Time for first client.  Make several SPS requests and measure Time to Fix.  Connect second client.  Measure Powerup Time and Time to Fix for second client. Compare Powerup Time and Fix Time of both clients.
+//!@SYMTestExpectedResults     Powerup Time should be the same for both clients.  Time to Fix should be the same for both clients.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8897
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 240 SimulationPSYTests TP300-4
+END_TESTCASE                   LBS-SIMULATIONPSY-0304
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0305
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0305
+//!@SYMTestCaseDesc            Set "allow partial updates" and request a fix.  Expect a complete fix back, since SPS does not support partial updates.
+//!@SYMTestActions             Client sets positioner to accept partial updates and requests a fix.
+//!@SYMTestExpectedResults     A complete fix is returned, since SPS does not support partial updates.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8893
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 100 SimulationPSYTests TP300-5
+END_TESTCASE                   LBS-SIMULATIONPSY-0305
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0306
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0306
+//!@SYMTestCaseDesc            Latitude wrap around. Moving over the equator, the North Pole and the South Pole
+//!@SYMTestActions             Client makes 4 series (passing N and S pole, going S and N through equator) of maximum 10 SPS requests, until the latitude overflows.
+//!@SYMTestExpectedResults     Latitude wraps around correctly: is not bigger than 90, is not smaller than -90, goes from positive values to negative ones and from negative to positive 
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8892
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 100 SimulationPSYTests TP300-6
+END_TESTCASE                   LBS-SIMULATIONPSY-0306
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0307
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0307
+//!@SYMTestCaseDesc            Test invalid fields in the SPS file.
+//!@SYMTestActions             Client tries to obtain a fix with SPS files containing invalid fields (misspellings: Powreup, etc.).
+//!@SYMTestExpectedResults     KErrCorrupt status should be returned to client.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8892
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 100 SimulationPSYTests TP300-7
+END_TESTCASE                   LBS-SIMULATIONPSY-0307
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0308
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0308
+//!@SYMTestCaseDesc            Test NMEA request when NMEA file is without a fix and when NMEA fix data is placed at the end of very long file.
+//!@SYMTestActions             Client tries to obtain a fix with an invalid NMEA file set.  Client sets a new valid NMEA file and retries.
+//!@SYMTestExpectedResults     In the first case, an error is returned to the client.  In the second case, the fix is returned to the client.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     8892
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 100 SimulationPSYTests TP300-8
+END_TESTCASE                   LBS-SIMULATIONPSY-0308
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0400
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0400
+//!@SYMTestCaseDesc            Client requests NMEA fix when an appropriate stored fix exist.
+//!@SYMTestActions             First client makes NMEA request and obtains a fix. Second client sets Max Update Age to 30 seconds and requests a fix.
+//!@SYMTestExpectedResults     Both clients receive the same data.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10810
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP400-0
+END_TESTCASE                   LBS-SIMULATIONPSY-0400 
+ 
+START_TESTCASE                 LBS-SIMULATIONPSY-0401
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0401
+//!@SYMTestCaseDesc            Client requests NMEA fix when no appropriate stored fix exists.
+//!@SYMTestActions             First client makes an NMEA request and obtains a fix. 10 seconds later, second client sets Max Update Age to 5 seconds and requests a fix.
+//!@SYMTestExpectedResults     Second client receives different position than first client (which corresponds to one of the successive fix in the NMEA file).
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11528
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP400-1
+END_TESTCASE                   LBS-SIMULATIONPSY-0401
+
+ 
+START_TESTCASE                 LBS-SIMULATIONPSY-0402
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0402
+//!@SYMTestCaseDesc            Two clients request NMEA fix when Max Update Age is 0.
+//!@SYMTestActions             First client makes an NMEA request and obtains fix. Second client sets Max Update Age option to 0 and obtains a fix.
+//!@SYMTestExpectedResults     Second client receives different position than first client (which corresponds to one of the successive fix in the NMEA file).
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11528
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP400-2
+END_TESTCASE                   LBS-SIMULATIONPSY-0402
+
+ 
+START_TESTCASE                 LBS-SIMULATIONPSY-0403
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0403
+//!@SYMTestCaseDesc            Client requests SPS fix when an appropriate stored fix exist.
+//!@SYMTestActions             First client makes SPS request and obtains a fix. Second client sets Max Update Age to 30 seconds and requests a fix.
+//!@SYMTestExpectedResults     Both clients receive the same data.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11528
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP400-3
+END_TESTCASE                   LBS-SIMULATIONPSY-0403
+ 
+START_TESTCASE                 LBS-SIMULATIONPSY-0404
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0404
+//!@SYMTestCaseDesc            Client requests SPS fix when no appropriate  stored fix exists.
+//!@SYMTestActions             First client makes a SPS request and obtains a fix. 10 seconds later, second client sets Max Update Age to 5 seconds and requests a fix.
+//!@SYMTestExpectedResults     Second client position should be farther than first.    
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11528
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP400-4
+END_TESTCASE                   LBS-SIMULATIONPSY-0404
+
+ 
+START_TESTCASE                 LBS-SIMULATIONPSY-0405
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0405
+//!@SYMTestCaseDesc            Two clients request SPS fix when Max Update Age is 0.
+//!@SYMTestActions             First client makes an SPS request and obtains fix. Second client sets Max Update Age option to 0 and obtains a fix.
+//!@SYMTestExpectedResults     Second client position should be farther than first.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11528
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP400-5
+END_TESTCASE                   LBS-SIMULATIONPSY-0405
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0500
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0500
+//!@SYMTestCaseDesc            Two clients sequentially request position in NMEA mode and in Common Data mode.
+//!@SYMTestActions             First client makes NMEA request and stores results. 
+//!							   Second client makes NMEA request a moment later and stores results. 
+//!							   Compare the received data.
+//!@SYMTestExpectedResults     There should be a difference between clients' results.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10809
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP500-0
+END_TESTCASE                   LBS-SIMULATIONPSY-0500 
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0501
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0501
+//!@SYMTestCaseDesc            Two clients simultaneously request position in NMEA mode and in Common Data mode.
+//!@SYMTestActions             First client makes NMEA request and stores results. 
+//!							   Second client makes NMEA request before first client completes and stores results. 
+//!							   Compare the received data.
+//!@SYMTestExpectedResults     Client positions should be identical.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10809
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP500-1
+END_TESTCASE                   LBS-SIMULATIONPSY-0501
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0502
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0502
+//!@SYMTestCaseDesc            Two clients sequentially request position in Simulated Movement mode and in Common Data mode.
+//!@SYMTestActions             First client makes SPS request and stores results. 
+//!							   Second client makes SPS request a moment later and stores results. 
+//!							   Compare the received data.
+//!@SYMTestExpectedResults     There should be a difference between clients' results.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10809
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP500-2
+END_TESTCASE                   LBS-SIMULATIONPSY-0502
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0503
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0503
+//!@SYMTestCaseDesc            Two clients sequentially request position in Simulated Movement mode and in Common Data mode.
+//!@SYMTestActions             First client makes SPS request and stores results. 
+//!							   Second client makes SPS request before first client completes and stores results. 
+//!							   Compare the received data.
+//!@SYMTestExpectedResults     Client positions should be identical.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10809
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 140 SimulationPSYTests TP500-3
+END_TESTCASE                   LBS-SIMULATIONPSY-0503
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0504
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0504
+//!@SYMTestCaseDesc            Data Mode is changed from Common to Independent in Simulated Movement mode
+//!@SYMTestActions             First client makes SPS request and stores results. 
+//!							   Data Mode is changed from Common to Independent. 
+//!							   Second client makes SPS request and stores results. 
+//!							   Compare the received data.
+//!@SYMTestExpectedResults     There should be a difference between clients' results, both clients receive fixes in Common Data Mode
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10810
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 240 SimulationPSYTests TP500-4
+END_TESTCASE                   LBS-SIMULATIONPSY-0504
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0505
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0505
+//!@SYMTestCaseDesc            Data Mode is changed from Independent to Common in NMEA mode
+//!@SYMTestActions             First client makes NMEA request and stores results. 
+//!							   Data Mode is changed from Independent to Common. 
+//!							   Second client makes NMEA request and stores results.
+//!							   Compare the received data.
+//!@SYMTestExpectedResults     There should not be a difference between clients' results, both clients receive fixes in Independent Data Mode.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10810
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 100 SimulationPSYTests TP500-5
+END_TESTCASE                   LBS-SIMULATIONPSY-0505
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0506
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0506
+//!@SYMTestCaseDesc            Two clients simultaneously request position in NMEA, first requests full fix, second partial one.
+//!@SYMTestActions             First client makes NMEA request for full fix. Second client makes NMEA request for partial fix.
+//!@SYMTestExpectedResults     Second client receives first partial fix, first client receives first full fix.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10530
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 240 SimulationPSYTests TP500-6
+END_TESTCASE                   LBS-SIMULATIONPSY-0506
+
+START_TESTCASE                 LBS-SIMULATIONPSY-0507
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-0507
+//!@SYMTestCaseDesc            Set "allow partial updates" and request NMEA fix.  
+//!							   Expect a complete fix back as there are no partial fixes in used NMEA file.
+//!@SYMTestActions             Client sets positioner to accept partial updates and requests a fix.
+//!@SYMTestExpectedResults     A complete fix is returned, as there are no partial fixes in tested NMEA file.
+//!@SYMPREQ                    2043
+//!@SYMREQ                     10530
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+RUN_TEST_STEP 100 SimulationPSYTests TP500-7
+END_TESTCASE                   LBS-SIMULATIONPSY-0507
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00600
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00600
+//!@SYMTestCaseDesc            SPS Tracking in Independent Data Set mode
+//!
+//!@SYMTestActions             Enable Independent Data Set mode.  Client 1 starts requesting SPS
+//!                            positions at 5 second intervals.  Client 2 starts requesting SPS
+//!                            positions at 10 second intervals.	
+//!
+//!@SYMTestExpectedResults     After the first fix, client 1 receives fixes every 5 +/- 2 seconds.
+//!                            After the first fix, client 2 receives fixes every 10 +/- 2 seconds.
+//!                            Client 2's fixes are always closer to the initial starting position
+//!                            than Client 1's fixes, since Client 2 was started later.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11529
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 140 SimulationPSYTests TP600-0
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00600
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00601
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00601
+//!@SYMTestCaseDesc            NMEA Tracking in Independent Data Set mode
+//!
+//!@SYMTestActions             Enable Independent Data Set mode.  Client 1 starts requesting NMEA
+//!                            positions at 5 second intervals.  Client 2 starts requesting NMEA
+//!                            positions at 10 second intervals.
+//!
+//!@SYMTestExpectedResults     After the first fix, client 1 receives fixes every 5 +/- 2 seconds.
+//!                            After the first fix, client 2 receives fixes every 10 +/- 2 seconds.
+//!                            Each client receives every fix in the file.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11529
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 140 SimulationPSYTests TP600-1
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00601
+
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00602
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00602
+//!@SYMTestCaseDesc            SPS Tracking in Common Data Set mode
+//!
+//!@SYMTestActions             Enable Common Data Set mode.  Client 1 starts requesting SPS positions
+//!                            at 5 second intervals.  Client 2 starts requesting SPS positions at 10
+//!                            second intervals.
+//!
+//!@SYMTestExpectedResults     After the first fix, client 1 receives fixes every 5 +/- 2 seconds.  
+//!                            After the first fix, client 2 receives fixes every 10 +/- 2 seconds.
+//!                            Client 2's fixes are always further than Client 1's last fix and Client 1's
+//!                            fixes are always further than Client 2's last fix, when measuring from
+//!                            the initial position.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11529
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 140 SimulationPSYTests TP600-2
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00602
+
+START_TESTCASE                 LBS-SIMULATIONPSY-00603
+//!@SYMTestCaseID              LBS-SIMULATIONPSY-00603
+//!@SYMTestCaseDesc            NMEA Tracking in Common Data Set mode
+//!
+//!@SYMTestActions             Enable Common Data Set mode.  Client 1 starts requesting NMEA positions at
+//!                            5 second intervals.  Client 2 starts requesting NMEA positions at 10 second
+//!                            intervals.
+//!
+//!@SYMTestExpectedResults     After the first fix, client 1 receives fixes every 5 +/- 2 seconds.
+//!                            After the first fix, client 2 receives fixes every 10 +/- 2 seconds.
+//!                            Client 2 always receives a new fix.  Client 1 receives either the last fix
+//!                            obtained by Client 2 or a new fix.
+//!
+//!@SYMPREQ                    2043
+//!@SYMREQ                     11529
+//!
+//!@SYMTestPriority            Medium
+//!@SYMTestType cit 
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 140 SimulationPSYTests TP600-3
+
+END_TESTCASE                   LBS-SIMULATIONPSY-00603
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 SimulationPSYTests LbsStep_StopLbs
+

@@ -1,0 +1,139 @@
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef __BLUETOOTH_IBY__
+#define __BLUETOOTH_IBY__
+
+REM --- Bluetooth ---
+
+// If __BT_DEBUG__ is defined pull in debug versions of the
+// Bluetooth and RemCon DLLs and Plugins regardless of the ROM type
+#ifdef __BT_DEBUG__
+#include <cflog.iby>
+#define __HCI_DEBUG__
+define BT_DIR UDEB
+#define BT_PLUGIN ECOM_PLUGIN_UDEB
+#else
+define BT_DIR BUILD_DIR
+#define BT_PLUGIN ECOM_PLUGIN
+#endif
+
+#include <btlogger.iby>
+#include <commsdebugutility.iby>
+
+REM *** The following dlls are client side dlls. They are always included
+REM *** in the ROM, whether bluetooth is supported by the device or not, so
+REM *** that client applications can link against them regardless.
+
+REM Bluetooth user library
+file=ABI_DIR\BT_DIR\bluetooth.dll		System\Libs\bluetooth.dll
+
+REM BT Manager
+file=ABI_DIR\BT_DIR\btdevice.dll		System\Libs\btdevice.dll
+file=ABI_DIR\BT_DIR\btmanclient.dll		System\Libs\btmanclient.dll
+
+REM BT Manager DBMS Security Policy
+data=ZPRIVATE\100012a5\policy\100069cc.spd	Private\100012a5\policy\100069cc.spd
+
+REM BT Notifier types
+file=ABI_DIR\BT_DIR\btextnotifiers.dll	System\Libs\btextnotifiers.dll
+
+REM EIR RSSI
+file=ABI_DIR\BT_DIR\eirclient.dll	System\Libs\eirclient.dll
+
+REM SDP
+file=ABI_DIR\BT_DIR\sdpdatabase.dll		System\Libs\sdpdatabase.dll
+file=ABI_DIR\BT_DIR\sdpagent.dll		System\Libs\sdpagent.dll
+
+REM Bluetooth AV user libraries
+file=ABI_DIR\BT_DIR\bluetoothav.dll		System\Libs\bluetoothAV.dll
+file=ABI_DIR\BT_DIR\gavdp.dll			System\Libs\gavdp.dll
+
+REM Generic Remote Control Framework
+file=ABI_DIR\BT_DIR\remconstatusapi.dll	System\Libs\remconstatusapi.dll
+#include <remotecontrol.iby>
+
+
+REM HCI Server Client
+file=ABI_DIR\BT_DIR\hciserverclient.dll	System\Libs\hciserverclient.dll
+REM BT Power Control
+file=ABI_DIR\BT_DIR\btpowercontrol.dll	System\Libs\btpowercontrol.dll
+
+REM Device Under Test Mode
+file=ABI_DIR\BT_DIR\dutmode.dll			System\Libs\dutmode.dll
+
+REM A2DP Optimisation user library
+file=ABI_DIR\BT_DIR\a2dpoptimisation.dll	System\Libs\a2dpoptimisation.dll
+
+REM *** Now for things which should only be included if the device
+REM *** supports bluetooth, to save ROM space...
+
+#ifndef __BT
+REM Feature BLUETOOTH is not in this ROM (bluetooth.iby)
+#else
+
+REM BT Manager Backup Registration
+data=ZPRIVATE\100069cc\backup_registration.xml	Private\100069cc\backup_registration.xml
+
+REM default is to run Esock_BT thread in DealerPlayer role
+data=ZPRIVATE\101f7988\esock_bt.cmi private\101F7988\esock_bt.cmi
+
+file=ABI_DIR\BT_DIR\btcomm.csy			System\Libs\btcomm.csy
+
+REM BT Manager
+file=ABI_DIR\BT_DIR\btmanserver.exe		System\Libs\btmanserver.exe
+
+REM SDP
+file=ABI_DIR\BT_DIR\sdpserver.exe		System\Libs\sdpserver.exe
+
+
+REM Bluetooth using HCI API Version 2
+file=ABI_DIR\BT_DIR\bt_v2.prt							System\Libs\bt_v2.prt
+REM Stack configuration files
+data=ZPRIVATE\101f7989\esock\bt.bt_v2.esk				Private\101f7989\ESock\bt.bt_v2.esk
+data=ZPRIVATE\101f7989\bluetooth\bluetooth_stack.ini	Private\101F7989\Bluetooth\bluetooth_stack.ini
+
+REM HCI Shared binary
+file=ABI_DIR\BT_DIR\hcishared.dll			System\Libs\hcishared.dll
+
+REM HCI variant includes
+#include <hci.iby>
+
+REM Client side RemCon APIs for AVRCP
+file=ABI_DIR\BT_DIR\avrcpipc.dll		System\Libs\avrcpipc.dll
+file=ABI_DIR\BT_DIR\remconplayerinformation.dll      System\Libs\remconplayerinformation.dll
+file=ABI_DIR\BT_DIR\remconmediainformationapi.dll      System\Libs\remconmediainformationapi.dll
+file=ABI_DIR\BT_DIR\remconbatterystatusapi.dll      System\Libs\remconbatterystatusapi.dll
+file=ABI_DIR\BT_DIR\remcongroupnavigationapi.dll      System\Libs\remcongroupnavigationapi.dll
+file=ABI_DIR\BT_DIR\remconabsolutevolume.dll      System\Libs\remconabsolutevolume.dll
+file=ABI_DIR\BT_DIR\remconnowplayingapi.dll      System\Libs\remconnowplayingapi.dll
+file=ABI_DIR\BT_DIR\remconmediabrowseapi.dll      System\Libs\remconmediabrowseapi.dll
+
+#ifndef BLUETOOTH_NO_AV
+
+REM AVRCP
+file=ABI_DIR\BT_DIR\avc.dll			System\Libs\avc.dll
+BT_PLUGIN(remconbeareravrcp.dll,remconbeareravrcp.rsc)
+BT_PLUGIN(remconavrcpstatusconverter.dll,remconavrcpstatusconverter.rsc)
+
+REM AVCTP Services
+file=ABI_DIR\BT_DIR\avctpservices.dll	System\Libs\avctpservices.dll
+
+#endif // BLUETOOTH_NO_AV
+
+#endif // __BT
+
+#endif
+

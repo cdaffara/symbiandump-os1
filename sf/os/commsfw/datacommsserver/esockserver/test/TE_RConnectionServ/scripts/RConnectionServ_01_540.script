@@ -1,0 +1,165 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName te_RConnectionServ
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+
+START_TESTCASE			COMINF-ESOCK-RConnectionServ-1601
+//! @SYMTestCaseID		COMINF-ESOCK-RConnectionServ-1601
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RConnectionServ::Connect()
+//RConnectionServ::AccessPointStatusQuery()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+//	Open ConnServ1
+//	Enumerate (total:0)
+//	Close ConnServ1
+//	Start conn1
+//	Open ConnServ1
+//	Enumerate (total:1, ppp:1)
+//	Close ConnServ1
+//	Start conn2
+//	Open ConnServ1
+//	Enumerate (total:1, ppp:1)
+//	Close ConnServ1
+//	Start conn3 (eth)
+//	Open ConnServ1
+//	Enumerate (total:2, ppp:1, eth:1)
+//	Close ConnServ1
+//	Stop conn1
+//	Open ConnServ1
+//	Enumerate (total:1, eth:1)
+//	Close ConnServ1
+//	Stop conn2
+//	Open ConnServ1
+//	Enumerate (total:1, eth:1)
+//	Close ConnServ1
+//	Stop conn3
+//	Open ConnServ1
+//	Enumerate (total:0)
+//	Close ConnServ1
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  CopyFile z:\testdata\configs\RConnectionServ\CIT_mixedap_config.txt c:\config.txt
+
+// Start by unloading esock, reseting commsdat and reloading esock
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\TestData\configs\RConnectionServ\RConnectionServ_MixedAPTypes.cfg -o c:\RConnectionServ.ced.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+// start simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StartSimTSYStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini SimTsy
+
+// Create entities required
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CreateConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CreateConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini OpenConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CreateConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini OpenConn3
+
+// Enumerate connections with legacy and rconnectionserv
+// No connections up to begin with
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectConnectionServ1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini APQuery1
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini EnumConnections1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConnectionServ1_1
+
+// Start conn1 *IAP1* connection
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini StartConn1
+
+// Enumerate again
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectConnectionServ1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini APQuery2
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini EnumConnections2
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConnectionServ1_2
+
+// Start conn2 - same AP *IAP1*
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini StartConn2
+
+// Enumerate again - no change expected as same AP
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectConnectionServ1_3
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini APQuery3
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini EnumConnections3
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConnectionServ1_3
+
+// Start conn3 - *IAP2*
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini StartConn3
+
+// Enumerate again - AP1, AP2
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectConnectionServ1_4
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini APQuery4
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini EnumConnections4
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConnectionServ1_4
+
+// Close conn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConn2
+
+// Enumerate again - AP1, AP2
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectConnectionServ1_5
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini APQuery5
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini EnumConnections5
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConnectionServ1_5
+
+// Stop conn1
+RUN_TEST_STEP 100 te_esockteststepsSuite stoprconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini StopConn1
+
+// Enumerate again - AP2
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectConnectionServ1_6
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini APQuery6
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini EnumConnections6
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConnectionServ1_6
+
+// Stop conn3
+RUN_TEST_STEP 100 te_esockteststepsSuite stoprconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini StopConn3
+
+// Enumerate again - none
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini ConnectConnectionServ1_7
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini APQuery7
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini EnumConnections7
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConnectionServ1_7
+
+// Close and cleanup resources
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// stop simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StopSimTSYStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_040.ini SimTsy
+
+// Shutdown
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			COMINF-ESOCK-RConnectionServ-1601
+
+
+
+

@@ -1,0 +1,51 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         te_lbsbtgpsconfig_cap_none.script
+//! @SYMScriptTestEnvironment
+
+// Copy the test server exe onto the C drive (if its on the Z drive)
+RUN_UTILS CopyFile z:\sys\bin\te_lbsbtgpsconfig.exe c:\sys\bin\te_lbsbtgpsconfig.exe
+
+// NO CAPABILITIES
+
+// Use Setcap to change capabilities of harness (MASK = 00000000)
+RUN_PROGRAM -1 setcap c:\sys\bin\te_lbsbtgpsconfig.exe 00000000 te_lbsbtgpsconfig_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [] (MASK = 00000000) ----
+
+LOAD_SUITE te_lbsbtgpsconfig_sc -SharedData
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+PRINT Run te_lbsbtgpsconfig_cap_none
+
+START_TESTCASE                LBS-GPSPSYCONFIG-NOACCESS-0001
+//! @SYMTestCaseID              LBS-GPSPSYCONFIG-NOACCESS-0001
+//! @SYMTestCaseDesc            This tests that the Bluetooth GPS PSY configuration API is not accessable when the client has no capabilities
+//! @SYMTestActions             1. Attempt to access the API by calling CLbsBtGpsConfig::NewL().
+//!                             2. Check that KErrPermissionDenied was returned.
+//!                             3. Check that no update notification was received.
+//! @SYMTestExpectedResults     The client should not be able to access the API.
+//! @SYMCreationDate            22/1/2009
+//! @SYMAuthor                  AndrewWedgbury
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 100 te_lbsbtgpsconfig_sc LbsBtGpsConfigStepNoAccess
+END_TESTCASE                  LBS-GPSPSYCONFIG-NOACCESS-0001
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+

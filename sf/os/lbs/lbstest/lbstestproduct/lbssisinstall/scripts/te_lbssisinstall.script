@@ -1,0 +1,76 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-SISINSTALL-te_lbssisinstall.script
+//! @SYMScriptTestEnvironment This test script perform install and uninstall tests
+
+
+PREFIX RUN_UTILS
+// All tests which connect to EPos Server must do this:
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+PRINT lbsbtpsy sis install and uninstall tests
+LOAD_SUITE te_lbssisinstall
+
+RUN_TEST_STEP 030 te_lbssisinstall StartLbsStep
+
+
+START_TESTCASE                LBS-SISINSTALL-AfterMarketInstallation-0001
+//! @SYMTestCaseID              LBS-SISINSTALL-AfterMarketInstallation-0001
+//! @SYMTestCaseDesc            The Bluetooth GPS Positioning Module shall support aftermarket installation.
+//!                             It shall be possible to install and use the Bluetooth GPS Positioning Module without the need to restart the device or the LBS sub-system.
+//!                             Either a SIS file, a stub SIS or a package file should be provided.
+//! @SYMTestPriority            High
+//! @SYMTestActions             run a "silent" (without user notification) install of the BTPSY.
+//!                             We then run basic tests to get Module Info and the location server should be able to use the module.
+//! @SYMTestExpectedResults     
+//!                             PASS: SIS install successful and the location server can use the Bluetooth module
+//!                             FAIL : SIS files already installed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  jeannoelm
+//! @SYMTestStatus              1. Under Development
+RUN_TEST_STEP 100 te_lbssisinstall CheckBTPSYinRomStep c:\testdata\configs\te_lbssisinstall.ini Section1
+RUN_TEST_STEP 100 te_lbssisinstall CheckBTPSYFromServerStep c:\testdata\configs\te_lbssisinstall.ini SectionBTFalse
+RUN_TEST_STEP 100 te_lbssisinstall SisInstallStep c:\testdata\configs\te_lbssisinstall.ini Section1
+DELAY 20000
+RUN_TEST_STEP 100 te_lbssisinstall CheckBTPSYFromServerStep c:\testdata\configs\te_lbssisinstall.ini SectionBTTrue
+END_TESTCASE                  LBS-SISINSTALL-AfterMarketInstallation-0001
+
+
+
+START_TESTCASE                LBS-SISINSTALL-AfterMarketUninstallation-0001
+//! @SYMTestCaseID              LBS-SISINSTALL-AfterMarketUninstallation-0001
+//! @SYMTestCaseDesc            The Bluetooth GPS Positioning Module shall support aftermarket un-installation
+//!                             It shall be possible to un-install the Bluetooth GPS Positioning Module without the need to restart the device or the LBS sub-system for the removal to be reflected within the positioning module list.
+//! @SYMTestPriority            High
+//! @SYMTestActions             run a "silent" (without user notification) uninstall of the BTPSY.
+//!                             We then run basic tests to get Module Info, and the location server shouldnt be able to find it anymore.
+//! @SYMTestExpectedResults     PASS: SIS uninstalls successful, and the location server notices the disappearance of the Bluetooth module.
+//!                             FAIL : SIS files already uninstalled, or never installed at the first place.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  jeannoelm
+//! @SYMTestStatus              1. Under Development
+RUN_TEST_STEP 100 te_lbssisinstall SisUninstallStep c:\testdata\configs\te_lbssisinstall.ini Section1
+DELAY 20000
+RUN_TEST_STEP 100 te_lbssisinstall CheckBTPSYFromServerStep c:\testdata\configs\te_lbssisinstall.ini SectionBTFalse
+END_TESTCASE                  LBS-SISINSTALL-AfterMarketUninstallation-0001
+
+RUN_TEST_STEP 030 te_lbssisinstall StopLbsStep
+
+PRINT sis file install tests Complete

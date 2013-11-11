@@ -1,0 +1,425 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Test request for swp change
+// 
+//
+
+#include <ssm/ssmcmd.rh>
+#include "ssmcmdextra.rh"
+
+// custom command data
+RESOURCE SSM_COMMAND_CUSTOM_CMD_DATA r_command_custom_cmd_good_data
+	{
+	val1 = '1';
+	val2 = '2';
+	val3 = '3';
+	val4 = '4';
+	val5 = '5';
+	}
+
+// custom command data
+RESOURCE SSM_COMMAND_CUSTOM_CMD_DATA r_command_custom_cmd_bad_data
+	{
+	val1 = '0';
+	val2 = '0';
+	val3 = '0';
+	val4 = '0';
+	val5 = '0';
+	}
+
+// valid ESsmWaitForSignal struct without data
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd1
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// invalid type
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd2
+	{
+	type = ESsmCmdLoadSup;
+	severity = ECmdMediumSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// unsupported version
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd3
+	{
+	version = 999;
+	severity = ECmdMediumSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// invalid execution_behaviour 1
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd4
+	{
+	severity = ECmdMediumSeverity;
+	execution_behaviour = 0;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// invalid execution_behaviour 2
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd5
+	{
+	severity = ECmdMediumSeverity;
+	execution_behaviour = 10;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// invalid ordinal
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd6
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 0;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// missing dll name
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd7
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// invalid dll file
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd8
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "nosuchfile.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// invalid unload_on_finish 1
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd9
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = -1;
+	retries = 3;
+	}
+
+// invalid unload_on_finish 2
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd10
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = 25;
+	retries = 3;
+	}
+
+// negative retries
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd11
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = -56;
+	}
+
+// valid ESsmWaitForSignal struct with data
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd12
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// ordinal does not exist
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd13
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 10;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// valid ESsmDeferredWaitForSignal struct without data
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd14
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmDeferredWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// valid ESsmDeferredWaitForSignal struct with good data
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd15
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmDeferredWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// valid ESsmWaitForSignal struct with bad data, ECmdIgnoreFailure
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd16
+	{
+	severity = ECmdIgnoreFailure;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_bad_data;
+	}
+
+// valid ESsmWaitForSignal struct with bad data, ECmdHighSeverity
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd17
+	{
+	severity = ECmdHighSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_bad_data;
+	}
+
+// valid ESsmDeferredWaitForSignal struct with bad data, ECmdIgnoreFailure
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd18
+	{
+	severity = ECmdIgnoreFailure;
+	execution_behaviour = ESsmDeferredWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_bad_data;
+	}
+
+// valid ESsmDeferredWaitForSignal struct with bad data, ECmdHighSeverity
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd19
+	{
+	severity = ECmdHighSeverity;
+	execution_behaviour = ESsmDeferredWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_bad_data;
+	}
+
+// ESsmWaitForSignal struct with bad init, ECmdIgnoreFailure
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd20
+	{
+	severity = ECmdIgnoreFailure;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd_badinit.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// ESsmWaitForSignal struct with bad init, ECmdHighSeverity
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd21
+	{
+	severity = ECmdHighSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd_badinit.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// negative ordinal
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd22
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = -5;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// valid ESsmFireAndForget struct with bad data, ECmdIgnoreFailure
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd23
+	{
+	severity = ECmdIgnoreFailure;
+	execution_behaviour = ESsmFireAndForget;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_bad_data;
+	}
+
+// valid ESsmFireAndForget struct with bad data, ECmdHighSeverity
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd24
+	{
+	severity = ECmdHighSeverity;
+	execution_behaviour = ESsmFireAndForget;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_bad_data;
+	}
+
+// valid ESsmFireAndForget struct without data, ECmdCriticalSeverity
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd25
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmFireAndForget;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+
+// valid ESsmFireAndForget struct with good data
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd26
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmFireAndForget;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// ESsmFireAndForget struct with bad init, ECmdIgnoreFailure
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd27
+	{
+	severity = ECmdIgnoreFailure;
+	execution_behaviour = ESsmFireAndForget;
+	dllname = "tcustom_cmd_badinit.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// ESsmDeferredWaitForSignal struct with bad init, ECmdIgnoreFailure
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd28
+	{
+	severity = ECmdIgnoreFailure;
+	execution_behaviour = ESsmDeferredWaitForSignal;
+	dllname = "tcustom_cmd_badinit.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// ESsmFireAndForget struct with bad init, ECmdHighSeverity
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd29
+	{
+	severity = ECmdHighSeverity;
+	execution_behaviour = ESsmFireAndForget;
+	dllname = "tcustom_cmd_badinit.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+// ESsmDeferredWaitForSignal struct with bad init, ECmdHighSeverity
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd30
+	{
+	severity = ECmdHighSeverity;
+	execution_behaviour = ESsmDeferredWaitForSignal;
+	dllname = "tcustom_cmd_badinit.dll";
+	ordinal = 1;
+	unload_on_finish = ENeverUnload;
+	retries = 3;
+	dll_data = r_command_custom_cmd_good_data;
+	}
+
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+// valid test priority struct without data
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd31
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	priority = 1000;
+	}
+
+//command with initial version should have default priority
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd32
+	{
+	version = ECmdCustomCommandInitialVersion;
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	}
+	
+//  negative test priority struct without data
+RESOURCE SSM_START_CUSTOM_COMMAND r_command_custom_cmd33
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "tcustom_cmd.dll";
+	ordinal = 1;
+	unload_on_finish = EUnloadOnCommandCompletion;
+	retries = 3;
+	priority = -1;
+	}	
+
+#endif
+

@@ -1,0 +1,71 @@
+/*
+* Copyright (c) 2008-2010 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Project definition file for project ATEXT server
+*
+*/
+
+
+// Use the flag below and recompile to skip the creation of search helper data
+// for every at command metadata entry. The search helper data consumes 2xTInt
+// bytes of data for every AT command. If multiple plugins need to support the
+// same AT commands then this flag speeds up the metadata creation.
+
+#define OPTIMIZE_FOR_SPEED
+
+// Use the flag below and recompile to list the full support entries for AT
+// command handling. This is useful to find out the plugin responsibilities.
+
+#define PRINT_SUPPORT_DATA
+
+#include <platform_paths.hrh>
+#include "../inc/prjconfig.h"
+
+#ifdef OPTIMIZE_FOR_SPEED
+MACRO PRJ_OPTIMIZE_FOR_SPEED
+#define PRJ_OPTIMIZE_FOR_SPEED
+#endif  // OPTIMIZE_FOR_SPEED
+
+#ifdef PRINT_SUPPORT_DATA
+MACRO PRJ_PRINT_SUPPORT_DATA
+#define PRJ_PRINT_SUPPORT_DATA
+#endif  // PRINT_SUPPORT_DATA
+
+TARGET                  atext.exe
+TARGETTYPE              exe
+UID                     0x1000008d 0x2001CBEB
+EPOCSTACKSIZE           0x5000 // Hack for plugins using RCmManager; remove this line when RCmManager becomes client-server
+EPOCHEAPSIZE            0x1000 0x2000000  // Use same as MCE
+
+CAPABILITY              CAP_SERVER NetworkControl CommDD PowerMgmt
+VENDORID                VID_DEFAULT
+
+SOURCEPATH              ../src
+SOURCE                  main.cpp
+SOURCE                  atextsrv.cpp
+SOURCE                  atextsession.cpp
+SOURCE                  atextmetadata.cpp
+SOURCE                  atextlisten.cpp
+
+USERINCLUDE             ../inc ../../client/inc
+
+// Default system include paths for OS extension layer modules.
+OS_LAYER_SYSTEMINCLUDE
+
+LIBRARY                 atextpluginbase.lib
+LIBRARY			        ecom.lib
+LIBRARY			        euser.lib
+
+#ifdef PRJ_FILE_TRACE
+LIBRARY	flogger.lib
+#endif

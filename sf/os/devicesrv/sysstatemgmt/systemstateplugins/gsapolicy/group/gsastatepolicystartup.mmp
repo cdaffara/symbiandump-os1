@@ -1,0 +1,80 @@
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifdef WINS
+TARGET			ssm.state.policy.0000.dll
+#else
+TARGET			ssm.refrence.state.policy.hw.0000.dll
+#endif
+TARGETTYPE		dll
+UID				0x2000D75D 0x2000D75F
+VENDORID		0x70000001
+
+CAPABILITY		DiskAdmin PowerMgmt ProtServ SwEvent WriteDeviceData ReadDeviceData
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+USERINCLUDE		../inc
+USERINCLUDE		../../localinc
+USERINCLUDE     	../../../ssmpolicyplugins/cenrep
+
+
+SOURCEPATH		../src
+SOURCE			gsastatepolicystartup.cpp
+
+SOURCEPATH		../../localsrc
+SOURCE			ssmpanic.cpp
+
+DEFFILE			gsastatepolicystartup.def
+
+LIBRARY			euser.lib 
+LIBRARY			ssmcmn.lib
+LIBRARY			ssmcmd.lib
+LIBRARY			bafl.lib
+LIBRARY			efsrv.lib
+LIBRARY			estor.lib
+LIBRARY     		centralrepository.lib
+
+// "/private/<SID of SSM>/startup/<Value of KSystemStartupModeKey>/"
+SOURCEPATH		../resource
+START RESOURCE	gsastartupcmdlist1.rss
+TARGETPATH		/private/2000d75b/startup/1
+END
+
+#if defined(WINS)	//for wins//
+
+SOURCEPATH		../resource/wins
+START RESOURCE	gsastartupcmdlist8.rss
+TARGETPATH		/private/2000d75b/startup/8
+END
+
+#else	//for hardware//
+
+SOURCEPATH		../resource/armv5
+START RESOURCE	gsastartupcmdlist8_target.rss
+TARGETPATH		/private/2000d75b/startup/8
+END
+
+// Launch 'sysstart.exe' if startup resource is not found. If 'sysstart.exe' fails, launch 'sysagt2svr.exe' and 'wserv.exe'
+// resource file to fallback to 'sysstart.exe'
+// resource file path format : "z:/private/<SID of SSM>/startup/fallback/"
+SOURCEPATH		../resource/armv5
+START RESOURCE	fallbacktosysstart_target.rss
+TARGETPATH		/private/2000d75b/startup/fallback
+END
+
+#endif
+
+SMPSAFE

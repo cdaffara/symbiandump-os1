@@ -1,0 +1,52 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run SusPlatsecStepProtSrv tests
+
+PRINT INFO: Removing capability ProtServ from tsus_ssmutilsrv ~(1<<8)
+RUN_PROGRAM -1 setcap tsus_ssmutilsrv.exe 01234 tsus_ssmutilsrv01234.exe
+
+//Start ssmutilsrv with test-name, this must be done from an exe with cap ProtSrv
+LOAD_SUITE tsus_ssmutilsrv
+
+START_TESTCASE 			DEVSRVS-SSMA-SUS-0018
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SUS-0018
+RUN_TEST_STEP 100 tsus_ssmutilsrv SusPlatsecStepProtSrvBegin
+END_TESTCASE 			DEVSRVS-SSMA-SUS-0018
+
+//Try to connect to the ssmutilsrv started above from tsus_ssmutilsrv01234
+LOAD_SUITE tsus_ssmutilsrv01234
+
+START_TESTCASE 			DEVSRVS-SSMA-SUS-0019
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SUS-0019
+//! @SYMPREQ 			PREQ1871
+//! @SYMREQ			REQ9159
+//! @SYMTestType		IT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc		Ensure UtilityServer refuse connection for clients with incorrect capabilities
+//! @SYMTestActions		The test will attempt to connect to the Utility server with a client with incorrect capabilities
+//! 					1.With client missing ProtSrv
+//! @SYMTestExpectedResults 	The server returns KErrPermissionDenied and the connection is refused.
+RUN_TEST_STEP 100 tsus_ssmutilsrv01234 SusPlatsecStepProtSrv
+END_TESTCASE 			DEVSRVS-SSMA-SUS-0019
+
+//Shutdown the test ssmutilsrv
+LOAD_SUITE tsus_ssmutilsrv
+
+START_TESTCASE 			DEVSRVS-SSMA-SUS-0020
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SUS-0020
+RUN_TEST_STEP 100 tsus_ssmutilsrv SusPlatsecStepProtSrvEnd
+END_TESTCASE 			DEVSRVS-SSMA-SUS-0020

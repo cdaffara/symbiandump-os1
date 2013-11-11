@@ -1,0 +1,461 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the CBluetoothPhysicalLinks class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Sherry Ho and Zoe Chen
+//! @SYMCreationDate			16/08/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	T_BTUserAPI	-SharedData
+DELAY		500
+
+// ****************************************************************************
+// CBluetoothPhysicalLinks
+// ****************************************************************************	
+// Connected
+
+START_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0001
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0001
+//! @SYMAPI						CBluetoothSocket, MBluetoothSocketNotifier, TBTDevAddr, RHostResolver, TL2CAPSockAddr
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint and accept and verify data
+//!								Uses API elements: 	NewL()1, Bind(), listen()1, and NewL()4 from CBluetoothSocket
+//!													HandleAcceptCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TBTDevAddr() from TBTDevAddr
+//!													Open() and SetHostName() from RHostResolver
+//!													TL2CAPSockAddr(), SetFamily() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Create an TL2CAPSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								7. Call the listen()1 method of the CBluetoothSocket object
+//!								8. Create a new empty CBluetoothSocket using NewL()4
+//!								9. Create an TBTDevAddr object (slave)
+//!								10. Create and initialise an RHostResolver
+//!								11. Set Hostname (SlaveDevice) of the device
+//!								12. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								13. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								14. Do socket cleanup by calling Shutdown()1
+//!								15. HandleShutdownCompleteL gets called verify error code
+//!								16. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Bluetooth endpoint set up successfully
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0001command3NewL
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetFamily		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0001command6SetFamily
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0001-0002
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct		
+			COMMAND		TBTDevAddrLocal	OpenHostResolver		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable		
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TBTDevAddrLocal
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0001-0002
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0001-0003
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PhysicalLinks-PublicApi-Passive-0001-0003command2Accept
+			OUTSTANDING	
+			COMMAND		CBluetoothSessionSocket	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0001-0003command3Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~	
+			COMMAND		CBluetoothSocket1	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0001-0003command4Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0001-0003
+
+END_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0001
+
+
+START_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0002
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0002
+//! @SYMAPI						CBluetoothSocket, MBluetoothSocketNotifier, TL2CAPSockAddr
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint and accept and verify data
+//!								Uses API elements: 	NewL()1, Bind(), listen()1, and NewL()4 from CBluetoothSocket
+//!													HandleAcceptCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TL2CAPSockAddr(), SetFamily() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Create an TL2CAPSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								7. Call the listen()1 method of the CBluetoothSocket object
+//!								8. Create a new empty CBluetoothSocket using NewL()4
+//!								9. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								10. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								11. Do socket cleanup by calling Shutdown()1
+//!								12. HandleShutdownCompleteL gets called verify error code
+//!								13. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Bluetooth endpoint set up successfully
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0001command3NewL
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetFamily		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0001command6SetFamily
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0002-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PhysicalLinks-PublicApi-Passive-0002-0002command2Accept
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0002-0002command3Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~	
+			COMMAND		CBluetoothSocket1	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0002-0002command4Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0002-0002
+
+END_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0002
+
+
+START_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0003
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0003
+//! @SYMAPI						CBluetoothSocket, MBluetoothSocketNotifier, TBTDevAddr, RHostResolver, TL2CAPSockAddr
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint and accept and verify data
+//! @SYMAPI						CBluetoothSocket, MBluetoothSocketNotifier, TL2CAPSockAddr
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint and accept and verify data
+//!								Uses API elements: 	NewL()1, Bind(), listen()1, and NewL()4 from CBluetoothSocket
+//!													HandleAcceptCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TL2CAPSockAddr(), SetFamily() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Create an TL2CAPSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								7. Call the listen()1 method of the CBluetoothSocket object
+//!								8. Create a new empty CBluetoothSocket using NewL()4
+//!								9. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								10. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								11. Do socket cleanup by calling Shutdown()1
+//!								12. HandleShutdownCompleteL gets called verify error code
+//!								13. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Bluetooth endpoint set up successfully
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0001command3NewL
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetFamily		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0001command6SetFamily
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0003-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PhysicalLinks-PublicApi-Passive-0003-0002command2Accept
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0003-0002command3Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~		
+			COMMAND		CBluetoothSocket1	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0003-0002command4Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose	
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0003-0002
+
+END_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0003
+
+
+START_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0004
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0004
+//! @SYMAPI						CBluetoothSocket, MBluetoothSocketNotifier, TL2CAPSockAddr
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint and accept and verify data
+//!								Uses API elements: 	NewL()1, Bind(), listen()1, and NewL()4 from CBluetoothSocket
+//!													HandleAcceptCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TL2CAPSockAddr(), SetFamily() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Create an TL2CAPSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								7. Call the listen()1 method of the CBluetoothSocket object
+//!								8. Create a new empty CBluetoothSocket using NewL()4
+//!								9. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								10. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								11. Do socket cleanup by calling Shutdown()1
+//!								12. HandleShutdownCompleteL gets called verify error code
+//!								13. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Bluetooth endpoint set up successfully
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0001command3NewL
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetFamily		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0001command6SetFamily
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0004-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PhysicalLinks-PublicApi-Passive-0004-0002command2Accept
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0004-0002command3Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~	
+			COMMAND		CBluetoothSocket1	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0004-0002command4Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose	
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0004-0002
+
+END_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0004
+
+
+START_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0005
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0005
+//! @SYMAPI						CBluetoothSocket, MBluetoothSocketNotifier, TL2CAPSockAddr
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint and accept and verify data
+//!								Uses API elements: 	NewL()1, Bind(), listen()1, and NewL()4 from CBluetoothSocket
+//!													HandleAcceptCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TL2CAPSockAddr(), SetFamily() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Create an TL2CAPSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								7. Call the listen()1 method of the CBluetoothSocket object
+//!								8. Create a new empty CBluetoothSocket using NewL()4
+//!								9. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								10. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								11. Do socket cleanup by calling Shutdown()1
+//!								12. HandleShutdownCompleteL gets called verify error code
+//!								13. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Bluetooth endpoint set up successfully
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0001command3NewL
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetFamily		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0001command6SetFamily
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0005-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PhysicalLinks-PublicApi-Passive-0005-0002command2Accept
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0005-0002command3Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~		
+			COMMAND		CBluetoothSocket1	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0005-0002command4Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0005-0002
+
+END_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0005
+
+
+START_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0006
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0006
+//! @SYMAPI						CBluetoothSocket, MBluetoothSocketNotifier, TL2CAPSockAddr
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint and accept and verify data
+//!								Uses API elements: 	NewL()1, Bind(), listen()1, and NewL()4 from CBluetoothSocket
+//!													HandleAcceptCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TL2CAPSockAddr(), SetFamily() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Create an TL2CAPSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								7. Call the listen()1 method of the CBluetoothSocket object
+//!								8. Create a new empty CBluetoothSocket using NewL()4
+//!								9. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								10. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								11. Do socket cleanup by calling Shutdown()1
+//!								12. HandleShutdownCompleteL gets called verify error code
+//!								13. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Bluetooth endpoint set up successfully
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0001command3NewL
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetFamily		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0001command6SetFamily
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0006-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PhysicalLinks-PublicApi-Passive-0006-0002command2Accept
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0006-0002command3Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~	
+			COMMAND		CBluetoothSocket1	Shutdown	BT-USER-PhysicalLinks-PublicApi-Passive-0006-0002command4Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose	
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-0006-0002
+
+END_TESTCASE	BT-USER-PhysicalLinks-PublicApi-Passive-Slave-0006
+
+
+DELAY		500

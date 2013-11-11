@@ -1,0 +1,74 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Spud Test for DEF113516 - Static Ip and Dns is not handled correctly in SPUD
+//
+
+//! @file 
+
+PRINT te_spud_staticip - DEF113516 - Static Ip and Dns is not handled correctly in SPUD
+
+// Ensure that the default config is present if no cleverer one has been put there already
+RUN_SCRIPT z:\testdata\scripts\exec_esock_default_to_config_1.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+CED -i z:\testdata\configs\spud_staticip\te_spud_staticip.xml ced.log
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MkDir c:\private\
+RUN_UTILS  MkDir c:\private\101F7989\
+RUN_UTILS  MkDir c:\private\101F7989\esock\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  MakeReadWrite c:\qospolicies.ini
+RUN_UTILS  MakeReadWrite c:\private\101F7989\esock\qospolicies.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  DeleteFile c:\qospolicies.ini
+RUN_UTILS  DeleteFile c:\private\101F7989\esock\qospolicies.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\spud_staticip\te_spud_staticip_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\spud_staticip\te_spud_staticip_config.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\spud_staticip\te_spud_staticip_loopback.ini c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\qospolicies.ini c:\qospolicies.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\qospolicies.ini c:\private\101F7989\esock\qospolicies.ini
+
+LOAD_SUITE te_esockteststepsSuite -SharedData
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE NET_SPUD_DEF113516
+
+RUN_TEST_STEP 100 te_esockteststepsSuite startsimtsyStep z:\testdata\configs\spud_staticip\simtsy.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\spud_staticip\socketserv.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\spud_staticip\connection.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconnectionStep z:\testdata\configs\spud_staticip\subconnection.ini
+
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\spud_staticip\socketserv.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\spud_staticip\connection.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\spud_staticip\connection.ini
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsubconnectionStep z:\testdata\configs\spud_staticip\subconnection.ini
+
+RUN_TEST_STEP 100 te_esockteststepsSuite closersubconnectionStep z:\testdata\configs\spud_staticip\subconnection.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\spud_staticip\connection.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\spud_staticip\socketserv.ini
+
+RUN_TEST_STEP 100 te_esockteststepsSuite stopsimtsyStep z:\testdata\configs\spud_staticip\simtsy.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE NET_SPUD_DEF113516
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Complete te_spud_staticip - DEF113516 - Static Ip and Dns is not handled correctly in SPUD
+

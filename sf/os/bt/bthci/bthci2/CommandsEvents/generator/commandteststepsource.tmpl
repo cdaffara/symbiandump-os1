@@ -1,0 +1,92 @@
+// Copyright (c) 2006-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// $FILENAME.cpp
+// This file was generated automatically from the template commandteststepsource.tmpl
+// on $GENERATE_TIME_STAMP
+// Implementation of test step $CLASSNAME.
+// 
+//
+
+/**
+ @file 
+ @internalComponent
+*/
+
+#include "$FILENAME.h"
+
+#include <bluetooth\hci\hciframe.h>
+#include <bluetooth\hci\VendorDebugCompleteEvent.h>
+#include <bluetooth\hci\VendorDebugEvent.h>
+#include <bluetooth\hci\$CMDFILENAME.h>
+
+//HCI Framing constants for command frames - use 0 values since we are not going to use
+static const TInt KHCTLCommandHeaderSize = 0;
+static const TInt KHCTLCommandTrailerSize = 0;
+
+$CLASSNAME::$CLASSNAME()
+	{
+	SetTestStepName(K${TESTSTEPNAME});
+	}
+
+$CLASSNAME::~$CLASSNAME()
+	{
+	}
+
+TVerdict $CLASSNAME::doTestStepL()
+	{
+	if(TestStepResult() != EPass)
+		{
+		return TestStepResult();
+		}
+
+	SetTestStepResult(EFail);
+
+	CHctlCommandFrame* frame = CHctlCommandFrame::NewL(KHCTLCommandHeaderSize,KHCTLCommandTrailerSize);
+	CleanupStack::PushL(frame);
+
+$CMDINITMAXPARAMS
+	$CMDNAME* cmd = $CMDNAME::NewL($MAXPARAMETERS);
+	CleanupStack::PushL(cmd);
+
+	if(cmd->Opcode() != $CMDOPCODE)
+		{
+		return TestStepResult();
+		}
+
+$CHECK_MAX_ACCESSORS
+	cmd->FormatCommand(*frame);
+	TBuf8<CHctlCommandFrame::KHCIMaxCommandLength> verificationData = _L8("$FRAMEDATA");
+	
+	if(frame->HCTLPayload().Right(frame->HCTLPayload().Length()-CHctlCommandFrame::KHCICommandPacketHeaderLength) != verificationData)
+		{
+		return TestStepResult();
+		}
+
+	CleanupStack::PopAndDestroy(cmd);
+
+	cmd = $CMDNAME::NewL();
+	CleanupStack::PushL(cmd);
+$CMDINITMINPARAMS
+	cmd->Reset($MINPARAMETERS);
+
+$CHECK_MIN_ACCESSORS
+$MATCH_COMPLETE_EVENT
+$MATCH_STATUS_EVENT
+$MATCH_PROPRIETARY_EVENT
+$MATCH_EMPTY_EVENT
+
+	CleanupStack::PopAndDestroy(2);
+	SetTestStepResult(EPass);
+	return TestStepResult();
+	}

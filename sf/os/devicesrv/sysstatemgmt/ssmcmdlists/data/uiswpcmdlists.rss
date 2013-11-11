@@ -1,0 +1,206 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command lists for the UI phase SWP:
+*   - UI phase Started
+*
+*/
+
+#include <ssm/ssmcmd.rh>
+#include <ssm/clayerswp.hrh>
+
+#include "ssmswp.hrh"
+#include "ssmdlldatadefs.rh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmUiPhaseStarted;
+            resource_id = r_started_commands;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_started_commands
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_started_commands
+    {
+    commands =
+        {
+        r_cmd_publishswp,           // prio 0xFFF1
+        r_cmd_kill_splash,          // prio 0xFFE7 - Remove splash screen
+        r_cmd_devlockcheck,         // prio 0xFFD7 - Security code query, if needed
+        r_cmd_startanim,            // prio 0xFFC7 - Startup animation(s)
+        r_cmd_waitanim,             // prio 0xFFB7 - Wait for the animations to finish
+        r_cmd_enableappskey,        // prio 0xFFA7 - Enable applications key
+        r_cmd_enableglobalnotes,    // prio 0xFFA7 - Enable global notes
+        r_cmd_swidaemon             // prio 0xFF97 - Initializes pre-installed applications from memory card
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmd_devlockcheck
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_devlockcheck
+    {
+    priority = 0xFFD7;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 11; // Device security check
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_enableappskey
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_enableappskey
+    {
+    priority = 0xFFA7;
+    severity = ECmdCriticalSeverity;
+    dllname = "akncustcmds.dll";
+    ordinal = 2; // EnableAppsKey
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_enableglobalnotes
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_enableglobalnotes
+    {
+    priority = 0xFFA7;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8773;  // KPSUidUikon
+    key = 0x00000006;       // KUikGlobalNotesAllowed
+    value = 1;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_kill_splash
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_kill_splash
+    {
+    priority = 0xFFE7;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000301; // KPSSplashShutdown
+    value    = 101;        // ESplashShutdown
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_publishswp
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_PUBLISH_SYSTEM_WIDE_PROPERTY r_cmd_publishswp
+    {
+    priority = 0xFFF1;
+    severity = ECmdCriticalSeverity;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_startanim
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_startanim
+    {
+    priority = 0xFFC7;
+    severity = ECmdCriticalSeverity;
+    category = 0x100058F4;  // KPSUidStartupApp
+    key = 0x00000001;       // KPSStartupAppState
+    value = 2;              // EStartupAppStateStartAnimations
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_swidaemon
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_swidaemon
+    {
+    priority = 0xFF97;
+    name = "z:\\sys\\bin\\swidaemon.exe";
+    execution_behaviour = ESsmWaitForSignal;
+    monitor_info = r_mon_3_restarts_reset;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_waitanim
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_waitanim
+    {
+    priority = 0xFFB7;
+    severity = ECmdCriticalSeverity;
+    dllname = "ssmsystemcmds.dll";
+    ordinal = 5; // WaitPsKeyExact
+    dll_data = r_dlldata_waitanim;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    execution_behaviour = ESsmWaitForSignal;
+    }
+
+// ===========================================================================
+// DLL data items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_dlldata_waitanim
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_WAIT_PS r_dlldata_waitanim
+    {
+    category = 0x100058F4;  // KPSUidStartupApp
+    key = 0x00000001;       // KPSStartupAppState
+    target = 3;             // EStartupAppStateFinished
+    }
+
+// monitoring.rss contains resource definitions, so it may not be included
+// before entry point.
+#include "monitoring.rss"

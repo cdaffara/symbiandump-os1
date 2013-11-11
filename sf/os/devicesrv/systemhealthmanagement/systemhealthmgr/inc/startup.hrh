@@ -1,0 +1,259 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// This file has been deprecated and use ssmcmd.hrh instead 
+// 
+//
+
+#ifndef __STARTUP_HRH__
+#define __STARTUP_HRH__
+
+/** Identifiers for different command types.
+
+Note: To add a new command type, extend this enum and add a
+new struct to startup.rh. The struct should start with a WORD
+member initialised to the newly-added value.
+
+@publishedPartner
+@deprecated Instead of this use TSsmCommandType
+*/
+enum TStartupCommandType
+	{
+	/**
+	This command is used for starting processes.
+	*/
+	EStartupProcess = 1,
+	/**
+	This command is used for starting apps.
+	*/
+	EStartupApp,
+	/**
+	This command is used for starting or killing the splash screen.
+	*/
+	EStartupSplashScreen,
+	/**
+	This command is used to force the apparc server to initialise.
+	*/
+	EInitAppArcServer,
+	/**
+	This command is used to call a function within a DLL using
+	the ordinal number.
+	*/
+	EStartupDLL,
+	/**
+	This command is used to check that all previous processes and
+	apps with start_method EDeferredWaitForStart have rendezvoused.
+	*/
+	EMultipleWait,
+	/**
+	This command is used for starting processes with extended sysstart V2 functionality.
+	*/
+	EStartupProcess2,
+	/**
+	This command is used for starting applications with extended sysstart V2 functionality.
+	*/
+	EStartupApp2,
+	/**
+	This command is used for starting AMAStarter with a particular DSC
+	*/
+	EStartupAMAStarter
+	};
+
+/** Identifiers for starting up an application. Presently there are
+two methods of startup.
+
+@publishedPartner
+@deprecated Instead of this use TSsmCommandType
+*/
+enum TStartupType
+	{
+	/**
+	For starting exes.
+	*/
+	EStartProcess = 1,
+	/**
+	For starting apps.
+	*/
+	EStartApp
+	};
+
+/** Identifiers for each startup state. Used to inform state-aware
+applications of a change of state.
+
+@publishedPartner
+@deprecated Instead of this use TSsmStartupSubStates
+*/
+enum TStartupStateIdentifier
+	{
+	/**
+	Undefined state.
+	*/
+	EStartupStateUndefined = 0x00,
+	/**
+	@internalComponent
+	Reserved for future use.
+	*/
+	EReservedStartUpState1 = 0x08,
+	/**
+	Within this state all ROM based(static) components or resources
+	that are critical to the operation of the phone function are started.
+	*/
+	EStartupStateCriticalStatic = 0x10,
+	/**
+	@internalComponent
+	Reserved for future use.
+	*/
+	EReservedStartUpState2 = 0x18,
+	/**
+	Within this state all non-ROM based(dynamic) components or resources
+	that are critical to the operation of the phone function are started.
+	*/
+	EStartupStateCriticalDynamic = 0x20,
+	/**
+	Networking state.
+	*/
+	EStartupStateNetworkingCritical = 0x28,
+	/**
+	Within this state all ROM based(static) or non-ROM based(dynamic) components
+	or resources that are non-critical to the operation of the phone function
+	are started.
+	*/
+	EStartupStateNonCritical = 0x30,
+	/**
+	@internalComponent
+	Reserved for future use.
+	*/
+	EReservedStartUpState4 = 0x38,
+	/**
+	@internalComponent
+	Reserved for future use.
+	*/
+	EReservedStartUpState5 = 0x40
+	};
+
+/** Identifiers for each start-up method.
+
+@publishedPartner
+@deprecated Instead of this use TSsmExecutionBehaviour
+*/
+enum TStartMethod
+	{
+	/**
+	By using this type the starter can continue immediately
+	with executing its next command.
+	*/
+	EFireAndForget = 1,
+	/**
+	By using this type the starter cannot continue with the
+	next command until a rendezvous has been made with the started process.
+	*/
+	EWaitForStart,
+	/**
+	By using this type the starter will continue with the next command
+	before a rendezvous has been made with the current command.
+	However the rendezvous will be checked later when a MULTIPLE_WAIT command
+	is encountered.
+	*/
+	EDeferredWaitForStart
+	};
+
+
+
+/** Identifier for the no of retries on state transition failure.
+
+@publishedPartner
+@deprecated 
+*/
+enum TNoOfRetries
+	{
+	/**
+ 	On state transition failure do not re-attempt the transition.
+	*/
+	ERetry0,
+	/**
+ 	On state transition failure re-attempt the transition once.
+	*/
+	ERetry1
+	};
+
+
+/**  Identifier for the action to be taken on state transition
+failure (after a re-attempt has already been made if required).
+
+@publishedPartner
+@deprecated Instead of this use TSsmRecoveryMethod
+*/
+enum TActionOnStateTransitionFailure
+	{
+	/**
+ 	Ignore the state transition failure. Carry on with actions
+ 	corresponding to the next state.
+	*/
+	EIgnoreFailure,
+
+	/**
+ 	Panic the system starter if state transition failed. This
+ 	will cause the device to re-boot.
+	*/
+	EPanicOnFailure
+	};
+
+/**  Identifier for the action to be taken on command failure.
+This is used with the fail_on_error fields within START_PROCESS_INFO, START_APP_INFO, START_DLL_INFO, and MULTIPLE_WAIT structures.
+These structures rely on this enum being a boolean value so it must not hold more than 2 values: EIgnoreCommandFailure=0 and EPanicOnCommandFailure=1.
+
+@publishedPartner
+@deprecated Instead of this use TSsmRecoveryMethod
+*/
+enum TActionOnCommandFailure
+	{
+	/**
+ 	Ignore the command failure.
+	*/
+	EIgnoreCommandFailure,
+
+	/**
+ 	Panic the system starter if command fails. This
+ 	will cause the device to re-boot.
+	*/
+	EPanicOnCommandFailure
+	};
+
+/**  Identifier for the action to be taken on command failure.  
+This should be used to set the retry_failure_recovery_method when using START_PROCESS_INFO2 or START_APP_INFO2 structures
+
+@publishedPartner
+@deprecated Instead of this use TSsmRecoveryMethod
+*/
+enum TRecoveryMethod
+	{
+	/**
+	Ignore the command failure
+	*/
+	EIgnoreOnFailure,
+	/**
+	Reboot the OS
+	*/
+	ERestartOS,
+	/**
+	Reboot the OS in a particular mode
+	*/
+	ERestartOSWithMode,
+	/**
+	Reboot the OS (with no attempts to restart the component being attempted)
+	*/
+	ECriticalNoRetries
+	};
+
+#endif	// __STARTUP_HRH__
+

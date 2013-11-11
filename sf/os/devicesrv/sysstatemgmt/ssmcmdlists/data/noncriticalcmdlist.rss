@@ -1,0 +1,658 @@
+/*
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command list for the Non-critical startup state in minimal startup mode.
+*
+*/
+
+#include <ssm/conditionresourcetypes.rh>
+#include <ssm/ssmcmd.rh>
+#include <ssm/startupreason.h>
+#include <ssm/clayerswp.hrh>
+
+#include "ssmswp.hrh"
+#include "ssmsubstateext.hrh"
+#include "ssmdlldatadefs.rh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateNonCritical;
+            resource_id = r_cmds;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmds
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds
+    {
+    commands =
+        {
+        r_cmd_sastate,          // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,     // prio 0xFFF1
+        r_cmd_psstate,          // prio 0xFFF0
+        // prio 0xFFE7
+        r_cmd_simcheck,
+        r_cmd_clearstartupreason,
+        r_cmd_createswp_uiphase,
+        r_cmd_createswp_rfstatus,
+        r_cmd_waitforofflinequery,
+        // prio 0xFFD7
+        r_cmd_setswp_uistart,   // After offline query has been made
+        r_cmd_bsengine,
+        // prio 0xFFC7
+        r_cmd_setswp_rfon,
+        r_cmd_setswp_rfoff,
+        r_cmd_startupready      // Last command, prio 0x0000
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+// ---------------------------------------------------------------------------
+// r_cmd_bsengine
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_bsengine
+    {
+    priority = 0xFFD7;
+    name = "z:\\sys\\bin\\bsengine.exe";
+    execution_behaviour = ESsmWaitForSignal;
+    timeout = 10000;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_createswp_rfstatus
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CREATE_SYSTEM_WIDE_PROPERTY r_cmd_createswp_rfstatus
+    {
+    priority = 0xFFE7;
+    severity = ECmdCriticalSeverity;
+    key = SWP_UID_SSM_RF_STATUS;
+    filename = "rfstatusswppolicy.dll";
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_createswp_uiphase
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CREATE_SYSTEM_WIDE_PROPERTY r_cmd_createswp_uiphase
+    {
+    priority = 0xFFE7;
+    severity = ECmdCriticalSeverity;
+    key = SWP_UID_SSM_UI_PHASE;
+    filename = "ssmuiswppolicy.dll";
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 104;        // ESwStateCriticalPhaseOK
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_publishstate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_cmd_publishstate
+    {
+    priority = 0xFFF1;
+    severity = ECmdCriticalSeverity;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_setswp_rfoff
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_REQUEST_SYSTEM_WIDE_PROPERTY r_cmd_setswp_rfoff
+    {
+    priority = 0xFFC7;
+    severity = ECmdCriticalSeverity;
+    key = SWP_UID_SSM_RF_STATUS;
+    value = ESsmRfOff;
+    conditional_information = r_cond_simnotusable_or_bootoffline;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_setswp_rfon
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_REQUEST_SYSTEM_WIDE_PROPERTY r_cmd_setswp_rfon
+    {
+    priority = 0xFFC7;
+    severity = ECmdCriticalSeverity;
+    key = SWP_UID_SSM_RF_STATUS;
+    value = ESsmRfOn;
+    conditional_information = r_cond_simusable_and_bootonline;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_setswp_uistart
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_REQUEST_SYSTEM_WIDE_PROPERTY r_cmd_setswp_uistart
+    {
+    priority = 0xFFD7;
+    severity = ECmdCriticalSeverity;
+    key = SWP_UID_SSM_UI_PHASE;
+    value = ESsmUiPhaseStarted;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_simcheck
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_simcheck
+    {
+    priority = 0xFFE7;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 10;
+    unload_on_finish = ENeverUnload;
+    conditional_information = r_cond_ps_simusable;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_startupready
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_startupready
+    {
+    priority = 0x0000;
+    severity = ECmdMediumSeverity;
+    category = 0x100059C9;
+    key = 2;
+    value = 1;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_waitforofflinequery
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_waitforofflinequery
+    {
+    priority = 0xFFE7;
+    severity = ECmdCriticalSeverity;
+    dllname = "ssmsystemcmds.dll";
+    ordinal = 6; // WaitPsKeyRange
+    dll_data = r_dlldata_waitofflinequery;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    execution_behaviour = ESsmWaitForSignal;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_clearstartupreason
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_clearstartupreason
+    {
+    priority = 0xFFE7;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 16; // Clearstartupreason
+    retries = 2;
+    execution_behaviour = ESsmWaitForSignal;
+    }
+
+// ===========================================================================
+// DLL data items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_dlldata_activitymonitor_timeout
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_TIMEOUT r_dlldata_activitymonitor_timeout
+    {
+    timeout = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateNonCritical;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_waitcleanbootinfo
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_WAIT_PS_2 r_dlldata_waitcleanbootinfo
+    {
+    category = 0x101F8766;  // KPSUidStartup
+    key = 0x00000012;       // KStartupCleanBoot
+    target1 = 101;          // EStartupNormalBoot
+    target2 = 102;          // EStartupCleanBoot
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_waitofflinequery
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_WAIT_PS_2 r_dlldata_waitofflinequery
+    {
+    category = 0x101F8766;  // KPSUidStartup
+    key = 0x00000011;       // KStartupBootIntoOffline
+    target1 = 101;          // EBootIntoOnlineMode
+    target2 = 102;          // EBootIntoOfflineMode
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_waitphone
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_WAIT_PS r_dlldata_waitphone
+    {
+    category = 0x101F8766;  // KPSUidStartup
+    key = 0x00000044;       // KPSPhonePhase1Ok
+    target = 101;           // EPhonePhase1Ok
+    }
+	
+// ===========================================================================
+// Conditional blocks in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_firstboot
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_firstboot
+    {
+    category		  = 0x101F8766; // KPSUidStartup
+    key           = 0x00000013; // KPSStartupFirstBoot
+    value         = 101;        // EPSStartupFirstBoot
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_alwaysonline
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_alwaysonline
+    {
+    feature_id = KFeatureIdAlwaysOnLine;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_cellbroadcast
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_cellbroadcast
+    {
+    feature_id = KFeatureIdCellBroadcast;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_emailfw
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_emailfw
+    {
+    feature_id = KFeatureIdFfEmailFramework;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_iadv2
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_iadv2
+    {
+    feature_id = KFeatureIdFfIaupdatePhase2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_ippush
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_ippush
+    {
+    feature_id = KFeatureIdIpPush;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_omapoc
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_omapoc
+    {
+    feature_id = KFeatureIdOmaPoc;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_omasuplplugins
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_omasuplplugins
+    {
+    feature_id = KFeatureIdOmaSuplPlugins;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_pnp_mobile_services
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_pnp_mobile_services
+    {
+    feature_id = KFeatureIdPlugAndPlayMobileServices;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_remotestoragefw
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_remotestoragefw
+    {
+    feature_id = KFeatureIdRemoteStorageFw;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_runtime_dcmo;
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_runtime_dcmo
+    {
+    feature_id = KFeatureIdFfRuntimeDeviceCapabilityConfiguration;
+    }
+	
+// ---------------------------------------------------------------------------
+// r_cond_feat_sappolicymgmt
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_sappolicymgmt
+    {
+    feature_id = KFeatureIdSapPolicyManagement;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_sdnd
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_sdnd
+    {
+    feature_id = KFeatureIdSdnd;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_simcard
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_simcard
+    {
+    feature_id = KFeatureIdSimCard;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_sind
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_sind
+    {
+    feature_id = KFeatureIdSind;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_syncml_dm
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_syncml_dm
+    {
+    feature_id = KFeatureIdSyncMlDm;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_syncml_dm_fota
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_syncml_dm_fota
+    {
+    feature_id = KFeatureIdSyncMlDmFota;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_tvout
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_tvout
+    {
+    feature_id = KFeatureIdTvOut;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_firstboot_or_fotareset_or_deeprfsreset
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_OR r_cond_firstboot_or_fotareset_or_deeprfsreset
+    {
+    lhs = r_cond_fotareset_or_deeprfsreset;
+    rhs = r_cond_ps_firstboot;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_fotareset_or_deeprfsreset
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_OR r_cond_fotareset_or_deeprfsreset
+    {
+    lhs = r_cond_ps_fotareset;
+    rhs = r_cond_ps_deeprfsreset;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_no_sdnd
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_NOT r_cond_no_sdnd
+    {
+    sub_condition = r_cond_feat_sdnd;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_pnp_mobile_services_and_firstboot
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_AND r_cond_pnp_mobile_services_and_firstboot
+    {
+    lhs = r_cond_feat_pnp_mobile_services;
+    rhs = r_cond_ps_firstboot;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_bootoffline
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_bootoffline
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000011;      // KStartupBootIntoOffline
+    value = 102;           // EBootIntoOfflineMode
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_bootonline
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_bootonline
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000011;      // KStartupBootIntoOffline
+    value = 101;           // EBootIntoOnlineMode
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_deeprfsreset
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_deeprfsreset
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000045;      // KPSStartupReason
+    value = EDeepRFSReset;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_fotareset
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_fotareset
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000045;      // KPSStartupReason
+    value = EFirmwareUpdate;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_normalboot
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_normalboot
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000012;      // KStartupCleanBoot
+    value = 101;           // EStartupNormalBoot
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_simusable
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_simusable
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000031;      // KPSSimStatus
+    value = 101;           // ESimUsable
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_simnotusable
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_NOT r_cond_simnotusable
+    {
+    sub_condition = r_cond_ps_simusable;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_simnotusable_or_bootoffline
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_OR r_cond_simnotusable_or_bootoffline
+    {
+    lhs = r_cond_simnotusable;
+    rhs = r_cond_ps_bootoffline;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_simusable_and_bootonline
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_AND r_cond_simusable_and_bootonline
+    {
+    lhs = r_cond_ps_simusable;
+    rhs = r_cond_ps_bootonline;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_sind_and_no_sdnd
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_AND r_cond_sind_and_no_sdnd
+    {
+    lhs = r_cond_feat_sind;
+    rhs = r_cond_no_sdnd;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_syncml_dm_fota_and_fotareset
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_AND r_cond_syncml_dm_fota_and_fotareset
+    {
+    lhs = r_cond_feat_syncml_dm_fota;
+    rhs = r_cond_ps_fotareset;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_syncml_dm_or_pnp_mobile_services
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_OR r_cond_syncml_dm_or_pnp_mobile_services
+    {
+    lhs = r_cond_feat_syncml_dm;
+    rhs = r_cond_feat_pnp_mobile_services;
+    }
+
+// monitoring.rss contains resource definitions, so it may not be included
+// before entry point.
+#include "monitoring.rss"

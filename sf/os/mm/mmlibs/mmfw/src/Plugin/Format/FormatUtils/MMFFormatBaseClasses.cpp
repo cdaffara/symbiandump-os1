@@ -1,0 +1,1524 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include <e32def.h>
+
+#include <mmf/common/mmffourcc.h>
+
+#include <mmf/server/mmffile.h>
+#include <mmf/server/mmfdes.h>
+
+#include "MMFFormatBaseClasses.h"
+#include "formatUtils.h"
+
+
+/*
+ TMmfFormatPanics is an enumeration with the following entries:
+ EPreconditionViolation indicates a precondition violation
+ EPostConditionViolation indicates a post condition violation
+*/
+enum TMmfFormatPanics
+	{
+	EPostConditionViolation,
+	EPreconditionViolation
+	};
+/**
+@internalTechnology
+
+This method generates a panic
+
+@param aPanicCode
+*/
+void Panic(TInt aPanicCode)
+	{
+	_LIT(KMMFFormatPanicCategory, "MMFFormat");
+	User::Panic(KMMFFormatPanicCategory, aPanicCode);
+	}
+
+
+
+EXPORT_C CMMFFormatRead::~CMMFFormatRead()
+	{
+	delete iBuffer;
+	delete iConvertBuffer;
+	delete iChannelAndSampleRateConverterFactory;
+	}
+
+
+/**
+*
+* SourceThreadLogon
+* @param aEventHandler
+* @return TInt
+*
+*/
+EXPORT_C TInt CMMFFormatRead::SourceThreadLogon(MAsyncEventHandler& aEventHandler)
+	{//pass through to source clip
+	iAsyncEventHandler = &aEventHandler;
+	return(iClip->SourceThreadLogon(*this));
+	}
+
+
+/**
+*
+* ConstructL
+* @param aSource
+* 
+*/
+EXPORT_C void CMMFFormatRead::ConstructL(MDataSource* aSource)
+	{
+	iBuffer = CreateSourceBufferOfSizeL(KDefineIOBufferSize);
+
+	iClip = aSource ;
+
+	User::LeaveIfError(iClip->SourceThreadLogon(*this)) ;
+	TCleanupItem threadCleanupItem(DoDataSourceThreadLogoff, iClip);
+	CleanupStack::PushL(threadCleanupItem);
+
+	iClip->SourcePrimeL();
+	TCleanupItem srcCleanupItem(DoDataSourceStop, iClip);
+	CleanupStack::PushL(srcCleanupItem);
+
+	ProcessFormatHeaderL(); 
+	
+	iState = EInitialised ;
+
+	CleanupStack::Pop();
+	iClip->SourceStopL();
+
+	CleanupStack::Pop();  
+	iClip->SourceThreadLogoff() ;
+	}
+
+
+
+
+
+/**
+*
+* SourcePrimeL
+*
+*/
+EXPORT_C void CMMFFormatRead::SourcePrimeL()
+	{
+	iFilePosition = 0;
+	iClip->SourcePrimeL();
+	if ((TInt)iClipLength != static_cast<CMMFClip*>(iClip)->Size())
+		{//clip has changed - is no longer the same size so rescan headers
+		ProcessFormatHeaderL();
+		}
+
+	iFilePosition = iStartPosition;
+
+	if (iFrameTimeInterval.Int64() == 0)
+		CalculateFrameTimeInterval();
+
+	//final check to confirm we can play this clip
+	User::LeaveIfError(OKToPlay());
+	}
+
+/**
+*
+* BufferFilledL
+* @param aBuffer
+* 
+*/
+EXPORT_C void CMMFFormatRead::BufferFilledL(CMMFBuffer* aBuffer)
+	{
+	
+	//[ precondition aBuffer is not NULL ]
+	__ASSERT_DEBUG( aBuffer, Panic( EPreconditionViolation ) );
+	
+	if (!CMMFBuffer::IsSupportedDataBuffer(aBuffer->Type()))
+		{
+		User::Leave(KErrNotSupported);	
+		}
+
+	//increment the current play position and check if that was the last buffer
+	iFilePosition += STATIC_CAST(CMMFDataBuffer*, aBuffer)->Data().Length();
+	if (iFilePosition >= iStartPosition + iDataLength)
+		{
+		aBuffer->SetLastBuffer(ETrue);	
+		}
+	else
+		{
+		aBuffer->SetLastBuffer(EFalse);
+		}
+
+	// if s/w conversion is required is performed here so we make sure
+	// the aBuffer has been filled
+	if (iNeedsSWConversion)
+		{
+		//need to create an intermediate buffer in which to place the converted data
+		//need to perform channel & sample rate conversion before writing to clip
+		iBufferToEmpty = aBuffer; //save this so it can be returned to datapath
+		
+		//need to create an intermediate buffer in which to place the converted data
+		TUint bufferSize = STATIC_CAST(CMMFDataBuffer*, aBuffer)->Data().MaxLength();
+		if(!iConvertBuffer || iConvertBufferSize < iChannelAndSampleRateConverter->MaxConvertBufferSize(bufferSize))
+			{
+			if (iConvertBuffer)
+				{
+				delete iConvertBuffer;
+				iConvertBuffer = NULL;
+				}
+			iConvertBufferSize = iChannelAndSampleRateConverter->MaxConvertBufferSize(bufferSize);
+			iConvertBuffer = CreateSourceBufferOfSizeL(iConvertBufferSize);
+			}
+		
+		iChannelAndSampleRateConverter->Convert(*(CMMFDataBuffer*)aBuffer,*iConvertBuffer);
+		
+		//copy our converted data back into the real buffer to return to datapath
+		CMMFDataBuffer* audio = STATIC_CAST(CMMFDataBuffer*, iConvertBuffer);
+		TDes8& dest = STATIC_CAST( CMMFDataBuffer*, iBufferToEmpty )->Data() ; 
+		dest.SetLength(0);
+		dest.Copy(audio->Data().Left(dest.MaxLength()));
+		}
+	
+	
+	aBuffer->SetTimeToPlay(PositionL()) ;
+
+	iDataPath->BufferFilledL( aBuffer ) ;	
+	}
+
+
+
+
+/**
+*
+* SendEventToClient
+* @param aEVent
+* @return TInt
+*
+*/
+EXPORT_C TInt CMMFFormatRead::SendEventToClient(const TMMFEvent& aEvent)
+	{
+	// An event has been generated by the source.
+	// If we have an event handler, use that to propogate the event.
+	if (iAsyncEventHandler)
+		return iAsyncEventHandler->SendEventToClient(aEvent);
+	// Otherwise, there isn't much we can do.
+	return KErrNone;
+	}
+
+
+
+
+/**
+*
+* SourcePlayL
+*
+*/
+EXPORT_C void CMMFFormatRead::SourcePlayL()
+	{
+	iClip->SourcePlayL();
+	}
+
+/**
+*
+* SourcePauseL
+*
+*/
+EXPORT_C void CMMFFormatRead::SourcePauseL()
+	{
+	iClip->SourcePauseL();
+	}
+
+/**
+*
+* SourceStopL
+*
+*/
+EXPORT_C void CMMFFormatRead::SourceStopL()
+	{
+	iFilePosition = 0;
+	iClip->SourceStopL();
+	}
+
+/**
+*
+* SourceThreadLogoff
+*
+*/
+EXPORT_C void CMMFFormatRead::SourceThreadLogoff()
+	{
+	iAsyncEventHandler = NULL;
+	iClip->SourceThreadLogoff();
+	}
+
+/**
+*
+* Streams
+* @param aMediaType
+* @returns TUint
+*
+*/
+EXPORT_C TUint CMMFFormatRead::Streams(TUid aMediaType) const
+	{
+	//need to check aMediaType for audio
+	if (aMediaType == KUidMediaTypeAudio) 
+		return 1;
+	else 
+		return 0;
+	}
+
+/**
+*
+* FrameTimeInterval
+* @param  aMediaId
+* @returns TTimeIntervalMicroSeconds
+*
+*/
+EXPORT_C TTimeIntervalMicroSeconds CMMFFormatRead::FrameTimeInterval(TMediaId aMediaId) const
+	{
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		return iFrameTimeInterval;
+	else 
+		return TTimeIntervalMicroSeconds(0);
+	}
+
+/**
+*
+* NegotiateSourceL
+* @param aSink
+* 
+*/
+EXPORT_C void CMMFFormatRead::NegotiateSourceL(MDataSink& aSink)
+	{
+	//check if have a Format Write as sink
+	if (aSink.DataSinkType() == KUidMmfFormatEncode)
+		{//source is a clip so for now set sink settings to match source
+		iSinkSampleRate = static_cast<CMMFFormatEncode&>(aSink).SampleRate();
+		iSinkChannels = static_cast<CMMFFormatEncode&>(aSink).NumChannels();
+		iSinkFourCC.Set(static_cast<CMMFFormatEncode&>(aSink).SinkDataTypeCode(KUidMediaTypeAudio));
+		
+		//we can only run sample rate conversion on PCM16
+		//but if sink is PCM too, we don't convert here - we do it in the write instead
+		if ((SourceDataTypeCode(KUidMediaTypeAudio) == KMMFFourCCCodePCM16) && (iSinkFourCC != KMMFFourCCCodePCM16))
+			{
+			if ((iSinkSampleRate != SampleRate()) || (iSinkChannels != NumChannels()))
+				{
+				iNeedsSWConversion = ETrue;
+				if (!iChannelAndSampleRateConverterFactory)
+					iChannelAndSampleRateConverterFactory = new(ELeave)CMMFChannelAndSampleRateConverterFactory;
+
+				iChannelAndSampleRateConverter = 
+					iChannelAndSampleRateConverterFactory->CreateConverterL( SampleRate(), NumChannels(), iSinkSampleRate, iSinkChannels);
+				}
+			}
+		}
+	else
+		User::Leave(KErrNotSupported);
+	}
+
+
+
+/**
+*
+* Duration
+* @param AMediaId
+* @return TTimeIntervalMicroSeconds 
+*
+*/
+EXPORT_C TTimeIntervalMicroSeconds CMMFFormatRead::Duration(TMediaId aMediaId) const
+	{
+	TTimeIntervalMicroSeconds duration(0); //default
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		duration = DurationCalculation(iDataLength, iSampleRate, iBitsPerSample, iChannels);
+
+	return duration;
+	}
+
+
+
+
+/**
+*
+* NegotiateSourceBufferL
+* @param aSinkBuffer
+*
+*/
+EXPORT_C void CMMFFormatRead::NegotiateSourceBufferL(CMMFBuffer& aSinkBuffer)
+	{
+	if (!(&aSinkBuffer))
+		{
+		return;	//asychronous buffers may not be initialised
+		}
+
+	if (CMMFBuffer::IsSupportedDataBuffer(aSinkBuffer.Type()))
+		{
+		//if sink buffer has a fixed size use this to determine source buffer size
+		TUint sinkBufferLength =  STATIC_CAST( CMMFDataBuffer&, aSinkBuffer ).Data().MaxLength();
+		CalculateFrameSize(sinkBufferLength);
+		}
+	else
+		User::Leave(KErrNotSupported);
+	}
+
+
+
+
+/**
+*
+* CalculateFrameTimeInterval
+* 
+*/
+EXPORT_C void CMMFFormatRead::CalculateFrameTimeInterval()
+	{
+	iFrameTimeInterval = FrameTimeIntervalCalculation(iFrameSize, iSampleRate, iBitsPerSample, iChannels);
+	}
+
+
+/**
+*
+* CalculateFrameSize
+* 
+*/
+EXPORT_C void CMMFFormatRead::CalculateFrameSize(TUint aSuggestedFrameSize)
+	{
+	TUint oldFrameSize = iFrameSize;
+
+	if (aSuggestedFrameSize)
+		iFrameSize = aSuggestedFrameSize;
+	else
+		iFrameSize = FrameSizeCalculation(iSampleRate, iBitsPerSample, iChannels);
+
+	if (iFrameSize != oldFrameSize || iFrameTimeInterval.Int64() == 0)
+		CalculateFrameTimeInterval();
+	}
+
+
+
+EXPORT_C TTimeIntervalMicroSeconds CMMFFormatRead::PositionL()
+	{
+	return DurationCalculation(iFilePosition - iStartPosition, iSampleRate, iBitsPerSample, iChannels);
+	}
+
+
+EXPORT_C TAny* CMMFFormatRead::CustomInterface(TUid /*aInterfaceId*/)
+	{
+	return NULL;
+	}
+
+
+EXPORT_C void CMMFFormatRead::SetPositionL(const TTimeIntervalMicroSeconds& aPosition)
+	{
+	//if position is beyond the end of the file, set to end of data.
+	if(aPosition >= Duration(KUidMediaTypeAudio))
+		{
+		iFilePosition =  iStartPosition + iDataLength;
+		return;
+		}
+
+
+	TUint readDataFrom =  DataPosition(aPosition, iSampleRate, iBitsPerSample, iChannels);
+
+	TUint sampleSize = iBitsPerSample * iChannels / 8;
+	//if iBitsPerSample < 8
+	if(sampleSize <1)
+		sampleSize=1;
+
+	//Must align the data read to the start of a sample
+	if(sampleSize != 1)
+		readDataFrom = AlignToSample(readDataFrom, sampleSize, 0, iDataLength);
+
+	iFilePosition =  iStartPosition + readDataFrom;
+	}
+
+
+EXPORT_C CMMFDataBuffer* CMMFFormatRead::CreateSourceBufferOfSizeL(TUint aSize)
+	{
+	//needs to create source buffer
+	CMMFDataBuffer* buffer = CMMFDataBuffer::NewL(aSize);
+	buffer->Data().FillZ(aSize);
+	return buffer;
+	}
+
+/**
+*
+* CreateSourceBufferL
+* @param aReference
+* @param aMediaId
+* @return CMMFBuffer*
+*
+*/
+EXPORT_C CMMFBuffer* CMMFFormatRead::CreateSourceBufferL(TMediaId aMediaId, TBool &aReference)
+	{
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		{
+		aReference = EFalse;
+		CalculateFrameSize();
+		return CreateSourceBufferOfSizeL( iFrameSize );
+		}
+	else
+		{
+		User::Leave(KErrNotSupported);
+		}
+	return NULL;
+	}
+
+/**
+*
+* CreateSourceBufferL
+* @param aMediaId
+* @param aReference
+* @return CMMFBuffer*
+*
+*/
+EXPORT_C CMMFBuffer* CMMFFormatRead::CreateSourceBufferL(TMediaId aMediaId, CMMFBuffer& aSinkBuffer, TBool &aReference)
+	{
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		{
+		NegotiateSourceBufferL(aSinkBuffer); //sets frame size to match sink buffer
+		return CreateSourceBufferL(aMediaId, aReference);
+		}
+	else 
+		User::Leave(KErrNotSupported);
+	return NULL;
+	}
+
+
+
+/**
+*
+* SourceDataTypeCode
+* @param aMediaId
+* @return TFourCC
+*
+*/
+EXPORT_C TFourCC CMMFFormatRead::SourceDataTypeCode(TMediaId aMediaId)
+	{
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		return iFourCC;
+	else 
+		return TFourCC(); //defaults to 'NULL' fourCC
+	}
+
+/**
+*
+* SetSourceDataTypeCode
+* @param aSinkFourCC
+* @param aMediaId
+* @returns TInt
+*
+*/
+EXPORT_C TInt CMMFFormatRead::SetSourceDataTypeCode(TFourCC aSinkFourCC, TMediaId aMediaId)
+	{
+	TInt err = KErrNone;
+	if (aMediaId.iMediaType != KUidMediaTypeAudio) 
+		err = KErrNotSupported;
+	else 
+		if (iFourCC != aSinkFourCC) 
+			err = KErrAlreadyExists; //can't set fourCC if clip exists - it already has a code
+		else
+			err = KErrNone;
+		
+		return err;
+	}
+
+/**
+* SetNumChannels
+* @param aChannels
+* @returns TInt
+*/
+EXPORT_C TInt CMMFFormatRead::SetNumChannels(TUint aChannels)
+	{
+	TInt err = KErrNone;
+	if (iChannels != aChannels) 
+		err = KErrAlreadyExists; //can't set fourCC if clip exists - it already has a code
+	return err;
+	}
+
+/**
+* SetSampleRate
+* @param aSampleRate
+* @returns TInt
+*/
+EXPORT_C TInt CMMFFormatRead::SetSampleRate(TUint aSampleRate)
+	{
+	TInt err = KErrNone;
+	if (iSampleRate != aSampleRate) 
+		err = KErrAlreadyExists; //can't set fourCC if clip exists - it already has a code
+	return err;
+	}
+
+
+/**
+*
+* DoReadL
+* @param aReadPosition
+*
+*/
+EXPORT_C void CMMFFormatRead::DoReadL(TInt aReadPosition)
+	{
+	STATIC_CAST(CMMFClip*,iClip)->ReadBufferL(iBuffer,aReadPosition);
+	}
+
+
+
+
+
+
+/**
+*
+* FillBufferL
+* @param aBuffer
+* @param aConsumer
+* @param aMediaId
+*
+*/
+EXPORT_C void CMMFFormatRead::FillBufferL(CMMFBuffer* aBuffer, MDataSink* aConsumer, TMediaId aMediaId )
+	{	
+	//If aBuffer is null, its methods should not be called.
+	if (aBuffer == NULL)
+		{
+		User::Leave(KErrArgument);
+		}
+		
+	if (!CMMFBuffer::IsSupportedDataBuffer(aBuffer->Type()))
+		{
+		User::Leave(KErrNotSupported);
+		}
+
+	if (aMediaId.iMediaType != KUidMediaTypeAudio)
+		User::Leave(KErrNotSupported);
+	
+	iDataPath = aConsumer;	
+	
+	//Started playing the data. FrameNumber may not be 1 as position may have been set.
+
+	//use the first buffer to control the framesize
+	TUint requestSize;
+	if (static_cast<CMMFDataBuffer*>(aBuffer)->RequestSize() <= 0)
+		{
+		requestSize = static_cast<CMMFDataBuffer*>(aBuffer)->Data().MaxLength();
+		}
+	else
+		{
+		requestSize = static_cast<CMMFDataBuffer*>(aBuffer)->RequestSize();
+		}
+
+	// Some files can contain extra info after the audio data, so
+	// look at iDataLength (the size of the data not the whole file)
+	// and see if we've reached the end. The last buffer flag will be 
+	// set when we receive this data.
+
+	if (iFilePosition + requestSize > iStartPosition + iDataLength)
+		{//Only request the outstanding data.
+		TUint lastBufferLen = (iStartPosition + iDataLength) - iFilePosition; 
+
+		//NB setting the request size seems reasonable, however this causes failures as the 
+		//framesize is inadvertently updated.
+
+		static_cast<CMMFClip*>(iClip)->ReadBufferL(lastBufferLen, aBuffer, iFilePosition, this);
+		}
+	//if RequestSize is set, use API that accepts this
+	else if (aBuffer->RequestSize())
+		{
+		static_cast<CMMFClip*>(iClip)->ReadBufferL(aBuffer->RequestSize(), aBuffer, iFilePosition, this);
+		}
+	
+	else
+		static_cast<CMMFClip*>(iClip)->ReadBufferL(aBuffer, iFilePosition, this);
+	}
+
+
+
+/**
+*
+* GetSupportedSampleRatesL
+* @param aSampleRates
+*
+*/
+EXPORT_C void CMMFFormatRead::GetSupportedSampleRatesL(RArray<TUint>& aSampleRates)
+	{
+	aSampleRates.Reset();
+	
+	// Iterate through the valid sample table and append each value to aSampleRates
+	TInt i = sizeof(KMMFFormatSampleRates) / sizeof(TUint);
+	
+	while (i--)
+		{
+		User::LeaveIfError(aSampleRates.Append(KMMFFormatSampleRates[i]));
+		}
+	}
+
+/**
+*
+* GetSupportedNumChannelsL
+* @param aNumChannels
+*
+*/
+EXPORT_C void CMMFFormatRead::GetSupportedNumChannelsL(RArray<TUint>& aNumChannels)
+	{
+	aNumChannels.Reset();
+	for (TUint chan = KMono; chan <= MaxNumChannels(); chan++)
+		{
+		User::LeaveIfError(aNumChannels.Append(chan));
+		}
+	}
+
+
+
+
+
+
+/**
+*
+* ConstructL
+* @param aSink
+*
+*/	
+EXPORT_C void CMMFFormatWrite::ConstructL(MDataSink* aSink)
+	{
+	iBuffer = CreateSinkBufferOfSizeL(KDefineIOBufferSize);
+
+	iClip = aSink;
+
+	//first need to check if sink clip already exists to get settings.
+	//we will do this by trying to read the header to see if anything is there
+	User::LeaveIfError(iClip->SinkThreadLogon(*this));
+	TCleanupItem threadCleanupItem(DoDataSinkThreadLogoff, iClip);
+	CleanupStack::PushL(threadCleanupItem);
+	
+	iClip->SinkPrimeL();
+	TCleanupItem sinkCleanupItem(DoDataSinkStop, iClip);
+	CleanupStack::PushL(sinkCleanupItem);
+
+	iInitialFileSize = static_cast<CMMFClip*>(iClip)->Size();
+	if(iInitialFileSize > 0)
+		DoReadL(0);//read from beginning of file
+
+	if ((iInitialFileSize > 0) && (iBuffer->Data().Size() > 0))
+		{
+		iClipAlreadyExists = ETrue;
+				
+		ProcessFormatHeaderL();
+		}
+	else
+		{ //no file already exists so 
+		//set settings ie num channels, sample rate, 8/16 bit here
+		//if have external settings and these are different to the exiting clip settings
+		//if the clip already exists which settings take priority??
+		//just use a standard set of default values for now
+		iClipAlreadyExists = EFalse;
+
+		SetDefaultHeaderParametersL();
+		}
+
+	// set the default position to the end so that data is appended 
+	// to the clip unless the position is set explicitly
+	iFilePosition =  iStartPosition + iDataLength;	
+	
+	CleanupStack::Pop();
+	iClip->SinkStopL();
+	
+	CleanupStack::Pop();
+	iClip->SinkThreadLogoff();
+	
+	iFileHasChanged = EFalse;
+	iHeaderUpdated = EFalse;
+
+	iState = EUninitialised;
+	}
+
+
+
+
+
+
+
+EXPORT_C CMMFFormatWrite::~CMMFFormatWrite()
+	{
+	if (iClip && iClip->DataSinkType()==KUidMmfFileSink)
+		{
+		// We're going to remove the file if this wasn't a successful session.
+		// How do we know if this was a successfull session? Well if we
+		// wrote more data than merely the header its a good bet.
+
+		if (iHeaderLength >= static_cast<TUint>(static_cast<CMMFClip*>(iClip)->Size())) //no data written
+			{
+			if (!iClipAlreadyExists) // this is a new file
+				{
+				//delete the file
+				STATIC_CAST(CMMFFile*, iClip)->Delete();
+				}
+			else if (iFileHasChanged)//clip exists already - problem occurred with appending to file
+				{
+				//Set file back to original size
+				STATIC_CAST(CMMFFile*, iClip)->SetSize(iInitialFileSize);
+				}
+			}
+		}
+
+	delete iBuffer;
+	delete iConvertBuffer;
+	delete iChannelAndSampleRateConverterFactory;
+	}
+
+
+
+/**
+*
+* SinkPrimeL
+*
+*/
+EXPORT_C void CMMFFormatWrite::SinkPrimeL()
+	{
+	iClip->SinkPrimeL(); //propagate state change down to clip
+
+	if (iState != EInitialised)
+		{
+		TInt result = DetermineIfValidClip();
+
+		if (result == KErrCorrupt)
+			{
+			User::Leave(result);
+			}
+
+
+		if (iFileHasChanged)
+			{//the file may have changed need to update settings
+			iClipAlreadyExists = ETrue;
+
+			if (result == KErrNone)
+				{//the clip is a valid clip
+				ProcessFormatHeaderL();
+
+				}
+			else if (result == KErrNotFound)
+				{//the clip has been deleted
+				SetDefaultHeaderParametersL();
+				iClipAlreadyExists = EFalse;
+				}
+			else 
+				{
+				User::Leave(result);
+				}
+			iFileHasChanged = EFalse;
+			}
+		}
+	
+	CalculateFrameSize();
+
+	// set the default position to the end so that data is appended 
+	// to the clip unless the position is set explicitly
+	iFilePosition = iStartPosition + iDataLength;	
+
+	iConverterFrameSizeSet = EFalse;
+
+	iState = EInitialised;
+
+	//final check to confirm we can record to this clip
+	User::LeaveIfError(OKToRecord());
+	}
+
+
+
+
+/**
+*
+* SinkThreadLogon
+* @param aEventHandler
+*
+* @return Tint
+*/
+EXPORT_C TInt CMMFFormatWrite::SinkThreadLogon(MAsyncEventHandler& aEventHandler)
+	{//pass through to sink clip
+	iAsyncEventHandler = &aEventHandler;
+	return(iClip->SinkThreadLogon(*this));
+	}
+
+/**
+*
+* IsValidSampleRate
+* @param aSampleRate
+*
+* @return TBool
+*/
+EXPORT_C TBool CMMFFormatWrite::IsValidSampleRate( TUint aSampleRate  )
+	{
+	TBool result = EFalse;
+    
+	TInt upperLimit = sizeof(KMMFFormatSampleRates) / sizeof(TUint);
+	
+	for( TInt index = 0; index < upperLimit; index++ )
+		{
+		if( aSampleRate == KMMFFormatSampleRates[ index ] )
+			{
+			// [ it is a valid samplerate ]
+			result = ETrue;
+			break;
+			}
+		}
+
+	return result;
+	}
+
+
+
+
+
+/**
+*
+* SinkPlayL
+*
+*/
+EXPORT_C void CMMFFormatWrite::SinkPlayL()
+	{
+	iInitialFileSize = iClipLength;
+		
+	if (!iHeaderUpdated)
+		WriteHeaderL();
+
+	iClip->SinkPlayL(); //propagate state change down to clip
+
+	if ( ((iChannels != iSourceChannels) || (iSampleRate != iSourceSampleRate) )
+		&& (!iSourceWillSampleConvert) )
+		{
+		//the source channels & sample rate don't match the formats
+		//therefore need to do a conversion 
+		//currently only pcm16 is supported so return with an error if format not pcm16
+		if (iFourCC != KMMFFourCCCodePCM16) 
+			User::Leave(KErrNotSupported);
+
+		if (!iChannelAndSampleRateConverterFactory)
+			iChannelAndSampleRateConverterFactory = new(ELeave)CMMFChannelAndSampleRateConverterFactory;
+
+		iChannelAndSampleRateConverter = 
+			iChannelAndSampleRateConverterFactory->CreateConverterL( iSourceSampleRate, iSourceChannels, iSampleRate, iChannels);
+
+		
+		//need to create an intermediate buffer in which to place the converted data
+		if (iConvertBuffer != NULL)
+			{
+			delete iConvertBuffer;
+			iConvertBuffer = NULL;
+			}
+		iConvertBufferSize = iChannelAndSampleRateConverter->MaxConvertBufferSize(iFrameSize);
+		iConvertBuffer = CreateSinkBufferOfSizeL(iConvertBufferSize);
+		}
+
+	iFileHasChanged = ETrue; //file will change if we start playing to it
+	}
+
+/**
+*
+* SinkPauseL
+*
+*/
+EXPORT_C void CMMFFormatWrite::SinkPauseL()
+	{
+	iClip->SinkPauseL(); //propagate state change down to clip
+	WriteHeaderL(); //need to write the file header now were stopping
+	}
+
+/**
+*
+* SinkStopL
+*
+*/
+EXPORT_C void CMMFFormatWrite::SinkStopL()
+	{
+	if(iClip->DataSinkType()==KUidMmfFileSink)
+		{
+		if(STATIC_CAST(CMMFFile*, iClip)->SinkStopped() != EFalse)
+			return;
+		}
+	iClip->SinkPrimeL(); // need to make sure that file is open to write header
+	TCleanupItem sinkCleanupItem(DoDataSinkStop, iClip);
+	CleanupStack::PushL(sinkCleanupItem);
+
+	if(iFileHasChanged)
+		{
+		WriteHeaderL(); //need to write the file header now were stopping
+		}
+
+	CleanupStack::Pop();
+	iClip->SinkStopL(); //propagate state change down to clip
+	
+	iState = EUninitialised;
+	}
+
+/**
+*
+* SinkThreadLogoff
+*
+*/
+EXPORT_C void CMMFFormatWrite::SinkThreadLogoff()
+	{
+	iAsyncEventHandler = NULL;
+	iClip->SinkThreadLogoff();
+	iState = EUninitialised;
+	}
+
+
+/**
+*
+* FrameTimeInterval
+* @param aMediaId
+*
+*/
+EXPORT_C TTimeIntervalMicroSeconds CMMFFormatWrite::FrameTimeInterval(TMediaId aMediaId) const
+	{
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		return iFrameTimeInterval;
+	else 
+		return TTimeIntervalMicroSeconds(0);
+	}
+
+
+/**
+*
+* Duration
+* @param aMediaId
+* @return TTimeIntervalMicroSeconds 
+* 
+*/
+EXPORT_C TTimeIntervalMicroSeconds CMMFFormatWrite::Duration(TMediaId aMediaId) const
+	{
+	TTimeIntervalMicroSeconds duration(0); //default
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		duration = DurationCalculation(iDataLength, iSampleRate, iBitsPerSample, iChannels);
+	return duration;
+	}
+
+
+
+EXPORT_C TTimeIntervalMicroSeconds CMMFFormatWrite::PositionL()
+	{
+	return DurationCalculation(iFilePosition - iStartPosition, iSampleRate, iBitsPerSample, iChannels);
+	}
+
+EXPORT_C void CMMFFormatWrite::SetPositionL(const TTimeIntervalMicroSeconds& aPosition)
+	{
+	//if position is beyond the end of the file, set to end of file.
+	if(aPosition >= Duration(KUidMediaTypeAudio))
+		{
+		iFilePosition =  iStartPosition + iDataLength;
+		return;
+		}
+
+
+	TUint writeDataFrom =  DataPosition(aPosition, iSampleRate, iBitsPerSample, iChannels);
+
+	TUint sampleSize = iBitsPerSample * iChannels / 8;
+	//if iBitsPerSample < 8
+	if(sampleSize <1)
+		sampleSize=1;
+
+	//Must align the data write to the start of a sample
+	if(sampleSize != 1)
+		writeDataFrom = AlignToSample(writeDataFrom, sampleSize, 0, iDataLength);
+
+	iFilePosition =  iStartPosition + writeDataFrom;
+	}
+
+
+
+
+/**
+*
+* EmptyBufferL
+* @param aBuffer
+* @param aSupplier
+* @param aMediaId
+* @preconditions
+* aBuffer is not NULL
+* aSupplier is not NULL
+* aMediaId is of type audio
+* the max clip length has not been exceeded
+*/
+EXPORT_C void CMMFFormatWrite::EmptyBufferL(CMMFBuffer* aBuffer, MDataSource* aSupplier, TMediaId aMediaId)
+	{	
+	if ((aBuffer != NULL) && (!CMMFBuffer::IsSupportedDataBuffer(aBuffer->Type())))
+		User::Leave(KErrNotSupported);
+
+	//[ precondition aBuffer is not NULL ]
+	__ASSERT_DEBUG( aBuffer, Panic( EPreconditionViolation ) );
+	
+	//[ precondition aSupplier is not NULL ]
+	__ASSERT_DEBUG( aSupplier, Panic( EPreconditionViolation ) );
+	
+	//[ precondition media type is audio ]
+	if (aMediaId.iMediaType!=KUidMediaTypeAudio)
+		User::Leave(KErrNotSupported);
+		
+	//[ precondition that the max clip length has not been exceeded]
+	if( IsMaxClipLengthExceeded( *aBuffer ))
+		User::Leave(KErrEof);
+	
+	iDataPath = aSupplier;
+	
+	if (iState == EInitialised)
+		{//assumes first frame is frame 1 not 0 
+
+		// Check the buffer size and calculate the Frame Time Interval
+		TUint bufferFrameSize = STATIC_CAST(CMMFDataBuffer*,aBuffer)->Data().MaxLength();
+		CalculateFrameSize(bufferFrameSize);
+
+
+		if (iFilePosition < iStartPosition)
+			{
+			iFilePosition = iStartPosition; //can't write before start of header
+			}
+		else 
+			{
+			if (iFilePosition > iStartPosition + iDataLength)
+				iFilePosition = iStartPosition + iDataLength; //can't have position > end of data
+			}
+
+		if ((iChannelAndSampleRateConverter) && (!iSourceWillSampleConvert))
+			{//need to perform channel & sample rate conversion before writing to clip
+
+			//need to create an intermediate buffer in which to place the converted data
+			if(!iConvertBuffer || iConvertBufferSize < iChannelAndSampleRateConverter->MaxConvertBufferSize(bufferFrameSize))
+				{
+				if (iConvertBuffer)
+					{
+					delete iConvertBuffer;
+					iConvertBuffer = NULL;
+					}
+				iConvertBufferSize =  iChannelAndSampleRateConverter->MaxConvertBufferSize(bufferFrameSize);
+				iConvertBuffer = CreateSinkBufferOfSizeL(iConvertBufferSize);
+				}
+
+			TInt frmSize = iChannelAndSampleRateConverter->Convert(*(CMMFDataBuffer*)aBuffer,*iConvertBuffer);
+			if (!iConverterFrameSizeSet || !iFrameSize) //[ added !iFrameSize to fix sidde 
+				{//need to set new framesize - note that the frmSize can vary by 2 bytes therfore 
+				//to avoid bad filepositions just use the same frame size throughout
+				iFrameSize = frmSize;
+				iConverterFrameSizeSet = ETrue;
+				}
+			iBufferToEmpty = aBuffer; //save this so it can be returned to datapath
+			
+			STATIC_CAST( CMMFClip*, iClip )->WriteBufferL( iConvertBuffer, iFilePosition, this ) ;
+			}
+		else
+			{//no need to convert the data
+			iBufferToEmpty = aBuffer; //save this so it can be returned to datapath
+			
+			STATIC_CAST( CMMFClip*, iClip )->WriteBufferL( aBuffer, iFilePosition, this ) ;
+			}
+		}
+	
+	}
+
+
+
+
+
+
+/**
+*
+* IsMaxClipLengthExceeded
+* @internalTechnology
+* @param aBuffer
+* @returns TBool
+*/
+EXPORT_C TBool CMMFFormatWrite::IsMaxClipLengthExceeded( const CMMFBuffer& aBuffer )
+	{
+	TBool status = EFalse;
+	
+	// Check we haven't exceeded any set maximum on our clip length
+	if (iMaximumClipSize > 0)
+		{
+		TInt currentClipLength = STATIC_CAST(CMMFClip*, iClip)->Size();
+		TInt bufferSize = aBuffer.BufferSize();
+		if ((currentClipLength + bufferSize) >= iMaximumClipSize)
+			status = ETrue;
+		}
+	
+	return status;
+	}
+
+/**
+*
+* CreateSinkBufferOfSizeL
+* @param aSize 
+* @returns CMMFDataBuffer* 
+*
+*/
+EXPORT_C CMMFDataBuffer* CMMFFormatWrite::CreateSinkBufferOfSizeL(TUint aSize)
+	{
+	//needs to create source buffer
+	CMMFDataBuffer* buffer = CMMFDataBuffer::NewL(aSize);
+	buffer->Data().FillZ(aSize);
+	return buffer;
+	}
+
+/**
+*
+* CreateSinkBufferL
+* @param aReference
+* @param aMediaId
+* @returns CMMBuffer*
+*
+*/
+EXPORT_C CMMFBuffer* CMMFFormatWrite::CreateSinkBufferL(TMediaId aMediaId, TBool &aReference)
+	{
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		{
+		aReference = EFalse;
+		CalculateFrameSize();
+		return CreateSinkBufferOfSizeL(iFrameSize);
+		}
+	else 
+		User::Leave(KErrNotSupported);
+	return NULL;
+	}
+
+/**
+*
+* SinkDataTypeCode
+* @param aMediaId
+* @return TFourCC
+*
+*/
+EXPORT_C TFourCC CMMFFormatWrite::SinkDataTypeCode(TMediaId aMediaId)
+	{
+	if (aMediaId.iMediaType == KUidMediaTypeAudio) 
+		return iFourCC;
+	else 
+		return TFourCC(); //defaults to 'NULL' fourCC
+	}
+
+
+/**
+*
+* SetNumChannels
+* @param aChannels
+* @return TInt
+*
+*/
+EXPORT_C TInt CMMFFormatWrite::SetNumChannels(TUint aChannels)
+	{
+	TInt error = KErrNone;
+	if (iClipAlreadyExists) 
+		{
+		if (iChannels!=aChannels)
+			error = KErrAlreadyExists; //can't set channels if clip exists - it already has this set
+		else
+			error = KErrNone;
+		}
+	else if ((aChannels >=  KMono) && (aChannels <= MaxNumChannels())) 
+		{
+		iChannels = aChannels;
+		}
+	else 
+		{
+		error = KErrNotSupported; //only allow one or two channels
+		}
+	
+	return error;
+	}
+
+
+
+/**
+*
+* SetSampleRate 
+* @param aSampleRate
+* @return TUnit
+* checks against KMMFFormatSampleRates to see if argument is valid
+*/
+EXPORT_C TInt CMMFFormatWrite::SetSampleRate(TUint aSampleRate)
+	{		
+	TInt status = KErrNotSupported;
+	if (iClipAlreadyExists) 
+		{
+		if (iSampleRate!=aSampleRate)
+			status = KErrAlreadyExists; //can't set sample rate if clip exists - it already has this set
+		else
+			status = KErrNone;
+		}
+	else
+		{
+		//we'll iterate through the valid sample table
+		TInt i = sizeof(KMMFFormatSampleRates) / sizeof(TUint);
+		
+		while ((i--) && (status != KErrNone))
+			{
+			if (aSampleRate == KMMFFormatSampleRates[i])
+				{
+				iSampleRate = aSampleRate;
+				status = KErrNone;
+				}
+			}
+		}
+	return status;
+	}
+
+/**
+*
+* DoReadL
+* @param aReadPosition
+*
+*/
+EXPORT_C void CMMFFormatWrite::DoReadL(TInt aReadPosition)
+	{
+	STATIC_CAST( CMMFClip*, iClip )->ReadBufferL( iBuffer, aReadPosition ) ;
+	}
+
+/**
+*
+* DoWriteL
+* @param aWritePosition
+*
+*/
+EXPORT_C void CMMFFormatWrite::DoWriteL(TInt aWritePosition)
+	{
+	STATIC_CAST( CMMFClip*, iClip )->WriteBufferL( iBuffer, aWritePosition ) ;
+	}
+
+
+
+
+/**
+ *  CropL.  This function shortens the clip from the position specified to the end specified.
+ *  It rewrites the header.
+ *  
+ *
+ *  @param aPosition -  Position in middle of clip at which to cut it
+ *  @param aToEnd - if ETrue keep the last part, if EFalse keep the first part
+ *
+ *	@return - standard error code
+ */
+EXPORT_C void CMMFFormatWrite::CropL(TTimeIntervalMicroSeconds aPosition, TBool aToEnd )
+	{
+	// Does clip have any size to crop
+	if(iDataLength == 0)
+		return;
+
+	// Is aPosition between the start and the end?
+	if ( ( aPosition < TTimeIntervalMicroSeconds(0) ) || ( aPosition > Duration( KUidMediaTypeAudio) ) ) 
+		User::Leave( KErrArgument ) ;
+	
+	// Convert aPostion to cropPosition in bytes
+	TInt64 cropPosition64 = ( I64INT(aPosition.Int64()) * iSampleRate * (iBitsPerSample/8) * iChannels ) /KOneSecondInMicroSeconds;
+
+	//[ now calculate the position in bytes with sample size bit alignment, to ensure we extract from the start of a sample
+	TUint sampleSize = (iBitsPerSample/8) * iChannels;
+	TUint cropPosition = AlignToSample(I64INT(cropPosition64), sampleSize, 0, iDataLength, ERoundDown);	
+
+	//lets confirm that we are aligned on a sample boundary
+	ASSERT( cropPosition % sampleSize == 0 );
+	
+	TInt dataSize ;  // This will be the size of the data left after cropping.
+	
+	if ( !aToEnd )
+		{
+		// Shift the data physically
+		// move the data in blocks
+		// Create a CMMFDataBuffer and use CMMFClip to shift the data
+		dataSize = iClipLength - cropPosition ;
+		if (( dataSize > 0 ) && (aPosition != TTimeIntervalMicroSeconds(0)))
+			{
+			TInt bufSize = ( dataSize < KDefineIOBufferSize ? dataSize : KDefineIOBufferSize ) ; //max bufSize 512
+			CMMFDataBuffer* buffer = CMMFDataBuffer::NewL(bufSize) ;
+			CleanupStack::PushL( buffer ) ;
+			
+			TUint rPos = iHeaderLength + cropPosition ; // read position 
+			TUint wPos = iHeaderLength;
+			TInt dataToShift = ETrue ;
+			while ( dataToShift )
+				{
+				STATIC_CAST( CMMFClip*, iClip )->ReadBufferL( buffer, rPos ) ;  // synchronous calls
+				STATIC_CAST( CMMFClip*, iClip )->WriteBufferL( buffer, wPos ) ;
+
+				rPos += bufSize ;
+				wPos += bufSize ;
+
+				if ( rPos > iClipLength ) 
+					dataToShift = EFalse ;  // past the end:  Done
+				}// while data to shift
+			CleanupStack::PopAndDestroy( ) ; // buffer
+			}// if data to shift
+		}// crop to start
+	else // crop to end
+		{
+		dataSize = cropPosition ;
+		}
+	
+	iDataLength = dataSize;
+	iClipLength = iHeaderLength + dataSize;
+	
+	// Do the physical chop
+	User::LeaveIfError( (STATIC_CAST(CMMFClip*,iClip))->SetSize( iDataLength ) );
+	}
+
+
+
+
+
+/**
+*
+* BufferEmptiedL
+* @param aBuffer
+*
+*/
+EXPORT_C void CMMFFormatWrite::BufferEmptiedL(CMMFBuffer* aBuffer)
+	{
+	iDataLength += aBuffer->BufferSize();
+	iFilePosition += aBuffer->BufferSize(); //total bytes written so far - iFilePosition is not always = iDataLength due to repositions
+	if (iClipLength < iFilePosition)
+		iClipLength = iFilePosition; //need iClipLength incase we write data then repos to an earlier pos in the clip
+	if (iBufferToEmpty != aBuffer) 
+		iDataPath->BufferEmptiedL(iBufferToEmpty); //need to return same buffer
+	else 
+		iDataPath->BufferEmptiedL(aBuffer);
+	}
+
+
+
+
+/**
+ *  BytesPerSecond.  Calculate and return the number of bytes used for on second of audio.
+ *
+ *	@return - bytesPerSecond
+ */
+EXPORT_C TInt64 CMMFFormatWrite::BytesPerSecond() 
+	{
+	//as we only support 8 or 16 bit, this calculation is OK
+	//wouldn't work for a theoretically 4 bit AU file though
+	TInt64 bytesPerSecond;
+	
+	//Until these settings have been set by negotiation or by the User, assume default levels
+	if (iSampleRate == 0 || iBitsPerSample == 0 || iChannels == 0)
+		bytesPerSecond = (KMMFFormatDefaultSampleRate * KMMFFormatDefaultBitsPerSample * KMMFFormatDefaultChannels) / 8;
+	else
+		bytesPerSecond = (iSampleRate * iBitsPerSample * iChannels) / 8 ;
+
+	return bytesPerSecond ;
+	}
+
+
+
+
+/**
+*
+* CalculateFrameTimeInterval
+*
+*/
+EXPORT_C void CMMFFormatWrite::CalculateFrameTimeInterval()
+	{		
+	iFrameTimeInterval = FrameTimeIntervalCalculation(iFrameSize, iSampleRate, iBitsPerSample, iChannels);
+	}
+
+
+/**
+*
+* CalculateFrameSize
+* 
+*/
+EXPORT_C void CMMFFormatWrite::CalculateFrameSize(TUint aSuggestedFrameSize)
+	{
+	TUint oldFrameSize = iFrameSize;
+
+	if (aSuggestedFrameSize)
+		iFrameSize = aSuggestedFrameSize;
+	else
+		iFrameSize = FrameSizeCalculation(iSampleRate, iBitsPerSample, iChannels);
+
+	if (iFrameSize != oldFrameSize || iFrameTimeInterval.Int64() == 0)
+		CalculateFrameTimeInterval();
+	}
+
+
+/**
+*
+* GetSupportedSampleRatesL
+* @param aSampleRates
+*
+*/
+EXPORT_C void CMMFFormatWrite::GetSupportedSampleRatesL(RArray<TUint>& aSampleRates)
+	{
+	aSampleRates.Reset();
+	
+	// Iterate through the valid sample table and append each value to aSampleRates
+	TInt i = sizeof(KMMFFormatSampleRates) / sizeof(TUint);
+	
+	while (i--) 
+		{
+		if ((iSourceSampleRate==0) || (KMMFFormatSampleRates[i] <= iSourceSampleRate)) 
+			{
+			User::LeaveIfError(aSampleRates.Append(KMMFFormatSampleRates[i]));		
+			}
+		}
+	}
+
+/**
+*
+* GetSupportedNumChannelsL
+* @param aNumChannels
+*
+*/
+EXPORT_C void CMMFFormatWrite::GetSupportedNumChannelsL(RArray<TUint>& aNumChannels)
+	{
+	aNumChannels.Reset();
+	for (TUint chan = KMono; chan <= MaxNumChannels(); chan++)
+		{
+		User::LeaveIfError(aNumChannels.Append(chan));
+		}
+	}
+
+/**
+*
+* SetMaximumClipSizeL
+* @param aBytes
+* preconditions
+* 
+*/
+EXPORT_C void CMMFFormatWrite::SetMaximumClipSizeL(TInt aBytes)
+	{
+	//[ precondition aBytes > -1 ]
+	if( aBytes <= -2 )
+		{
+		User::Leave(KErrArgument);
+		}
+	else if(aBytes == -1)
+		{
+		iMaximumClipSize = 0;	
+		}
+	else
+		{
+		iMaximumClipSize = aBytes;
+		}
+	// [ post condition max clip size >= 0 ]
+	__ASSERT_DEBUG( (iMaximumClipSize >= 0), Panic( EPostConditionViolation ) );
+	}
+
+
+/**
+*
+* SendEventToClient
+* @param aEVent
+* @return TInt
+*
+*/
+EXPORT_C TInt CMMFFormatWrite::SendEventToClient(const TMMFEvent& aEvent)
+	{
+	// An event has been generated by the sink.
+	// If we have an event handler, use that to propogate the event.
+	if (iAsyncEventHandler)
+		return iAsyncEventHandler->SendEventToClient(aEvent);
+	// Otherwise, there isn't much we can do.
+	return KErrNone;
+	}
+
+
+
+
+

@@ -1,0 +1,45 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT ****************************************************
+PRINT	       Perform TE_ESOCK IPv6 OOM tests
+PRINT ****************************************************
+//
+// Ensure that the default config is present if no cleverer one has been put there already
+RUN_SCRIPT z:\testdata\scripts\exec_esock_default_to_config_1.script
+
+RUN_SCRIPT z:\testdata\scripts\te_esock_test_unloadesockForced.script
+
+ced -i z:\testdata\configs\te_esock.xml ced.log
+
+RUN_SCRIPT z:\testdata\scripts\te_esock_test_loadesock.script
+
+// copy the relevant ini file
+RUN_UTILS CopyFile z:\testdata\configs\test_esock_ip6.ini c:\test_esock_ip.ini
+RUN_UTILS MakeReadWrite c:\test_esock_ip.ini
+
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-oom-nonet-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-oom-nonet-ip6.script
+//RUN_SCRIPT z:\testdata\scripts\te_esock_tests-oom-nonet.script
+//RUN_SCRIPT z:\testdata\scripts\te_esock_tests-mem-nonet.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-oom-net-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-oom-net-ip6.script
+
+RUN_SCRIPT z:\testdata\scripts\te_esock_test_unloadesockForced.script
+
+RUN_UTILS DeleteFile c:\test_esock_ip.ini
+
+PRINT TE_ESOCK IP6 OOM tests complete

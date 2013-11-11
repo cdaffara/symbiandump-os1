@@ -1,0 +1,261 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Modified default resource file to test system starter
+// WARNING: Any changes made to this resource file must be
+// checked against the system starter test cases. 
+// Specifically:
+// - DefStartFailAppPanic
+// 
+//
+
+#include <startup.rh>
+
+//
+// ENTRY POINT
+//
+
+// THIS MUST BE THE FIRST RESOURCE. The system relies on
+// this having a resource ID of 1
+
+RESOURCE STARTUP_ENTRY_POINT r_entry_point
+	{
+	entry_point = r_startup_state_critical_static; 
+	}
+//
+
+
+
+//
+// CRITICAL-STATIC startup state
+//
+RESOURCE STATE_INFO r_startup_state_critical_static
+	{
+	id = EStartupStateCriticalStatic;
+	name = "Critical Static";
+	command_list = r_critical_static_commands;
+	next = r_startup_state_critical_dynamic;
+	}
+
+RESOURCE COMMAND_ARRAY r_critical_static_commands
+	{
+	commands =
+		{
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\SysAgt2Svr.exe";
+			start_method = EWaitForStart;
+			no_of_retries_on_failure = 2;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\fbserv.exe";
+			start_method = EWaitForStart;
+			no_of_retries_on_failure = 1;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\wserv.exe";
+			args = "-NoShell";
+			start_method = EWaitForStart;
+			},
+		SPLASH_SCREEN
+			{
+			path = "Z:\\sys\\bin\\splash.exe";
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\eiksrvs.exe";
+			args = "-OnlyStartDependentServers";
+			start_method = EWaitForStart;
+			},
+		START_APP_INFO
+			{
+			path = "Z:\\sys\\bin\\app990.exe"; // app does not exist - negative test
+			start_method = EDeferredWaitForStart;         
+  			fail_on_error = 1; 
+			},
+		START_APP_INFO
+			{
+			path = "Z:\\sys\\bin\\app991.exe"; // app does not exist - negative test
+			start_method = EWaitForStart;                                           
+  			fail_on_error = 0; 
+			},
+		START_APP_INFO
+			{
+			path = "Z:\\sys\\bin\\app992.exe"; // app does not exist - negative test
+			start_method = EFireAndForget;                                      
+  			fail_on_error = 0; 
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\app993.exe"; // app does not exist - negative test
+			start_method = EDeferredWaitForStart;                                      
+  			fail_on_error = 0; 
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\app994.exe"; // app does not exist - negative test
+			start_method = EWaitForStart;                                              
+  			fail_on_error = 0; 
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\app995.exe"; // app does not exist - negative test
+			start_method = EFireAndForget;                                      
+  			fail_on_error = 0; 
+			},
+		MULTIPLE_WAIT
+			{
+			},
+		START_APP_INFO
+			{
+			path = "Z:\\sys\\bin\\appfwk_sysstart_test_app5.exe";
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\sisregistryserver.exe";
+			start_method = EWaitForStart;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\tzserver.exe";
+			start_method = EWaitForStart;
+			}
+		};
+	}
+
+//
+// CRITICAL-DYNAMIC startup state
+//
+RESOURCE STATE_INFO r_startup_state_critical_dynamic
+	{
+	id = EStartupStateCriticalDynamic;
+	name = "Critical Dynamic";
+	command_list = r_critical_dynamic_commands;
+	next = r_startup_state_networking_critical;
+	}
+
+RESOURCE COMMAND_ARRAY r_critical_dynamic_commands
+	{
+	commands =
+		{
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\initialiselocale.exe";
+			start_method = EWaitForStart;
+			fail_on_error = EIgnoreCommandFailure;
+			},		
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\apsexe.exe";
+			start_method = EWaitForStart;  // this is the only method allowable for apsexe.exe
+			},
+		START_APP_INFO
+			{
+			path = "Z:\\sys\\bin\\shell.exe";	// Requires apparc to be properly started
+			viewless = 1;	 
+			start_method = EDeferredWaitForStart; 
+			},
+		MULTIPLE_WAIT  
+			{
+			timeout = 20000;
+			fail_on_error = EPanicOnCommandFailure;
+			},
+		SPLASH_SCREEN
+			{
+			kill = 1;
+			} 		
+		};
+	}
+
+//
+// Networking-CRITICAL startup state
+//
+RESOURCE STATE_INFO  r_startup_state_networking_critical
+	{
+	id = EStartupStateNetworkingCritical;   
+	name = "Networking-Critical";
+	command_list =  r_networking_critical_commands;
+	next = r_startup_state_non_critical;
+	}
+
+RESOURCE COMMAND_ARRAY r_networking_critical_commands
+	{
+	commands =
+		{
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\c32start.exe";
+  			start_method = EWaitForStart;
+  			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\msexe.exe";
+			start_method = EWaitForStart;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\watcher.exe";
+			start_method = EWaitForStart;
+			}
+		};
+	}
+
+//
+// NON-CRITICAL startup state
+//
+RESOURCE STATE_INFO r_startup_state_non_critical
+	{
+	id = EStartupStateNonCritical;
+	name = "Non-critical";
+	command_list = r_non_critical_commands;
+	next = 0;	// No more state transitions
+	}
+
+RESOURCE COMMAND_ARRAY r_non_critical_commands
+	{
+	commands =
+		{
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\SystemAMS.exe";
+			args = "-boot";
+			fail_on_error = EIgnoreCommandFailure;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\swidaemon.exe";
+			start_method = EWaitForStart;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\cntsrv.exe";
+			args = "-nontransient";
+			fail_on_error = 0;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\agsvexe.exe";
+			args = "-nontransient";
+			fail_on_error = 0;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\fotaagent.exe";
+			fail_on_error = EIgnoreCommandFailure;
+			}
+		};
+	}
+
+

@@ -1,0 +1,103 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-BEARERMOBILITY
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+PRINT NET_BMOBILITY_760670:
+PRINT RCommsMobilityApiExt::Open(),
+PRINT RCommsMobilityApiExt::RegisterForMobilityNotification(),
+PRINT Simulate current AP going down
+PRINT Receive PreferredCarierAvailable,
+PRINT RCommsMobilityApiExt::RegisterForMobilityNotification(),
+PRINT RCommsMobilityApiExt::MigrateToPreferredCarrier(),
+PRINT Receive NewCarierActive,
+PRINT Do not register (no call to RCommsMobilityApiExt::RegisterForMobilityNotification()),
+PRINT RCommsMobilityApiExt::NewCarrierRejected(),
+PRINT RCommsMobilityApiExt::Close()
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+// Set up the comms database and start esock in preparation for the test
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\BearerMobility\BearerMobility_001.ced.cfg c:\BearerMobility_001.ced.cfg.log
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-Mobility-0801
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-Mobility-0801
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ1060
+//!@SYMAPI
+// TODO_CDG
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+// Create and connect socketserver and connectionserver instances
+RUN_TEST_STEP 150 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\BearerMobility\Mobility_760670.ini CreateSockSvr
+RUN_TEST_STEP 150 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\BearerMobility\Mobility_760670.ini ConnectSockSvr
+
+// Create and open a connection (conn1)
+RUN_TEST_STEP 150 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\BearerMobility\Mobility_760670.ini CreateConn
+RUN_TEST_STEP 150 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\Mobility_760670.ini OpenConn
+
+// Make bearer1 available and connect with associated snap
+RUN_TEST_STEP 150 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_760670.ini ChangeAvailabilityUpAp4
+RUN_TEST_STEP 150 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_760670.ini ChangeAvailabilityUpAp5
+RUN_TEST_STEP 150 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\BearerMobility\Mobility_760670.ini StartConnSnap53
+
+// Prepare mobility APIs which we will subscribe on
+RUN_TEST_STEP 150 te_esockteststepsSuite OpenRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_760670.ini OpenMobilityExtension
+
+//Register
+RUN_TEST_STEP 150 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_760670.ini RegisterForMobility
+
+//Simulate the access point going down and receive the PreferredCarrierAvailable
+RUN_TEST_STEP 150 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_760670.ini ChangeAvailabilityDownAp4
+RUN_TEST_STEP 150 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_760670.ini CheckPreferredCarrierAvailable
+
+//Register
+RUN_TEST_STEP 150 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_760670.ini RegisterForMobility
+
+//Migrate to preferred carrier
+RUN_TEST_STEP 150 te_esockteststepsSuite migratercommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_760670.ini MigrateToPreferredCarrier
+
+//Check the new carrier is active now
+RUN_TEST_STEP 150 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_760670.ini CheckNewCarrierActive
+
+//Do not register, reject the new carrier
+RUN_TEST_STEP 150 te_esockteststepsSuite rejectcarrierrcommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_760670.ini RejectNewCarrier
+
+// Clean up what we used
+RUN_TEST_STEP 150 te_esockteststepsSuite CloseRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_760670.ini CloseMobilityExtension
+RUN_TEST_STEP 150 te_esockteststepsSuite CloseRConnectionStep z:\testdata\configs\BearerMobility\Mobility_760670.ini CloseConn
+RUN_TEST_STEP 150 te_esockteststepsSuite closersocketservStep z:\testdata\configs\BearerMobility\Mobility_760670.ini CloseSocketSvr
+END_TESTCASE			COMINF-ESOCK-RConnection-Mobility-0801
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed NET_BMOBILITY_760670
+
+
+

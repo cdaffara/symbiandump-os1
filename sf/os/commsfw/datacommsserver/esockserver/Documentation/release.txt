@@ -1,0 +1,1457 @@
+ESOCK E32 Sockets server
+
+8. Nov 2003.
+============
+
+¨ ESock implements the functionality required by a CPM, e.g. meeting rendezvous at 
+  start-up and supporting the messages required by the framework (see R0). Also
+  it doesnt shut down automatically but rather on request from the RootServer.
+¨ ESock now supports MBufs for data transfer to protocol SAP implementations 
+  over the PRT interface (CServProviderBase). The descriptor based Write() and 
+  GetData() functions are deprecated.
+¨ ESock now understands the BindFrom parameter in .ESK files. Allows a protocol 
+  configuration to specify its binding below another protocol. This avoids the need 
+  for it appearing in the upper protocol's configuration file, making such protocols 
+  more modular. 
+¨ New feature: Datagram Continuation, the ability to read a datagram in parts. With 
+  PRT v1 when an application reads a datagram using RSocket::recv() ESock calls GetData() 
+  upon the SAP for the exact amount of data requested by the client. If the datagram is 
+  bigger than the requested amount the PRT will truncate it and return the  requested amount 
+  of octets. It is up to the client to know whether the data was truncated. This leads to some 
+  clients having to maintain absurdly large transfer buffers to cope with out-lier cases. 
+  With PRTs implementing PRT1.5, ESock calls GetData() with a carefully oversized length 
+  parameter, with the intent that the SAP delivers the entire datagram RMBufChain. A client 
+  request to read the datagram which includes a TSockXfrLength parameter, eg  
+  RSocket::Recv(TDes8& aDesc,TUint flags,TRequestStatus& aStatus,TSockXfrLength& aLen), 
+  then completes with the remaining unread octets of the datagram in the TSockXfrLength. 
+  The client can then read the remaining octets by further reads with the  'KSockReadContinuation' 
+  flag OR'd into the flags field. Remaining octets are discarded upon the next read without the 
+  KSockReadContinuation flag set.
+  Notes:
+    (1) This only works with PRT1.5 protocols.
+    (2) Clients who do not set the KSockReadContinuation flag experience the original behaviour that overflows are discarded
+    (3) Clients who need to treat datagrams as a "stream" can always set KSockReadContinuation as in the absence of remaining data a new GetData is performed.
+¨ The MBuf Manager has been moved from ESock/MBufMgr to MBufMgr. All classes previously living 
+  in the NIFMAN component, implementing extra functionality for MBufs have been moved to the 
+  new MBufMgr component. Components needing this should link to the mbufmgr.dll library.
+¨ ESock has been split into a client DLL (esock.dll) and a server DLL (esocksvr.dll).
+¨ ESock is now using the Secure IPC framework. E.g. CServer2, RMessage2 and TIpcArgs.
+
+29. Nov 2001 (alfredh)
+======================
+
+Defect fixes:
+
+KUN-54UMKA "CSocket::Ioctl() panics when calling second Ioctl if first one leaves"
+
+Problem fixed in ssock/ss_sock.cpp - now setting flag 'ioctl block' *after* a
+successful memory allocation. This defect was found using SmsStack reg tests.
+Verified on WINS and ARM4 (assabet board)
+Also increased the stacksize for tcesock.exe to 0x10000 so I could run on assabet.
+
+
+Version 2.1 (651)
+==============
+Merged in the changes to the test codes the projects now output logs 
+
+	- TCESOCK  logs to \epoc32\wins\c\esoctest.txt under wins and on c:\esoctest.txt under thumb
+	- TIPC logs to \epoc32\wins\c\ipctest.txt under wins and on c:\ipctest.txt under thumb
+	- TSHUT logs to \epoc32\wins\c\tshutest.txt under wins and on c:\tshutest.txt under thumb
+
+	
+
+Version 2.0 (650)
+=================
+
+First release onto mainline share. Identical to version 555 on ER5u share.
+
+Version 1.0 (555)
+=================
+- Previous fix for (EDNPGAL-4B4GEJ in ER5u) was broken and removed in ESOCK 554. The
+correct fix has now been added to this release (ESOCK 555)
+
+Version 1.0 (554)
+=================
+
+- defect fix for EDNDHAR-4BXLU6 (Web hits a SocketServer USER 47 Panic on receiving data)
+in ER5u Defects. Involved removing the so-called defect fix that was put in ESOCK 552, for
+"Large TCPIP packets seem to be lost".
+
+Version 1.0 (553)
+=================
+
+-EPOC Connect was broken by 552 by the omission of the construction of a hard-coded 
+ESOCK.INI for the WINC build. This has been rectified.
+
+
+Version 1.0 (552)
+=================
+
+- Minor code changes to eliminate MSVC6 warnings. 
+- defect fix for "Large TCPIP packets Seem to be Lost" (EDNPGAL-4B4GEJ in ER5u).
+	This fix works for WINS but does not fix the defect on ARM. This is still under
+	investigation.
+- defect fix for "Need to remove all references to EPOC registry" - (EDNDMAY-49CE4E in ER5u
+defects). Removed sections of code which used it (all in WINC build).
+- defect fix for "Need to remove calls to deprecated functions" (EDNDMAY-49CDVT in ER5u defects).
+  Removed two lines which call RThread::SetNotifyIfDie() and RThread::SetMark().
+
+
+
+Version 1.0 (550)
+=================
+
+- Split Nifman from Esock.
+- Removed all narrow-specific stuff from MNT.CMD and EBLD.BAT.
+- Removed narrow def files.
+- Did some general tidying up of header files.
+
+Version 1.0(510)
+================
+- Fixed (another) defect in Nifman code for restarting the thread
+  (ER5 Defect Database EDNKPIA-465MLC)
+
+Version 1.0(509)
+================
+- Changed the Nifman code for restarting the thread
+
+Version 1.0(508)
+================
+- Re systemised the ESock thread
+
+Version 1.0(507)
+================
+- Added EBLD.BAT
+- Change in CS_CLI.CPP RSocket::GetOpt
+
+Version 1.0(506)
+================
+- Boilerplated source files
+- Changed esock to run as non-system thread
+- edit mnt to use evalid.bat for validation
+
+Version 1.0(505)
+================
+-defect fix
+Transfer socket failed with an socket openned in passive mode
+defect reference: SW1-322
+
+Version 1.0(504)
+================
+- Fixed a defect which meant that debug protocols would not run
+with a release ESOCK.
+
+Version 1.0(503)
+================
+- debug/Rel stuff
+- Unicode UID, added a ROM directory
+
+Version 1.0(502)
+================
+- VC5
+
+Version 1.0(501)
+================
+- Fixed the handling of UNICODE ini files. 
+- This was tested on a RACK.
+
+Version 1.0(500)
+================
+- Finished MAKMAKE stuff including testcode
+- Mad proofed the Nif interface
+- First release for ER5
+
+Version 1.0(093)
+================
+- Changed ESOCK tom use MAKMAKE
+
+Version 1.0(92)
+================
+- Changed Nifman to depend on the CommDB header file rather than using the
+  definitions for datbase fields in nifvar.h
+- Changed MS CallBack codes to be >1000 rather than -ve as -ve values cannot
+  be stored in the database
+
+
+Version 1.0(91)
+================
+- Fixed a defect in the MBuf code, didn't ulink when removing a buffer
+  from a chain.
+- Changed the Nif Interface for reading descriptors
+
+
+Version 1.0(90)
+================
+- Modifications for callback. BC across the ESOCK i/f but not the NifMan
+  interface, so a new agent is required. I.e. a kipper (Netdial2) which
+  supports callback.
+
+
+Version 1.0(072)
+================
+
+- Fixed WINC build because make files did not have the __WINS__ macro in them
+
+- Added test code for WINC to tcesock.exe
+
+
+Version 1.0(071)
+================
+
+- MARM debug build is now BC with MARM release as per E32 125.
+
+- Updated obey files.
+
+- Incrementeted build number to 071.
+
+- Made changes to support PLP over TCPIP, i.e. allowing INI file to be 
+  loaded from the MS Windows in WINC builds.
+
+- Work around in place of E32 WINC/WINS/WIndows 95 TLS defect by using Windows 
+  TLS instead of EPOC32 TLS
+
+Version 1.0 (400)
+=================
+
+- R4 release. Standard set of R4 dependencies.
+
+- Standardised MNT verbs. Can now build project on a clean drive using 
+  BLDFROMNOTHING.
+
+Version 1.0(070)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond (nonunicode)
+NIFMAN.DLL is BC with build 066 (nonunicode)
+UNICODE ESOCK.DLL and UNICODE NIFMAN.DLL not BC with previous releases
+Not SC with previous releases due to changes in TDes8 v.s TDes declarations
+
+
+General changes
+- Updated all build scripts to build and get UNICODE components
+- Ran all test code in UNICODE on WINS and MARM rom on a rack D
+
+Changes to NIFMAN.DLL
+- Introduced freeze files for UNICODE WINS and MARM
+- MNifIfNotify::Authenticate() now takes TDes arguments as oppose to TDes8
+- Changed NIFMAN::SetSocketState() to return KErrUnsupported if it is given an 
+  unrecognised
+- CNifAgentBase::Authenticate() now takes TDes arguments as oppose to TDes8
+- Changed INI file reading code to interpret ini files with leading FFFE bytes as UNICODE.
+
+
+ESOCK.DLL
+- Frozen def file changed for UNICODE WINS and MARM
+- RServiceResolver::GetByName() & GetByNumber now take a TDesC argument as oppose to TDes8
+- THostName definition changed to TBuf<0x40> rather than TBuf8<0x40>
+- TServiceName definition changed to TBuf<0x20> rather than TBuf8<0x20>
+- Added wide IPC Read/Write functions to server side
+- Changed server side buffer to THostName rather than TBuf8<30> for SetHostName call
+  There is a potential defect here which limits host name size of only 30 characters
+- Changed INI file reading code to interpret ini files with leading FFFE bytes as UNICODE.
+- Changed Changed CHostResolvProvdBase and CServiceResolvProvdBase functions to 
+  use TDes instead of TDes8 declarations
+- Had to increase the stack size to pass the nifman tests, so it is now KDefaultStackSize*sizeof(TText)
+- Fixed SW1-836 RSocket::Write does not pass flags through on stream sends because of type 'o'
+- Fixed SW1-851 Double clean up stack push for protocol family reference
+- Added KSocketInternalWriteBit & KSocketInternalReadBit for protected Send/Recv flags
+
+
+Version 1.0(069)
+================
+
+No source code changes but released with documentation under version control
+
+
+Version 1.0(068)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 066
+
+-Changed version numbers returned by RNif class to be teh same as ESOCK
+
+-Added functionality to Nif::SetSocketState() to set the ESOCK socket internal
+buffer size.  ENifBuffers512 sets the buffers to 512 bytes, ENifBuffers1024 to 1024
+and ENifBuffers2048 to 2048.
+
+-Incremented build number
+
+Version 1.0(067)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 066
+
+-Fixed SW1-203 'Possible panic if immediate restart after disconnect'
+
+-Fixed SW1-204 'Stage transition from Uninitialised to Unconnected not picked up by RNifMonitor'
+
+-Added iState==EDisconnecting __ASSERT_debug to NIFMAN DisconnectComplete() upcall
+
+
+Version 1.0(066)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 063 with exception of added functions
+
+Changes to NIFMAN
+
+-Added derived class RNifMonitor.  RNifMonitor::Open() opens a session to the NIFMAN
+server. It is similar to a RNif session however the corresponding agent is not
+loaded nor is it referenced.  The only supported commands for RNifMonitor are:
+Progress(), LastProgressError(), ProgressNotification(), CancelProgressNotification().
+Other RNif functions will return KErrNotSupported.  These changes are a response
+to SW1-195.
+
+-Changed TPtrC(0,0) default arguments to TPtr() as per SW1-194
+
+-Changed KNifOptLevel constant declaration from 401 to 0x191 to be consistent with other
+hex declarations
+
+-Added constants KAgentUninitialised=0 and KAgentUnconnected=1 and removed 
+KMinAgentProgress=0.  This is all about allowing NIFMAN to give consistant updates
+through the RNifMonitor class.  KAgentUninitalised is the default stage whenever
+a monitor session connects and there is no agent.  As soon as an agent appears
+the stage will change to KAgentUnconnected.  When the agent eventually unloads
+the stage will change back to KAgentUinitialised.  These stages are consistient with
+NTRAS and NETDIAL agents, plus it means the stage will be updated correctly in the 
+final instance.
+
+-Moved the last progress error variable storage from the agent reference into the
+sessions.  This means a session must be active to get a last error.  Calling
+LastProgressError() will now clear the last error from the particular session.
+
+-Made various changes on the NIFMAN server side to support RNifMonitor class.  The
+main changes involved ensuring the monitor sessions are updated when agents are born
+/killed.
+
+-Changed RNif client side code to make better code reuse when opening sessions.
+
+-Added test code for RNifMonitor class and progress update changes.
+  
+
+Changes to ESOCK
+-Incremented build numbers
+
+
+Version 1.0(065)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 063
+
+Changes to NIFMAN
+-A new variable has been added "Timeout\StopIfNoClient".  If this variable is true or
+the variable is not found then the interface will be stopped immediately if is is not
+yet established and there are no network users, (i.e. internet protocol using socket
+server sessions)
+
+-A new variable has been added "Timeout\\ReconnectIfNoClient".  If this variable is not
+found or is false then the reconnect dialog will not be requested if there
+are no network users
+
+Changes to ESOCK
+-Incremented build numbers
+
+
+Version 1.0(064)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 060 with exception of added functions
+
+Changes to NIFMAN
+-EsWatch thread now creates a reference to the nifman library in its
+  entry point.  This avoids exceptions because esock dynamically loads nifman
+
+-EsWatch now looks at the thread exit type in addition to the logon
+  completion code
+
+Changes to ESOCK
+-Incremented build numbers
+
+Version 1.0(063)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 060 with exception of added functions
+
+Changes to NIFMAN
+-Added following functions to get progress information and to stop network interfaces
+  Nif::ProgressL(TNifProgress& aProgress, const TDesC& aName)
+  Nif::Stop(TAny* aId, CNifIfBase* aIf)
+  Nif::ProgressL(TNifProgress& aProgress, TAny* aId, CNifIfBase* aIf)
+-Added constant KNifOptInterfaceProgress=3, for protocols to implement as a GetOpt
+-Added test code as appropriate
+
+
+Changes to ESOCK
+-Incremented build number
+
+Version 1.0(062)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 060
+
+Changes to NIFMAN
+-Fixed SW1-137 'Network timeouts don't allow zero seconds'
+ If 0 is returned from the database the timeout is set to the minumum 1
+ If any negative number is returned by the database the timeout is infinite
+ If the database does not support the timeout values the timeout is infinite
+
+-Fixed SW1-81 'PC.PRT can panic the Socket Server'
+ If the port number is out of range KErrTooBig is returned
+
+Changes to ESOCK
+-Incremented build number
+
+
+Version 1.0(061)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 060
+
+Changes to NIFMAN
+-Changed function name CNifFactory::ConstructL to CNifFactory::InitL, which means its
+ still BC.  In any case the only project using this function is ETHER802
+-Added enumeration ENifSocketCreated for Nif::SetSocketState.  This is BC because
+ the enumeration maps directly onto appropriate ESOCK internal socket state.
+-Added StartC32() function into RNif client side if socket server does not exist
+-A thread 'EsWatch' is now started by NIFMAN to monitor ths socket server thread
+ if the thread suffers an abnormal exit then the C32Exe process is restarted.
+-Speeded up the operation of Nif::CheckIniConfig() by only searching for ESOCK.INI
+ once on the server side
+-The mbuf reaper started by NIFMAN will no longer remove the first mbuf pool.
+
+Changes to ESOCK
+-Incremented build number
+
+Version 1.0(060)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 059 with exception of added functions
+
+Changes to NIFMAN
+
+-Added EXPORT CNifFactory::ConstructL
+-Added EXPORT Nif::SetSocketState()
+-Incremented build number
+-Fixed SW1-97 'Cannot start NetDial twice in quick succession on Series 5'
+-Fixed alloc heaven in Nifman::CheckIniConfig function
+
+Changes to ESOCK
+-Moved __UHEAP_MARK & __UHEAP_MARKEND statements in thread creation for debug build
+-Now explicitly deleting active scheduler & cleanup trap
+-Changed void CResolverProvdBase::SetNotify() to an inline
+
+Version 1.0(059)
+================
+
+ESOCK.DLL is BC with Protea v.100 and beyond
+NIFMAN.DLL is BC with build 058, but strings requested from agents have changed 
+making it incompatible with TCPIP 026.
+
+
+Changes to NIFMAN
+
+-Added following Functions to NIFMAN
+    Nifman::CheckIniConfig() - External function will ensure the ESOCK.INI file has been parsed
+	Nif::IsProtocolLoaded() - NIFMAN internal function to determine if named protocol is loaded
+	Nif::CheckInstalledL() - NIFMAN internal function to check nifman is installed
+	Nif::CheckInstallMBufManager() - internal function which also checks in ini file for MBuf max heap size
+
+-Added CMBufPoolReaper class which goes off every 5 seconds to recover mbuf manager heap
+-Standardised all NIFVAR.H variables to have correct prefixes
+-Changed 'ShortTimeout' to 'Timeout\\Client'
+-Changed 'LongTimeout' to 'Timeout\\Route'
+ 
+
+
+Changes to ESOCK
+-Incremented build number
+-Added friend class CMBufPoolReaper to RMBufQ
+-Added friend class CMBufPoolReaper & Nif to CMBufManager
+-Removed inline C'tor from CMBufManager
+-Changed CMBufManager data variables from protected back to private
+-Added friend class Nif to CProtocolRef
+-Changed CESockIniData data members from private to protected
+-Fixed SW1-68 'OOM Access violation' as suggested
+-Fixed SW1-69 'Unchecked return value' as suggested
+-Fixed SW1-42 'Inconsistent asserts' as suggested
+-Fixed SW1-43 'ESock Fault after calling connect' as suggested
+-Removed bogus assert from CProtocolBase d'tor
+
+
+
+Version 1.0(058)
+================
+
+ESOCK.DLL is BC with Protea V.100 and beyond
+
+New Component
+-Moved NIFMAN.DLL from TCPIP into ESOCK & redesigned NIFMAN.DLL to cope with
+multiple agents/nifs
+-Added 3 test modules IDUMMY.NIF, ADUMMY.AGT & TNIFMAN.EXE.
+-Changed PDUMMY.PRT to include nifman tests
+
+Note new nifman will only work with TCPIP 026 and beyond
+
+Changes to ESOCK (i.e. changes affecting Protea ROM)
+-Added inline accessor for CProtocolBase::iRefCount - 'CProtocolBase::RefCount() const'
+-Added KUidEsockExtension = 0x10000387 to ES_PROT.H
+-Incremented build number
+-Added inline C'tor for CMBufManager
+-Changed data variables access for CMBufManager from private to protected
+-Fixed SW3-1616 'RMBufChain::TrimEnd() does not deal with an offset of zero correctly'
+-Fixed SW1-183 'Possible orphaning of library handle under OOM when loading extension module'
+-Fixed SW1-384 'Possible exception under OOM caused by prematurely unloaded library/partially constructed object'
+-Commented out various __ASSERT_debug's SS_SOCK.CPP lines 1332 & 1579 to enable TCPIPs
+    half close mechanism to work properly
+-Added inline accessor to CSocketScheduler::iGlobals - 'CSocketScheduler::Globals()'
+-Fixed SW1-383 'Possible OOM exception because 'new' should be 'new (ELeave)'
+
+Other
+-IPC.PRT is now included in the ESOCK releasables.
+-Given CIpcProtocolHolder::GetNextFreePort TInt return type to eliminate warning
+
+
+Version 1.0(057)
+================
+BC
+
+-Fixed SW3-1332 'Potential OOM problem with Socket Server exclusive mode'
+-Incremented build number to 057
+
+
+Version 1.0(056)
+================
+
+-Fixed SW3-1281 Infrared printing can easily kill machine and corrupt files
+    By increasing the socket server active object priority when it is in exclusive mode.
+-Incremented build number to 056
+
+Version 1.0(055)
+================
+
+-Fixed SW3-819 MARM ESOCK.DLL released without .map file
+-Fixed SW3-783 Two functions declared IMPORT_C but not defined EXPORT_C 
+    MARM build now has two extra exports
+-Fixed SW3-432 ESOCK version numbers incorrect.  They are now 1.0.55
+-Fixed SW3-355 ESOCK does not check module Uid2s
+-Fixed SW-3775 Socket Server panics itself rather than panicking clients
+-Added mnt valid verb
+-Added lots more test code
+-Removed all .mdp files from archive
+-Added mnt bldarmrel verb
+
+Version 1.0(054)
+================
+
+-Fixed more problems with TSockXfrLength not being filled in for Send()/Recv()
+-Changed call to CArrayFixBase::SetReserveL for E32 release 105
+-Fixed some problems with RHostResolver::Next()
+
+Version 1.0(053)
+================
+
+-Fixed problem with delta timer resolution by compensating for for lack of rounding
+   up in CDeltaTimer class when granularity in reduced.  This has enabled a 100% performance 
+   improvement for IrCOMM.
+-Fixed a defect in data length parameter for TCPIP half close.
+-Completed implementation for RHostResolver::Next()
+
+Version 1.0(052)
+================
+
+-Removed pdummy.prt from release
+-Stopped releasing ESOCK.INI files because they are incorrect
+-Removed starting of ESOCK in DLL entry point for WINS.
+-Changed INIFILE.H to ES_INI.H
+-Removed ESOCK_INI_FILE_DIR define from ES_INI.H
+-Changed name of class CIniFile to CESockIniData ordinals still in same place
+-Providing default argument for CESockIniData::NewL()
+-Stripped loads of private data out of CSockIniData class
+-Changed exported CESockIniData c'tor from private to protected
+	No effect on existing use because no component could have been using it
+-Now Building WINC esock.dll with WINS def files.
+-Moved #define _MBUF_CHECKS into debug builds only
+-RMBufQ::Transfer(...) now private
+-Fixed defect in CSocket::ConnectL where check for error state was not taking place
+-WINC build will now look in MS Windows registry for INI files - a default is provided
+	for ESOCK.INI
+-Socket server shut down timer started after family close.  This fixes defect with library 
+    unloading and latency timer for TCPIP.
+-Latency timer set to 15 seconds.
+-Added RSocket::Name() which allows obtains system global name for a socket
+-Added RSocket::Transfer() which allows a socket to be transfered from one session to 
+    another by using the socket global name as a reference.  The transfer is like a
+	socket creation.  If it fails the socket which is being transfer will remain with
+	the original socket.  Success/failure at the originating socket can be checked
+	by calling RSocket::Info which will return KErrNone if the transfer failed and 
+	KErrBadHandle if it succeeded.
+-Fixed problem with Shutdown(EStopOutput) by allowing data to be received if the socket
+	is in a shutting down state.  Additionally any call to a send function will now 
+	complete with KErrEof if output has been stopped.
+-If a socket has been shut down with EStopInput any further calls to a receive function
+	will complete with KErrEof.
+-Moved creation of CSocket::iAcceptQ into CSocket::ListenL() which avoids possible 
+    exception because return of 'new' was not checked.
+-Removed iIoctlBuf from CSocket because it has no requirement to be persistent
+-Changed CSocket::iAcceptQ to a CCirBuf which avoids some OOM problems and truely
+	implements a fixed size queue.  A panic is generated if a protocol attempts to
+	overfill the accept queue.
+-Ready to go with uid check but commented out until all protocols implement it.
+-Fixed potential OOM defect where library handle could have been orphaned in
+	CProtocolFamilyRef::LoadL().
+-Implmented a way of passing Connect/Disconnect data OOM errors to the client instead of
+	just ignoring them
+
+Version 1.0(051)
+================
+
+Not binary compatible with last release by virtue of the following:
+
+Removed all redundant package buffers from RSocket class and replaced two
+    which are used with PckgBufC's.  This cuts the size of a RSocket on the
+    stack by about 52 bytes.
+
+Other changes:
+
+Removed names which are not required by clients from ES_SOCK.H
+Removed the constant KSockOptionMaxSize because it is now redundant
+Removed the double under score from the start of RSocketServ::SetExclusive mode and 
+    RSocketServ::ClearExclusive mode.
+Added following uids to marm builds:
+    ESOCK.DLL uid2 0x1000008D uid3 0x10000047
+    *.PRT uid2 0x1000004A
+Added a protocol accessible function, SocketServExt::InstallSchedulerHook(), which 
+    allows a callback to be put in place of the active scheduler WaitForAnyRequest.
+    This is primarily intended for use with the WINC version of PLP.
+Removed WINC specific scheduler overloading for PLP.  It has now moved to PLP.
+
+Version 1.0(050)
+================
+
+Binary Compatible with last release
+C32 Upgrade release
+
+Version 1.0(049)
+================
+
+Binary Compatible with last release
+Fixed defect in CHostResolver::SetHostName() where GetHostName was being called instead.
+Removed iBusy assertions in query completion becaus the assertion is invalid if the
+	request was cancelled
+
+Version 1.0(048)
+================
+
+Binary Compatible with last release
+Added following options for GetOpt:
+	KSOReadBytesPending - Is passed to the protocol to be filled in with number of bytes
+						  which will be read in the next read operation
+	KSOUrgentDataOffset - For a stream protocol which supports urgent data this get option
+						  is passed on to the protocol to retreive the urgent data offset
+	KSOSelectLastError -  For use with the select Ioctl KSockSelectExcept this get option 
+						  retreives the last error, on a per socket basis.
+Moved TESOCKActivePriority from ES_SOCK.H to ES_PROT.H
+Added KNewDataEndofData which when passed to MSocketNotify::NewData indicates that socket
+	is in a half closed state and will receive no more data	any subsequent reads will
+	complete with KErrEof and length 0.
+Removed KIOctlNRead and KIOctlCatMark because they have no function in the sockets API.
+
+
+Version 1.0(047)
+================
+
+Binary Compatible with last release
+Fixed defect in RSocket::Recv() where an invalid address is passed.
+Fixed defect in RSocket::GetOpt() where SetOpt was being called instead
+Added a socket level select ioctl with similar semantics to BSD, i.e.:
+
+   TPckgBuf<TUint> flags;
+   flags()=KSockSelectRead | KSockSelectWrite | KSockSelectExcept;
+   socket.Ioctl(KIOctlSelect, status, &flags, KSOLSocket);
+   
+   The Ioctl will complete when any of the flaged conditions are
+   satisfied.
+   KSockSelectRead means data is pending, for listening sockets a
+   connect is pending or a disconnect is pending
+   KSockSelectWrite means a socket is connected and data can be written
+   KSockSelectExcept means the socket is in an error state.
+   
+   
+Version 1.0(046)
+================
+
+Binary Compatible with last release
+Fixed memory leak in CSocket::SetSockOptL
+Integrated extension loading code for TCPIP.
+
+
+Version 1.0(045)
+================
+Changed RSocket::EStopInOut to RSocket::EImmediate and reordered enums
+Fixed defect in stream protocol sends
+Fixed defect in Shutdown(RSocket::EStopInOut, ) by clearing subsession handle through a null message
+Fixed potential defect in accept if socket has been put in an error state by the protocol
+Added asynchronous stop protocol call
+Added SetExclusiveMode and ClearExclusiveMode calls to RSocketServ session
+Added freeze files
+Added WINC build
+
+Version 1.0(044)
+===============
+Fixed memory defect when protocols fail to start
+Reduced socket server thread minimum heap to 4K
+
+
+Version 1.0(043)
+===============
+Fixed B4 SW-93 Set buffer length defect.
+
+
+Version 1.0(040)
+================
+
+Updated ESOCK Entry point
+Set minor version number to 4.
+Fixed "ETwoClose fault from RSocket::Close() if a RSocket::ShutDown() is pending"
+B4 Release.
+
+
+Version 1.0(040)
+================
+
+Version 1.0(039)
+================
+
+Added class TMBufPktQIter for iterating MBuf packet queues.
+
+Checked and corrected const handling throughout MBuf classes, where required, additional const
+versions of inlines have been added.
+
+Added RMBufChain::AppendL(TInt aLen). This adds space to the end of a chain.
+
+Version 1.0(038)
+================
+
+Removed RSocket::RecvOneOrMoreFrom. Recv from operations are only meaningful on non connection oriented
+protocols, OneOrMore behaviour is only meaningful on stream protocols which must, by definition be 
+connection oriented.
+
+All read operations on RSocket now use the buffer's descriptor's max length rather than length.
+This makes Revcs specifying an explicit length more meaningful and the API generally  more usable.
+
+Added RHostResolver::GetHostName(TDes &aName,TRequestStatus &aStatus) so that TCP/IP can take it's
+own good time about sorting out exactly who it might be.
+
+Version 1.0(037)
+================
+
+Added virtual void CServProviderBase::CancelIoctl(TUint aLevel,TUint aName)=0;
+This is called when a client cancels a pending Ioctl. Protocols should not call IoctlComplete
+in response to (or indeed after) a CancelIoctl.
+
+Version 0.1(036)
+================
+
+CProtocolBase now provides default implementations for most of it's virtual
+functions (all except Identify() actually)
+This is to cut down code size of protocols as they no longer need to provide stub
+functionality for services they do not support.
+Default behaviour is as follows:
+
+InitL(TDesC &aTag) - Do Nothing
+StartL(void) - Do Nothing
+
+BindL(CProtocolBase* protocol, TUint id) - Panic EDoesNotBindBelow
+BindToL(CProtocolBase* protocol) - Panic EDoesNotBindAbove
+Send(...) - Panic ECantSend
+Process(...) - Panic ECantProcess
+GetOption(...) - return KErrNotSupported
+SetOption(...) - return KErrNotSupported
+Error() - Panic EDontMessWithMyHeadManImHavingABadDay
+
+Implemented IPC stream protocol.
+This is a client server connection model, stream
+based service. I've implemented it mainly for testing purposes but if anyone needs
+reliable stream based IPC it is fully tested release quality code.
+IPC.PRT, RSocket::Open(_L("IPC Stream"));
+
+Added RSocket::SetLocalPort(TUint aPort) and RSocket::GetLocalPort() these provide a 
+simpler interface than Bind for protocols which do not fully use a TSockAddr for local
+addressing.
+
+TServerProtocolDesc and TProtocolDesc now follow standard EPOC/32
+naming conventions. (i.e. all instance variables are iXxxxXxxx)
+
+KBufSizeUndefined becomes KSocketBufSizeUndefined
+KDefaultBufferSize becomes KSocketDefaultBufferSize
+KInternalOptionBit becomes KSocketInternalOptionBit
+KStream becomes KSocketMessageSizeIsStream
+KUndefined becomes KSocketMessageSizeUndefined
+KNoLimit becomes KSocketMessageSizeNoLimit
+KNoSecurity becomes KSocketNoSecurity
+
+TServerProtocolDesc::iLayer has been removed.
+
+ESOCK now (as much as possible) checks TProtocolDescs which protocols supply.
+
+Version 0.1(035)
+================
+
+Added RSocket open by name RSocket::Open(RSocketServ &aServer,const TDesC& aName)
+aName should be the protocol name as supplied to RSocketServ::FindProtocol unlike
+FindProtocol opening a socket by name does not support wildcard matching.
+
+RSocket::Close now calls CloseSubSession so you don't get paniced for closing a
+socket twice. I don't like this but everyone else seems to think it's the bees knees.
+
+Version 0.1(034)
+================
+
+Version 0.1(033)
+================
+
+Fixed destructor defect on creating NetDatabases under OOM conditions.
+
+Version 0.1(032)
+================
+
+Released for E32 069
+
+Version 0.1(031)
+================
+
+B-2 Candidate.
+
+The ini file is now opened using a TFindFile. The socket server searches in 
+\System\Data on all drives opening the first esock.ini it finds. Search order is 
+defined by the file server.
+
+Version 0.1(030)
+================
+
+Changed default path for ini file to \System\Data\esock.ini for all builds.
+
+Reimplemented RSocket::Shutdown(RSocket::ENormal...);
+
+Added an optional parameter to MSocketNotify::CanClose.
+TDelete aDelete can be set to EDetach which will stop ESOCK auto deleting the socket
+service provider when it is closed. This should be used by protocols such as TCP which
+need the SSP to linger after the client has exited. Deleteing the SSP then becomes the
+protocol's responsibility.
+
+Made CProtocolBase::Tag and CProtocolBase::StartSending public again. Sorry.
+ 
+Version 0.1(029)
+================
+
+Delayed protocol closure.
+Protocols may now replace virtual void CProtocolBase::CloseNow(); which is called when
+all clients referencing a protocol have disconnected. In response a protocol must (at some
+time later call void CProtocolBase::CanClose() to indicate that the protocol can be deleted.
+This is to allow reliable protocols (TCP in particular) to ensure that all data has drained
+from the stack before it is deleted. Protocols must not sit in CloseNow synchronously waiting
+for data to drain.
+Note that after all clients have exited the socket server spends a short time mourning it's
+losses (currently 5 mins) and then exits. At this time all protocols will be forcibly unloaded
+anyway.
+
+Version 0.1(028)
+================
+
+New startup code.
+ESOCK now starts a new thread in the comms server process (C32EXE).
+All test clients should now start the comm server (StartC32()) before connecting 
+to the socket server. There is no longer any need to explicitly start esock. 
+This code relies on defect HA-205 being fixed. If you take this release for 066 you must
+apply the fix described on notes yourself. Due to defect HA-212 you should also set the 
+nocallentrypoint flag for esock.dll in your oby file
+
+Tidied code.
+ProtocolManager class split into 2. If you're missing an API try
+looking in SocketServer.
+
+Version 0.1(027)
+================
+
+Added RNetDatabase::Cancel RHostresolver::Cancel and RServiceResolver::Cancel().
+On the protocol, these call a new pure virtual fn CResolverProvdBase::CancelCurrentoperation().
+
+Added RMbufQ::Assign(RMbufChain &), RMbufQ::Append(RMbufChain &) and RMbufQ::Prepend(RMbufChain &)
+To add etc mbuf chains to RMbufQs.
+
+Removed RMbufQ::CopyIn(TUint8*, TInt len, Tint offset) and RMbufQ::CopyOut(TUint8*, TInt len, TInt offset)
+
+Version 0.1(026)
+================
+
+ESOCK E32 Sockets server 
+Version 0.1(025)
+================
+
+Added code to shut the socket server down cleanly under WINS and fixed a couple of memory
+leaks this revealed.
+
+Changed creation interface to resolver classes:
+RHostResolver::Open(RSocketServ &aSocketServer,TUint anAddrFamily,TUint aProtocol);
+RServiceResolver::Open(RSocketServ& aSocketServer,TUint anAddrFamily,TUint sockType,TUint aProtocol);
+RNetDatabase::Open(RSocketServ& aSocketServer,TUint anAddrFamily,TUint aProtocol);
+These slight changes better reflect the domain of the resolver in question.
+
+Fixed busy defect in CNetDatabase.
+
+Moved the following functions from class ByteOrder to class BigEndian Get32(const TUint8* aPtr),
+Get16(const TUint8* aPtr), Put32(TUint8* aPtr, TUint32 aVal) and Put16(TUint8* aPtr, TUint16 aVal).
+These functions read and write byteswapped data at (possibly) misaligned addresses
+
+Added class LittleEndian which also implements Get32(const TUint8* aPtr), Get16(const TUint8* aPtr) and
+Put32(TUint8* aPtr, TUint32 aVal), Put16(TUint8* aPtr, TUint16 aVal); These funtions write data in host order 
+at (possibly) misaligned addresses.
+
+CancelAll now calls Shutdown with CServProviderBase::EImmediate rather than CServProviderBase::ENormal
+
+Added KSockWriteUrgent, KSIPeekData and KSockReadPeek. Protocols which support urgent data (AKA Out of band or unit data) should set 
+KSIUrgentData in their protocol info. Protocols which support peeking should set KSIPeekData. If a read request
+is issued with the peek bit set and a protocol supports peek it should process the read as normal but retain a 
+copy of the data for subsequent reads.
+
+Version 0.1(024)
+================
+
+RSocket::GetOpt and RSocket::SetOpt become
+TInt RSocket::SetOpt(TUint anOptionName,TUint anOptionLevel,const TDesC8& anOption=TPtrC(NULL,0));
+TInt RSocket::GetOpt(TUint anOptionName,TUint anOptionLevel,TDes8& anOption);
+
+RSocket::Ioctl becomes 
+EXPORT_C void RSocket::Ioctl(TUint aCommand,TRequestStatus& aStatus,TDes8& aDesc=TPtr8(NULL,0),TUint aLevel=KLevelUnspecified)
+
+Added CProtocolBase::Tag() to retrun a TPtrC to the protocol's tag name
+
+Version 0.1(023)
+================
+
+added RSocketServ::StartProtocol(TUint anAddrFamily,TUint aSockType,TUint aProtocol,TRequestStatus &aS)
+This can be used to asynchronously start a protocol so that a later call to RSocket::Open will
+complete immediately
+
+Asynchronous RSocket::Close has been removed - use asynchronous ShutDown then synchronous close to
+allow a protocol to drain.
+
+RSocket::Listen(), RSocket::Bind(), RSocket::LocalName() and RSocket::RemoteName() all 
+become synchronous.
+
+CProtocolBase::StartSending() becomes CProtocolBase::StartSending(CProtocolBase* aProtocol)
+aProtocol should point to the protocol which is raising the flow control on event.
+
+added client side MBufManager debugging functions:
+TInt RSocketServ::__DbgFailNextMbuf(TInt n); // Fail after n allocs on the core Mbuf allocator, 0 to cancel
+TInt RSocketServ::__DbgSetMbufPoolLimit(TInt n); // Set the maximum size of the mbuf pool to n bytes
+TInt RSocketServ::__DbgCheckMbuf(TInt n); // Check that there are only n bytes allocated from the entire pool
+TInt RSocketServ::__DbgMbufFreeSpace();	// return the amount of free space in the mbuf manager pool (bytes)
+TInt RSocketServ::__DbgMbufTotalSpace(); // return the total size of the mbuf manager pool (bytes)
+
+Added net database lookup classes. Unfortunately I have been unable to extract as much generality
+as I would have liked and so the net database Base classes provide little more than IPC and 
+request routing.
+
+RNetDatabase client side and CNetDBProvdBase server side - API are similar to other lookup classes and 
+should be obvious.
+
+Version 0.1(022)
+================
+
+NetServ has been droped from the ESOCK releasables - EIKON ESOCK clients must once again 
+call StartESOCK(NULL) just like the rest of us.
+
+Switched the API to Accept() so that Accept is called on the listening socket and takes
+a blank socket as an argument - this is so that CancelAccept() is called on the same socket
+as Accept() was called on.
+i.e newConnection.Accept(listener,aStatus); becomes listener.Accept(newConnection,aStatus);
+
+Fixed defect in outgoing connection data copy.
+
+Version 0.1(021)
+================
+
+Ini files moved to \e32data (WINS) or \data (EPOC)
+
+void CServProviderBase::PassiveOpen(...) becomes TInt CServProviderBase::PassiveOpen(...)
+this allows protocols to return errors (OOM etc.) on passive opens
+
+Added an extra parameter (CProtocolBase* aSourceProtocol=NULL) to all inter protocol calls
+so that the source of such a call may be identified. Protocols shouls call these functions
+with aSourceProtocol=this
+
+All ESOCK specific error numbers now negative
+
+Replaced ALIGN macros with templates AlignDown4 and IsAligned4
+
+Known defects - PDummy's service provider (WINS test code) can leak memory in OOM conditions
+
+Version 0.1(020)
+================
+Reduced the memory footprint of ESOCK to about 77k from 0.5 Mb :-(
+Fixed protocol re-start defect in NETSRV
+
+Version 0.1(019)
+================
+J Day release.
+NETSERV now starts (and links to) IRDA, TCP/IP and NCP32.
+
+WARNING
+MNT command has a defect in GETBLD. After getting E32 v61 INCC WINS WINSDB it then gets 60 of EMARM.
+Reason unknown as yet.)
+
+Version 0.1(018)
+================
+
+added reliance on C32 for netsrv
+removed dependancies on econs
+
+NOTE COMMS PDD MUST BE CALLED ECDRV1
+
+Version 0.1(017)
+================
+
+17 was abandoned due to excess grief - it is haunted enter release 17 at your own peril
+
+Version 0.1(016)
+================
+
+Added the netserv releasable. This is used by the shell to configure
+the network.
+
+Fixed PDUMMY and IPWINS with refeneces to EEmergency.
+
+Version 0.1(015)
+================
+
+CServProviderBase::EEmergency becomes CServProviderBase::EImmediate this is to make code for the the following defect fix
+read more sensibly
+
+Canceling a pending connect will now shut a socket down EImmediate (was EEmergency) rather than 
+ENormal - this is to stop ESOCK panicing on the call to CanClose()
+
+TActivePriority becomes TESOCKActivePriority to prevent a name clash with EIKON.
+
+fixed typeo KKDletaTimerInterval becomes DeltaTimerIneterval
+
+Version 0.1(014)
+================
+
+Brought releasble zip filenames into line with other projects
+
+WINS release in 	r:\ESOCK\ZIP\EWINS.nnn
+WINS debug sdbs in 	r:\ESOCK\ZIP\EWINSDB.nnn
+MARM release in 	r:\ESOCK\ZIP\EMARM.nnn
+
+Added RSocket::CancelAll
+
+RSocket::CancelXXXXX() no longer panics the client under any circumstances
+
+RSocket::Accept(RSocket& aListeningSocket,TSockAddr &aRemote TDes8 &aConnectData,TRequestStatus& aStatus)
+becomes RSocket::Accept(RSocket& aListeningSocket,TDes8 &aConnectData,TRequestStatus& aStatus); 
+clients can use RSocket::RemoteName after accepting if they need to know the address of the 
+remote host initiating a conection.
+
+ESOCK's delta timer queue function becomes
+IMPORT_C TTimerHandle CDeltaTimer::Queue(TTimeIntervalShortMicroSeconds aTimeInMicroSeconds,TCallBack& aCallBack);
+to fall in line with E32 timer implementations i.e the "Micro" isn't a misprint anymore. KDletaTimerInterval 
+specifies the granularity of the delta timer.
+
+CServProvider::Write(const TDesC8& aDesc, TUint options)=0; becomes 
+CServProvider::Write(const TDesC8& aDesc, TUint options, TSockAddr* anAddr=NULL)=0;
+SetRemote name is now only called as a result of RSocket::Connect()s - SendTo addresses will be sent through 
+on the new TSockAddr argument. Connection oriented sockets should never have the TSockAddr set on a Write call.
+
+Version 0.1(013)
+================
+
+Includes ARM Build
+
+WINS release in 	r:\ESOCK\ZIP\ESKWINS.nnn
+WINS debug sdbs in 	r:\ESOCK\ZIP\ESKSDB.nnn
+MAMR release in 	r:\ESOCK\ZIP\ESKMARM.nnn
+
+WINS release includes
+ESOCKxx.DLL	ESOCK dll and exe
+ESOCKxx.LIB	ESOCK link library
+PDUMMYxx.PRT Dummy protocol module
+IPWINSxx.PRT TCP/IP over WinSock protocol module
+
+MARM relase includes
+ESOCKxx.DLL ESOCK dll and exe
+ESOCKxx.lib ESOCK link library
+PDUMMY.PRT dummy protocol modules
+
+Release notes
+=============
+
+AutoBind now called for SendTo on connectionless sockets not previously bound.
+
+Fixed looping defect in Error(MSocketNotify::EErrorConnect)
+
+removed external dependencies on ss_pman.h
+
+fixed SendTo failure on non connections oriented sockets.
+
+Version 0.1(012)
+================
+
+Added support for writable ini files.
+	TInt CIniFile::WriteVar(const TDesC& aSection,const TDesC& aVarName,TInt aValue);
+	TInt CIniFile::WriteVar(const TDesC& aSection,const TDesC& aVarName,const TDesC& aValue);
+	void CIniFile::CommitL();
+
+
+Version 0.1(011)
+================
+
+symbolic constant ESOCK_INI_FILE added to specify the path of the ini file.
+
+Added new class RMBufAsyncRequest which provides asyncronous buffer allocation for 
+protocols to help them avoid dealocks.
+
+Added inlines RMBuf::Get() and RMBuf::Put() which safely get and put bytes to/from an
+MBuf. These are not inlines in debug builds.
+
+Added inlines RMBuf::AllocL() and RMBuf::Free() so that there is now no need at all
+for protocols to call CMBufManager functions.
+
+Removed operator->() from all classes and replaced with RMBufXXX::First() which
+returns a pointer to the first MBuf in a buffer queue or chain.
+
+Changed void RMBufChain::Align(Tint aSize) to TInt RMBufChain::Align(Tint aSize).
+The functionality of this has changed slightly also and now allow aSize to be greater
+than the chain length without raising a panic. aSize must is still limited to an
+MBuf buffer size (ie aSize<=128). The number of bytes that were aligned is returned.
+
+Removed  TMBufIter::operator->()
+
+Removed RMBuf* operator from all classes except TMBufIter.
+
+Amended test code to check RMBufChain::CreateL() and Async allocator support.
+
+Re-organised MBuf source code, splitting it into several files.
+
+Added Protocol debugging aids to CMBufManager:
+__DbgSetPoolLimit()	- Sets a hard limit on the maximum size to which the pool may grow.
+__DbgSetFailAfter() - Causes a future allocation request to fail
+__DbgGetBufSpace()	- Returns free buffer space
+__DbgGetBufTotal()	- Returns total buffer space
+
+(Re-)Exported the TAsyncCallback class.
+Removed excess EXPORTs from CAsync class.
+Added ProtocolManager::__DbgForceKillMBufManager()
+
+CSocket::Error() no longer has a hard coded call to __debugGER()
+
+KIoctlNonBlockingIO becomes KSONonBlockingIO and KIoctlBlockingIO becomes KSOBlockingIO
+Blocking behaviour should now be set using SetOption.
+
+RSocket::SetOpt(TUint optionName,const TDesC8 &aDesc,TUint optionLevel,TRequestStatus &aStatus) becomes
+RSocket::SetOpt(TUint optionName,const TDesC8 *aDesc,TUint optionLevel) and 
+RSocket::GetOpt(TUint optionName,const TDesC8 &aDesc,TUint &anOptionLen,TUint optionLevel,TRequestStatus &aStatus) becomes
+RSocket::GetOpt(TUint optionName,const TDesC8 *aDesc,TUint &anOptionLen,TUint optionLevel);
+
+To support Ioctls without any data void Ioctl(TUint level,TUint name,TDes8 &anOption,TUint aLen) 
+becomes void Ioctl(TUint level,TUint name,TDes8 &anOption) and, because of this 
+CServProvdBase::Ioctl(TUint level,TUint name,TDes8& anOption) becomes 
+CServProvdBase::Ioctl(TUint level,TUint name,TDes8* anOption) and MSocket::IoctlComplete(TDesC8 &aBuf) 
+becomes MSocket::IoctlComplete(TDesC8 &aBuf) 
+
+RSocket::Close no longer panics if the socket was never opened
+
+void CServProviderBase::SetRemName(TSockAddr& anAddr) becomes TInt CServProviderBase::SetRemName(TSockAddr& anAddr)
+protocols can pre check addresses (for valid port numbers etc) and return an error synchronously - otherwise they 
+should return KErrNone.
+
+Version 0.1(010)
+================
+
+ESOCK now builds under ARM but will not link against the released base due to a gcc defect.
+Talk to Rog if you want to run ESOCK on a rack.
+
+Added static EXPORT_C ProtocolManager::__DbgForceLoadMBufManagerL(); This allows debug builds to 
+force premature loading of the MBuf manager.
+
+RMBufPktQ::Replace() becomes RMBufPktQ::Prepend().
+
+Added void RMBufChain::CreateL(const TDesC8& aDes, TInt aHdrLen=0); This creates an MBuf chain
+from a descriptor and optionally prepends space for a protocol header.
+
+Added TInt TSockAddr::GetUserLen(); Derived classes should now call SetUserLen() in their 
+contructor to set the descriptor length tom the actuall length of the desciptor. TSockAddr 
+now initialises the length to maximum possible length of the descriptor. Note: If you dynamically
+change the length of your address, then either ignore this or set to max possible length.
+The primary use for this is to enable address type independant routing to be implemented by 
+regarding the derive portion of TSockAddr as a bit stream. If this will never apply to you,
+then there is no real need to do a SetUserLen() in you constructor.
+
+TSocketAddress removed. Where needed, this functionality can be implemented
+in derived classes. Use of the names "Input()" and "Output()" may be
+appropriate for consistancy.
+
+CProtocolFamilyBase::NewProtocol becomes CProtocolFamilyBase::NewProtocolL
+
+Re-designed protocol manager. CProtocolBase and CProtocolFamily are no longer CObjects.
+The fact that they were was adding to the complexity of the protocol manager. This should make
+no difference to protocol modules.
+
+Added low memory tests to test code and fixed all memory leaks (etc.) detected.
+
+Added class CAsyncCallBack : public CAsync. CAsyncCallBack implements the bare minimum non virtual
+subclass of CAsync.
+
+Added full binding code. (Based on a hacked up inifile system)
+
+	Binding is controled by the file \e32sys\esock.ini. The format of this is very similar to 
+	Windows' protman.ini
+	i.e
+	[SectionName]
+	itemName= itemValue
+	[AnotherSectionName]
+	itemName= itemValue
+	
+	Note that there must not be a space between "itemname" and "=" and there must be a spece between 
+	"=" and  itemValue. Also note  that itemValue is terminated by white space.
+
+	Protocols may read the ini file (or other similar files) using the CIniFile class. Note that whne the
+	Registry is implemented CIniFile will be removed.
+
+	There is a general section called [sockman] which should contain an item "protocols" with a comma
+	seperated list of top level protocols - i.e those protocols which can create sockets.
+
+	Each protocol is described by it's own section. The section name is the protocol's "tag" the protocol
+	section must contain two items: "filename" and "index" these are respectively the .prt (dll) file to load
+	the protocol from and (if required) the (1 based) index of the specific protocol within the protocol family.
+
+	A protocol section may also have an optional "bindto" item which specifies a comma seperated list of 
+	(tags of) the lower bindings of the protocol.
+
+	CProtocolBase::InitL() becomes CProtocolBase::InitL(TDesC& aTag) the descriptor carries the protocol's
+	tag from the ini file. Protocols should add options to their specific section and use the supplied tag
+	as  a section name to retrieve them - this allows us to multiple instantiations of a single protocol.
+
+	e.g
+		[sockman]
+		protocols= ip
+
+		[transport]
+		filename= \e32sys\pdummy.prt
+		index= 1
+		bindto= interface1,interface2
+
+		[interface1]
+		filename= \e32sys\pdummy.prt
+		index= 2
+
+		[interface2]
+		filename= \e32sys\pdummy.prt
+		index= 2
+
+	This ini file loads protocol 1 from \e32sys\pdummy.prt and binds it to two seperate instances of
+	protocol 2 from \e32sys\pdummy.prt
+
+	Protocols are late bound when sockets are created. An unfortunate side effect of this is that BindL 
+	and BindToL May be called after StartL due to a second round of binding.
+
+	Protocols should call Open on any protocols they bind to and Close on any protocols they are bound to 
+	when they close. This will ensure that protocols are destroyed in the correct order (up the stack)
+
+	Thanks to SteveT for the original CIniFile.
+
+
+Socket buffers are now fixed in size - once they have been explicitly set. Otherwise they will
+continue to grow as before.
+
+Version 0.1(009)
+================
+
+Fixed defect in Disconnect up call.
+
+Removed CServProvdBase::Create() this was an artifact of the previous incarnation of the protocol manager.
+
+Added proper copy constructors to Service providers in ipwins. Added esock debug asserts to ipwins.
+
+SocketTimer::Queue(TInt aTimeInMicroSeconds,TCallBack &aCallBack); becomes SocketTimer::Queue(TTimeIntervalMicroSeconds aTimeInMicroSeconds,TCallBack &aCallBack); 
+I'm not sure if this is a good thing though.
+
+Internals of SocketTimer altered to use a heartbeat rather than an interval timer - this makes better use of E32 delta queues.
+
+CServProviderBase::Protocol() has been removed. SSPs which wish need reference their protocol should implement this themselves.
+
+TNotify has become the mixin MSocketNotify there should be no change to protocols.
+Similarly TResolverNotify has become MResolverNotify.
+
+CServProviderBase::SetLocalName now returns a TInt - this allows protocols to signal an error for (amongst other things) bad protocol 
+family in the address and reserved port numbers. The error is passed directly to the client. SetRemoteName should still signal any errors 
+using an Error call during or after the ActiveOpen() call.
+
+Similarly, GetOption and SetOption now return a TInt. Also CProtocolBase::GetOption and CProtocolBase::SetOption
+
+The socket server no longer steals all Ioctl calls it recognises regardless of the level.
+
+Added restartable connections to sockets. A protocol which can restart after a failed connect or a disconnect should set KSICanReconnect
+in it's protocol info field. This allows clients to reissue a connect request after a failure.
+
+Added a new error indication bit: MSocketNotify::EErrorFatal this will cause all pending requests to complete. If the socket does not 
+support re-connection setting EErrorFatal will put into an error state which will stop all further client requests. 
+MSocketNotify::EErrorFatal is not set by default. MSocketNotify::EErrorFatal should be used to indicate an error on a listening socket.
+
+New improved EchServ. The test server now provides chargen, NULL and connect back services as follows:
+	Service		TCP/Port 	UDP/Port
+	=======		========	========
+	Echo		 20000		   -
+	Char Gen	 20001		   -
+	Null		 20002		   -
+	Reconnect	 20003		  n/a
+
+The reconnect srvice will create a new socket and attempt to connect back to the originating host on port 20004. 
+When both connections are in place it will echo data received on each socket to the other.
+
+MSocketNotify::IoctlComplete() becomes MSocketNotify::IoctlComplete(TDesC8 &aBuf) anyreturn data for the Ioctl should be
+sent in the IoctlComplete call. SSPs now need to copy any data required fro mthe Ioctl call.
+
+Version 0.1(008)
+================
+
+Fixed Deadlock defect on startup with no valid protocols.
+
+OSILayer enum becomes TOSILayer. All memnbers get an E Prefix. Ooops.
+
+Fixed a descriptor type defect in the CSocket class.
+
+CServiceProviderBase::SetNotify is no longer virtual. SSPs should now use the new pure virtual 
+Start() as indication that they can send messages to their iSocket 
+
+Tidied up the protocol init code. fixed defects when loading second+ protocols from a single family.
+
+Finished name resolution and service database functionality (Except Next). NetDatabase will 
+be left until there is more input available from IrIAS
+
+Fixed datagram Close/Shutdown order defect.
+
+Fixed code rot in the e32 finger server and IPWINS.
+
+CAsync had unneccessary code. CAsync::CallBackL and CAsync::RunL have been removed (RunL becomes pure virtual). You 
+should place all code from CAsync::CallBackL into the derived RunL
+
+Added a global timer class:
+class SocketTimer 
+	{
+public:
+	IMPORT_C static TTimerHandle Queue(TInt aTimeInMicroSeconds,TCallBack &aCallBack);
+	IMPORT_C static void Remove(TTimerHandle aTimer);
+	};
+Although times are specified in milliseconds the timer currently only gives 1/10th second granularity so it isn't much better that a CTimer.
+This will be rectified when E32 supports fine grained timers - this in unlikely to be on WINS, you'll have to live with the 1/10ths.
+Queue returns a TTimerHandle which should be passed to Remove to Cancel a timer. TTimerHandle becomes when the timer goes off. Timer test 
+code is in TSOCK\T_TIMER.MAK
+
+Version 0.1(007)
+================
+
+
+TSockAddr re-implemented more effeciently and added CmpPort() member to compare for equality two TSockAddr structures.
+
+ES_INET.H dependancy removed from ESock.
+
+Class TSockAddrIN has been renamed to TInetAddr. Implementation of TInetAddr moved to TCPIP and also IPWINS.
+
+Class Inet removed from Esock and replaced with class ByteOrder that implements byte order swapping.
+
+Included test code for MBuf manager as TESTMBUF but see below.
+
+Changed MNT.CMD to ensure that test protocols have the InstallXXX symbols as the first in generated def files.
+All Esock code (especially protocol modules) should now be built using real (i.e. non name) builds.
+DEF files were added to the release in 005.
+
+Added Peek() to RMBufPktQ to allow the first packet to be examined without removing it.
+
+Removed cleanup stack support from RMBufChain.
+
+CProtocolBase::Bind() becomes CProtocolBase::BindL() and CProtocolBase::BindTo() becomes 
+CProtocolBase::BindToL() protocols should leave from any binding operation to indicate an error.
+
+Inter-Protocol flow control:
+CProtocolBase::Send() now returns TInt, added virtual void CProtocolBase::StartSending(); These now form a 
+flow control pair. A zero return from a send should floww control off the sending protocol. StartSending 
+acts as a flow control on.
+
+Added virtual void CProtocolBase::Error(Tint anError); Protocols should propagate error conditions up 
+the stack (eventually to socket service providers) using this call.
+
+Added TServerProtocolDesc::OSIlayer and corresponding OSILayer enum. Protocols will be Start()ed in
+increasing layer  order (ie up the stack).
+
+RSocketServer::FindProtocol(const TProtocolName&,TProtocolDesc &) implemented.
+
+Introduced alloc heaven tool code into socket server.
+Fixed Alloc heaven.
+
+Fixed RecvFrom functionality. (Was not writing address back to client space.)
+
+Fixed datagram message completeion defect.
+
+Removed last globals from the socket server. Yeah!
+
+Send(RMBufChain & ,TSockAddr *from,TSockAddr *to=NULL) becomes Send(RMBufChain &) MBuf chains now carry 
+source and destination addresses. (this should have been in 006.)
+
+Added MBuf Manager to socket server. MBuf manager is installed whenever a protocol which requires MBuf 
+services is loaded. Use of MBuf manager as a stand alone dll is no depreciated. Protocols should indicate that
+they rewuire the MBufManager by setting ENeedMBufs in their serviceTypeInfo.
+
+Version 0.1(006)
+================
+
+CProtocolBase::NewSAPL() becomes CProtocolBase::NewSAPL(TUint aSocketType) The single parameter indicates the socket type.
+Protocols which only produce a single socket type may ignore it.
+
+TNotify::Error(TInt anError); becomes TNotify::Error(TInt anError,TUint anOperationMask=KAllOperationss);
+Errors can now be specified on one of more operations. Operation bitmasks are specified in TNotify.
+
+Added TNotify::IoctlComplete ioctl operations are now asynchronous and follow the general pattern. Socket Service providers ioctl
+call carries a descriptor. The desc's contents are protocol specific. The socket server will write the entire contents of the descriptor
+back to client space after an Ioctl completes.
+
+Process(RMBufChain & ,TSockAddr *from,TSockAddr *to=NULL) becomes Process(RMBufChain &) MBuf chains now carry source and destination addresses.
+
+
+Version 0.1(005)
+================
+
+Made release notes more comprehensive. Esock now has 3 users.
+
+Added RecvOneOrMore functionality. This causes a socket (stream only) to block until any data arrives.
+It will then read any data that is available (upto the size of the supplied descriptor) and complete immediately.
+
+added serviceTypeInfo to TServerProtocolDesc structure - it is important that protocols fill this in correctly using
+values from the TProtocolServiceInfo enum. Note that previous releases of IPWINS and PDUMMY were incorrect.
+
+added *.def to li.prj
+
+Cleaned up startup and shutdown code in IPWINS - we were leaving threads hanging around.
+
+Esock now uses UserSvr::InitRegisterCallback() this is important as protocols will start to use the
+comms server which must be started before they load.
+
+Added CProtocolBase::ProtcolFamily() and CServProviderBase::Protocol()
+
+Renamed TIPWINS.* to T_IPWINS.*
+
+Added basic host name resolution to IPWINS - this is used by the test code. You no longer need to edit IP addresses in T_IPWINS
+Addresses are currently returned in host order - this may change.
+
+Unicode name resolution does not work.
+
+Non debug MBuf manager does not build.

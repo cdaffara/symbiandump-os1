@@ -1,0 +1,27 @@
+CXX	 = g++296
+CXXFLAGS =  -x c++ -g -D __LINUX__ -I $(EPOCROOT)epoc32/include -I ../inc
+SOURCE	 =  MAINFUNC.CPP BMTOPBM.CPP PBMCOMP.CPP PBMTOBM.CPP RGB.CPP UTILS.CPP
+BLDDIR	 = ../build-bmconv
+OBJECT   = $(addprefix $(BLDDIR)/, $(notdir $(SOURCE:.CPP=.o)))
+TARGET	 = $(BLDDIR)/bmconv
+
+VPATH	 = ../bmconv
+
+_dummy := $(shell mkdir -p $(BLDDIR))
+
+all: $(TARGET)
+
+
+$(TARGET): $(OBJECT)
+	$(CXX) $^ -o $@
+	
+	
+$(OBJECT): $(BLDDIR)/%.o: %.CPP
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJECT) $(TARGET)
+	-rmdir $(BLDDIR)
+
+.PHONY: all clean
+

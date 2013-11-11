@@ -1,0 +1,299 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE TSI_MMFACLNT.DLL
+#PAUSE_AT_END
+
+# wait for ring.wav to finish playing
+delay 5000
+
+
+#True Pause
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0175-HP
+//! @SYMTestCaseDesc			Negative: Call Pause before WriteL
+//! @SYMTestPriority			High
+//! @SYMTestType			Exception usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1.Create a CMdaAudioOutputStream object
+//! 					2. Call Pause
+//! 					3. Call Open
+//! 					4. Call Pause
+//! @SYMTestExpectedResults 		CMdaAudioToneUtility::Pause() returns with KErrNotReady
+//! 
+PRINT Negative: Call Pause before WriteL 
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0175-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0176-HP
+//! @SYMTestCaseDesc			Positive: Pause-Resume
+//! @SYMTestPriority			High
+//! @SYMTestType			Normal usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1.Create a CMdaAudioOutputStream object
+//! 					2. Call Open
+//! 					3. Wait for MaosOpenComplete()
+//! 					4. Call WriteL
+//! 					5. Call Pause. Wait 2 seconds
+//!					6. Resume playback
+//! 					7. Call WriteL until MaoscPlayComplete(TInt)
+//! @SYMTestExpectedResults 		MMdaAudioOutputStreamCallback::MaoscBufferCopied callback will not be received after Pause. 
+//!					Audio continues from paused position. Pause and Resume return with KErrNone
+//! 
+PRINT Positive: Pause-Resume
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0176-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0177-HP
+//! @SYMTestCaseDesc			Positive: Pause-Resume three times
+//! @SYMTestPriority			High
+//! @SYMTestType			Normal usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1.Create a CMdaAudioOutputStream object
+//! 					2. Call Open
+//! 					3. Wait for MaosOpenComplete()
+//! 					4. Call WriteL
+//! 					5. Call Pause. Wait 2 seconds
+//! 					6. Repeat steps 4&5 two times
+//! 					7. Call WriteL until MaoscPlayComplete(TInt)
+//! @SYMTestExpectedResults 		MMdaAudioOutputStreamCallback::MaoscBufferCopied callback will not be received after Pause. 
+//!					Audio continues from paused position. Pause and Resume return with KErrNone
+//! 
+PRINT Positive: Pause-Resume three times
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0177-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0178-HP
+//! @SYMTestCaseDesc			Positive: Change configuration while in Pause
+//! @SYMTestPriority			High
+//! @SYMTestType			Alternative usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1. Play preloaded audio
+//! 					2. Pause playback
+//! 					3. Change volume and balance to values different from default.
+//! 					4. Resume playback
+//! 					5. Check the values have been changed
+//! @SYMTestExpectedResults 		Volume and balance can be changed in paused state. Changed values are maintained after resume
+//!					Audio continues from paused position. Pause and Resume return with KErrNone
+//! 
+PRINT Positive: Change configuration while in Pause (file sequence)
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0178-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0179-HP
+//! @SYMTestCaseDesc			Negative: Change invalid config while in pause
+//! @SYMTestPriority			High
+//! @SYMTestType			Alternative usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1.Create a CMdaAudioOutputStream object
+//! 					2. Call Open
+//! 					3. Wait for MaosOpenComplete()
+//! 					4. Call WriteL
+//! 					5. Call Pause.
+//! 					6. Call SetAudioPropertiesL
+//! 					7. Call WriteL
+//! @SYMTestExpectedResults 	SetAudioPropertiesL should leave with KErrNotSupported
+//!				Audio continues from paused position. Pause and Resume return with KErrNone
+//! 
+PRINT Negative: Change invalid config while in pause
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0179-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0180-HP
+//! @SYMTestCaseDesc			Positive: GetBytes during pause
+//! @SYMTestPriority			High
+//! @SYMTestType			Alternative usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1.Create a CMdaAudioOutputStream object
+//! 					2. Call Open
+//! 					3. Wait for MaosOpenComplete()
+//! 					4. Call WriteL
+//! 					5. Call Pause.
+//! 					6. Call GetBytes. Wait 2 seconds
+//! 					7. Call GetBytes again
+//! 					8. Call WriteL until MaoscPlayComplete(TInt)
+//! @SYMTestExpectedResults 		GetBytes should return the same number while in Pause
+//!					Audio continues from paused position. Pause and Resume return with KErrNone
+//! 
+PRINT Positive: GetBytes during pause
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0180-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0181-HP
+//! @SYMTestCaseDesc			Positive: Write-Pause-Stop-Write
+//! @SYMTestPriority			High
+//! @SYMTestType			Normal usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1.Create a CMdaAudioOutputStream object
+//! 					2. Call Open
+//! 					3. Wait for MaosOpenComplete()
+//! 					4. Call WriteL
+//! 					5. Call Pause. Wait 2 seconds
+//! 					6. Call Stop
+//!                                     7. Call Resume
+//! 					8. Call WriteL until MaoscPlayComplete(TInt)
+//! @SYMTestExpectedResults 		Pause returns with KErrNone. Resume returns with KErrNotReady while stopped. Audio should be resumed from the start
+//! 
+PRINT Positive: Write-Pause-Stop-Resume-Write
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0181-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0182-HP
+//! @SYMTestCaseDesc			Negative: Pause-Resume non-support formats
+//! @SYMTestPriority			High
+//! @SYMTestType			Alternative usecase
+//! @SYMREQ				REQ11462
+//! @SYMPREQ				1540
+//! @SYMTestActions 			1.Create a CMdaAudioOutputStream object
+//! 					2. Call Open
+//! 					3. Wait for MaosOpenComplete()
+//! 					4. SetDataTypeL
+//! 					5. Call WriteL
+//! 					6. Call Pause. Wait 2 seconds
+//! 					7. Call WriteL until MaoscPlayComplete(TInt)
+//! @SYMTestExpectedResults 		Pause returns KErrNotSupported
+//! 
+PRINT Negative: Pause-Resume non-support formats
+RUN_TEST_STEP 30000,ACLNT, MM-MMF-ACLNT-I-0182-HP  \audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0185-HP
+//! @SYMTestCaseDec			Play-Pause-Stop-Play
+//! @SYMTestPriority			High
+//! @SYMTestType			Normal usecase
+//! @SYMREQ				REQ11462
+//!					REQ11459
+//!					REQ11460
+//! @SYMPREQ				1540
+//! @SYMTestActions			1. Play preloaded audio
+//!					2. Pause
+//!					3. Stop
+//!					4. Continue play. Checking that play continues correctly.
+//! @SYMTestExpectedResults		Audio does not continue from paused position. Audio is restarted
+//!
+PRINT Play-Pause-Stop-Play
+RUN_TEST_STEP 60000, ACLNT, MM-MMF-ACLNT-I-0185-HP c:\audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0186-HP
+//! @SYMTestCaseDec			Change configuration while in Pause
+//! @SYMTestPriority			High
+//! @SYMTestType			Alternative usecase
+//! @SYMREQ				REQ11462
+//!					REQ11459
+//!					REQ11460
+//! @SYMPREQ				1540
+//! @SYMTestActions: 
+//!					1. Play preloaded audio
+//!					2. Pause playback
+//!					3. Change volume and balance to values different from default.
+//!					4. Resume playback
+//!					5. Check the values have been changed
+//! @SYMTestExpectedResults:		Volume and balance can be changed in paused state. Changed values are maintained after resume
+//!
+PRINT Change configuration while in Pause
+RUN_TEST_STEP 60000, ACLNT, MM-MMF-ACLNT-I-0186-HP c:\audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0187-HP
+//! @SYMTestCaseDec			Pause play and continue play (sqn).
+//! @SYMTestPriority			High
+//! @SYMTestType			Normal usecase
+//! @SYMREQ				REQ11461
+//! @SYMPREQ				1540
+//! @SYMTestActions
+//!					1. Play preloaded audio
+//!					2. Pause
+//!					3. Continue play. Checking that play continues correctly.
+//! @SYMTestExpectedResults		Audio continues from paused position.
+//!					
+PRINT Pause play and continue play (sqn).
+RUN_TEST_STEP 60000, ACLNT, MM-MMF-ACLNT-I-0187-HP c:\audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0188-HP
+//! @SYMTestCaseDec			Pause play and continue play three times (sqn)
+//! @SYMTestPriority			High
+//! @SYMTestType			Normal usecase
+//! @SYMREQ				REQ11461
+//! @SYMPREQ				1540
+//! @SYMTestActions: 
+//!					1. Play preloaded audio
+//!					2. Pause
+//!					3. Continue play
+//!					4. Repeat steps 2-3 two more times
+//! @SYMTestExpectedResults		Audio continues from paused position.
+//!					
+PRINT Pause play and continue play three times (sqn)
+RUN_TEST_STEP 60000, ACLNT, MM-MMF-ACLNT-I-0188-HP c:\audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0189-HP
+//! @SYMTestCaseDec			Play-Pause-Stop-Play (sqn)
+//! @SYMTestPriority			High
+//! @SYMTestType			Normal usecase
+//! @SYMREQ				REQ11461
+//! @SYMPREQ				1540
+//! @SYMTestActions 
+//!					1. Play preloaded audio
+//!					2. Pause
+//!					3. Stop
+//!					4. Continue play. Checking that play continues correctly.
+//! @SYMTestExpectedResults		Audio does not continue from paused position.
+//!					
+PRINT Play-Pause-Stop-Play (sqn)
+RUN_TEST_STEP 60000, ACLNT, MM-MMF-ACLNT-I-0189-HP c:\audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0190-HP
+//! @SYMTestCaseDec			Change configuration while in Pause (sqn)
+//! @SYMTestPriority			High
+//! @SYMTestType			Alternative usecase
+//! @SYMREQ				REQ11461
+//! @SYMPREQ				1540
+//! @SYMTestActions
+//!					1. Play preloaded audio
+//!					2. Pause playback
+//!					3. Change volume and balance to values different from default.
+//!					4. Resume playback
+//!					5. Check the values have been changed
+//! @SYMTestExpectedResults		Volume and balance can be changed in paused state. Changed values are maintained after resume
+//!
+PRINT Change configuration while in Pause (sqn)
+RUN_TEST_STEP 60000, ACLNT, MM-MMF-ACLNT-I-0190-HP c:\audio.ini
+TEST_COMPLETE
+
+//! @SYMTestCaseID			MM-MMF-ACLNT-I-0191-HP
+//! @SYMTestCaseDec			Pause play and continue play using different codecs.
+//! @SYMTestPriority			High
+//! @SYMTestType			Alternative usecase
+//! @SYMREQ				REQ11461
+//! @SYMPREQ				1540
+//! @SYMTestActions
+//!					1. Play preloaded audio
+//!					2. Pause
+//!					3. Continue play. Checking that play continues correctly.
+//!					4. Repeat this with all supported formats
+//! @SYMTestExpectedResults		Audio continues from paused position for each format
+//!				
+PRINT Pause play and continue play using different codecs.
+RUN_TEST_STEP 120000, ACLNT, MM-MMF-ACLNT-I-0191-HP c:\audio.ini
+TEST_COMPLETE

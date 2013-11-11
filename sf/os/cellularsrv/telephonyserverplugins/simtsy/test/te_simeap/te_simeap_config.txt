@@ -1,0 +1,52 @@
+[test0]
+# SmartCardAuthInfo= <TBuf8<KAutnLength>AUTN>, <TBuf8<KRandLength>RAND>, <TBuf8<KResLength>RES>, <TBuf8<KIkLength>IK>, <TBuf8<KCkLength>CK>, <TBuf8<KKcLength>iKc>, <TBuf8<KAutsLength>AUTS>, <TInt AuthErr>, <TAID>, <Data_Format; 0=Ascii, 1=with binary>
+SmartCardAuthInfo= AUTN_IN, RAND_IN, 123456789, 1234567890, 1234567899, 12345678, , 0
+SmartCardAuthInfo= AUTN_IN, RAND_IN, , , , , 1234567897, -2
+SmartCardAuthInfo= AUTN_IN, RAND_IN, 123456789, 1234567890, 1234567899, 12345678, , 0, AID1
+SmartCardAuthInfo= AUTN_IN, RAND_IN, , , , , 1234567897, -7, AID1
+SmartCardAuthInfo= \x00\x01\x02\x03\x04\x05, \x00\x01\x02\x03\x06\x07, \x00\x00\x00\x11\x11\x11, \x00\x00\x00\x11\x11\x22, \x00\x00\x00\x11\x22\x33, \x00\x01\x00\x02\x03\x04\x05\x06, , 0, \x00\x01\x00\x02, 1
+
+SmartCardAppInfo= AID00, EAPAID, 1, 1723
+
+#EapProcedure= <AID:bin>, <TEapType>, <num_EapChallenge_tags>, <optional:int dataFormat>
+#EapId= <id>
+#EapPseudonymId= <id>
+#EapMasterKey= <key>
+#EapExtMasterKey= <key>
+#EapChallenge= <challenge_data>, <resp_data>, <TEapAuthStatus>
+
+##### The following two EapProcedure tags test whether simtsy can #####
+##### carry out requests on two different sub-session at the same #####
+##### time.  (See test step TestSmartCardEap.)                    #####
+
+# Same as above test but with no explicit data format
+EapProcedure= \x00\x01\x00\x00\x02, 17, 3
+EapId= EAP_ID1
+EapPseudonymId= EAP_PseudonymID1
+EapMasterKey= EAP_KEY1
+EapExtMasterKey= EAP_KEY1EXT
+EapChallenge= CHALLENGE_DATA1, RESPONSE_DATA1, 1
+EapChallenge= CHALLENGE_DATA2, RESPONSE_DATA2, 1
+EapChallenge= CHALLENGE_DATA3, RESPONSE_DATA3, 2
+
+# bin data format
+EapProcedure= \x00\x02\x00\x00\x02, 23, 2, 1
+EapId= \x00\x01\x02\x03\x04\x05
+EapPseudonymId=
+EapMasterKey= \x00\x01\x02\x03\x04\x66
+EapExtMasterKey=
+EapChallenge= \x00\x00\x00\x11\x11\x11\x22\x22\x22, \xAA\xBB\xCC\x00\xDD\xEE\xFF, 1
+EapChallenge= \x00\x00\x00\x12\x12\x12\x22\x22\x22, \xAB\xBB\xCC\x00\xDD\xEE\xFF, 2
+
+##### The following two EapProcedure tags test whether simtsy can #####
+##### simulate stopping two sub-sessions from initialising on a   #####
+##### common AID.  (See test step TestSmartCardEap.)              #####
+EapProcedure= \x00\x00\x00\x00\xEE, 22, 0, 1
+EapProcedure= \x00\x00\x00\x00\xEE, 11, 0, 1
+
+# used to test bad client; need two entries, one for the bad client
+#   thread and one for the client which tries to use the same
+#   AID,EAPType after the bad client thread has died.
+#   (See test step TestSmartCardBasedEapBadClient.)
+EapProcedure= \x00\x03\x00\x00\x02, 25, 0
+EapProcedure= \x00\x03\x00\x00\x02, 25, 0

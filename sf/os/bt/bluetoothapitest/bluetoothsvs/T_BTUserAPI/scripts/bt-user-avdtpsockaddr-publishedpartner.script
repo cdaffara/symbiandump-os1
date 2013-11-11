@@ -1,0 +1,302 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all published partner elements of the TAvdtpSockAddr class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedPartner APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Wekey Weng
+//! @SYMCreationDate			10/03/2008
+///////////////////////////////////////////////////////////////////////////////
+
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	T_BTUserAPI
+DELAY		500
+
+
+// ****************************************************************************
+// TAvdtpSockAddr
+// **************************************************************************** 
+
+START_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0001
+//! @SYMTestCaseID              BT-USER-AvdtpSockAddr-PublishedPartner-0001
+//! @SYMAPI                     TAvdtpSockAddr::TAvdtpSockAddr()
+//! @SYMAuthor                  Wekey Weng
+//! @SYMCreationDate            02/29/2008
+//! @SYMTestCaseDesc            Default constructor using 0 as the parameter for setPort() 
+//! @SYMTestActions             1. Create a TAvdtpSockAddr object using default constructor
+//!                             2. Destruct the TAvdtpSockAddr object
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            Low
+//! @SYMTestExpectedResults     TAvdtpSockAddr object is created successfully
+//! @SYMTestType                CIT
+
+    START_TEST_BLOCK    10  T_BTUserAPI          \bluetooth\user\BT-USER-AvdtpSockAddr-PublishedPartner.ini
+            CREATE_OBJECT   TAvdtpSockAddr       avdtpsockaddr
+            COMMAND         avdtpsockaddr        new
+            COMMAND         avdtpsockaddr        ~
+    END_TEST_BLOCK
+    
+END_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0001
+
+//This case has problem. Need some investigation.
+START_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0002
+//! @SYMTestCaseID              BT-USER-AvdtpSockAddr-PublishedPartner-0002
+//! @SYMAPI                     TAvdtpSockAddr::TAvdtpSockAddr(const TSockAddr {ref})
+//! @SYMAuthor                  Wekey Weng
+//! @SYMCreationDate            02/29/2008
+//! @SYMTestCaseDesc            Copy constructor from original socket address
+//! @SYMTestActions             1. Create a TSockAddr object
+//!                             2. Create a TAvdtpSockAddr object with TSockAddr object
+//!                             3. Destruct the TAvdtpSockAddr object
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     TAvdtpSockAddr object is created successfully using copy constructor
+//! @SYMTestType                CIT
+
+    START_TEST_BLOCK    10  T_BTUserAPI         \bluetooth\user\BT-USER-AvdtpSockAddr-PublishedPartner.ini
+            CREATE_OBJECT   TSockAddr           sockaddr
+            CREATE_OBJECT   TAvdtpSockAddr      avdtpsockaddr
+            COMMAND         sockaddr            Construct
+            COMMAND         avdtpsockaddr       new     BT-USER-AvdtpSockAddr-PublishedPartner-0002-0001-new_Command2
+            COMMAND         avdtpsockaddr       ~
+            COMMAND         sockaddr            ~
+    END_TEST_BLOCK
+    
+END_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0002
+
+//This case may has problem. Need some investigation.
+START_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0003
+//! @SYMTestCaseID              BT-USER-AvdtpSockAddr-PublishedPartner-0003
+//! @SYMAPI                     TAvdtpSockAddr::Cast(const TSockAddr {ref})
+//! @SYMAuthor                  Wekey Weng
+//! @SYMCreationDate            02/29/2008
+//! @SYMTestCaseDesc            Utility function to downcast a TSockAddr to a TAvdtpSockAddr 
+//! @SYMTestActions             1. Create a TSockAddr object
+//!                             2. Downcast the TSockAddr object to a TAvdtpSockAddr
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     Return TAvdtpSockAddr as expected and no panic caused
+//! @SYMTestType                CIT
+
+    START_TEST_BLOCK    10  T_BTUserAPI         \bluetooth\user\BT-USER-AvdtpSockAddr-PublishedPartner.ini
+            CREATE_OBJECT   TSockAddr           sockaddr
+            CREATE_OBJECT   TAvdtpSockAddr      avdtpsockaddr
+            COMMAND         sockaddr            Construct
+            COMMAND         avdtpsockaddr       Cast    BT-USER-AvdtpSockAddr-PublishedPartner-0003-0001-Cast_Command2
+            COMMAND         sockaddr            ~
+    END_TEST_BLOCK
+    
+END_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0003
+
+START_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0004
+//! @SYMTestCaseID              BT-USER-AvdtpSockAddr-PublishedPartner-0004
+//! @SYMAPI                     TAvdtpSockAddr::SetSession(TAvdtpTransportSessionType );
+//!                             TAvdtpSockAddr::Session()
+//! @SYMAuthor                  Wekey Weng
+//! @SYMCreationDate            02/29/2008
+//! @SYMTestCaseDesc            Set the AVDTP session type into the socket address and get AVDTP session type from socket address  
+//! @SYMTestActions             1. Create a TAvdtpSockAddr object
+//!                             2. Set the AVDTP session type (EMedia) into the TAvdtpSockAddr object
+//!                             3. Get AVDTP session type
+//!                             4. Set the AVDTP session type (EReporting) into the TAvdtpSockAddr object
+//!                             5. Get AVDTP session type
+//!                             6. Set the AVDTP session type (ERecovery) into the TAvdtpSockAddr object
+//!                             7. Get AVDTP session type
+//!                             8. Set the AVDTP session type (ESignalling) into the TAvdtpSockAddr object
+//!                             9. Get AVDTP session type
+//!                             10. Destruct the TAvdtpSockAddr object
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The methods SetSession() is called without causing panic
+//!                             2. The method Session() returns value as expected without causing panic
+//!                                2.1 Step 3 returns EMedia
+//!                                2.2 Step 5 returns EReporting
+//!                                2.3 Step 7 returns ERecovery
+//!                                2.4 Step 9 returns ESignalling
+//! @SYMTestType                CIT
+
+    START_TEST_BLOCK    10  T_BTUserAPI         \bluetooth\user\BT-USER-AvdtpSockAddr-PublishedPartner.ini
+            CREATE_OBJECT   TAvdtpSockAddr      avdtpsockaddr
+            COMMAND         avdtpsockaddr       new     
+            COMMAND         avdtpsockaddr       SetSession    BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-SetSession_Command2
+            COMMAND         avdtpsockaddr       Session       BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-Session_Command3
+            COMMAND         avdtpsockaddr       SetSession    BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-SetSession_Command4
+            COMMAND         avdtpsockaddr       Session       BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-Session_Command5
+            COMMAND         avdtpsockaddr       SetSession    BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-SetSession_Command6
+            COMMAND         avdtpsockaddr       Session       BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-Session_Command7
+            COMMAND         avdtpsockaddr       SetSession    BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-SetSession_Command8
+            COMMAND         avdtpsockaddr       Session       BT-USER-AvdtpSockAddr-PublishedPartner-0004-0001-Session_Command9
+            COMMAND         avdtpsockaddr       ~
+    END_TEST_BLOCK
+    
+END_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0004
+
+START_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0005
+//! @SYMTestCaseID              BT-USER-AvdtpSockAddr-PublishedPartner-0005
+//! @SYMAPI                     TAvdtpSockAddr::SetSEID(TSEID );
+//!                             TAvdtpSockAddr::SEID()
+//! @SYMAuthor                  Wekey Weng
+//! @SYMCreationDate            02/29/2008
+//! @SYMTestCaseDesc            Set the Stream endpoint identifier (SEID) into the socket address and get the SEID from socket address
+//! @SYMTestActions             1. Create a TAvdtpSockAddr object
+//!                             2. Create a TSEID(10, ETrue) object
+//!                             3. Create a TSEID(11, EFalse) object
+//!                             4. Set the 1st TSEID object into the TAvdtpSockAddr object
+//!                             5. Get TSEID object from the TAvdtpSockAddr object
+//!                             6. Set the 2nd TSEID object into the TAvdtpSockAddr object
+//!                             7. Get TSEID object from the TAvdtpSockAddr object
+//!                             8. Destruct the TAvdtpSockAddr object and 2 TSEID objects.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The method SetSEID() is called without causing panic
+//!                             2. Step 4 returns TSEID object as expected
+//! @SYMTestType                CIT
+
+    START_TEST_BLOCK    10  T_BTUserAPI         \bluetooth\user\BT-USER-AvdtpSockAddr-PublishedPartner.ini
+            CREATE_OBJECT   TAvdtpSockAddr      avdtpsockaddr
+            CREATE_OBJECT   TSEID               seid
+            CREATE_OBJECT   TSEID               seid2
+            COMMAND         avdtpsockaddr       new     
+            COMMAND         seid                new           BT-USER-AvdtpSockAddr-PublishedPartner-0005-0001-new_Command2
+            COMMAND         seid2               new           BT-USER-AvdtpSockAddr-PublishedPartner-0005-0001-new_Command3
+            COMMAND         avdtpsockaddr       SetSEID       BT-USER-AvdtpSockAddr-PublishedPartner-0005-0001-SetSEID_Command4
+            COMMAND         avdtpsockaddr       SEID          BT-USER-AvdtpSockAddr-PublishedPartner-0005-0001-SEID_Command5
+            COMMAND         avdtpsockaddr       SetSEID       BT-USER-AvdtpSockAddr-PublishedPartner-0005-0001-SetSEID_Command6
+            COMMAND         avdtpsockaddr       SEID          BT-USER-AvdtpSockAddr-PublishedPartner-0005-0001-SEID_Command7
+            COMMAND         avdtpsockaddr       ~
+            COMMAND         seid                ~
+            COMMAND         seid2               ~
+    END_TEST_BLOCK
+    
+END_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0005
+
+START_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0006
+//! @SYMTestCaseID              BT-USER-AvdtpSockAddr-PublishedPartner-0006
+//! @SYMAPI                     TAvdtpSockAddr::TAvdtpSockAddr(const TSockAddr {ref})
+//! @SYMAuthor                  Jason Lin
+//! @SYMCreationDate            03/25/2008
+//! @SYMTestCaseDesc            Copy constructor from original socket address
+//! @SYMTestActions             1. Create a TAvdtpSockAddr object (avdtpsockaddr) using the default constructor
+//!                             2. Create a TSEID object referring to a remote endpoint with 10
+//!                             3. Set TSEID object (seid) into the TAvdtpSockAddr object  
+//!                             4. Set the AVDTP session type (EReporting) into the TAvdtpSockAddr object
+//!                             5. Create the 2nd TAvdtpSockAddr object (avdtpsockaddr1) with tht 1st TAvdtpSockAddr object
+//!                             6. Get TSEID object from the TAvdtpSockAddr object
+//!                             7. Get the AVDTP session from the TAvdtpSockAddr object
+//!                             8. Destruct the TAvdtpSockAddr object(avdtpsockaddr1)
+//!                             9. Destruct the TSEID object
+//!                             10. Destruct the TAvdtpSockAddr object(avdtpsockaddr)
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. TAvdtpSockAddr objects (sockaddr and sockaddr1) were created without any panic
+//!                             2. TSEID object was created without any panic
+//!                             3. SetSession() and SetSEID() were called without any panic
+//!                             4. Step 6 return seid
+//!                             5. Step 7 return EReporting
+//! @SYMTestType                CIT
+    
+        START_TEST_BLOCK    10  T_BTUserAPI         \bluetooth\user\BT-USER-AvdtpSockAddr-PublishedPartner.ini
+            CREATE_OBJECT   TAvdtpSockAddr      avdtpsockaddr
+            CREATE_OBJECT   TSEID               seid
+            CREATE_OBJECT   TAvdtpSockAddr      avdtpsockaddr1
+            COMMAND         avdtpsockaddr       new
+            COMMAND         seid                new                 BT-USER-AvdtpSockAddr-PublishedPartner-0006-0001-new_Command2
+            COMMAND         avdtpsockaddr       SetSEID             BT-USER-AvdtpSockAddr-PublishedPartner-0006-0001-SetSEID_Command3
+            COMMAND         avdtpsockaddr       SetSession          BT-USER-AvdtpSockAddr-PublishedPartner-0006-0001-SetSession_Command4
+            COMMAND         avdtpsockaddr1      new                 BT-USER-AvdtpSockAddr-PublishedPartner-0006-0001-new_Command5
+            COMMAND         avdtpsockaddr1      SEID                BT-USER-AvdtpSockAddr-PublishedPartner-0006-0001-SEID_Command6
+            COMMAND         avdtpsockaddr1      Session             BT-USER-AvdtpSockAddr-PublishedPartner-0006-0001-Session_Command7
+            COMMAND         avdtpsockaddr1      ~
+            COMMAND         seid                ~
+            COMMAND         avdtpsockaddr       ~
+    END_TEST_BLOCK
+    
+END_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0006
+
+START_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0007
+//! @SYMTestCaseID              BT-USER-AvdtpSockAddr-PublishedPartner-0007
+//! @SYMAPI                     TAvdtpSockAddr::Cast(const TSockAddr {ref})
+//! @SYMAuthor                  Jason Lin
+//! @SYMCreationDate            03/25/2008
+//! @SYMTestCaseDesc            Utility function to downcast a TSockAddr to a TAvdtpSockAddr 
+//! @SYMTestActions             1. Create a TBTSockAddr object(btsockaddr)
+//!                             2. Create a TBTDevAddr object(btdevaddr)
+//!                             3. Create a TBTServiceSecurity object(btservsecurity)
+//!                             4. Set the address family Id(42) into TBTSockAddr object
+//!                             5. Set the length (12) for appended data into TBTSockAddr object
+//!                             6. Set the port(20) for address into TBTSockAddr object
+//!                             7. Set the BT address(btdevaddr) into TBTSockAddr object
+//!                             8. Set the security(btservsecurity) into TBTSockAddr object
+//!                             9. Downcast the TBTSockAddr object to a TAvdtpSockAddr(avdtpsockaddr)
+//!                             10. Get the address family Id from the TAvdtpSockAddr object
+//!                             11. Get the length for appended data from the TAvdtpSockAddr object
+//!                             12. Get the port for address from the TAvdtpSockAddr object
+//!                             13. Get the BT address from the TAvdtpSockAddr object
+//!                             14. Get the security from the TAvdtpSockAddr object
+//!                             15. Destruct the TAvdtpSockAddr object
+//!                             16. Destruct the TBTServiceSecurity object
+//!                             17. Destruct the TBTDevAddr object
+//!                             18. Destruct the TBTSockAddr object
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. TBTSockAddr object was created successfully, and all methods were called without any panic
+//!                             2. Step 10 return 42
+//!                             3. Step 11 return 12
+//!                             4. Step 12 return 20
+//!                             5. Step 13 return devaddr
+//!                             6. Step 14 return servsecurity
+//! @SYMTestType                CIT
+    
+        START_TEST_BLOCK    10  T_BTUserAPI         \bluetooth\user\BT-USER-AvdtpSockAddr-PublishedPartner.ini
+            CREATE_OBJECT   TBTSockAddr         btsockaddr
+            CREATE_OBJECT   TBTServiceSecurity  btservsecurity
+            CREATE_OBJECT   TAvdtpSockAddr      avdtpsockaddr
+            COMMAND         btsockaddr          Construct
+            COMMAND         btservsecurity      Construct
+            COMMAND         btsockaddr          SetFamily           BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-SetFamily_Command4
+            COMMAND         btsockaddr          PROTECTED-SetUserLen BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-PROTECTED-SetUserLen_Command5
+            COMMAND         btsockaddr          SetPort             BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-SetPort_Command6
+            COMMAND         btsockaddr          SetBTAddr           BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-SetBTAddr_Command7
+            COMMAND         btsockaddr          SetSecurity         BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-SetSecurity_Command8
+            COMMAND         avdtpsockaddr       Cast                BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-Cast_Command9
+            COMMAND         avdtpsockaddr       Family              BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-Family_Command10
+            COMMAND         avdtpsockaddr       GetUserLen          BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-GetUserLen_Command11
+            COMMAND         avdtpsockaddr       Port                BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-Port_Command12
+            COMMAND         avdtpsockaddr       BTAddr              BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-BTAddr_Command13
+            COMMAND         avdtpsockaddr       BTSecurity          BT-USER-AvdtpSockAddr-PublishedPartner-0007-0001-BTSecurity_Command14
+            COMMAND         avdtpsockaddr       ~
+            COMMAND         btservsecurity      ~
+            COMMAND         btsockaddr          ~
+    END_TEST_BLOCK
+    
+END_TESTCASE BT-USER-AvdtpSockAddr-PublishedPartner-0007
+
+DELAY		2000
+
+
+
+
+
+
+

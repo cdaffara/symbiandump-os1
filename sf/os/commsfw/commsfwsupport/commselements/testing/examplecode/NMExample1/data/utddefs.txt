@@ -1,0 +1,108 @@
+//
+// Node Messages basic message and message signature definitions
+//
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Define ENUM TStateChangeStage before including this file
+// Define ENUM ActivityId before including this file
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+CONST KNodeMessagesImplementationUid = 0x10285F38
+CONST KWhisperRealmId = 0x2002984C
+
+ENUM NM_SignatureId : UINT32
+    ESignalBase                          =0
+    ENodeSignal                          =1
+    ESignatureBase                       =2
+    ESignatureNumber                     =3
+    ESignatureUid                        =4
+    ESignatureErrContext                 =5
+    ESignatureErrResponse                =6
+	
+    ESignatureNodeId                     =8
+    ESignatureNodeIdNumber               =9
+    ESignatureNodeIdNumberNumber         =10
+    ESignatureMessageIdNumber            =11
+    ESignatureAnyNumber                  =12
+    ESignatureMetaDataPtr                =13
+    ESignatureNumberNumberNumber         =14
+    ESignatureRMessage2                  =15
+    ESignatureNumberRMessage2            =16
+    ESignatureAny                        =17
+    ESignatureNumberNumber               =18
+    ESignatureNodeIdAny                  =19
+    ESignatureNodeIdNodeId               =20
+    ESignatureNodeIdNodeIdNumber         =21
+    ESignatureNumberNumberNumberNumber   =22
+    ESignatureUidNumber                  =23
+    ESignatureNumberUidNumber            =24
+    ESignatureNodeIdClientType           =25
+    ESignatureClientTypeUidClientType    =26
+    ESignatureClientType                 =27
+    ESignatureClientTypeUid              =28
+    ESignatureMessageId                  =29
+    ESignatureNodeIdNumberNumberNumber   =30
+    ESignatureTypeId                     =31
+END ENUM
+
+ENUM Whisper_SignatureId : UINT32
+    EStringSigId                          =1
+END ENUM
+
+CONTEXT Context_RuntimeCtxId
+//    UINT8 iSize
+//    UINT8 iSalt
+//    UINT16 iThread
+//    UINT32 iScope
+      PAD 8
+END CONTEXT
+
+CONTEXT Context_NodeId : Context_RuntimeCtxId 
+    UINT32 iPtr
+END CONTEXT
+
+ALIAS CONTEXT TCommsId = Context_NodeId
+
+STRUCT STypeId
+    UINT32 iUid
+    UINT32 iTypeId
+END STRUCT
+	
+SIGNATURE TSignalBase
+    TYPEID = KNodeMessagesImplementationUid:ESignalBase
+END SIGNATURE
+
+SIGNATURE TNodeSignal : TSignalBase
+    TYPEID = KNodeMessagesImplementationUid:ENodeSignal
+    TMessageId iMessageId
+END SIGNATURE
+
+// Synonymous with TSigVoid
+SIGNATURE TSignatureBase : TNodeSignal
+    TYPEID = KNodeMessagesImplementationUid:ESignatureBase
+END SIGNATURE
+
+SIGNATURE TSigNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNumber
+    UINT32 iValue
+END SIGNATURE 
+
+ALIAS SIGNATURE TSigVoid = TSignatureBase
+
+SIGNATURE TSigString : TSignatureBase
+    TYPEID = KWhisperRealmId:EStringSigId
+    PAD 0x30
+END SIGNATURE 
+
+ENUM Whisper_MessageId : UINT16
+     EWhisper  = 1
+END ENUM
+
+MESSAGE Whisper
+    SIGNATURE = TSigString
+    MESSAGEID = KWhisperRealmId:EWhisper
+END MESSAGE
+
+
+
+

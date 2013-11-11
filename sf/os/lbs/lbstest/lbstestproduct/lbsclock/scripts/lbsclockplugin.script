@@ -1,0 +1,77 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClockTestServer -SharedData
+
+PRINT Run LbsClockTestServer
+PRINT
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	// Re-select the profile ini
+ 	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+REMOVE_PREFIX
+
+// Install the test clock plugin + set AGPS module mode.
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 010 LbsClockTestServer LbsClockStep_SelectPlugin c:\testdata\configs\lbsclockplugin.ini LBS-ClockPlugin
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_SetAutonomousMode
+
+RUN_TEST_STEP 030 LbsClockTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-Clock-Plugin-0002
+
+//!@SYMTestCaseID			LBS-Clock-Plugin-0002
+//!@SYMTestCaseDesc			Automatic clock adjust using a clock plugin.
+//!
+//!@SYMTestActions			1. Select the clock plugin to use, from the admin KLbsSettingSetClockModule setting.
+//!							2. Switch on the Auto Clock API from the admin KSettingClockAdjust setting.
+//!							3. Request and process a position update.
+//!
+//!@SYMTestExpectedResults	Verify the time is set correctly in step 3, see test case 0004 for details.
+//!
+//!@SYMPREQ					PREQ 1616
+//!@SYMREQ					REQ 1616.08
+//!@SYMREQ					REQ 1616.09
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClockTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclockplugin.ini  LBS-Clock
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclockplugin.ini LBS-ClockPlugin-0041
+RUN_TEST_STEP 020 LbsClockTestServer LbsClockStep_Main c:\testdata\configs\lbsclockplugin.ini LBS-ClockPlugin-0041
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Clock-Plugin-0002
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 020 LbsClockTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

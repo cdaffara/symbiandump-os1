@@ -1,0 +1,788 @@
+//! @File
+//! @SYMTestSuiteName	lbsclientupdateoptions.script
+//! @SYMScriptTestEnvironment
+
+/
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+// Delete old log file
+RUN_UTILS DeleteFile c:\private\101f401d\Logdbu.dat
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+    // delete any profiles from C drive left over from previous tests
+ 	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+
+PRINT Set Autonomous Mode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+START_TESTCASE LBS-Client-UpdateOptions-0001
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0001
+//!@SYMTestCaseDesc			Check that SetUpdateOptions works by setting and getting values.
+//!					
+//!@SYMTestActions			1. Call SetUpdateOptions using a default construct TPositionUpdateOptionsA as a parameter.
+//!					2. Call GetUpdateOptions passing a blank TpositionUpdateOptionsB as a parameter.
+//!					
+//!@SYMTestExpectedResults		TPositionUpdateOptionsA should equal TpositionUpdateOptionsB.
+//!
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-001
+
+END_TESTCASE LBS-Client-UpdateOptions-0001
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0002
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0002
+//!@SYMTestCaseDesc			Negative test for TPositionUpdateOptions with incorrect aInterval parameters.
+//!					
+//!@SYMTestActions			1. Create TPositionUpdateOptions using a non-default constructor, with a negative aInterval value.
+//!					
+//!@SYMTestExpectedResults		Test should panic EpositionBadTime(12)
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP !PanicCode=12 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-002
+
+END_TESTCASE LBS-Client-UpdateOptions-0002
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0003
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0003
+//!@SYMTestCaseDesc			Negative test for TPositionUpdateOptions with incorrect aTimeOut parameters
+//!					
+//!@SYMTestActions			1. Create TPositionUpdateOptions using a non-default constructor, with a negative aTimeOut value.
+//!					
+//!@SYMTestExpectedResults		Test should panic EpositionBadTime(12)
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP !PanicCode=12 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-003
+
+END_TESTCASE LBS-Client-UpdateOptions-0003
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0004
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0004
+//!@SYMTestCaseDesc			Negative test for TPositionUpdateOptions with incorrect aMaxAge parameters.
+//!					
+//!@SYMTestActions			1. Create TPositionUpdateOptions using a non-default constructor, with a negative aMaxAge value.
+//!					
+//!@SYMTestExpectedResults		Test should panic EpositionBadTime(12)
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP !PanicCode=12 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-004 
+
+END_TESTCASE LBS-Client-UpdateOptions-0004
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0005
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0005
+//!@SYMTestCaseDesc			Request position update with default Update Options.
+//!					
+//!@SYMTestActions			1. Call SetUpdateOptions using a default construct TPositionUpdateOptions as a parameter.
+//!					2. Call NotifyPositionUpdate().
+//!					
+//!@SYMTestExpectedResults		We should receive updates in a manner consistent with the default parameters of TPositionUpdateOptions.
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-005
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-005 
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 030 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-UpdateOptions-0005
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0006
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0006
+//!@SYMTestCaseDesc			SetUpdateOptions while there is an outstanding request.
+//!					
+//!@SYMTestActions	
+//!					1. Set a longish interval (1 minute say); this is to ensure that there's an outstanding NotifyPositionUpdate when options are changed.
+//!					2. Call NotifyPositionUpdate.
+//!					3. Call SetUpdateOptions with non-default interval specified.
+//!					4. Call NotifyPositionUpdate. Note that we expect this to complete as normal, without being affected by the new options
+//!					5. Call NotifyPositionUpdate several times.
+//!					
+//!@SYMTestExpectedResults		The NPUD which is outstanding when the new interval is set, should complete as normal (after original interval).
+//!						Subsequent requests should complete according to the new options (ie first one can come anytime up to timeout)
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-006
+RUN_TEST_STEP 240 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-006
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-UpdateOptions-0006
+
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0007
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0007
+//!@SYMTestCaseDesc			Request Location Update with non-default update interval
+//!					
+//!@SYMTestActions			
+//!					1. Set the interval and timeout update options to non-default values (using SetUpdateOptions) and verify the set.
+//!					2. Call NotifyPositionUpdate() several times.
+//!					3. Verify that positions arrive inside valid time windows
+//!					
+//!@SYMTestExpectedResults		The first position should arrive before the timeout
+//!						Subsequent positions should arrive between X + interval and X + interval + timeout, where X = time first position received
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!@SYMPREQ				PREQ 89
+//!@SYMREQ				REQ 89.03
+//!@SYMREQ				REQ 89.04
+//!@SYMREQ				REQ 89.06
+//!@SYMREQ				REQ 89.07
+//!@SYMREQ				REQ 89.09
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ClearLog
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-007
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-007
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-007
+
+END_TESTCASE LBS-Client-UpdateOptions-0007
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0008
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0008
+//!@SYMTestCaseDesc			SetUpdateInterval Negative test.
+//!					
+//!@SYMTestActions			1. Create an instance of TPositionUpdateOption.
+//!					   *Call SetUpdateInterval with a negative value
+//!					
+//!@SYMTestExpectedResults		*Negative value should result in Panic EPositionBadTime
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP !PanicCode=12 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-008
+
+END_TESTCASE LBS-Client-UpdateOptions-0008
+
+
+//START_TESTCASE LBS-Client-UpdateOptions-0009
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0009
+//!@SYMTestCaseDesc			Confirm that NotifyPositionUpdate will timeout after a specified period.
+//!					
+//!@SYMTestActions			1. Create an instance of TPositionUpdateOption.
+//!					2. Call SetUpdateTimeOut with values different from the default (5, 10, 30secs).
+//!					3. Check that the call to UpdateTimeOut reflects this change.
+//!					4. Call SetUpdateOptions using this instance of TPositionUpdateOptions as a parameter.
+//!					
+//!					** Configure test gps module to cause a timeout
+//!					
+//!					5. Call NotifyPositionUpdate().
+//!	
+//!					Note: Run test case with test module only.
+//!
+//!@SYMTestExpectedResults		We should receive updates in a manner consistent with the parameters of this instance of TPositionUpdateOptions.
+//!					** NotifyPositionUpdate will return KErrTimedOut
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Completed.
+//!
+//RUN_TEST_STEP 010 LbsClientTestServer "Configure test gps module to cause a timeout"
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-009
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-009
+
+//END_TESTCASE LBS-Client-UpdateOptions-0009
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0009
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0009
+//!@SYMTestCaseDesc			Negative test for SetUpdateTimeout
+//!					
+//!@SYMTestActions			1. Create an instance of TPositionUpdateOption.
+//!					2. Call SetUpdateTimeOut with a negative value.
+//!					
+//!@SYMTestExpectedResults		* Negative value should result in Panic EPositionBadTime
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP !PanicCode=12 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-010
+
+END_TESTCASE LBS-Client-UpdateOptions-0009
+
+
+//START_TESTCASE LBS-Client-UpdateOptions-0011
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0011
+//!@SYMTestCaseDesc			Request location update with specific accuracy by disable Partial Updates  
+//!					
+//!@SYMTestActions			1. Open positioner with configured required quality
+//!					2. Configure partial Updates with EFalse.
+//!					3. Request Location Update
+//!					4. Wait for request to complete
+//!					5. Verify that location info is returned as expected.
+//!					6. Verify that the location request is logged.
+//!		
+//!@SYMTestExpectedResults              Request completes successfully with expected accuracy
+//!
+//!					Note: Run test case with test module only.
+//!
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-011
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-011
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+//END_TESTCASE LBS-Client-UpdateOptions-0011
+
+
+//START_TESTCASE LBS-Client-UpdateOptions-0012
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0012
+//!@SYMTestCaseDesc			Request location update with specific accuracy by enable Partial Updates 
+//!					
+//!@SYMTestActions			1. Open positioner with configured required quality
+//!					2. Configure partial Updates with ETrue.
+//!					3. Request Location Update
+//!					4. Wait for request to complete
+//!					5. Verify that location info is returned as expected.
+//!					6. Verify that the location request is logged.
+//!					
+//!@SYMTestExpectedResults		Request completes successfully with low accuracy position
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-012
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-012
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+//END_TESTCASE LBS-Client-UpdateOptions-0012
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0010
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0010
+//!@SYMTestCaseDesc			Check that timely location updates work ok with MaxUpdateAge.
+//!					
+//!@SYMTestActions			1. Create an instance of TPositionUpdateOption.
+//!					2. Call SetMaxUpdateAge with age limit < Interval.
+//!					3. Check that the call to MaxUpdateAge reflects this change.
+//!					4. Call SetUpdateOptions using this instance of TPositionUpdateOptions as a parameter.
+//!					5. Have a location in cache by calling NotifyPositionUpdate().
+//!					6. Call NotifyPositionUpdate().
+//!					
+//!@SYMTestExpectedResults		We should get location info without error.
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-013
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-013
+
+END_TESTCASE LBS-Client-UpdateOptions-0010
+
+
+//START_TESTCASE LBS-Client-UpdateOptions-0014
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0014
+//!@SYMTestCaseDesc			Need a further test that checks maxage for locations at intervals - add test (details need fleshed out).
+//!					
+//!@SYMTestActions			1. Create two RPositionerServers
+//!					2. Open two RPositioners, each one opening a subsession to a separate RPositionerServer and seperate modules.
+//!					3. Create 2 instances of TPositionUpdateOption.
+//!					4. Call SetMaxUpdateAge =10 seconds, interval = 5seconds on A.
+//!					5. Call SetMaxUpdateAge =0 seconds, interval = 2 seconds on B.
+//!					6. Call NotifyPositionUpdate() repeatedly on both.
+//!					
+//!@SYMTestExpectedResults		*Behaviour here may be uncertain* We should get location info without error.
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented
+
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-014
+
+//END_TESTCASE LBS-Client-UpdateOptions-0014
+
+
+//START_TESTCASE LBS-Client-UpdateOptions-0015
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0015
+//!@SYMTestCaseDesc			Need a further test that checks maxage for locations at intervals - add test (details need fleshed out).
+//!					
+//!@SYMTestActions			1. Create two RPositionerServers
+//!					2. Open two RPositioners, each one opening a subsession to a separate RPositionerServer but the same modules.
+//!					3. Create 2 instances of TPositionUpdateOption.
+//!					4. Call SetMaxUpdateAge =10 seconds, interval = 5seconds on A.
+//!					5. Call SetMaxUpdateAge =0 seconds, interval = 2 seconds on B.
+//!					6. Call NotifyPositionUpdate() repeatedly on both.
+//!					
+//!@SYMTestExpectedResults		*Behaviour here may be uncertain* We should get location info without error.
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented
+
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-015
+
+//END_TESTCASE LBS-Client-UpdateOptions-0015
+
+
+//START_TESTCASE LBS-Client-UpdateOptions-0016
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0016
+//!@SYMTestCaseDesc			Need a further test that checks maxage for locations at intervals - add test (details need fleshed out).
+//!					
+//!@SYMTestActions			1. Create one RPositionerServer
+//!					2. Open two RPositioners, each one opening a subsession to the RPositionerServer but different modules.
+//!					3. Create 2 instances of TPositionUpdateOption.
+//!					4. Call SetMaxUpdateAge =10 seconds, interval = 5seconds on A.
+//!					5. Call SetMaxUpdateAge =0 seconds, interval = 2 seconds on B.
+//!					6. Call NotifyPositionUpdate() repeatedly on both.
+//!					
+//!@SYMTestExpectedResults		*Behaviour here may be uncertain* We should get location info without error.
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented
+
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-016
+
+//END_TESTCASE LBS-Client-UpdateOptions-0016
+
+
+//START_TESTCASE LBS-Client-UpdateOptions-0017
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0017
+//!@SYMTestCaseDesc			Check that fairly timely location updates work ok.
+//!					
+//!@SYMTestActions			1. Open an RPositioner.
+//!					2. Create an instance of TPositionUpdateOption.
+//!					3. Call SetMaxUpdateAge with age limit >= Interval.
+//!					4. Check that the call to MaxUpdateAge reflects this change.
+//!					5. Call SetUpdateOptions using this instance of TPositionUpdateOptions as a parameter.
+//!					6. Call NotifyPositionUpdate().
+//!					7. Close RPositioners.
+//!					
+//!@SYMTestExpectedResults		MaxUpdateAge() should return 0 because there is no acceptable age limit set for NotifyPositionUpdate.
+//!
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented
+
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-017
+
+//END_TESTCASE LBS-Client-UpdateOptions-0017
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0011
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0011
+//!@SYMTestCaseDesc			Negative testing on SetMaxUpdateAge, using a negative value.
+//!					
+//!@SYMTestActions			1. Create an instance of TPositionUpdateOption.
+//!					2. Call SetMaxUpdateAge with a negative value for the age limit.
+//!					
+//!@SYMTestExpectedResults		Negative age limit should result in Panic EPositionBadTime
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP !PanicCode=12 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-018
+
+END_TESTCASE LBS-Client-UpdateOptions-0011
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0012
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0012
+//!@SYMTestCaseDesc			Check that SetMaxUpdateAge actually gets a cached value from within the MaxUpdateAge time frame.
+//!					
+//!@SYMTestActions			1. *No cached data must be present. 
+//!					   *No trace of previous location fixes must be present.
+//!					2. Call PosInfoA = NotifyPositionUpdate().
+//!					3. Create an instance of TPositionUpdateOption.
+//!					4. Call SetMaxUpdateAge with a valid value for the age limit.
+//!					5. Check that the call to MaxUpdateAge reflects this change.
+//!					6. Call SetUpdateOptions using this instance of TPositionUpdateOptions as a parameter.
+//!					7. Call NotifyPositionUpdate(PosInfoB).
+//!					
+//!@SYMTestExpectedResults		The cached PosInfoA should match the final position received.
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.08
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-019
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-019
+
+END_TESTCASE LBS-Client-UpdateOptions-0012
+
+//START_TESTCASE LBS-Client-UpdateOptions-0020
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0020
+//!@SYMTestCaseDesc			Confirm that partial updates are getting at specified intervals  
+//!					
+//!@SYMTestActions			1.Open positioner with configured required quality.
+//!					2.Configure partial Updates with ETrue.
+//!					3.Set the UpdateInterval to some non default value.
+//!					4.Call SetUpdateOptions to update position info at specified intervals.
+//!					5.Request Location Update by Calling NotifyPositionUpdate()
+//!					Note: each time partial update is received we need to reissue the location request until full location received.
+//!		                        6.Verify that location info is returned as expected.			
+//!                                     7.Verify that the location request is logged. 
+//!
+//!
+//!@SYMTestExpectedResults		we should get partial updates at specified intervals
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-020
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-020
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+//END_TESTCASE LBS-Client-UpdateOptions-0020
+
+//START_TESTCASE LBS-Client-UpdateOptions-0021
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0021
+//!@SYMTestCaseDesc			Confirm that we receive incomplete location information     
+//!					
+//!@SYMTestActions			1.Open positioner with configured required quality.
+//!					2.Configure partial Updates with ETrue.
+//!					3.Request Location Update, passing SatelliteInfo 
+//!					4.Verify that location info is returned as expected.
+//!					5.Verify that the location request is logged. 
+//!
+//!                                     
+//!
+//!@SYMTestExpectedResults		we should get partial updates successfully
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-021
+//RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-021
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+//END_TESTCASE LBS-Client-UpdateOptions-0021
+
+
+// Selecting the default admin values will ensure the AGPS module requests assistance data.
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+START_TESTCASE LBS-Client-UpdateOptions-0013
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0013
+//!@SYMTestCaseDesc			Request Location Update with non-default update interval
+//!					
+//!@SYMTestActions			
+//!					1. Set the interval and timeout update options to non-default values (using SetUpdateOptions) and verify the set.
+//!					2. Call NotifyPositionUpdate() several times.
+//!					3. Verify that positions arrive inside valid time windows
+//!					
+//!@SYMTestExpectedResults		The first position should arrive before the timeout
+//!						Subsequent positions should arrive between X + interval and X + interval + timeout, where X = time first position received
+//!					
+//!@SYMPREQ				PREQ 786
+//!@SYMREQ				REQ 786.07
+//!@SYMREQ				REQ 786.09
+//!@SYMREQ				REQ 786.10 
+//!@SYMREQ				REQ 786.11 
+//!@SYMREQ				REQ 786.12
+//!@SYMPREQ				PREQ 89
+//!@SYMREQ				REQ 89.03
+//!@SYMREQ				REQ 89.04
+//!@SYMREQ				REQ 89.06
+//!@SYMREQ				REQ 89.07
+//!@SYMREQ				REQ 89.09
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ClearLog
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-107
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-107
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-107
+
+END_TESTCASE LBS-Client-UpdateOptions-0013
+
+
+START_TESTCASE LBS-Client-UpdateOptions-0101
+
+//!@SYMTestCaseID			LBS-Client-UpdateOptions-0101
+//!@SYMTestCaseDesc			Testcase to show the fix for DEF118183 (TTG:<cancellation does not enable tracking to be ceased>)
+//!					The test case is to cancel a tracking position request.  This should result in the outstanding request being 
+//!					completed with KErrCancel.
+//!					
+//!@SYMTestActions	
+//!					1. Call NotifyPositionUpdate. (Non-tracking to establish an available position within the maxupdateage period)
+//!					2. Set a tracking interval (say 10seconds) and a maxupdateage that is well within the tracking period (1 sec)
+//!					3. Call SetUpdateOptions with non-default interval and maxupdateage specified.
+//!					4. Call NotifyPositionUpdate. Note that we expect this to complete immediately because of the stored position from 1 above
+//!					5. Call NotifyPositionUpdate.
+//!					6. Wait a short period (say 2sec) and then cancel the update request
+//!					
+//!@SYMTestExpectedResults		The NPUD which is outstanding when the cancel was issued, should complete with KErrCancel.
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTIONS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-101
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_UpdateOptions c:\testdata\configs\LbsClientUpdateOptions.ini LBS-UPDATE-OPTS-101
+
+END_TESTCASE LBS-Client-UpdateOptions-0101
+
+
+
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+  

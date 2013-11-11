@@ -1,0 +1,210 @@
+#ifndef __TEXTSHELL_OBY__
+#define __TEXTSHELL_OBY__
+
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// This OBY File is used to build Text Shell ROM Images.
+// 
+//
+
+define OBEYFILE TextShell
+define ROMDATE	##TODAY##
+
+#define NO_METROTRK_APP // don't want metrotrk application
+#define HAS_ETHERNET	// include etherDrv, ether802, DHCP
+#define SYMBIAN_EXCLUDE_FAX
+#undef __IPSEC
+#define SYMBIAN_EXCLUDE_OBEX
+#ifdef SYMBIAN_SYSTEM_STATE_MANAGEMENT
+#define _SSMSTARTUPMODE 1	//for ssma boot up.
+#else
+#define _STARTUPMODE1		// for sysstart.iby
+#endif
+
+#define __MMC
+#define __COVER_DISPLAY
+#define __IRDA
+#define __BT
+#define __USB
+#define __CS_VIDEO_TELEPHONY
+#define __DHCP
+#define __COMMON_TSY__EMERGENCY_CALLS_ENABLED_IN_OFFLINE_MODE
+#define __VIBRA
+#define __MTP_PROTOCOL_SUPPORT
+#define __SERIES60_KEYPAD_NO_SLIDER
+#define __DRIVE_MODE
+#define __SERIES60_AMBIENT_LIGHT_SENSOR
+#define __UPNP_PRINT_FRAMEWORK
+#define FF_FMTX
+
+// The following 3 macros need to be removed once LibXML2 is depended 
+// by any of the component in textshell image.
+#define SYMBIAN_EXCLUDE_LIBXML2
+#define SYMBIAN_EXCLUDE_LIBXML2_SAX_CPARSER_PLUGIN
+#define SYMBIAN_EXCLUDE_LIBXML2_DOM_XPATH_API
+
+// Various workarounds to avoid dependencies on UIKON
+
+#define __TLS_IBY__			// exclude TLS
+#define __TLSPROVIDER_IBY__		// exclude TLSPROVIDER 
+#define __OBEXPROTOCOL_IBY__	// exclude obex.dll etc
+#define __WLANEAPMETHODS_IBY__	// exclude eap_tls.msy & friends
+// 
+
+#include <header.iby>				/* ROM header definitions */
+#include <base.iby>					/* The lowest-level of the operating system */
+
+#ifdef SYMBIAN_SYSTEM_STATE_MANAGEMENT
+
+#include <ssma.iby>			/*System State Management Architecture*/
+#include <ssplugins.iby>		/*System State Management Plugins*/
+
+//Include SSM optional components to enable teams to build a plain textshell rom (on the lines of DEF128306), 
+//following removal of h4_textshell_rom.oby.
+#include <amastart.iby>
+#include <aplp.iby>
+#include <shma.iby>
+#include <ssrefplugins.iby>
+#else
+#include <sysstart.iby>
+#include <sysstartconfig.iby>
+#endif // SYMBIAN_SYSTEM_STATE_MANAGEMENT
+
+#include <debug.iby>
+file=ABI_DIR\DEBUG_DIR\RUNTESTS.EXE					sys\bin\RUNTESTS.EXE
+
+
+file=ABI_DIR\DEBUG_DIR\EDISP.DLL				sys\bin\EDISP.DLL
+
+
+#ifdef FULL_WINDOWSERVER
+   ERROR TextShell ROMs currently require the Text window server //#include <wserv.iby>
+#else
+   file=ABI_DIR\DEBUG_DIR\ewsrv.EXE					sys\bin\EWSRV.EXE	fixed
+   file=ABI_DIR\DEBUG_DIR\ECONS.DLL					sys\bin\ECONS.DLL	
+#endif
+
+#include <eshell.iby>
+
+#if !defined(FULL_WINDOWSERVER)
+#include <graphics_textshell.iby>
+#endif
+
+#include <centralrepository.iby>
+	file=ABI_DIR\BUILD_DIR\abclient.dll			sys\bin\abclient.dll
+
+#include <crypto.iby>
+
+#include <c32.iby>
+#include <ecuart.iby>
+#include <irda.iby>
+#include <bluetooth.iby>
+#include <stdlib.iby>
+#include <gdi.iby>
+#include <fntstore.iby>
+#include <fbserv.iby>
+#include <bitgdi.iby>
+#include <iculayoutengine.iby>
+#include <freetype.iby>
+#include <opengles.iby>
+
+#include <printers.iby>
+
+// include enough multimedia components to keep cone happy. includes symbian optional, reference and replacable components
+#include <mmf.iby>
+#include <mmcommon.iby>
+#include <mdf.iby>
+#include <devvideo.iby>
+#include <devsound_pluginsupport.iby>
+#include <devsound_refplugin.iby>
+#ifdef SYMBIAN_MULTIMEDIA_A3FDEVSOUND
+#include <acf.iby>
+#include <a3fdevsound.iby>
+#include <acl.iby>
+#include <devsoundadaptationinfo.iby>
+#include <refacladaptation.iby>
+#include <refmmrc.iby>
+#include <a3fserverstart.iby>
+#endif // SYMBIAN_MULTIMEDIA_A3FDEVSOUND
+
+#include <traces.iby>
+#include <mmf_plugin.iby>
+#include <omxilcompref.iby>
+#include <omxilcomp.iby>
+#include <omxilcore.iby>
+	
+	#include <inetprotutil.iby>		/* needed for mmfcontrollerframework.dll */
+	#include <caf.iby>				/* needed for mediaclientutils.dll */
+
+
+#include <sysagent.iby>
+
+#include <network.iby>	
+	#include <dial.iby>		// needed by commsdat
+
+#include <etel.iby>
+#include <smsstack.iby>
+
+#include <etelmm.iby>
+#include <etelpckt.iby>
+#include <mmtsy.iby>
+#include <etelsat.iby>
+#include <sysawatcher.iby>
+
+#include <bafl.iby>
+#include <ecom.iby>
+#include <store.iby>
+#include <dbms.iby>
+#include <pwrcli.iby>
+#include <xml.iby>
+#include <ups.iby>
+#include <securitycommonutils.iby>
+
+/* Feature Management run-time */
+#ifdef SYMBIAN_FEATURE_MANAGER
+
+// Include both old and new components when Feature Manager enabled
+#include <featmgr.iby>
+#include <featreg.iby>
+
+#else 
+
+// Include only the original Feature Registry otherwise
+#include <featreg.iby>
+#ifndef ROM_FEATURE_MANAGEMENT
+/* Provide a default configuration file for the feature registry */ 
+data=EPOCROOT##epoc32\data\config\featreg_default.cfg    private\102744CA\featreg.cfg
+#endif
+#endif
+
+#include <testexecute.iby>		// Test Execute framework
+
+// Major unwanted extras needed to make the image link correctly
+
+#ifndef __APPARC_IBY__
+REM Satisfy unwanted references to appgrfx.dll
+#include <apparc.iby>		/* Application architecture DLLs */
+	#include <emime.iby>		/* Mime recognition */
+#endif
+
+#ifndef __CONE_IBY__
+REM Satisfy unwanted reference to cone.dll, usually for CCoeEnv::Static()
+#include <cone.iby>
+	file=ABI_DIR\BUILD_DIR\viewcli.dll		sys\bin\viewcli.dll
+		file=ABI_DIR\BUILD_DIR\viewsrv.dll		sys\bin\viewsrv.dll
+	#include <egul.iby>
+		#include <numberconversion.iby>
+#endif
+
+#endif

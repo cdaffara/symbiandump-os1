@@ -1,0 +1,1081 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the CBluetoothSynchronousLink class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Zoe Chen and Cliff Chang
+//! @SYMCreationDate			19/09/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	UCCControlTE
+LOAD_SUITE	T_BTUserAPI	-SharedData
+DELAY		2000
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini BuildRunSynchronousLinkPassiveSlave
+
+DELAY		5000
+// ****************************************************************************
+// Set up BT Addresses
+// ****************************************************************************
+
+START_TESTCASE BT-USER-PublicApi-Master-SetBTAddresses
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PublicApi-Active-SetBTAddresses-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+DELAY		2000
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		TBTDevAddrRemote	Construct		
+			COMMAND		TBTDevAddrRemote	OpenHostResolver		BT-USER-PublicApi-Active-SetBTAddresses-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrRemote	SetHostNameL		BT-USER-PublicApi-Active-SetBTAddresses-0002command4SetHostNameL
+			COMMAND		TBTDevAddrRemote	GetDeviceAddress		BT-USER-PublicApi-Active-SetBTAddresses-0002command5GetDeviceAddress
+			OUTSTANDING
+			COMMAND		TRfcommSockAddr1	Construct		
+			COMMAND		TRfcommSockAddr1	SetSecurity		BT-USER-PublicApi-Active-SetBTAddresses-0002command8SetSecurity
+			COMMAND		TRfcommSockAddr1	SetBTAddr		BT-USER-PublicApi-Active-SetBTAddresses-0002command9SetBTAddr
+			COMMAND		TRfcommSockAddr1	BTAddr		BT-USER-PublicApi-Active-SetBTAddresses-0002command10BTAddr
+			COMMAND		TRfcommSockAddr1	SetPort		BT-USER-PublicApi-Active-SetBTAddresses-0002command11SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TBTDevAddrRemote	
+			STORE	TRfcommSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+DELAY		5000
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-PublicApi-Active-SetBTAddresses-0003command1Connect
+			OUTSTANDING
+			STORE	CBluetoothSocket1	
+			STORE	TRfcommSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct		
+			COMMAND		TBTDevAddrLocal	SetBTAddr		BT-USER-PublicApi-Active-SetBTAddresses-0004command3SetBTAddr
+			COMMAND		CBluetoothSocket1	Send		BT-USER-PublicApi-Active-SetBTAddresses-0004command5Send
+			OUTSTANDING	
+			STORE	CBluetoothSocket1	
+			STORE	TBTDevAddrLocal	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PublicApi-Active-SetBTAddresses-0005command1Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-PublicApi-Master-SetBTAddresses
+
+DELAY		2000
+
+// ****************************************************************************
+// CBluetoothSynchronousLink Master
+// **************************************************************************** 
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0001
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0001
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier
+//! @SYMTestCaseDesc			Cancel creating a synchronous link
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewLC(), SetupConnection()2, CancelSetup(), Disconnect() and destructor from CBluetoothSynchronousLink
+//!													HandleDisconnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								3. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								4. Return callback HandleCreateConnectionCompleteL() function
+//!								5. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								6. Waiting for 1 micro secs
+//!								7. Allocate and open a socket sub-session for Bluetooth SCO using NewLC() function
+//!								8. Create a synchronous link on an EXISTING physical link with a device address and EPacketsHV1
+//!								   using SetupConnection()2 function. Return KErrNone if successful
+//!								9. Cancel creating a synchronous link using CancelSetup() function
+//!								10. Disconnect the sychronous link and HandleDisconnectionCompleteL call back return
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Delete the synchronous link using destructor
+//!								13. Delete the Bluetooth socket using destructor
+//!								14. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Cancel succeeded
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0001-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0001-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewLC		BT-USER-SynchronousLink-PublicApi-Active-0001-0001command9NewLC
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0001-0001command10SetupConnection
+			COMMAND		CBluetoothSynchronousLinkData	CancelSetup		
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	Disconnect		BT-USER-SynchronousLink-PublicApi-Active-0001-0001command13Disconnect
+			OUTSTANDING	
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0001
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0002
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0002
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier
+//! @SYMTestCaseDesc			Return the negotiated bandwidth
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewLC(), SetupConnection()1, Bandwidth() and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								3. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								4. Return callback HandleCreateConnectionCompleteL() function
+//!								5. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								6. Waiting for 1 micro secs
+//!								7. Allocate and open a socket sub-session for Bluetooth SCO using NewLC() function
+//!								8. Create a synchronous link on an EXISTING physical link with a device address using 
+//!								   SetupConnection()1 function. Return KErrNone if successful
+//!								9. Return callback HandleSetupConnectionCompleteL() function
+//!								10. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								11. Return the negotiated bandwidth using Bandwidth() function
+//!								12. Delete the synchronous link using destructor
+//!								13. Delete the Bluetooth socket using destructor
+//!								14. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		The negotiated bandwidth was returned
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY	15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0002-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0002-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewLC		BT-USER-SynchronousLink-PublicApi-Active-0002-0001command9NewLC
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0002-0001command10SetupConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	Bandwidth
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData
+			STORE_ACTIVE_SCHEDULER	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0002
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0003
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0003
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, TBTSyncPackets
+//! @SYMTestCaseDesc			Return an estimate of the retransmission policy on the link
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()3, RetransmissionEffort() and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV2) using TBTSyncPackets() function
+//!								2. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address and ESyncPacketsHV2
+//!								   using SetupConnection()3 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Return an estimate of the retransmission policy on the link using RetransmissionEffort() function
+//!								13. Verify that if return result (EeSCORetransmitNone) is as expected (EeSCORetransmitNone)
+//!								14. Delete the synchronous link using destructor
+//!								15. Delete the Bluetooth socket using destructor
+//!								16. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		EeSCORetransmitNone returned as expected
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Active-0003-0001command2TBTSyncPackets
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0003-0001command7NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0003-0001command8CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0003-0001command11NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0003-0001command12SetupConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	RetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Active-0003-0001command14RetransmissionEffort
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0003
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0004
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0004
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, TBTSyncPackets
+//! @SYMTestCaseDesc			Return the air coding portion only of the coding specified on the link
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()3, RetransmissionEffort(), Coding() and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV3) using TBTSyncPackets() function
+//!								2. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address and ESyncPacketsHV3
+//!								   using SetupConnection()3 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Return an estimate of the retransmission policy on the link using RetransmissionEffort() function
+//!								13. Verify that if return result (EeSCORetransmitNone) is as expected (EeSCORetransmitNone)
+//!								14. Return the air coding portion only of the coding specified on the link using Coding() function
+//!								15. Verify that if return result (0) is as expected (0)
+//!								16. Delete the synchronous link using destructor
+//!								17. Delete the Bluetooth socket using destructor
+//!								18. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Zero returned as expected
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Active-0004-0001command2TBTSyncPackets
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0004-0001command7NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0004-0001command8CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0004-0001command11NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0004-0001command12SetupConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	RetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Active-0004-0001command14RetransmissionEffort
+			COMMAND		CBluetoothSynchronousLinkData	Coding		BT-USER-SynchronousLink-PublicApi-Active-0004-0001command15Coding
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0004
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0005
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0005
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, TBTSyncPackets
+//! @SYMTestCaseDesc			Return the negotiated latency in miliseconds (rounded up if non-integer on the link)
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()3, RetransmissionEffort(), SetMaxLatency(), Latency() and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV1) using TBTSyncPackets() function
+//!								2. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address and ESyncPacketsHV1
+//!								   using SetupConnection()3 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Return an estimate of the retransmission policy on the link using RetransmissionEffort() function
+//!								13. Verify that if return result (EeSCORetransmitNone) is as expected (EeSCORetransmitNone)
+//!								14. Specify maximum acceptable latency in milliseconds with decimal 2 using SetMaxLatency() function
+//!								15. Return the negotiated latency in miliseconds using Latency() function
+//!								16. Verify that if return result (0) is as expected (0)
+//!								17. Delete the synchronous link using destructor
+//!								18. Delete the Bluetooth socket using destructor
+//!								19. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Decimal 4 returned as expected
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command2TBTSyncPackets
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command7NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command8CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command11NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command12SetupConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	RetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command14RetransmissionEffort
+			COMMAND		CBluetoothSynchronousLinkData	SetMaxLatency		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command15SetMaxLatency
+			COMMAND		CBluetoothSynchronousLinkData	Latency		BT-USER-SynchronousLink-PublicApi-Active-0005-0001command16Latency
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0005
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0006
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0006
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, TBTSyncPackets
+//! @SYMTestCaseDesc			Use SetNotifier to change the notifier of events
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()3, RetransmissionEffort(), SetNotifier() and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV3) using TBTSyncPackets() function
+//!								2. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address and ESyncPacketsHV3
+//!								   using SetupConnection()3 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Return an estimate of the retransmission policy on the link using RetransmissionEffort() function
+//!								13. Verify that if return result (EeSCORetransmitNone) is as expected (EeSCORetransmitNone)
+//!								14. Set the object to be notified of synchronous link events using SetNotifier() function
+//!								15. Delete the synchronous link using destructor
+//!								16. Delete the Bluetooth socket using destructor
+//!								17. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Change succeeded
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Active-0006-0001command2TBTSyncPackets
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0006-0001command7NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0006-0001command8CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0006-0001command11NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0006-0001command12SetupConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	RetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Active-0006-0001command14RetransmissionEffort
+			COMMAND		CBluetoothSynchronousLinkData	SetNotifier		BT-USER-SynchronousLink-PublicApi-Active-0006-0001command15SetNotifier
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0006
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0007
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0007
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier
+//! @SYMTestCaseDesc			Get the socket address of the remote Bluetooth device
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()1, RemoteName() and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address
+//!								   using SetupConnection()1 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Get the socket address of the remote Bluetooth device using RemoteName() function
+//!								13. Delete the synchronous link using destructor
+//!								14. Delete the Bluetooth socket using destructor
+//!								15. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		The remote address was returned
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0007-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0007-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0007-0001command9NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0007-0001command10SetupConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	RemoteName		BT-USER-SynchronousLink-PublicApi-Active-0007-0001command12RemoteName
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0007
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0008
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0008
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier
+//! @SYMTestCaseDesc			Disconnect a synchronous link
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()1, Disconnect() and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() and HandleDisconnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address
+//!								   using SetupConnection()1 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Disconnect the sychronous link and HandleDisconnectionCompleteL call back return
+//!								13. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								14. Delete the synchronous link using destructor
+//!								15. Delete the Bluetooth socket using destructor
+//!								16. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrNone returned from HandleDisconnectionCompleteL() callback
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0008-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0008-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0008-0001command9NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0008-0001command10SetupConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	Disconnect		BT-USER-SynchronousLink-PublicApi-Active-0008-0001command12Disconnect
+			OUTSTANDING
+			ASYNC_DELAY	5000000	
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0008
+
+
+// ****************************************************************************
+// Negative test cases
+// ****************************************************************************
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0011
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0011
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier
+//! @SYMTestCaseDesc			Create a synchronous link on an EXISTING physical link
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()1 and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address
+//!								   using SetupConnection()1 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Delete the synchronous link using destructor
+//!								13. Delete the Bluetooth socket using destructor
+//!								14. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0011-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0011-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0011-0001command9NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0011-0001command10SetupConnection
+			OUTSTANDING	
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0011
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0012
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0012
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier
+//! @SYMTestCaseDesc			Create a synchronous link on an EXISTING physical link
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()1 and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address
+//!								   using SetupConnection()1 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Delete the synchronous link using destructor
+//!								13. Delete the Bluetooth socket using destructor
+//!								14. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0012-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0012-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0012-0001command9NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0012-0001command10SetupConnection
+			OUTSTANDING	
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0012
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0013
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0013
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier
+//! @SYMTestCaseDesc			Create a synchronous link on an EXISTING physical link
+//!								Uses API elements: 	RSocketServ() and Connect() from RSocketServ
+//!													NewL() and CreateConnection() from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL(), SetupConnection()1 and destructor from CBluetoothSynchronousLink
+//!													HandleSetupConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								3. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								4. Bring in a new member to the piconet with a device address using CreateConnection() 
+//!								   function. Return KErrNone if successful
+//!								5. Return callback HandleCreateConnectionCompleteL() function
+//!								6. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								7. Waiting for 1 micro secs
+//!								8. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								9. Create a synchronous link on an EXISTING physical link with a device address
+//!								   using SetupConnection()1 function. Return KErrNone if successful
+//!								10. Return callback HandleSetupConnectionCompleteL() function
+//!								11. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								12. Delete the synchronous link using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+DELAY		15000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0013-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-SynchronousLink-PublicApi-Active-0013-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0013-0001command9NewL
+			COMMAND		CBluetoothSynchronousLinkData	SetupConnection		BT-USER-SynchronousLink-PublicApi-Active-0013-0001command10SetupConnection
+			OUTSTANDING	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData
+			ASYNC_DELAY	5000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			STORE	CBluetoothPhysicalLinksData	
+			STORE	RSocketServData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0013
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0014
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0014
+//! @SYMAPI						CBluetoothSynchronousLink
+//! @SYMTestCaseDesc			Return the negotiated bandwidth when the synchronous link is not connected
+//!								Uses API elements: 	NewL(), Bandwidth() and destructor
+//! @SYMTestActions				1. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								2. Return the negotiated bandwidth using Bandwidth() function
+//!								3. Delete the synchronous link using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		The negotiated bandwidth was returned successfully
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0014-0001command2NewL
+			COMMAND		CBluetoothSynchronousLinkData	Bandwidth		
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0014
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0015
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0015
+//! @SYMAPI						CBluetoothSynchronousLink
+//! @SYMTestCaseDesc			Return the negotiated latency in miliseconds when the synchronous link is not connected
+//!								Uses API elements: 	NewL(), Latency() and destructor
+//! @SYMTestActions				1. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								2. Return the negotiated latency in miliseconds using Latency() function
+//!								3. Verify that if return result (0) is as expected (0)
+//!								4. Delete the synchronous link using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Zero returned as expected
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0015-0001command2NewL
+			COMMAND		CBluetoothSynchronousLinkData	Latency		BT-USER-SynchronousLink-PublicApi-Active-0015-0001command3Latency
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0015
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0016
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0016
+//! @SYMAPI						CBluetoothSynchronousLink
+//! @SYMTestCaseDesc			Return the air coding portion only of the coding when the synchronous link is not connected
+//!								Uses API elements: 	NewL(), Coding() and destructor
+//! @SYMTestActions				1. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								2. Return the air coding portion only of the coding specified on the link using Coding() function
+//!								3. Verify that if return result (0) is as expected (0)
+//!								4. Delete the synchronous link using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Zero returned as expected
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0016-0001command2NewL
+			COMMAND		CBluetoothSynchronousLinkData	Coding		BT-USER-SynchronousLink-PublicApi-Active-0016-0001command3Coding
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0016
+
+
+START_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0017
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Active-Master-0017
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, CBluetoothSynchronousLink
+//! @SYMTestCaseDesc			Return an estimate of the retransmission policy when the synchronous link is not connected
+//!								Uses API elements: 	Close() from RSocketServ
+//!													destructor from CBluetoothPhysicalLinks
+//!													NewL(), RetransmissionEffort() and destructor from CBluetoothSynchronousLink
+//! @SYMTestActions				1. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								2. Return an estimate of the retransmission policy on the link using RetransmissionEffort() function
+//!								3. Verify that if return result (EeSCORetransmitNone) is as expected (EeSCORetransmitNone)
+//!								4. Delete the synchronous link using destructor
+//!								5. Delete the Bluetooth socket using destructor
+//!								6. Close the session on the socket server
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		EeSCORetransmitNone returned as expected
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Active-0017-0001command2NewL
+			COMMAND		CBluetoothSynchronousLinkData	RetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Active-0017-0001command3RetransmissionEffort
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-Master-0017
+
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveExecutionResultSynchronousLinkPassiveSlave
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StopTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StopSyncService
+

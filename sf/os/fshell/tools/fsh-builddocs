@@ -1,0 +1,705 @@
+#!perl
+# fsh-builddocs
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Description:
+# fsh-builddocs - A tool that generates HTML documentation from POD source files.
+
+use strict;
+use Cwd;
+use Pod::Html;
+use IO::File;
+use File::Basename;
+use File::Path;
+use File::Copy;
+use Getopt::Long;
+use FindBin;
+use lib "$FindBin::Bin";
+use fshu;
+use CommandInfoFile;
+
+
+#
+# Constants.
+#
+
+my $kCpp = "$ENV{EPOCROOT}epoc32\\gcc\\bin\\cpp -I. ";
+
+
+#
+# Globals.
+#
+
+my %options = (
+	       verbose => 0,
+	       includes => []
+	      );
+
+
+#
+# Main.
+#
+
+my $podListFile = ProcessCommandLine();
+my $podListDirName = dirname($podListFile);
+my $cwd = cwd();
+chdir ($podListDirName) or die "Error: Couldn't chdir to '$podListDirName' - $!\n";
+my $spec;
+
+eval {
+  $spec = ParsePodList($podListFile);
+  CopyCss($spec);
+  CopyPod($spec);
+  IdentifyIndexPod($spec);
+  IdentifyCifPod($spec);
+  GenerateIndexPod($spec);
+  GenerateCifPod($spec);
+  BuildHtml($spec);
+};
+my $error = $@;
+
+chdir ($cwd) or die "Error: Couldn't chdir back to '$cwd': $!\n";
+die $error if ($error);
+
+
+#
+# Subs.
+#
+
+sub ProcessCommandLine {
+  my $help;
+  GetOptions('h|help' => \$help,
+	     'v|verbose' => \$options{verbose},
+	     'w|what' => \$options{what},
+	     'c|clean' => \$options{clean},
+	     'i|include=s' => $options{includes}) or DisplayHelp();
+  DisplayHelp() if ($help);
+  warn "Invalid arguments\n" and DisplayHelp() unless (@ARGV == 1);
+
+  my $relativeEpocRootPath = fshu::RelativePath($ENV{EPOCROOT}, cwd());
+  $relativeEpocRootPath =~ s/\\/\//g; # '\' -> '/'.
+  foreach my $include (@{$options{includes}}) {
+    if ($include =~ /^epoc32/i) {
+      $include = "${relativeEpocRootPath}$include";
+    }
+  }
+
+  return shift @ARGV;
+}
+
+sub DisplayHelp {
+  require Pod::Text;
+  print "\n";
+  my $parser = Pod::Text->new();
+  $parser->parse_from_file($0);
+  exit;
+}
+
+sub ParsePodList {
+  my $podListFileName = shift;
+
+  local $_;
+  my $command = $kCpp . join (' ', map {"-I$_"} @{$options{includes}}) . " $podListFileName 2>&1 |";
+  print "Running '$command'\n" if ($options{verbose});
+  open (CPP, $command) or die "Error: Couldn't run 'cpp.exe': $!\n";
+  my $spec;
+
+  my $currentDir;
+  my $currentFile = $podListFileName;
+  my $currentLine = 0;
+  while (my $line = <CPP>) {
+    ++$currentLine;
+    $line =~ s/^\s+//;
+    next if (!$line); # Blank lines.
+
+    if ($line =~ /^#\s+(\d+)\s+"([^"]+)"/) {
+      $currentLine = $1;
+      $currentFile = fshu::TidyPath($2);
+      $currentDir = dirname($currentFile);
+    }
+    elsif ($line =~ /^doc-root\s+(\S+)\s*$/) {
+      $spec->{docRoot} = fshu::TidyPath($1);
+    }
+    elsif ($line =~ /^temp-root\s+(\S+)\s*$/) {
+      $spec->{tempRoot} = fshu::TidyPath($1);
+    }
+    elsif ($line =~ /^css\s+(\S+)\s*$/) {
+      $spec->{cssFile} = fshu::TidyPath("$currentDir\\" . fshu::TidyPath($1));
+    }
+    elsif ($line =~ /^pod\s+(\S+)\s+(\S+)\s*$/) {
+      my $podFileName = fshu::TidyPath("$currentDir\\" . fshu::TidyPath($1));
+      my $htmlFileName = fshu::TidyPath($2);
+
+      # If this HTML file matches one we already have in the list, allow this one to override.
+      my $found = 0;
+      foreach my $podFile (@{$spec->{podFiles}}) {
+	if (lc($podFile->{htmlFileName}) eq lc($htmlFileName)) {
+	  $podFile->{podFileName} = $podFileName;
+	  $found = 1;
+	  last;
+	}
+      }
+      unless ($found) {
+	push (@{$spec->{podFiles}}, {
+				     podFileName => $podFileName,
+				     htmlFileName => $htmlFileName
+				    });
+      }
+    }
+    elsif ($line =~ /^index\s+(\S+)/) {
+      my $htmlDirName = fshu::TidyPath($1);
+      my $podFileName;
+      if ($line =~ /^index\s+\S+\s+(\S+)\s*$/) {
+	$podFileName = fshu::TidyPath("$currentDir\\" . fshu::TidyPath($1));
+      }
+      push (@{$spec->{indices}}, {
+				   podFileName => $podFileName,
+				   htmlDirName => $htmlDirName
+				  });
+    }
+    elsif ($line =~ /^cif\s+(\S+)\s+(\S+)/) {
+      my $cifDirName = fshu::TidyPath($1);
+      my $htmlDirName = fshu::TidyPath($2);
+      my $podFileName;
+      if ($line =~ /^cif\s+\S+\s+\S+\s+(\S+)\s*$/) {
+	$podFileName = fshu::TidyPath("$currentDir\\" . fshu::TidyPath($1));
+      }
+      push (@{$spec->{cifIndices}}, {
+				      podFileName => $podFileName,
+				      htmlDirName => $htmlDirName,
+				      cifDirName => $cifDirName
+				     });
+    }
+    else {
+      die "Error: Invalid pod-list line at $currentFile($currentLine):\n$line";
+    }
+  }
+
+  close (CPP);
+
+  die "Error: No 'doc-root' in pod-list\n" unless ($spec->{docRoot});
+  die "Error: No 'temp-root' in pod-list\n" unless ($spec->{tempRoot});
+  return $spec;
+}
+
+sub CopyCss {
+  my $spec = shift;
+
+  if ($spec->{cssFile}) {
+    my $target = "$spec->{docRoot}\\" . basename($spec->{cssFile});
+    if ($options{what}) {
+      print "$target\n";
+    }
+    elsif ($options{clean}) {
+      unlink ($target);
+    }
+    else {
+      fshu::CopyFile($spec->{cssFile}, $target, $options{verbose});
+    }
+  }
+}
+
+sub CopyPod {
+  my $spec = shift;
+
+  foreach my $podEntry (@{$spec->{podFiles}}) {
+    my $targetFileName = "$spec->{tempRoot}\\$podEntry->{htmlFileName}";
+    $targetFileName =~ s/\.[^\.]+$/\.pod/;
+    $podEntry->{tempPodFileName} = $targetFileName;
+    if ($options{what}) {
+      # Do nothing.
+    }
+    elsif ($options{clean}) {
+      unlink ($targetFileName);
+    }
+    else {
+      fshu::CopyFile($podEntry->{podFileName}, $targetFileName, $options{verbose});
+    }
+  }
+}
+
+sub IdentifyIndexPod {
+  my $spec = shift;
+
+  # This sub-routine identifies the index POD files that will be generated later on.
+  # This is done as a separate phase to allow indices to contain links generated POD.
+
+  foreach my $indexEntry (@{$spec->{indices}}) {
+    push (@{$spec->{podFiles}}, {
+				 podFileName => "$indexEntry->{htmlDirName}.pod",
+				 tempPodFileName => "$spec->{tempRoot}\\$indexEntry->{htmlDirName}.pod",
+				 htmlFileName => "$indexEntry->{htmlDirName}.html"
+				});
+  }
+}
+
+sub GenerateIndexPod {
+  my $spec = shift;
+
+  foreach my $indexEntry (@{$spec->{indices}}) {
+    my $tempDir = "$spec->{tempRoot}\\$indexEntry->{htmlDirName}";
+    my $indexPodFileName = "$tempDir.pod";
+
+    if ($options{what}) {
+      # Do nothing.
+    }
+    elsif ($options{clean}) {
+      unlink ($indexPodFileName);
+    }
+    else {
+      print "Building $indexPodFileName\n" if ($options{verbose});
+      fshu::MakePath($tempDir);
+      open (INDEX, ">$indexPodFileName") or die "Error: Couldn't open '$indexPodFileName' for writing - $!\n";
+
+      # Copy the contents of the introductory POD.
+      if ($indexEntry->{podFileName}) {
+	open (POD, $indexEntry->{podFileName}) or die "Error: Couldn't open '$indexEntry->{podFileName}' for reading - $!\n";
+	while (my $line = <POD>) {
+	  print INDEX $line;
+	}
+	close (POD);
+      }
+      else {
+	print INDEX "=head1 $indexEntry->{htmlDirName}\n\n";
+      }
+
+      # Add the links.
+      my $htmlDir = lc($indexEntry->{htmlDirName});
+      foreach my $podEntry (@{$spec->{podFiles}}) {
+	if (lc(dirname($podEntry->{htmlFileName})) eq $htmlDir) {
+	  my $fileName = $podEntry->{htmlFileName};
+	  $fileName =~ s/\.[^\.]+$//;
+	  $fileName =~ s/\\/\//g;
+	  my $presentableFileName = basename($fileName);
+	  $presentableFileName = ucfirst($presentableFileName);
+	  $presentableFileName =~ s/_/ /g;
+	  $fileName =~ s/\//::/g;
+	  print INDEX "\nL<$presentableFileName|$fileName>\n";
+	}
+      }
+
+      close (INDEX);
+    }
+  }
+}
+
+sub IdentifyCifPod {
+  my $spec = shift;
+
+  # This sub-routine identifies the CIF index POD files that will be generated later on.
+  # This is done as a separate phase to allow indices to contain links generated POD.
+
+  foreach my $podEntry (@{$spec->{cifIndices}}) {
+    push (@{$spec->{podFiles}}, {
+				 podFileName => "$podEntry->{htmlDirName}.pod",
+				 tempPodFileName => "$spec->{tempRoot}\\$podEntry->{htmlDirName}.pod",
+				 htmlFileName => "$podEntry->{htmlDirName}.html"
+				});
+  }
+}
+
+sub GenerateCifPod {
+  my $spec = shift;
+
+  foreach my $podEntry (@{$spec->{cifIndices}}) {
+    my $tempDir = "$spec->{tempRoot}\\$podEntry->{htmlDirName}";
+    my $indexPodFileName = "$tempDir.pod";
+    my $indexFile;
+
+    if ($options{what}) {
+      # Do nothing.
+    }
+    elsif ($options{clean}) {
+      unlink ($indexPodFileName);
+    }
+    else {
+      print "Building $indexPodFileName\n" if ($options{verbose});
+      fshu::MakePath($tempDir);
+      $indexFile = IO::File->new(">$indexPodFileName") or die "Error: Couldn't open '$indexPodFileName' for writing: $!\n";
+
+      # Copy the contents of the introductory POD.
+      if ($podEntry->{podFileName}) {
+	open (POD, $podEntry->{podFileName}) or die "Error: Couldn't open '$podEntry->{podFileName}' for reading - $!\n";
+	while (my $line = <POD>) {
+	  print $indexFile $line;
+	}
+	close (POD);
+      }
+      else {
+	print $indexFile "=head1 $podEntry->{htmlDirName}\n\n";
+      }
+
+      # Add an entry for the index .pod to cause the HTML to be generated later.
+      push (@{$spec->{podFiles}}, {
+				   tempPodFileName => $indexPodFileName,
+				   htmlFileName => "$podEntry->{htmlDirName}.html"
+				  });
+    }
+
+    # Generate a POD file for each CIF and add a line for each to the index file.
+    opendir(DIR, $podEntry->{cifDirName}) or die "Error: Couldn't opendir '$podEntry->{cifDirName}' - $!\n";
+    while (defined(my $file = readdir(DIR))) {
+      my $cifFileName = "$podEntry->{cifDirName}\\$file";
+      if (-f $cifFileName and ($cifFileName =~ /\.cif$/i)) {
+	my $podFileName = "$tempDir\\$file";
+	$podFileName =~ s/\.cif$/\.pod/i;
+	my $htmlFileName = "$podEntry->{htmlDirName}\\$file";
+	$htmlFileName =~ s/\.cif$/\.html/i;
+	
+	print "Reading '$cifFileName'...\n" if ($options{verbose});
+	my $cif = CommandInfoFile->New($cifFileName);
+	Cif2Pod($cif, $podFileName, $htmlFileName, $indexFile, $spec->{podFiles});
+      }
+    }
+    closedir(DIR);
+
+    if ($indexFile) {
+      $indexFile->close();
+    }
+  }
+}
+
+sub BuildHtml {
+  my $spec = shift;
+
+  my $cwd = cwd();
+  unless ($options{what} or $options{clean}) {
+    chdir ($spec->{tempRoot}) or die "Error: Couldn't chdir to '$spec->{tempRoot}' - $!\n";
+  }
+
+  eval {
+    my $first = 1;
+    foreach my $podEntry (@{$spec->{podFiles}}) {
+      DoBuildHtml($podEntry->{tempPodFileName}, $podEntry->{htmlFileName}, $spec->{docRoot}, $spec->{cssFile}, $first);
+      $first = 0 if ($first);
+    }
+  };
+
+  my $error = $@;
+  chdir $cwd;
+  die $@ if $@;
+}
+
+sub DoBuildHtml {
+  my $podFileName = shift;
+  my $htmlFileName = shift;
+  my $docRoot = shift;
+  my $css = shift;
+  my $first = shift;
+
+  my $outputFileName = "$docRoot\\$htmlFileName";
+
+  if ($options{what}) {
+    print "$outputFileName\n";
+  }
+  elsif ($options{clean}) {
+    unlink ($outputFileName);
+  }
+  else {
+    print "Building $outputFileName\n" if ($options{verbose});
+    fshu::MakePath(dirname($outputFileName));
+
+    my @elements = split /\\/, $htmlFileName;
+    my $numElements = @elements;
+    my $pathRelativeToDocRoot = '.';
+    for (my $i = 0; $i < ($numElements - 1); ++$i) {
+      if ($pathRelativeToDocRoot eq '.') {
+	$pathRelativeToDocRoot = '..';
+      }
+      else {
+	$pathRelativeToDocRoot = "..\\$pathRelativeToDocRoot";
+      }
+    }
+
+    my @args = ("--podpath=.",
+		"--podroot=.",
+		"--htmlroot=$pathRelativeToDocRoot",
+		"--recurse",
+		"--infile=$podFileName",
+		"--outfile=$outputFileName");
+    #  push (@args, '--verbose') if ($options{verbose});
+    if ($css) {
+      my $relativeCssName = "$pathRelativeToDocRoot\\" . basename($css);
+      push(@args, "--css=$relativeCssName");
+    }
+    if ($first) {
+      push (@args, '--flush');
+    }
+
+    print "Calling pod2html - ", join(' ', @args), "\n" if ($options{verbose});
+    pod2html(@args);
+  }
+}
+
+sub Cif2Pod {
+  my $cif = shift;
+  my $podFileName = shift;
+  my $htmlFileName = shift;
+  my $indexFile = shift;
+  my $podFileList = shift;
+
+  # Add an entry for the CIF .pod to cause the HTML to be generated later.
+  push (@$podFileList, {
+			tempPodFileName => $podFileName,
+			htmlFileName => $htmlFileName
+		       });
+
+  if ($options{what}) {
+    # Do nothing.
+  }
+  elsif ($options{clean}) {
+    unlink ($podFileName);
+  }
+  else {
+    open (OUTPUT, ">$podFileName") or die "Error: Couldn't open '$podFileName' for writing: $!\n";
+
+    print OUTPUT "=head1 SYNTAX\n\n";
+    my $fullName = $cif->FullName();
+    $fullName =~ s/^\S+\s//; # Remove the root command name if this is a sub-command.
+    print OUTPUT '    ', $fullName;
+
+    my $options = $cif->Options();
+    if ($options and (@$options > 0)) {
+      print OUTPUT ' [options]';
+    }
+
+    my $arguments = $cif->Arguments();
+    foreach my $argument (@$arguments) {
+      if ($argument->{flags}->{optional}) {
+	print OUTPUT ' [<';
+      }
+      else {
+	print OUTPUT ' <';
+      }
+      print OUTPUT $argument->{name};
+      if ($argument->{flags}->{optional}) {
+	print OUTPUT '>]';
+      }
+      else {
+	print OUTPUT '>';
+      }
+      if ($argument->{flags}->{multiple}) {
+	print OUTPUT ' ...';
+      }
+    }
+    print OUTPUT "\n\n";
+
+    if ($options and (@$options > 0)) {
+      print OUTPUT "=head1 OPTIONS\n\n";
+      print OUTPUT "=over5\n\n";
+      foreach my $option (@$options) {
+	print OUTPUT "=item -$option->{short_name} (--$option->{long_name}) $option->{type}\n\n$option->{description}";
+	if ($option->{type} eq 'enum') {
+	  FormatEnum($option->{enum_values});
+	}
+	if ($option->{flags}->{multiple}) {
+	  print OUTPUT " Can be specified more than once.";
+	}
+	if ($option->{env_var}) {
+	  print OUTPUT " Can also be specified by defining the environment variable '$option->{env_var}'.";
+	}
+	print OUTPUT "\n\n";
+      }
+      print OUTPUT "\n\n=back\n\n";
+    }
+
+    if ($arguments and (@$arguments > 0)) {
+      print OUTPUT "=head1 ARGUMENTS\n\n\n\n";
+      print OUTPUT "=over5\n\n";
+      foreach my $argument (@$arguments) {
+	print OUTPUT '=item ';
+	if ($argument->{flags}->{optional}) {
+	  print OUTPUT '[<';
+	}
+	else {
+	  print OUTPUT '<';
+	}
+	print OUTPUT $argument->{name};
+	if ($argument->{flags}->{optional}) {
+	  print OUTPUT ">]\n\n";
+	}
+	else {
+	  print OUTPUT ">\n\n";
+	}
+	print OUTPUT $argument->{description};
+	if ($argument->{flags}->{multiple}) {
+	  print OUTPUT ' Can be specified more than once.';
+	}
+	if ($argument->{env_var}) {
+	  print OUTPUT " Can also be specified by defining the environment variable '$argument->{env_var}'.";
+	}
+	if ($argument->{flags}->{last}) {
+	  print OUTPUT ' Any further arguments or options will be coalesced into this one.';
+	}
+	
+	if ($argument->{type} eq 'enum') {
+	  FormatEnum($argument->{enum_values});
+	}
+	elsif ($argument->{flags}->{multiple}) {
+	  print OUTPUT " [$argument->{type}(s)]";
+	}
+	else {
+	  print OUTPUT " [$argument->{type}]";
+	}
+	print OUTPUT "\n\n";
+      }
+      print OUTPUT "\n\n=back\n\n";
+    }
+
+    print OUTPUT "=head1 DESCRIPTION\n\n";
+    print OUTPUT $cif->ShortDescription(), "\n\n";
+    if ($cif->LongDescription()) {
+      print OUTPUT $cif->LongDescription(), "\n\n";
+    }
+    if ($cif->SeeAlso()) {
+      print OUTPUT "=head1 SEE ALSO\n\n";
+      print OUTPUT $cif->SeeAlso(), "\n\n";
+    }
+
+    if ($cif->NumSubCommands() > 0) {
+      print OUTPUT "=head1 SUB-COMMANDS\n\n";
+      my $numSubCommands = $cif->NumSubCommands();
+      for (my $i = 0; $i < $numSubCommands; ++$i) {
+	my $subCommandCif = $cif->SubCommand($i);
+	my $subCommandName = $subCommandCif->Name();
+	my $subCommandPodName = $subCommandCif->FullName();
+	$subCommandPodName =~ s/ /-/g;
+	print OUTPUT "L<$subCommandName|$subCommandPodName>\n\n";
+      }
+    }
+
+    if ($cif->Copyright()) {
+      print OUTPUT "=head1 COPYRIGHT\n\n";
+      print OUTPUT $cif->Copyright(), "\n\n";
+    }
+
+    close (OUTPUT);
+  }
+
+  if ($indexFile) {
+    my $description = $cif->ShortDescription();
+    $description =~ s/^\s*//;
+    $description =~ s/\s*$//;
+    print $indexFile "\nL<$cif->{name}|$cif->{name}> - $description\n\n";
+  }
+
+  if ($cif->NumSubCommands() > 0) {
+    # Recurse through sub-commands.
+    my $numSubCommands = $cif->NumSubCommands();
+    for (my $i = 0; $i < $numSubCommands; ++$i) {
+      my $thisSubCommandCif = $cif->SubCommand($i);
+      my $fullSubCommandName = $thisSubCommandCif->FullName();
+      $fullSubCommandName =~ s/ /-/g;
+      my $podName = $podFileName;
+      $podName =~ s/[^\\]+$/$fullSubCommandName\.pod/;
+      my $htmlName = $htmlFileName;
+      $htmlName =~ s/[^\\]+$/$fullSubCommandName\.html/;
+      Cif2Pod($cif->SubCommand($i), $podName, $htmlName, undef, $podFileList);
+    }
+  }
+}
+
+sub FormatEnum {
+  my $enumValues = shift;
+
+  my $descriptionsPresent = 0;
+  foreach my $enumValue (@$enumValues) {
+    if ($enumValue->{description} !~ /^\s*$/) {
+      $descriptionsPresent= 1;
+      last;
+    }
+  }
+  if ($descriptionsPresent) {
+    print OUTPUT "\n\n=over 5\n\n";
+    foreach my $enumValue (@$enumValues) {
+      print OUTPUT "=item $enumValue->{value}\n\n";
+      if ($enumValue->{description}) {
+	print OUTPUT $enumValue->{description};
+      }
+    }
+    print OUTPUT "\n\n=back\n\n";
+  }
+  else {
+    local $_;
+    print OUTPUT ' [', join (', ', map {$_->{value}} @$enumValues), ']';
+  }
+}
+
+__END__
+
+=head1 NAME
+
+fsh-builddocs - A tool that generates HTML documentation from POD source files.
+
+=head1 SYNOPSIS
+
+fsh-builddocs <pod-list-file>
+
+options:
+
+  -h (--help)        Display this help page.
+  -v (--verbose)     Verbose output.
+  -w (--what)        Do nothing but print the names of the files that would
+                     be generated.
+  -c (--clean)       Delete target files, rather than build them.
+
+=head1 DESCRIPTION
+
+This tool accepts a list of POD files (and indices - more on them later) and generates a corresponding set of HTML files within the specified output directory. The directory structure of the POD source files is mirrored in the output directory.
+
+The C<pod-list> file is preprocessed using F<cpp.exe> and so macro directives can be used to modify the list to suit a particular build configuration.
+
+The following syntax is supported for C<pod-list> files:
+
+=over 5
+
+=item C<doc-root E<lt>documentation_root_dirE<gt>>
+
+The directory into which the documentation HTML files will be generated.
+
+=item C<temp-root E<lt>temporary_file_root_dirE<gt>>
+
+The directory into any temporary files that are needed will be written.
+
+=item C<css E<lt>css_file_nameE<gt>>
+
+The name of a cascaded style sheet file that each of the generated HTML files should refer to. If specified, the file will be coped into the documentation root directory.
+
+=item C<pod E<lt>pod_file_nameE<gt> E<lt>html_file_nameE<gt>>
+
+Specifies a POD source file and a target HTML. The HTML file names are expected to be relative to the documentation root directory (specified with C<doc-root>).
+
+=item C<index E<lt>html_dir_nameE<gt>> [E<lt>index_pod_file_nameE<gt>]
+
+Generates a file named C<html_dir_name>F<.html>. This is produced by taking the contents of F<index_pod_file_name> (if specfied) and appending to that a links to each other HTML files that are present in the specified HTML directory. Note, because C<pod-list> files are preprocessed, it is possible to vary the contents of the index according to the build configuration by using #ifdef directives to prevent certain C<pod> lines from being active. For example:
+
+  pod my_pod_dir\some_pod_that_is_always_build.pod  my_html_dir\some_pod_that_is_always_built.html
+  #ifdef SOME_BUILD CONFIG
+  pod my_pod_dir\some_pod_that_is_only_built_sometimes.pod  my_html_dir\some_pod_that_is_only_built_sometimes.html
+  #endif
+  index my_html_dir my_pod_dir\index.pod
+
+=item C<cif E<lt>cif_dir_nameE<gt> E<lt>html_dir_nameE<gt> [E<lt>index_pod_file_nameE<gt>]>
+
+Specifies a directory containing a set of Command Information Files (CIFs). The CIFs are converted to POD and in the temporary directory and then to HTML in the HTML directory (which is expected to be relative to the documentation root directory). In addition a page containing links to each of the CIF HTML files is generated. This is named C<html_dir_name>F<.html> and is headed with the POD from C<index_pod_file_name> if that has been specified.
+
+=back
+
+=head1 KNOWN BUGS
+
+None known.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2010 Accenture. All rights reserved.
+
+=cut

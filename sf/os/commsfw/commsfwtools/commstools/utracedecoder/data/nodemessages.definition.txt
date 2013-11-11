@@ -1,0 +1,462 @@
+//
+// Node Messages basic message and message signature definitions
+//
+
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+// Define ENUM TStateChangeStage before including this file
+// Define ENUM ActivityId before including this file
+// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+ENUM DECIMAL TErrorCode : INT32
+    KErrNone = 0
+    KErrNotFound = -1
+    KErrGeneral = -2
+    KErrCancel = -3
+    KErrNoMemory = -4
+    KErrNotSupported = -5
+    KErrArgument = -6
+    KErrTotalLossOfPrecision = -7
+    KErrBadHandle = -8
+    KErrOverflow = -9
+    KErrUnderflow = -10
+    KErrAlreadyExists = -11
+    KErrPathNotFound = -12
+    KErrDied = -13
+    KErrInUse = -14
+    KErrServerTerminated = -15
+    KErrServerBusy = -16
+    KErrCompletion = -17
+    KErrNotReady = -18
+    KErrUnknown = -19
+    KErrCorrupt = -20
+    KErrAccessDenied = -21
+    KErrLocked = -22
+    KErrWrite = -23
+    KErrDisMounted = -24
+    KErrEof = -25
+    KErrDiskFull = -26
+    KErrBadDriver = -27
+    KErrBadName = -28
+    KErrCommsLineFail = -29
+    KErrCommsFrame = -30
+    KErrCommsOverrun = -31
+    KErrCommsParity = -32
+    KErrTimedOut = -33
+    KErrCouldNotConnect = -34
+    KErrCouldNotDisconnect = -35
+    KErrDisconnected = -36
+    KErrBadLibraryEntryPoint = -37
+    KErrBadDescriptor = -38
+    KErrAbort = -39
+    KErrTooBig = -40
+    KErrDivideByZero = -41
+    KErrBadPower = -42
+    KErrDirFull = -43
+    KErrHardwareNotAvailable = -44
+    KErrSessionClosed = -45
+    KErrPermissionDenied = -46
+    KErrExtensionNotSupported = -47
+    KErrCommsBreak = -48
+    KErrNoSecureTime = -49
+END ENUM
+
+CONST KNodeMessagesImplementationUid = 0x10285F38
+
+ENUM NM_SignatureId : UINT32
+    ESignalBase                          =0
+    ENodeSignal                          =1
+    ESignatureBase                       =2
+    ESignatureNumber                     =3
+    ESignatureUid                        =4
+    ESignatureErrContext                 =5
+    ESignatureErrResponse                =6
+	
+    ESignatureNodeId                     =8
+    ESignatureNodeIdNumber               =9
+    ESignatureNodeIdNumberNumber         =10
+    ESignatureMessageIdNumber            =11
+    ESignatureAnyNumber                  =12
+    ESignatureMetaDataPtr                =13
+    ESignatureNumberNumberNumber         =14
+    ESignatureRMessage2                  =15
+    ESignatureNumberRMessage2            =16
+    ESignatureAny                        =17
+    ESignatureNumberNumber               =18
+    ESignatureNodeIdAny                  =19
+    ESignatureNodeIdNodeId               =20
+    ESignatureNodeIdNodeIdNumber         =21
+    ESignatureNumberNumberNumberNumber   =22
+    ESignatureUidNumber                  =23
+    ESignatureNumberUidNumber            =24
+    ESignatureNodeIdClientType           =25
+    ESignatureClientTypeUidClientType    =26
+    ESignatureClientType                 =27
+    ESignatureClientTypeUid              =28
+    ESignatureMessageId                  =29
+    ESignatureNodeIdNumberNumberNumber   =30
+    ESignatureTypeId                     =31
+END ENUM
+	
+ENUM TRespAction : UINT32
+    EIgnore = 0
+    EPropagate = 1
+    ERetry = 2
+END ENUM
+
+
+CONTEXT Context_RuntimeCtxId
+//    UINT8 iSize
+//    UINT8 iSalt
+//    UINT16 iThread
+//    UINT32 iScope
+      PAD 8
+END CONTEXT
+
+
+CONTEXT Context_NodeId : Context_RuntimeCtxId 
+    UINT32 iPtr
+END CONTEXT
+
+
+CONTEXT Context_NodeCtxId : Context_NodeId 
+    ActivityId iNodeCtx		// low byte of activity id
+    PAD 1			// high byte of activity id
+    PAD 2 // 2-byte padding
+END CONTEXT
+
+ALIAS CONTEXT TCommsId = Context_NodeId
+
+STRUCT STypeId
+    UINT32 iUid
+    UINT32 iTypeId
+END STRUCT
+
+// h_structures.h
+STRUCT TStateChange
+    TStateChangeStage iStage
+    TErrorCode iError    
+END STRUCT
+
+// nm_errorrecovery.h
+STRUCT TErrContext
+    TCommsId iOriginator
+    UINT32 iActivitySigId
+    TMessageId iMessageId
+    TStateChange iStateChange
+    PAD 4 // UINT32 iInfo
+END STRUCT
+
+// nm_errorrecovery.h
+STRUCT TErrResponse
+    TRespAction iAction
+    TErrorCode iError    
+    TMessageId iMessageId  
+END STRUCT
+
+// e32cmn.h
+STRUCT RMessage2
+    UINT32 iHandle // From RMessagePtr2
+    INT32 iFunction
+    INT32 iArgs1
+    INT32 iArgs2
+    INT32 iArgs3
+    INT32 iArgs4
+    INT32 iSpare
+    UINT32 iSessionPtr
+    INT32 iFlags
+    INT32 iSpare3
+END STRUCT
+
+// nm_interfaces.h
+STRUCT TClientType
+    UINT32 iClientType
+    UINT32 iClientFlags
+END STRUCT
+
+// nm_interfaces.h
+STRUCT RClientInterface
+    UINT32 iSender
+    PAD 20
+END STRUCT
+
+// nm_interfaces.h
+STRUCT RNodeInterface
+    RClientInterface iBase
+    TClientType iClientType
+END STRUCT
+
+
+SIGNATURE TSignalBase
+    TYPEID = KNodeMessagesImplementationUid:ESignalBase
+END SIGNATURE
+
+SIGNATURE TNodeSignal : TSignalBase
+    TYPEID = KNodeMessagesImplementationUid:ENodeSignal
+    TMessageId iMessageId
+END SIGNATURE
+
+// Synonymous with TSigVoid
+SIGNATURE TSignatureBase : TNodeSignal
+    TYPEID = KNodeMessagesImplementationUid:ESignatureBase
+END SIGNATURE
+
+SIGNATURE TSigErrContext : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureErrContext
+    TErrContext iErrContext
+END SIGNATURE 
+
+SIGNATURE TSigErrResponse : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureErrResponse
+    TErrResponse iErrResponse
+END SIGNATURE 
+
+SIGNATURE TSigNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNumber
+    UINT32 iValue
+END SIGNATURE 
+
+SIGNATURE TSigUid : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureUid
+    UINT32 iUid
+END SIGNATURE 
+
+SIGNATURE TSigNodeId : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeId
+    TCommsId iNodeId
+END SIGNATURE 
+
+SIGNATURE TSigNodeIdNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeIdNumber
+    TCommsId iNodeId
+    UINT32 iValue
+END SIGNATURE 
+
+SIGNATURE TSigNodeIdNumberNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeIdNumberNumber
+    TCommsId iNodeId
+    UINT32 iValue1
+    UINT32 iValue2
+END SIGNATURE 
+
+SIGNATURE TSigNodeIdNumberNumberNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeIdNumberNumberNumber
+    TCommsId iNodeId
+    UINT32 iValue1
+    UINT32 iValue2
+    UINT32 iValue3
+END SIGNATURE 
+
+SIGNATURE TSigTypeId : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureTypeId
+    STypeId iTypeId
+END SIGNATURE
+
+SIGNATURE TSigMessageIdNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureMessageIdNumber
+    TMessageId iMsgId
+    UINT32 iValue
+END SIGNATURE 
+
+SIGNATURE TSigNumberNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNumberNumber
+    UINT32 iValue1
+    UINT32 iValue2
+END SIGNATURE 
+
+SIGNATURE TSigNumberNumberNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNumberNumberNumber
+    UINT32 iValue1
+    UINT32 iValue2
+    UINT32 iValue3
+END SIGNATURE 
+
+SIGNATURE TSigNumberNumberNumberNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNumberNumberNumberNumber
+    UINT32 iValue1
+    UINT32 iValue2
+    UINT32 iValue3
+    UINT32 iValue4
+END SIGNATURE 
+
+SIGNATURE TSigNodeIdNodeIdNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeIdNodeIdNumber
+    TCommsId iNodeId1
+    TCommsId iNodeId2
+    UINT32 iValue
+END SIGNATURE 
+
+SIGNATURE TSigMetaDataPtr : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureMetaDataPtr
+    UINT32 iPtr
+END SIGNATURE 
+
+SIGNATURE TSigRMessage2 : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureMetaDataPtr
+    RMessage2 iMessage
+END SIGNATURE 
+
+SIGNATURE TSigNumberRMessage2 : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNumberRMessage2
+    UINT32 iValue
+    RMessage2 iMessage
+END SIGNATURE 
+
+SIGNATURE TSigAny : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureAny
+    UINT32 iPtr
+END SIGNATURE 
+
+SIGNATURE TSigAnyNumber : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureAnyNumber
+    UINT32 iPtr
+    UINT32 iValue
+END SIGNATURE
+
+SIGNATURE TSigNodeIdAny : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeIdAny
+    TCommsId iNodeId
+    UINT32 iPtr
+END SIGNATURE
+
+SIGNATURE TSigNodeIdNodeId : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeIdNodeId
+    TCommsId iNodeId1
+    TCommsId iNodeId2
+END SIGNATURE
+
+SIGNATURE TSigNodeIdClientType : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureNodeIdClientType
+    TCommsId iNodeId
+    TClientType iClientType
+END SIGNATURE
+
+SIGNATURE TSigClientType : TSignatureBase
+    TYPEID = KNodeMessagesImplementationUid:ESignatureClientType
+    TClientType iClientType
+END SIGNATURE 
+
+
+ALIAS SIGNATURE TSigVoid = TSignatureBase
+ALIAS SIGNATURE TSigNumberDefaultNumberDefault = TSigNumberNumber
+ALIAS SIGNATURE TSigNodeIdNumberDefault = TSigNodeIdNumber
+ALIAS SIGNATURE TSigNumberDefault = TSigNumber
+ALIAS SIGNATURE TMessageExtensionRMessage2 = TSigNumberRMessage2
+ALIAS SIGNATURE TSigAnyNumberDefault = TSigAnyNumber
+
+
+// nm_messages_base.h
+CONST KBaseRealmId = 0x10285F38
+
+ENUM Base_MessageId : UINT16
+    ENull                         = 1
+    ECancel                       = 2
+    EError                        = 3
+END ENUM
+
+MESSAGE Null
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KBaseRealmId:ENull
+END MESSAGE
+
+MESSAGE Cancel
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KBaseRealmId:ECancel
+END MESSAGE
+
+MESSAGE Error
+    SIGNATURE = TSigMessageIdNumber
+    MESSAGEID = KBaseRealmId:EError
+END MESSAGE
+
+// nm_messages_error_recovery.h
+CONST KErrRecRealmId = 0x10285F3A
+ENUM ErrRec_MessageId : UINT16
+     EErrorRecoveryRequest         = 1
+     EErrorRecoveryResponse        = 2
+END ENUM
+
+MESSAGE ErrorRecoveryRequest
+    SIGNATURE = TSigErrContext
+    MESSAGEID = KErrRecRealmId:EErrorRecoveryRequest
+END MESSAGE
+
+MESSAGE ErrorRecoveryResponse
+    SIGNATURE = TSigErrResponse
+    MESSAGEID = KErrRecRealmId:EErrorRecoveryResponse
+END MESSAGE
+
+// nm_messages_child.h
+CONST KChildRealmId = 0x10285F39
+
+ENUM Child_MessageId : UINT16
+	EDestroy		= 1
+	ELeft			= 2
+END ENUM
+
+MESSAGE Destroy
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KChildRealmId:EDestroy
+END MESSAGE
+
+MESSAGE Left
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KChildRealmId:ELeft
+END MESSAGE
+
+
+
+// nm_messages_parent.h
+CONST KParentRealmId = 0x10285F3B
+ENUM Parent_MessageId : UINT16
+     	EDataClientIdle               = 1
+	EDataClientActive             = 2
+END ENUM
+
+MESSAGE DataClientIdle
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KParentRealmId:EDataClientIdle
+END MESSAGE
+
+MESSAGE DataClientActive
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KParentRealmId:EDataClientActive
+END MESSAGE
+
+//MESSAGE Joined
+//    SIGNATURE = TSigNodeIdNumber
+//    MESSAGEID = KParentRealmId:EJoined
+//END MESSAGE
+
+// nm_messages_peer.h
+CONST KPeerRealmId = 0x10285F3C
+
+ENUM Peer_MessageId : UINT16 
+	ELeaveRequest			= 1
+	ELeaveComplete			= 2
+//	EJoinRequest			= 3
+//	EJoinComplete			= 4
+END ENUM
+
+MESSAGE LeaveRequest
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KPeerRealmId:ELeaveRequest
+END MESSAGE
+
+MESSAGE LeaveComplete
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KPeerRealmId:ELeaveComplete
+END MESSAGE
+
+//MESSAGE JoinRequest
+//    SIGNATURE = TSigNodeIdClientType
+//    MESSAGEID = KPeerRealmId:EJoinRequest
+//END MESSAGE
+
+STRUCT RResponseMsg
+	RMessage2 iMessage
+	PAD 24						// iInterfaceId
+	UINT8 iRequestMsgParam
+	UINT8 iResponseMsgParam
+	PAD 2
+END STRUCT
+

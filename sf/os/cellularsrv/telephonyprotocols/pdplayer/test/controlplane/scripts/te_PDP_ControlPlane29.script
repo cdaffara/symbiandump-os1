@@ -1,0 +1,90 @@
+//
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+
+PRINT Running CASE29
+PRINT Validating AP Queries on the PDP tier.
+
+//
+LOAD_SUITE te_esockteststepsSuite -SharedData
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			PDP-ControlPlane-0029
+//! @SYMTestCaseID		PDP-ControlPlane-0029
+//! @SYMTestCaseDesc  Validating AP Queries on the PDP tier.
+//! @SYMPREQ 2624
+//! @SYMTestActions         Creating server connection, opening connections on SIM1/SIM2 validating AP Query for PDP Tier.
+//! @SYMTestExpectedResults AP Queries successful.
+//! @SYMTestPriority High
+//! @SYMTestStatus Under development
+//! @SYMTestType UT
+
+// start simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StartSimTSYStep  z:\testdata\configs\te_controlplanenetworkside_test29.ini SimTsy
+
+// create and open the first connection
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\te_controlplanenetworkside_test29.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\te_controlplanenetworkside_test29.ini ConnectSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\te_controlplanenetworkside_test29.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\te_controlplanenetworkside_test29.ini OpenConn1
+
+// Connect at *link* tier
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\te_controlplanenetworkside_test29.ini CreateConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\te_controlplanenetworkside_test29.ini ConnectConnectionServ1
+
+// Make first *link* AP unavailable *AP2*
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPacketDataAccessPointAvailabilityStep z:\testdata\configs\te_controlplanenetworkside_test29.ini SetSimTsyAvailable
+
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\te_controlplanenetworkside_test29.ini APQuery1
+
+// Make first *link* AP available *AP2*
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPacketDataAccessPointAvailabilityStep z:\testdata\configs\te_controlplanenetworkside_test29.ini SetSimTsyUnavailable
+
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\te_controlplanenetworkside_test29.ini APQuery1a
+
+// Start connection on bearer and detect change at AP
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\te_controlplanenetworkside_test29.ini StartConn1_1
+// This will tell us the number of started APs (1) and its id.
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\te_controlplanenetworkside_test29.ini APQuery2
+
+// Clean up connections
+
+RUN_TEST_STEP 100 te_esockteststepsSuite stoprconnectionStep z:\testdata\configs\te_controlplanenetworkside_test29.ini StopConn1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPacketDataAccessPointAvailabilityStep z:\testdata\configs\te_controlplanenetworkside_test29.ini SetSimTsyUnavailable
+
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\te_controlplanenetworkside_test29.ini APQuery1a
+
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\te_controlplanenetworkside_test29.ini CloseConn1
+
+// Close and cleanup resources
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\te_controlplanenetworkside_test29.ini CloseConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\te_controlplanenetworkside_test29.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// stop simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StopSimTSYStep z:\testdata\configs\te_controlplanenetworkside_test29.ini SimTsy
+
+// Shutdown
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			PDP-ControlPlane-0029
+
+
+
+
+
+

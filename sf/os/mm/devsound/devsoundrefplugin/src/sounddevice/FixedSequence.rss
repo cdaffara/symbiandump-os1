@@ -1,0 +1,288 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Definitions required for tone sequences 
+// 
+//
+
+// Signature definitions
+#define SEQ_SIG1 0x5153
+#define SEQ_SIG2 0x434E	
+#define SEQ_SIG	SEQ_SIG1,SEQ_SIG2, // Signature = "SQNC" ASCII
+
+// Commands
+#define SEQ_CMD_RET         -1
+#define SEQ_CMD_STARTLOOP   -2,
+#define SEQ_CMD_ENDLOOP     -3,
+
+// Useful values
+// Note frequencies
+#define SEQ_FREQ_A0	     440
+#define SEQ_FREQ_AsBf0   466  // 466.1637615 A#, Bb
+#define SEQ_FREQ_B0	     494  // 493.8833013
+#define SEQ_FREQ_C0	     523  // 523.2511306
+#define SEQ_FREQ_CsDf0	 554  // 554.365262 C#, Db, etc.
+#define SEQ_FREQ_D0	     587  // 587.3295358
+#define SEQ_FREQ_DsEf0   622  // 622.2539674
+#define SEQ_FREQ_E0      659  // 659.2551138
+#define SEQ_FREQ_F0      698  // 698.4564629
+#define SEQ_FREQ_FsGf0   740  // 739.9888454
+#define SEQ_FREQ_G0      784  // 783.990872
+#define SEQ_FREQ_GsAf0   831  // 830.6093952
+#define SEQ_FREQ_A1      880
+#define SEQ_FREQ_AsBf1   932  // 932.327523
+#define SEQ_FREQ_B1      988  // 987.7666025
+#define SEQ_FREQ_C1      1047 // 1046.502261
+#define SEQ_FREQ_CsDf1   1109 // 1108.730524
+#define SEQ_FREQ_D1      1175 // 1174.659072
+#define SEQ_FREQ_DsEf1   1245 // 1244.507935
+#define SEQ_FREQ_E1      1319 // 1318.510228
+#define SEQ_FREQ_F1      1397 // 1396.912926
+#define SEQ_FREQ_FsGf1   1480 // 1479.977691
+#define SEQ_FREQ_G1      1568 // 1567.981744
+#define SEQ_FREQ_GsAf1   1661 // 1661.21879
+#define SEQ_FREQ_A2      1760
+#define SEQ_FREQ_AsBf2   1865 // 1864.655046
+#define SEQ_FREQ_B2      1976 // 1975.533205
+#define SEQ_FREQ_C2      2093 // 2093.004522
+#define SEQ_FREQ_CsDf2   2217 // 2217.461048
+#define SEQ_FREQ_D2      2349 // 2349.318143
+#define SEQ_FREQ_DsEf2   2489 // 2489.01587
+#define SEQ_FREQ_E2      2673 // 2637.020455
+#define SEQ_FREQ_F2      2794 // 2793.825851
+#define SEQ_FREQ_FsGf2   2960 // 2959.955382
+#define SEQ_FREQ_G2      3136 // 3135.963488
+#define SEQ_FREQ_GsAf2   3322 // 3322.437581
+#define SEQ_FREQ_A3      3520
+#define SEQ_FREQ_AsBf3   3729 // 3729.310092
+
+// Volume defines
+#define SEQ_VOL_F        32767 // Forte = Loud
+#define SEQ_VOL_MF	     24575 // Mezzo forte = Medium loud
+#define SEQ_VOL_MP		 16383 // Mezzo piano = Medium soft
+#define SEQ_VOL_P         8191 // Piano = Soft
+	
+// Macros for defining sequences
+#define SEQ_DATA(A) SEQ_SIG A SEQ_CMD_RET
+#define SEQ_VAL(N) N,
+#define SEQ_LOOP(NUMBEROFTIMES,DATA) SEQ_CMD_STARTLOOP SEQ_VAL(NUMBEROFTIMES) DATA SEQ_CMD_ENDLOOP
+#define SEQ_TONE(DUR,F1,V1) SEQ_VAL(DUR) SEQ_VAL(F1) SEQ_VAL(V1) SEQ_VAL(0) SEQ_VAL(0)
+#define SEQ_2TONES(DUR,F1,V1,F2,V2) SEQ_VAL(DUR) SEQ_VAL(F1) SEQ_VAL(V1) SEQ_VAL(F2) SEQ_VAL(V2)
+#define SEQ_SILENCE(DUR) SEQ_VAL(DUR) SEQ_VAL(0) SEQ_VAL(0) SEQ_VAL(0) SEQ_VAL(0)
+// DUR = number samples@8kHz hence 8000 = 1 second
+// F1/F2 = frequency in Hz - can use note definitions above
+// V1/V1 = volume in range 0-32767 - can use volume definitions above
+// When playing two tones, sum of volumes should not be greater than 32767
+// e.g. can use MF+P or MP+MP
+
+STRUCT SEQUENCE_NAME
+    {
+    LTEXT name; // leading-byte counted text string
+    }
+
+STRUCT SEQUENCE_DATA
+    {
+	LEN WORD WORD data[]; // Array of 16bit data values
+    }
+
+STRUCT SEQUENCE_ARRAY
+    {
+    STRUCT sequences[];
+    }
+
+RESOURCE SEQUENCE_ARRAY fixed_tone_sequence
+	{ 
+	//
+	// Contains the sequences supported by the device (with localisable names)
+	//
+	sequences =
+		{
+        	SEQUENCE_NAME 
+			{ 
+			//
+			// A loud piercing sequence that alternates between two toned "warbles"
+			// Duration: 5 seconds
+			//
+			name="Rings";
+			},
+		SEQUENCE_DATA
+			{
+			data =
+				{ 
+				SEQ_DATA
+					(
+					SEQ_LOOP
+						(
+						2,
+						SEQ_LOOP
+						    (
+							11,
+							SEQ_TONE(250,SEQ_FREQ_GsAf2,SEQ_VOL_F)
+							SEQ_TONE(250,SEQ_FREQ_DsEf2,SEQ_VOL_F)
+							)
+						SEQ_LOOP
+						    (
+							11,
+							SEQ_TONE(250,SEQ_FREQ_DsEf2,SEQ_VOL_F)
+							SEQ_TONE(250,SEQ_FREQ_GsAf1,SEQ_VOL_F)
+							)
+						SEQ_SILENCE(6000)
+						)
+					SEQ_SILENCE(6000)
+					)
+				};
+			},
+        	SEQUENCE_NAME 
+			{ 
+			//
+			// A pleasant bell-like sequence based on clock chimes
+			// Duration:  5 seconds
+			// 
+			name="Chimes"; 
+			},
+		SEQUENCE_DATA
+			{
+			data =
+				{
+				SEQ_DATA
+					(
+					SEQ_2TONES(2500,SEQ_FREQ_E1,SEQ_VOL_MP,SEQ_FREQ_E1+5,SEQ_VOL_MP)
+					SEQ_2TONES(2500,SEQ_FREQ_C1,SEQ_VOL_MP,SEQ_FREQ_C1+5,SEQ_VOL_MP)
+					SEQ_2TONES(2500,SEQ_FREQ_D1,SEQ_VOL_MP,SEQ_FREQ_D1+5,SEQ_VOL_MP)
+					SEQ_2TONES(6250,SEQ_FREQ_G0,SEQ_VOL_MF,SEQ_FREQ_G0+5,SEQ_VOL_P)
+					SEQ_SILENCE(1250)
+ 					SEQ_2TONES(2500,SEQ_FREQ_G0,SEQ_VOL_MP,SEQ_FREQ_G0+5,SEQ_VOL_MP)
+					SEQ_2TONES(2500,SEQ_FREQ_D1,SEQ_VOL_MP,SEQ_FREQ_D1+5,SEQ_VOL_MP)
+					SEQ_2TONES(2500,SEQ_FREQ_E1,SEQ_VOL_MF,SEQ_FREQ_E1+5,SEQ_VOL_P)
+					SEQ_2TONES(7500,SEQ_FREQ_C1,SEQ_VOL_MP,SEQ_FREQ_C1+5,SEQ_VOL_MP)
+					SEQ_SILENCE(10000)
+					)
+				};
+			},
+        	SEQUENCE_NAME 
+			{ 
+			//
+			// A quiet sequence similar to a digital watch alarm
+			// Duration:  2.5 seconds
+			// 
+			name="Signal"; 
+			},
+		SEQUENCE_DATA
+			{ 
+			data =
+				{
+				SEQ_DATA
+					(
+					SEQ_LOOP
+						(
+						3,
+						SEQ_LOOP
+							(
+							3,
+							SEQ_TONE(328,SEQ_FREQ_AsBf3,SEQ_VOL_MF)
+							SEQ_SILENCE(339)
+							)
+						SEQ_SILENCE(2333)
+						)
+					SEQ_SILENCE(6998)
+					)
+				};
+			},
+        	SEQUENCE_NAME 
+			{ 
+			//
+			// Sounds like a fanfare played on an electric organ
+			// Duration:  2.6 seconds
+			// 
+			name="Fanfare"; 
+			},
+		SEQUENCE_DATA
+			{ 
+			data =
+				{
+				SEQ_DATA
+					(
+					SEQ_2TONES(2000,SEQ_FREQ_DsEf1,SEQ_VOL_MP,SEQ_FREQ_DsEf0,SEQ_VOL_MP)
+					SEQ_2TONES(2000,SEQ_FREQ_GsAf1,SEQ_VOL_MP,SEQ_FREQ_GsAf0,SEQ_VOL_MP)
+					SEQ_2TONES(1000,SEQ_FREQ_C2,SEQ_VOL_MP,SEQ_FREQ_C1,SEQ_VOL_MP)
+					SEQ_2TONES(1000,SEQ_FREQ_GsAf1,SEQ_VOL_MF,SEQ_FREQ_GsAf0,SEQ_VOL_P)
+					SEQ_2TONES(2000,SEQ_FREQ_DsEf1,SEQ_VOL_MP,SEQ_FREQ_DsEf0,SEQ_VOL_MP)
+					SEQ_2TONES(2000,SEQ_FREQ_GsAf1,SEQ_VOL_MP,SEQ_FREQ_GsAf0,SEQ_VOL_MP)
+					SEQ_2TONES(4000,SEQ_FREQ_C2,SEQ_VOL_MP,SEQ_FREQ_C1,SEQ_VOL_MP)
+					SEQ_2TONES(4000,SEQ_FREQ_GsAf1,SEQ_VOL_MF,SEQ_FREQ_GsAf0,SEQ_VOL_P)
+					SEQ_SILENCE(4000)
+					)
+				};
+			},
+		SEQUENCE_NAME 
+			{ 
+			//
+			// Pleasant two-tone chimes
+			// Duration:  4 seconds
+			// 
+			name="Bells"; 
+			},
+		SEQUENCE_DATA
+			{ 
+			data =
+				{
+				SEQ_DATA
+					(
+					SEQ_LOOP
+						(
+						2,
+						SEQ_2TONES(4000,SEQ_FREQ_E1,SEQ_VOL_MP,SEQ_FREQ_C1,SEQ_VOL_MP)
+						SEQ_2TONES(8000,SEQ_FREQ_C1,SEQ_VOL_MP,SEQ_FREQ_G0,SEQ_VOL_MP)
+						)
+					SEQ_SILENCE(8000)
+ 					)
+				};
+			},
+		SEQUENCE_NAME 
+			{ 
+			//
+			// Cavalry charge
+			// Duration: 2 seconds
+			// 
+			name="Cavalry"; 
+			},
+		SEQUENCE_DATA
+			{ 
+			data =
+				{
+				SEQ_DATA
+					(
+					SEQ_LOOP
+						(
+						2,
+						SEQ_2TONES(1333,SEQ_FREQ_A2,SEQ_VOL_MP,SEQ_FREQ_A1,SEQ_VOL_MP)
+						SEQ_SILENCE(667)
+ 						SEQ_2TONES(333,SEQ_FREQ_A2,SEQ_VOL_MP,SEQ_FREQ_A1,SEQ_VOL_MP)
+						SEQ_SILENCE(333)
+ 						)
+					SEQ_LOOP
+						(
+						2,
+						SEQ_2TONES(1333,SEQ_FREQ_E2,SEQ_VOL_MP,SEQ_FREQ_E1,SEQ_VOL_MP)
+						SEQ_SILENCE(667)
+ 						SEQ_2TONES(333,SEQ_FREQ_CsDf2,SEQ_VOL_MP,SEQ_FREQ_CsDf1,SEQ_VOL_MP)
+						SEQ_SILENCE(333)
+ 						)
+					SEQ_2TONES(2667,SEQ_FREQ_A2,SEQ_VOL_MP,SEQ_FREQ_A1,SEQ_VOL_MP)
+					SEQ_SILENCE(2667)
+ 					)
+				};
+			}
+		};
+	}
+

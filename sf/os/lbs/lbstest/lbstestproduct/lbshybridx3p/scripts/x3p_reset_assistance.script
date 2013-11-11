@@ -1,0 +1,60 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-X3P-RESET-ASSISTANCE
+//! @SYMScriptTestEnvironment TestExecute
+
+LOAD_SUITE LbsHybridX3PTestServer -SharedData
+
+PRINT Run LbsHybridX3PTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_SetupProtocolStub
+
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-X3P-RESET-TB-AFTERASSISTANCE-0001
+//! @SYMTestCaseID              LBS-X3P-RESET-TB-AFTERASSISTANCE-0001
+//! @SYMTestCaseDesc            X3P request that will be calculated in TB with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it sent out assistance data.
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Admin is set to TB
+//!                             A client makes an X3P request
+//!                             The Network starts the session, with techtype TB
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it sent out some assistance data
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should calculate the position as if starting from cold, by asking for assistance data again
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-RESET-TB-AFTAST
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PResetAssistance c:\testdata\configs\lbs_x3p.ini X3P-RESET-TB-AFTAST
+END_TESTCASE                  LBS-X3P-RESET-TB-AFTERASSISTANCE-0001
+
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini

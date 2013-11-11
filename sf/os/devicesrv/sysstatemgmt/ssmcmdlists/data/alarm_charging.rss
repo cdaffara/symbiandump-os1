@@ -1,0 +1,560 @@
+/*
+* Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command list for the following startup states:
+*   - Alarm
+*   - Charging
+*   - Test
+*   - Alarm to Charging
+*   - Charging to Alarm
+*   - Alarm to Normal
+*   - Charging to Normal
+*
+*/
+
+#include <ssm/conditionresourcetypes.rh>
+#include <ssm/ssmcmd.rh>
+
+#include "ssmsubstateext.hrh"
+#include "ssmdlldatadefs.rh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateTest;
+            resource_id = r_cmds_test;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateAlarm;
+            resource_id = r_cmds_alarm;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateCharging;
+            resource_id = r_cmds_charging;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateAlarmToCharging;
+            resource_id = r_cmds_alarm_to_charging;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateAlarmToNormal;
+            resource_id = r_cmds_alarm_to_normal;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateChargingToAlarm;
+            resource_id = r_cmds_charging_to_alarm;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateChargingToNormal;
+            resource_id = r_cmds_charging_to_normal;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmds_alarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_alarm
+    {
+    commands =
+        {
+        r_cmd_sastate_alarm,            // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,             // prio 0xFFF1
+        r_cmd_psstate_alarm,            // prio 0xFFF0
+        r_cmd_killsplash                // Last command, prio 0x0000
+        };
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmds_alarm_to_charging
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_alarm_to_charging
+    {
+    commands =
+        {
+        r_cmd_sastate_alarmtocharging,  // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,             // prio 0xFFF1
+        r_cmd_psstate_alarmtocharging   // prio 0xFFF0
+        };
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmds_alarm_to_normal
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_alarm_to_normal
+    {
+    commands =
+        {
+        r_cmd_sastate_alarmtonormal,    // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,             // prio 0xFFF1
+        r_cmd_psstate_alarmtonormal,    // prio 0xFFF0
+        r_cmd_splash                    // prio 0xFFE7
+        };
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmds_charging
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_charging
+    {
+    commands =
+        {
+        r_cmd_sastate_charging,         // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,             // prio 0xFFF1
+        r_cmd_psstate_charging,         // prio 0xFFF0
+        r_cmd_locod,                    // prio 0xFFB7
+        r_cmd_killsplash                // Last command, prio 0x0000
+        };
+    }
+
+
+// ---------------------------------------------------------------------------
+// r_cmds_charging_to_alarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_charging_to_alarm
+    {
+    commands =
+        {
+        r_cmd_sastate_chargingtoalarm,  // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,             // prio 0xFFF1
+        r_cmd_psstate_chargingtoalarm   // prio 0xFFF0
+        };
+    }
+
+
+// ---------------------------------------------------------------------------
+// r_cmds_charging_to_normal
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_charging_to_normal
+    {
+    commands =
+        {
+        r_cmd_sastate_chargingtonormal, // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,             // prio 0xFFF1
+        r_cmd_psstate_chargingtonormal, // prio 0xFFF0
+        r_cmd_splash                    // prio 0xFFE7
+        };
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmds_test
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_test
+    {
+    commands =
+        {
+        r_cmd_sastate_test,             // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,             // prio 0xFFF1
+        r_cmd_psstate_test              // prio 0xFFF0
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmd_killsplash
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_killsplash
+    {
+    priority = 0x0000;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000301; // KPSSplashShutdown
+    value    = 101;        // ESplashShutdown
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_locod
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_locod
+    {
+    priority = 0xFFB7;
+    name = "z:\\sys\\bin\\locod.exe";
+    execution_behaviour = ESsmFireAndForget;
+    monitor_info = r_mon_3_restarts_ignore;
+    conditional_information = r_cond_testatcommand_or_enableisicommunicationinusbchargingmode;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_alarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_alarm
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 108;        // ESwStateAlarm
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_alarmtocharging
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_alarmtocharging
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 112;        // ESwStateAlarmToCharging
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_alarmtonormal
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_alarmtonormal
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 115;        // ESwStateAlarmToNormal
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_charging
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_charging
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 107;        // ESwStateCharging
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_chargingtoalarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_chargingtoalarm
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 113;        // ESwStateChargingToAlarm
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_chargingtonormal
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_chargingtonormal
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 114;        // ESwStateChargingToNormal
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_test
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_test
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 106;        // ESwStateTest
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_publishstate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_cmd_publishstate
+    {
+    priority = 0xFFF1;
+    severity = ECmdCriticalSeverity;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_alarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_alarm
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_alarm;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_alarmtocharging
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_alarmtocharging
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_alarmtocharging;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_alarmtonormal
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_alarmtonormal
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_alarmtonormal;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_charging
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_charging
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_charging;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_chargingtoalarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_chargingtoalarm
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_chargingtoalarm;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_chargingtonormal
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_chargingtonormal
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_chargingtonormal;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_test
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_test
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_test;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_splash
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_splash
+    {
+    priority = 0xFFE7;
+    name = "z:\\sys\\bin\\splashscreen.exe";
+    }
+
+// ===========================================================================
+// DLL data items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_alarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_alarm
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateAlarm;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_alarmtocharging
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_alarmtocharging
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateAlarmToCharging;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_alarmtonormal
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_alarmtonormal
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateAlarmToNormal;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_charging
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_charging
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateCharging;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_chargingtoalarm
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_chargingtoalarm
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateChargingToAlarm;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_chargingtonormal
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_chargingtonormal
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateChargingToNormal;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_test
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_test
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateTest;
+    }
+
+// ===========================================================================
+// Conditional blocks in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_testatcommand
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_testatcommand
+    {
+    feature_id = KFeatureIdTestATCommand;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_enableisicommunicationinusbchargingmode
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_enableisicommunicationinusbchargingmode
+    {
+    feature_id = KFeatureIdEnableIsiCommunicationInUsbChargingMode;
+    }	
+	
+// ---------------------------------------------------------------------------
+// r_cond_testatcommand_or_certtesting
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_OR r_cond_testatcommand_or_enableisicommunicationinusbchargingmode
+    {
+    lhs = r_cond_feat_testatcommand;
+    rhs = r_cond_feat_enableisicommunicationinusbchargingmode;
+    }
+	
+	
+// monitoring.rss contains resource definitions, so it may not be included
+// before entry point.
+#include "monitoring.rss"

@@ -1,0 +1,69 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName LBS-HybridMOLR-UEAssistedMOLR-PosStatus
+//! @SYMScriptTestEnvironment TestExecute using hybrid_ueassisted_molr_posstatus.script
+
+
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+PRINT Run LbsHybridMOLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+//	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupRoamSelfLocate
+
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-HybridMOLR-UEAssistedMOLR-PosStatus-0001
+//! @SYMTestCaseID              LBS-HybridMOLR-UEAssistedMOLR-PosStatus-0001
+//! @SYMTestCaseDesc            Client generates MOLR request 
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             See test step Sequence inline comments
+//! @SYMTestExpectedResults     Sequence as per specified by FSM and UML Seq diagram is Followed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/3/2010
+//! @SYMAuthor                  brsengar
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini UEAssistedMOLRGpsOk
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsHybridUEAssistedNpudPosStatus
+END_TESTCASE                  LBS-HybridMOLR-UEAssistedMOLR-PosStatus-0001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+

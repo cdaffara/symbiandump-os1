@@ -1,0 +1,421 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		COMINF-ESOCK-RSubConnection-PublicAPI-TCP
+//! @SYMScriptDescription	Tests all published elements of the RSubConnection class as a means of confidence that the APIs work as expected.
+//! @SYMScriptAutomation	The tests are fully automated with Test Driver and TEF.
+//! @SYMScriptTestEnvironment	The test script requires an external IP Echo Server to operate (as described in the COMINF T_RSubConnection
+//!				PublishedAll API Test Suite Description.doc, chapter 4). The tests make modifications to the commsdat file and
+//!				return it back to normal afterwards. Connection is required to the test machine which contains the Echo Server.
+//! @SYMScriptDependencies 	A PC based IP Echo Server
+//! @SYMScriptAuthor		Runno Sgirka
+//! @SYMScriptCreationDate	28/02/2007
+///////////////////////////////////////////////////////////////////////////////
+
+LOAD_SUITE	T_RSubConnection
+DELAY		2000
+
+
+START_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0005
+//! @SYMTestCaseID		COMINF-ESOCK-RSubConnection-PublicAPI-0005
+//! @SYMAPI			RSubConnection
+//! @SYMTestCaseDesc		Test calls EventNotification(TNotificationEventBuf &aEventBuffer, TBool aGenericEventsOnly, TRequestStatus &aStatus)
+//!				method passing EFalse as aGenericEventsOnly parameter.
+//!				Uses API elements: Open(), EventNotification(), Close()
+//! @SYMTestActions		1.  Connect an RSocketServ.
+//!				2.  Open an instance of RConnection providing the RSocketServ.
+//!				3.  Start the RConnection instance.
+//!				4.  Call Open() method to open an instance of RSubConnection within the RConnection.
+//!				5.  Call EventNotification() method to request event notification passing EFalse as aGenericEventsOnly parameter.
+//!				6.  Open a TCP RSocket instance on RSubConnection.
+//!				7.  Connect the RSocket.
+//!				8.  Call outstanding to get the EventNotification() event.
+//!				9.  Close the RSocket.
+//!				10. Call Close() method to close the RSubConnection instance.
+//!				11. Close the RConnection instance.
+//!				12. Close the RSocketServ.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The EventNotification() method call is completed without errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSubConnection	\comms-infras\esock\T_RSubConnection\COMINF-ESOCK-RSubConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSubConnection	subConnection1
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0005-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RSubConnection-PublicAPI-0005-Start_command06
+		COMMAND		subConnection1	Constructor
+		COMMAND		subConnection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0005-Open_command09
+		COMMAND		subConnection1	EventNotification		COMINF-ESOCK-RSubConnection-PublicAPI-0005-EventNotification_command10
+		COMMAND		socket1	Constructor
+		COMMAND		socket1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0005-Open_command13
+		COMMAND		socket1	Connect		COMINF-ESOCK-RSubConnection-PublicAPI-0005-Connect_command14
+		OUTSTANDING	
+		COMMAND		socket1	Close
+		COMMAND		socket1	~
+		COMMAND		subConnection1	Close
+		COMMAND		subConnection1	~
+		COMMAND		connection1	Close
+		COMMAND		connection1	~
+		COMMAND		socketServ1	Close
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0005
+
+
+START_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0006
+//! @SYMTestCaseID		COMINF-ESOCK-RSubConnection-PublicAPI-0006
+//! @SYMAPI			RSubConnection
+//! @SYMTestCaseDesc		Test calls EventNotification() method that passes an event filter to register the SetParameters() method's outcome
+//!				Uses API elements: Open(), EventNotification(), SetParameters(), Close()
+//! @SYMTestActions		1.  Connect an RSocketServ.
+//!				2.  Open an instance of RConnection providing the RSocketServ.
+//!				3.  Start the RConnection synchronously.
+//!				4.  Call Open() method to open an instance of RSubConnection within the RConnection, using ECreateNew as the
+//!				    subconnection type.
+//!				5.  Call EventNotification() method to request event notification passing KSubConGenericEventParamsRejected |
+//!				    KSubConGenericEventParamsGranted as EventMask and 1 as EventListLength.
+//!				6.  Setup QoS data for SetParameters() call.
+//! 				7.  Call SetParameters() method passing EAcceptable as parameter set.
+//!				8.  Open a TCP RSocket instance on RSubConnection.
+//!				9.  Connect the RSocket.
+//!				10. Call outstanding to get the EventNotification() event for SetParameters() outcome.
+//!				11. Call Close() method to close the RSubConnection instance.
+//!				12. Close the RConnection instance.
+//!				13. Close the RSocketServ.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The EventNotification() method call is completed without errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSubConnection	\comms-infras\esock\T_RSubConnection\COMINF-ESOCK-RSubConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSubConnection	subConnection1
+		CREATE_OBJECT	RSubConParameterBundle	subConParameterBundle1
+		CREATE_OBJECT	CSubConParameterFamily	subConParameterFamily1
+		CREATE_OBJECT	CSubConQosGenericParamSet	subConQosGenericParamSet1
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0006-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RSubConnection-PublicAPI-0006-Start_command06
+		COMMAND		subConnection1	Constructor
+		COMMAND		subConnection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0006-Open_command09
+		COMMAND		subConnection1	EventNotification		COMINF-ESOCK-RSubConnection-PublicAPI-0006-EventNotification_command10
+		COMMAND		subConParameterBundle1	Constructor
+		COMMAND		subConParameterFamily1	Constructor		COMINF-ESOCK-RSubConnection-PublicAPI-0006-Constructor_command14
+		COMMAND		subConQosGenericParamSet1	Constructor		COMINF-ESOCK-RSubConnection-PublicAPI-0006-Constructor_command16
+		COMMAND		subConQosGenericParamSet1	SetDownLinkAveragePacketSize		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetDownLinkAveragePacketSize_command17
+		COMMAND		subConQosGenericParamSet1	SetDownLinkBandwidth		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetDownLinkBandwidth_command18
+		COMMAND		subConQosGenericParamSet1	SetDownLinkDelay		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetDownLinkDelay_command19
+		COMMAND		subConQosGenericParamSet1	SetDownLinkDelayVariation		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetDownLinkDelayVariation_command20
+		COMMAND		subConQosGenericParamSet1	SetDownLinkMaximumBurstSize		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetDownLinkMaximumBurstSize_command21
+		COMMAND		subConQosGenericParamSet1	SetDownLinkMaximumPacketSize		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetDownLinkMaximumPacketSize_command22
+		COMMAND		subConQosGenericParamSet1	SetDownLinkPriority		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetDownLinkPriority_command23
+		COMMAND		subConQosGenericParamSet1	SetHeaderMode		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetHeaderMode_command24
+		COMMAND		subConQosGenericParamSet1	SetUpLinkAveragePacketSize		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetUpLinkAveragePacketSize_command25
+		COMMAND		subConQosGenericParamSet1	SetUpLinkBandwidth		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetUpLinkBandwidth_command26
+		COMMAND		subConQosGenericParamSet1	SetUpLinkDelay		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetUpLinkDelay_command27
+		COMMAND		subConQosGenericParamSet1	SetUpLinkDelayVariation		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetUpLinkDelayVariation_command28
+		COMMAND		subConQosGenericParamSet1	SetUpLinkMaximumBurstSize		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetUpLinkMaximumBurstSize_command29
+		COMMAND		subConQosGenericParamSet1	SetUpLinkMaximumPacketSize		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetUpLinkMaximumPacketSize_command30
+		COMMAND		subConQosGenericParamSet1	SetUpLinkPriority		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetUpLinkPriority_command31
+		COMMAND		subConnection1	SetParameters		COMINF-ESOCK-RSubConnection-PublicAPI-0006-SetParameters_command33
+		COMMAND		socket1	Constructor
+		COMMAND		socket1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0006-Open_command36
+		COMMAND		socket1	Connect		COMINF-ESOCK-RSubConnection-PublicAPI-0006-Connect_command37
+		OUTSTANDING	
+		COMMAND		socket1	Close
+		COMMAND		socket1	~
+		COMMAND		subConQosGenericParamSet1	~
+		COMMAND		subConParameterBundle1	Close
+		COMMAND		subConParameterBundle1	~
+		COMMAND		subConnection1	Close
+		COMMAND		subConnection1	~
+		COMMAND		connection1	Close
+		COMMAND		connection1	~
+		COMMAND		socketServ1	Close
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0006
+
+
+START_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0009
+//! @SYMTestCaseID		COMINF-ESOCK-RSubConnection-PublicAPI-0009
+//! @SYMAPI			RSubConnection
+//! @SYMTestCaseDesc		Test calls Remove() method passing an associated socket from the subconnection as parameter.
+//!				Uses API elements: Open(), Add(), Remove(), Close()
+//! @SYMTestActions		1.  Connect an RSocketServ.
+//!				2.  Open an instance of RConnection providing the RSocketServ.
+//!				3.  Start the RConnection.
+//!				4.  Open a TCP socket on the RConnection.
+//!				5.  Connect the socket over the RConnection.
+//!				6.  Call Open() method to open an instance of RSubConnection within the RConnection.
+//!				7.  Call Add() passing the connected RConnection socket as parameter to move the connected socket onto the
+//!				    RSubConnection.
+//!				8.  Call outstanding.
+//! 				9.  Call Remove() to remove the socket from the RSubConnection.
+//!				10. Call outstanding.
+//!				11. Call Close() method to close the RSubConnection instance.
+//!				12. Close the RSocket.
+//!				13. Close the RConnection instance.
+//!				14. Close the RSocketServ.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The Remove() method call is completed without errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSubConnection	\comms-infras\esock\T_RSubConnection\COMINF-ESOCK-RSubConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSubConnection	subConnection1
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0009-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RSubConnection-PublicAPI-0009-Start_command06
+		COMMAND		socket1	Constructor
+		COMMAND		socket1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0009-Open_command09
+		COMMAND		socket1	Connect		COMINF-ESOCK-RSubConnection-PublicAPI-0009-Connect_command10
+		OUTSTANDING	
+		COMMAND		subConnection1	Constructor
+		COMMAND		subConnection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0009-Open_command14
+		COMMAND		subConnection1	Add		COMINF-ESOCK-RSubConnection-PublicAPI-0009-Add_command15
+		OUTSTANDING	
+		COMMAND		subConnection1	Remove		COMINF-ESOCK-RSubConnection-PublicAPI-0009-Remove_command17
+		OUTSTANDING	
+		COMMAND		subConnection1	Close
+		COMMAND		subConnection1	~
+		COMMAND		socket1	Close
+		COMMAND		socket1	~
+		COMMAND		connection1	Close
+		COMMAND		connection1	~
+		COMMAND		socketServ1	Close
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0009
+
+
+START_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0014
+//! @SYMTestCaseID		COMINF-ESOCK-RSubConnection-PublicAPI-0014
+//! @SYMAPI			RSubConnection
+//! @SYMTestCaseDesc		A negative test that calls Add() method passing an opened TCP RConnection socket as parameter without connecting the socket.
+//!				Uses API elements: Open(), Add(), Close()
+//! @SYMTestActions		1.  Connect an RSocketServ.
+//!				2.  Open an instance of RConnection providing the RSocketServ.
+//!				3.  Start the RConnection.
+//!				4.  Open a TCP socket on the RConnection.
+//!				6.  Call Open() method to open an instance of RSubConnection within the RConnection.
+//!				7.  Call Add() passing the opened RConnection socket as parameter.
+//!				8.  Call outstanding.
+//!				9.  Call Close() method to close the RSubConnection instance.
+//!				10. Close the RSocket.
+//!				11. Close the RConnection instance.
+//!				12. Close the RSocketServ.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The Add() method call returns error -18 (KErrNotReady).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSubConnection	\comms-infras\esock\T_RSubConnection\COMINF-ESOCK-RSubConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSubConnection	subConnection1
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND			socketServ1	Constructor
+		COMMAND			socketServ1	Connect
+		COMMAND			connection1	Constructor
+		COMMAND			connection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0014-Open_command05
+		COMMAND			connection1	Start		COMINF-ESOCK-RSubConnection-PublicAPI-0014-Start_command06
+		COMMAND			socket1	Constructor
+		COMMAND			socket1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0014-Open_command09
+		COMMAND			socket1	SetLocalPort
+		COMMAND			subConnection1	Constructor
+		COMMAND			subConnection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0014-Open_command13
+		COMMAND	!Error=-18	subConnection1	Add		COMINF-ESOCK-RSubConnection-PublicAPI-0014-Add_command14
+		OUTSTANDING	
+		COMMAND			subConnection1	Close
+		COMMAND			subConnection1	~
+		COMMAND			socket1	Close
+		COMMAND			socket1	~
+		COMMAND			connection1	Close
+		COMMAND			connection1	~
+		COMMAND			socketServ1	Close
+		COMMAND			socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0014
+
+
+START_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0017
+//! @SYMTestCaseID		COMINF-ESOCK-RSubConnection-PublicAPI-0017
+//! @SYMAPI			RSubConnection
+//! @SYMTestCaseDesc		A negative test that calls Remove() method without calling Add() method first, passing an associated TCP socket from the
+//!				subconnection as parameter.
+//!				Uses API elements: Open(), Remove(), Close()
+//! @SYMTestActions		1.  Connect an RSocketServ.
+//!				2.  Open an instance of RConnection providing the RSocketServ.
+//!				3.  Start the RConnection.
+//!				4.  Open a TCP socket on the RConnection.
+//!				5.  Connect the socket over the RConnection.
+//!				6.  Call Open() method to open an instance of RSubConnection within the RConnection.
+//! 				7.  Call Remove() to remove the RSocket from the RSubConnection instance.
+//!				8.  Call outstanding.
+//!				9.  Call Close() method to close the RSubConnection instance.
+//!				10. Close the RSocket.
+//!				11. Close the RConnection instance.
+//!				12. Close the RSocketServ.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The Remove() method call returns error -18 (KErrNotReady).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSubConnection	\comms-infras\esock\T_RSubConnection\COMINF-ESOCK-RSubConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSubConnection	subConnection1
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND			socketServ1	Constructor
+		COMMAND			socketServ1	Connect
+		COMMAND			connection1	Constructor
+		COMMAND			connection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0017-Open_command05
+		COMMAND			connection1	Start		COMINF-ESOCK-RSubConnection-PublicAPI-0017-Start_command06
+		COMMAND			socket1	Constructor
+		COMMAND			socket1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0017-Open_command09
+		COMMAND			socket1	Connect		COMINF-ESOCK-RSubConnection-PublicAPI-0017-Connect_command10
+		OUTSTANDING	
+		COMMAND			subConnection1	Constructor
+		COMMAND			subConnection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0017-Open_command14
+		COMMAND	!Error=-18	subConnection1	Remove		COMINF-ESOCK-RSubConnection-PublicAPI-0017-Remove_command15
+		OUTSTANDING	
+		COMMAND			subConnection1	Close
+		COMMAND			subConnection1	~
+		COMMAND			socket1	Close
+		COMMAND			socket1	~
+		COMMAND			connection1	Close
+		COMMAND			connection1	~
+		COMMAND			socketServ1	Close
+		COMMAND			socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0017
+
+
+
+START_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0026
+//! @SYMTestCaseID		COMINF-ESOCK-RSubConnection-PublicAPI-0026
+//! @SYMAPI			RSubConnection
+//! @SYMTestCaseDesc		Test calls CancelEventNotification() method before EventNotification() to verify that CancelEventNotification()
+//!				doesn't do anything if there is no outstanding EventNotification request for the subconnection.
+//!				Uses API elements: Open(), CancelEventNotification(), EventNotification(), Close()
+//! @SYMTestActions		1.  Connect an RSocketServ.
+//!				2.  Open an instance of RConnection providing the RSocketServ.
+//!				3.  Start the RConnection synchronously.
+//!				4.  Call Open() method to open an instance of RSubConnection within the RConnection, using ECreateNew as the
+//!				    subconnection type.
+//! 				5.  Call CancelEventNotification() method.
+//!				6.  Call EventNotification() method to request event notification passing EFalse as aGenericEventsOnly parameter.
+//!				7.  Open a TCP RSocket instance on RSubConnection.
+//!				8.  Connect the RSocket.
+//!				9.  Call outstanding to get the EventNotification() event.
+//!				10. Close the RSocket.
+//!				11. Call Close() method to close the RSubConnection instance.
+//!				12. Close the RConnection instance.
+//!				13. Close the RSocketServ.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The CancelEventNotification() method call should not affect the RSubConnection in any way.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSubConnection	\comms-infras\esock\T_RSubConnection\COMINF-ESOCK-RSubConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSubConnection	subConnection1
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0026-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RSubConnection-PublicAPI-0026-Start_command06
+		COMMAND		subConnection1	Constructor
+		COMMAND		subConnection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0026-Open_command09
+		COMMAND		subConnection1	CancelEventNotification
+		COMMAND		subConnection1	EventNotification		COMINF-ESOCK-RSubConnection-PublicAPI-0026-EventNotification_command11
+		COMMAND		socket1	Constructor
+		COMMAND		socket1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0026-Open_command14
+		COMMAND		socket1	Connect		COMINF-ESOCK-RSubConnection-PublicAPI-0026-Connect_command15
+		OUTSTANDING	
+		COMMAND		socket1	Close
+		COMMAND		socket1	~
+		COMMAND		subConnection1	Close
+		COMMAND		subConnection1	~
+		COMMAND		connection1	Close
+		COMMAND		connection1	~
+		COMMAND		socketServ1	Close
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0026
+
+
+START_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0029
+//! @SYMTestCaseID		COMINF-ESOCK-RSubConnection-PublicAPI-0029
+//! @SYMAPI			RSubConnection
+//! @SYMTestCaseDesc		Test calls EventNotification(TNotificationEventBuf &aEventBuffer, TBool aGenericEventsOnly, TRequestStatus &aStatus)
+//!				method passing ETrue as aGenericEventsOnly parameter.
+//!				Uses API elements: Open(), EventNotification(), Close()
+//! @SYMTestActions		1.  Connect an RSocketServ.
+//!				2.  Open an instance of RConnection providing the RSocketServ.
+//!				3.  Start the RConnection instance.
+//!				4.  Call Open() method to open an instance of RSubConnection within the RConnection.
+//!				5.  Call EventNotification() method to request event notification passing ETrue as aGenericEventsOnly parameter.
+//!				6.  Open a TCP RSocket instance on RSubConnection.
+//!				7.  Connect the RSocket.
+//!				8.  Call outstanding to get the EventNotification() event.
+//!				9.  Close the RSocket.
+//!				10. Call Close() method to close the RSubConnection instance.
+//!				11. Close the RConnection instance.
+//!				12. Close the RSocketServ.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The EventNotification() method call is completed without errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSubConnection	\comms-infras\esock\T_RSubConnection\COMINF-ESOCK-RSubConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSubConnection	subConnection1
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0029-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RSubConnection-PublicAPI-0029-Start_command06
+		COMMAND		subConnection1	Constructor
+		COMMAND		subConnection1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0029-Open_command09
+		COMMAND		subConnection1	EventNotification		COMINF-ESOCK-RSubConnection-PublicAPI-0029-EventNotification_command10
+		COMMAND		socket1	Constructor
+		COMMAND		socket1	Open		COMINF-ESOCK-RSubConnection-PublicAPI-0029-Open_command13
+		COMMAND		socket1	Connect		COMINF-ESOCK-RSubConnection-PublicAPI-0029-Connect_command14
+		OUTSTANDING	
+		COMMAND		socket1	Close
+		COMMAND		socket1	~
+		COMMAND		subConnection1	Close
+		COMMAND		subConnection1	~
+		COMMAND		connection1	Close
+		COMMAND		connection1	~
+		COMMAND		socketServ1	Close
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSubConnection-PublicAPI-0029

@@ -1,0 +1,348 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName  BASE-BSP-SOUND
+//! @SYMScriptTestEnvironment This test script requires a base rom image
+
+/////////////////////////////////////////////////////////////////////
+// BASE-BSP-SOUND-DRIVER-manual.script
+//
+//
+// Tests all the PublishedPartner APIs of the RMdaDevSound
+// class as a means of confidence that the APIs work as expected.
+// All test cases will keep the sound system state and 
+// restore that to initial state when test case finished
+// Platform dependent configuration is picked up from the global environment files
+//
+/////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir		${SYSDRIVE}\base\
+RUN_UTILS MkDir		${SYSDRIVE}\base\sound\
+RUN_UTILS MkDir		${SYSDRIVE}\base\sound\validation
+
+
+LOAD_SUITE	t_sound
+DELAY		5000
+
+///////////////////////////////////////////
+// Manual testing
+///////////////////////////////////////////
+
+START_TESTCASE 			BASE-BSP-SOUND-DRIVER-6001
+//! @SYMTestCaseID		BASE-BSP-SOUND-DRIVER-6001
+//! @SYMAPI			RMdaDevSound::PlayData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::SetPlayVolume(TInt)
+//! @SYMAuthor			Vassili Tsvetkov
+//! @SYMCreationDate		15/06/2008
+//! @SYMTestCaseDesc		Manual test. Play sound with volume level 50%, then set max volume level 
+//!				and play again. User will verify the volume change manually and give feedback
+//!				
+//! @SYMTestActions		1. Call Open() with unit [UnitEnum]
+//!				2. Call GetPlayFormat() and verify it from [default_play_format]
+//!				3. Show message "Press affirmative key to start playback with half volume"
+//!				4. Call PlayData() with valid sound data from [default_file]
+//!				5. Call SetPlayVolume() with max volume from [max_play_volume]
+//!				6. Show message "Press affirmative key to start playback with max volume"
+//!				7. Call PlayData() with valid sound data from [default_file]
+//!				8. Call PlayVolume(), where expected result is equal with max volume from [max_play_volume]
+//!				9. Request user feedback "Did it sound louder? Press affirmative key if Yes and any other key otherwise"
+//!				and store user's feedback in the log file
+//!				10. Restore default playback sound volume
+//!				11. Call Close().
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Playback finished w/o errors, sound became louder
+//! @SYMTestType		CIT
+	START_TEST_BLOCK		100				t_sound			\base\sound\base-bsp-sound-driver.ini
+		CREATE_OBJECT		RMdaDevSound			devsound  
+		COMMAND			devsound			new
+		COMMAND			devsound			Open			UnitEnum
+		CREATE_OBJECT		TCurrentSoundFormat		t_format		
+		COMMAND			t_format			new
+		COMMAND			devsound			GetPlayFormat		BSP-SOUND-DRIVER-GetPlayFormat
+		//!verify default play configuration			
+		COMMAND			t_format			irate_get		default_play_format
+		COMMAND			t_format			iencoding_get		default_play_format
+		COMMAND			t_format			ichannels_get		default_play_format
+		COMMAND			t_format			ibuffer_size_get	default_play_format
+		COMMAND			devsound			SetPlayVolume		play_volume_quater
+		COMMAND			devsound			utilityPromptMessage	start_playback_half_volume
+		COMMAND			devsound			PlayData		default_file
+		OUTSTANDING
+		COMMAND			devsound			SetPlayVolume		max_play_volume
+		COMMAND			devsound			utilityPromptMessage	start_playback_max_volume
+		COMMAND			devsound			PlayData		default_file
+		OUTSTANDING
+		COMMAND			devsound			PlayVolume		max_play_volume
+		COMMAND			devsound			utilityPromptMessage	ask_did_it_sound_louder
+		//!set back default playback audio level
+		COMMAND			devsound			SetPlayVolume		default_play_volume
+		COMMAND			t_format			~
+		COMMAND			devsound  			Close
+		COMMAND			devsound  			~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SOUND-DRIVER-6001
+
+START_TESTCASE 			BASE-BSP-SOUND-DRIVER-6002
+//! @SYMTestCaseID		BASE-BSP-SOUND-DRIVER-6002
+//! @SYMAPI			RMdaDevSound::RecordData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::PlayData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::SetPlayVolume(TInt);
+//!				RMdaDevSound::SetRecordLevel(TInt)
+//! @SYMAuthor			Vassili Tsvetkov
+//! @SYMCreationDate		15/06/2008
+//! @SYMTestCaseDesc		Manual test. Record sound with volume level 50%. Then play it. Set volume level to max and record again.
+//!				Play the last recorded file. User will verify the volume change manually and give feedback
+//!				
+//! @SYMTestActions		1. Call Open() with unit [UnitEnum]
+//!				2. Call GetRecordFormat() and verify it from [default_record_format]
+//!				3. Show message "Press affirmative key to start recording with half volume level"
+//!				4. Call SetRecordLevel() with values from [half_record_level]	
+//!				5. Call RecordData() with values from [record_32kb_half_volume]
+//!				6. Call SetPlayVolume() with values from [max_play_volume]
+//!				7. Call SetPlayFormat() with default value from [default_play_format]
+//!				8. Call PlayData() with valid sound data from [record_32kb_half_volume]
+//!				9. Show message "Press affirmative key to start recording with max volume level"
+//!				10. Call SetRecordLevel() with values from [max_record_level]
+//!				11. Call RecordData() with values from [record_32kb_max_volume]
+//!				12. Call PlayData() with valid sound data from [record_32kb_max_volume]
+//!				13. Request user feedback "Did it sound louder? Press affirmative key if Yes and any other key otherwise"
+//!				and store user's feedback in the log file
+//!				14. Restore default sound level
+//!				15. Call Close().
+//!
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Playback finished w/o errors, sound became louder
+//! @SYMTestType		CIT
+	START_TEST_BLOCK		100				t_sound			\base\sound\base-bsp-sound-driver.ini
+		CREATE_OBJECT		RMdaDevSound			devsound  
+		COMMAND			devsound			new
+		COMMAND			devsound			Open			UnitEnum
+		CREATE_OBJECT		TCurrentSoundFormat		t_format		
+		COMMAND			t_format			new
+		COMMAND			devsound			GetRecordFormat		BSP-SOUND-DRIVER-GetPlayFormat
+		//!verify default record configuration			
+		COMMAND			t_format			irate_get		default_record_format
+		COMMAND			t_format			iencoding_get		default_record_format
+		COMMAND			t_format			ichannels_get		default_record_format
+		COMMAND			t_format			ibuffer_size_get	default_record_format
+		COMMAND			devsound			utilityPromptMessage	start_record_half_volume
+		COMMAND			devsound			SetRecordLevel		half_record_level
+		COMMAND			devsound			RecordData		temp_file
+		OUTSTANDING
+		COMMAND			devsound			FlushRecordBuffer
+		COMMAND			devsound			utilityPromptMessage	start_playing_half_volume
+		COMMAND			devsound			GetPlayFormat		BSP-SOUND-DRIVER-GetPlayFormat
+		//!verify default play configuration			
+		COMMAND			t_format			irate_get		default_play_format
+		COMMAND			t_format			iencoding_get		default_play_format
+		COMMAND			t_format			ichannels_get		default_play_format
+		COMMAND			t_format			ibuffer_size_get	default_play_format
+		COMMAND			devsound			PlayData		temp_file
+		OUTSTANDING
+		COMMAND			devsound			utilityDeleteFile	delete_temp_file
+		COMMAND			devsound			utilityPromptMessage	start_record_max_volume
+		COMMAND			devsound			SetRecordLevel		max_record_level
+		COMMAND			devsound			RecordData		temp_file
+		OUTSTANDING
+		COMMAND			devsound			utilityPromptMessage	start_playing_max_volume
+		COMMAND			devsound			PlayData		temp_file
+		OUTSTANDING
+		COMMAND			devsound			utilityDeleteFile	delete_temp_file
+		COMMAND			devsound			utilityPromptMessage	ask_did_it_sound_louder
+		//!set back default recording audio level
+		COMMAND			devsound			SetRecordLevel		default_record_level
+		COMMAND			t_format			~
+		COMMAND			devsound  			Close
+		COMMAND			devsound  			~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SOUND-DRIVER-6002
+
+START_TESTCASE 			BASE-BSP-SOUND-DRIVER-7041
+//! @SYMTestCaseID		BASE-BSP-SOUND-DRIVER-7041
+//! @SYMAPI			RMdaDevSound::PlayData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::RecordData(TRequestStatus {ref}, const TDesC8 {ref})
+//! @SYMAuthor			Vassili Tsvetkov
+//! @SYMCreationDate		15/06/2008
+//! @SYMTestCaseDesc		Play default audio file with default format and at the same time record audio to different sound file.
+//! @SYMTestActions		1. Call Open() with unit [UnitEnum]
+//!				2. Call GetPlayFormat() and verify from [default_play_format]
+//!				3. Call PlayData() to play [default_audio_file]
+//!				4. Call SetRecordFormat() with [default_record_format]
+//!				5. Call RecordData to record audio to [temp_audio_file]
+//!				6. Call PlayData() to play [temp_audio_file]
+//!				7. Ask user if recorded audio is what was played
+//!				8. Call Close()
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Playing and recording completes without any errors and recorded audio is what it should supposed to be.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100				t_sound			\base\sound\base-bsp-sound-driver.ini
+		CREATE_OBJECT	RMdaDevSound			devsound  
+		COMMAND		devsound			new
+		COMMAND		devsound			Open			UnitEnum
+		CREATE_OBJECT	TCurrentSoundFormat		t_format		
+		COMMAND		t_format			new
+		COMMAND		devsound			GetPlayFormat		BSP-SOUND-DRIVER-GetPlayFormat
+		//!verify default play configuration			
+		COMMAND		t_format			irate_get		default_play_format
+		COMMAND		t_format			iencoding_get		default_play_format
+		COMMAND		t_format			ichannels_get		default_play_format
+		COMMAND		t_format			ibuffer_size_get	default_play_format
+		COMMAND		devsound			GetRecordFormat		BSP-SOUND-DRIVER-GetRecordFormat
+		//!verify default record configuration			
+		COMMAND		t_format			irate_get		default_record_format
+		COMMAND		t_format			iencoding_get		default_record_format
+		COMMAND		t_format			ichannels_get		default_record_format
+		COMMAND		t_format			ibuffer_size_get	default_record_format
+		COMMAND		devsound			utilityPromptMessage	start_record_and_playing_simultaneously
+		COMMAND		devsound			PlayData		default_file
+		COMMAND		devsound			RecordData		temp_file
+		OUTSTANDING
+		COMMAND		devsound			utilityPromptMessage	start_playing_audio_recorded_in_previous_step
+		COMMAND		devsound			PlayData		temp_file
+		OUTSTANDING
+		COMMAND		devsound			utilityDeleteFile	delete_temp_file
+		COMMAND		devsound			utilityPromptMessage	was_recorded_audio_correct
+		COMMAND		t_format			~
+		COMMAND		devsound  			Close
+		COMMAND		devsound  			~
+	END_TEST_BLOCK	 
+END_TESTCASE 			BASE-BSP-SOUND-DRIVER-7041
+
+START_TESTCASE 			BASE-BSP-SOUND-DRIVER-7042
+//! @SYMTestCaseID		BASE-BSP-SOUND-DRIVER-7042
+//! @SYMAPI			RMdaDevSound::PlayData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::RecordData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::NotifyPlayError(TRequestStatus {ref});
+//!				RMdaDevSound::CancelNotifyPlayError()
+//! @SYMAuthor			Vassili Tsvetkov
+//! @SYMCreationDate		15/06/2008
+//! @SYMTestCaseDesc		Call NotifyPlayError before playing file. Play default audio file with default format and at the same time record audio 
+//!				to different sound file. Call CancelNotifyPlayError before playing recorded audio.
+//! @SYMTestActions		1. Call Open() with unit [UnitEnum]
+//!				2. Call GetPlayFormat() and verify from [default_play_format]
+//!				3. Call GetRecordFormat() and verify from [default_record_format]
+//!				4. Call NotifyPlayError()
+//!				5. Call PlayData() to play [default_audio_file]
+//!				6. Call RecordData to record audio to [temp_audio_file]
+//!				7. Call CancelNotifyPlayError()
+//!				8. Call PlayData() to play [temp_audio_file]
+//!				9. Call Close()
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	NotifyPlayError() in step 3 completes with KErrUnderflow. Recording completes without any errors and recorded audio 
+//!				can be played. Playdata in step 4 completes with KErrNone. CancelNotifyPlayError completes with KErrNone.
+//!
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100				t_sound			\base\sound\base-bsp-sound-driver.ini
+		CREATE_OBJECT	RMdaDevSound			devsound  
+		COMMAND		devsound			new
+		COMMAND		devsound			Open			UnitEnum
+		COMMAND		devsound			CancelRecordData
+		CREATE_OBJECT	TCurrentSoundFormat		t_format		
+		COMMAND		t_format			new
+		COMMAND		devsound			GetPlayFormat		BSP-SOUND-DRIVER-GetPlayFormat
+		//!verify default play configuration			
+		COMMAND		t_format			irate_get		default_play_format
+		COMMAND		t_format			iencoding_get		default_play_format
+		COMMAND		t_format			ichannels_get		default_play_format
+		COMMAND		t_format			ibuffer_size_get	default_play_format
+		COMMAND		devsound			GetRecordFormat		BSP-SOUND-DRIVER-GetRecordFormat
+		//!verify default record configuration			
+		COMMAND		t_format			irate_get		default_record_format
+		COMMAND		t_format			iencoding_get		default_record_format
+		COMMAND		t_format			ichannels_get		default_record_format
+		COMMAND		t_format			ibuffer_size_get	default_record_format
+		COMMAND		devsound			utilityPromptMessage	start_record_and_playing_simultaneously
+		COMMAND	!AsyncError=-10	devsound			NotifyPlayError
+		COMMAND		devsound			PlayData		default_file		
+		COMMAND		devsound			RecordData		temp_file
+		OUTSTANDING
+		COMMAND		devsound			CancelNotifyPlayError
+		COMMAND		devsound			utilityPromptMessage	start_playing_audio_recorded_in_previous_step
+		COMMAND		devsound			PlayData		temp_file
+		OUTSTANDING
+		COMMAND		devsound			utilityDeleteFile	delete_temp_file
+		COMMAND		devsound			utilityPromptMessage	was_recorded_audio_correct
+		COMMAND		t_format			~
+		COMMAND		devsound  			Close
+		COMMAND		devsound  			~
+	END_TEST_BLOCK		 
+END_TESTCASE 			BASE-BSP-SOUND-DRIVER-7042
+
+START_TESTCASE 			BASE-BSP-SOUND-DRIVER-7043
+//! @SYMTestCaseID		BASE-BSP-SOUND-DRIVER-7043
+//! @SYMAPI			RMdaDevSound::PlayData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::RecordData(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RMdaDevSound::NotifyRecordError(TRequestStatus {ref});
+//!				RMdaDevSound::CancelNotifyRecordError()
+//! @SYMAuthor			Vassili Tsvetkov
+//! @SYMCreationDate		15/06/2008
+//! @SYMTestCaseDesc		Call NotifyRecordError before recording file. Play default audio file with default format and at the same time 
+//!				record audio to different sound file. Call CancelNotifyRecordError after recording.
+//! @SYMTestActions		1. Call Open() with unit [UnitEnum]
+//!				2. Call GetPlayFormat() and verify from [default_play_format]
+//!				3. Call GetRecordFormat() and verify from [default_record_format]
+//!				4. Call NotifyRecordError()
+//!				5. Call PlayData() to play [default_audio_file]
+//!				6. Call RecordData to record audio to [temp_audio_file]
+//!				7. Call CancelNotifyRecordError()
+//!				8. Call Close()
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	NotifyRecordError() in step 5 completes with KErrOverflow. Recording in step 6 completes with KErrNone. 
+//!				Playing in step 3 completes with KErrNone. CancelNotifyRecordError completes with KErrNone.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100				t_sound			\base\sound\base-bsp-sound-driver.ini
+		CREATE_OBJECT	RMdaDevSound			devsound  
+		COMMAND		devsound			new
+		COMMAND		devsound			Open			UnitEnum
+		COMMAND		devsound			CancelRecordData
+		CREATE_OBJECT	TCurrentSoundFormat		t_format		
+		COMMAND		t_format			new
+		COMMAND		devsound			GetPlayFormat		BSP-SOUND-DRIVER-GetPlayFormat
+		//!verify default play configuration			
+		COMMAND		t_format			irate_get		default_play_format
+		COMMAND		t_format			iencoding_get		default_play_format
+		COMMAND		t_format			ichannels_get		default_play_format
+		COMMAND		t_format			ibuffer_size_get	default_play_format
+		COMMAND		devsound			GetRecordFormat		BSP-SOUND-DRIVER-GetRecordFormat
+		//!verify default record configuration			
+		COMMAND		t_format			irate_get		default_record_format
+		COMMAND		t_format			iencoding_get		default_record_format
+		COMMAND		t_format			ichannels_get		default_record_format
+		COMMAND		t_format			ibuffer_size_get	default_record_format
+		COMMAND		devsound			utilityPromptMessage	start_record_and_playing_simultaneously
+		COMMAND	!AsyncError=-9	devsound			NotifyRecordError
+		COMMAND		devsound			PlayData		default_file		
+		COMMAND		devsound			RecordData		temp_file
+		OUTSTANDING
+		COMMAND		devsound			CancelNotifyRecordError
+		COMMAND		devsound			utilityPromptMessage	start_playing_audio_recorded_in_previous_step
+		COMMAND		devsound			PlayData		temp_file
+		OUTSTANDING
+		COMMAND		devsound			utilityDeleteFile	delete_temp_file
+		COMMAND		devsound			utilityPromptMessage	was_recorded_audio_correct
+		COMMAND		t_format			~
+		COMMAND		devsound  			Close
+		COMMAND		devsound  			~
+	END_TEST_BLOCK	 
+END_TESTCASE 			BASE-BSP-SOUND-DRIVER-7043
+

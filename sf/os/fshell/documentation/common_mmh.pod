@@ -1,0 +1,273 @@
+# common_mmh.pod
+#
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+=head1 common.mmh and platform.mmh Syntax
+
+The fshell build system uses a number of macros to control what should be built and how. These are defined in F<fshell/build/common/common.mmh> and F<fshell/build/E<lt>PLATFORME<gt>/platform.mmh>. Each platform defines the things it does and doesn't support in its platform.mmh. common.mmh takes these and defines some derived macros. This system allows fshell to be built in a large number of configurations, ranging from minimal base textshell on Symbian OS v9.1 to full GUI on the latest Symbian Foundation codeline.
+
+Any code wishing to use the fshell conditional system should C<< #include <fshell/common.mmh> >> and use the macros below and/or the ones defined in common.mmh to decide how to behave. Below follows the complete list of things that the platform.mmh can define. This isn't the complete list of all the macros that can be I<used>, for that see common.mmh directly. common.mmh can be included anywhere that the preprocessor is used - eg in source code, MMP files, RSS files or bld.infs.
+
+The macros that have a [NO_] in are assumed to be supported unless the [NO_] variant is defined. Eg in your MMP file you would check for btrace support with C<#ifdef FSHELL_BTRACE_SUPPORT> and to say a platform didn't support it you'd add C<#define FSHELL_NO_BTRACE_SUPPORT> to the platform.mmh. Unless the platform.mmh says otherwise, common.mmh would define C<FSHELL_BTRACE_SUPPORT>. Everything in fshell that uses btrace checks for C<FSHELL_SUPPORT_BTRACE> in either the bld.inf (in the case of a command that shouldn't be built at all if btrace isn't available) or in its MMP and/or source code (for a command that can still offer some functionality when btrace isn't available).
+
+=head2 Supported platform.mmh macros
+
+=over 4
+
+=item FSHELL_[NO_]BTRACE_SUPPORT
+
+BTrace (including timestamp2) supported in kernel. Everything except legacy v9.1-based platforms support btrace.
+
+=item FSHELL_[NO_]PIPS_SUPPORT
+
+Pips runtime available.
+
+=item FSHELL_[NO_]PATCHABLE_CONSTANTS_SUPPORT
+
+Platform/toolchain supports patchdata. Everything since about Symbian OS v9.1 does therefore it is assumed to be supported by default.
+
+=item FSHELL_[NO_]DYNAMICDFC_SUPPORT
+
+Kern::DynamicDfcQCreate API is present. Also used to guard TDfc::RawAdd.
+
+=item FSHELL_REPLACE_ECONS
+
+buildrom macro (on platforms that support it) to say that iosrv should replace econs.DLL with its own implementation.
+
+=item FSHELL_PLATFORM_S60
+
+S60 platform (value of this is either 3 or 5, for 3rd edition or 5th edition, or > 5 for foundation). Various UI code uses this to decide whether to build or not.
+
+=item FSHELL_PLATFORM_FOUNDATION
+
+Symbian Foundation platform (value of this is n, where n is Symbian^n).
+
+=item FSHELL_PLATFORM_SYMTB
+
+Symbian Timebox release (value can be 92 or 101).
+
+=item FSHELL_9_1_SUPPORT
+
+Used to guard things that don't work in Symbian OS v9.1, that don't have their own macro. Its use is discouraged in any new code. Currently guards: switchview missing API; missing thread priorities; demand paging definitions; missing RFs API; kernel TFindHandle class.
+
+=item FSHELL_CAP_ALL
+
+All capabilities are available (platform.mmh must define either this macro or the specific C<FSHELL_CAP_xxx> that are supported)
+
+=item FSHELL_PROTECTED_UIDS
+
+Protected uids (0x10xxxxxx) should be used, as opposed to unprotected (0xE0xxxxxx), for exe and dll UID3. The UIDs themselves are all defined at the bottom of common.mmh so nothing else uses this macro directly. Unprotected UIDs should only be specified if the platform produces an unsigned sis file.
+
+=item FSHELL_BASE_ROM
+
+Configure IBYs for base 'rom' command rather than 'buildrom' style.
+
+=item FSHELL_[NO_]COMMS_SUPPORT
+
+ESock and C32 are available.
+
+=item FSHELL_[NO_]BLUETOOTH_SUPPORT
+
+Bluetooth is available. If C<FSHELL_COMMS_SUPPORT> isn't available, BT is assumed not to be, also.
+
+=item FSHELL_[NO_]TELEPHONY_SUPPORT
+
+Etel and SMS available.
+
+=item FSHELL_[NO_]APPARC_SUPPORT
+
+Apparc available.
+
+=item FSHELL_[NO_]EZLIB_SUPPORT
+
+Zip libraries available.
+
+=item FSHELL_[NO_]AUDIO_SUPPORT
+
+MMF/Devsound available.
+
+=item FSHELL_[NO_]WSERV_SUPPORT
+
+Graphical windowserver (either version) is present (as opposed to text windowserver).
+
+=item FSHELL_[NO_]WSERV2_SUPPORT
+
+Windowserver v2 is being used. Very few things need to know what windowserver version is in use, but occasionally it is needed.
+
+=item FSHELL_[NO_]RAMDEFRAG_SUPPORT
+
+RAM defrag (in form of TRamDefragRequest API) is supported.
+
+=item FSHELL_CORE_SUPPORT_LOCAL_ICON
+
+Create a launch icon for running fshell local.
+
+=item FSHELL_CORE_SUPPORT_TCP_ICON
+
+Create a launch icon for running fshell remotely via TCP/IP.
+
+=item FSHELL_CORE_SUPPORT_BT_ICON
+
+Create a launch icon for running fshell remotely via Bluetooth.
+
+=item FSHELL_CORE_SUPPORT_USB_ICON
+
+Create a launch icon for running fshell remotely via USB. The value of the macro is the port name to use (eg C<"ACM::1">).
+
+=item FSHELL_CORE_SUPPORT_SERIAL_ICON
+
+Create a launch icon for running fshell remotely via Serial. The value of the macro is the console-title arguments to use (eg C<"port=COMM::1,rate=115200">).
+
+=item FSHELL_CORE_SUPPORT_RCONS_ICON
+
+Create a launch icon for running fshell remotely via rcons.
+
+=item FSHELL_CORE_SUPPORT_LICENSE
+
+Build platform specific license support into fshell. Note, the platform must export F<\epoc32\build\fshell\core\generated\license.cpp> that provides the implementation of the interface defined in F<\fshell\core\src\license.h>. Obsolete.
+
+=item FSHELL_[NO_]SAMPLINGPROFILER_SUPPORT
+
+Samping profiler (profiler.h) is present. (foundation forgot to include it in S^2).
+
+=item FSHELL_CLOGGER_REPLACE_FLOGGER
+
+Put "FLOGGER_clogger_stub.DLL" into the ROM file as "flogger.dll". Probably won't work for SIS install.
+
+=item FSHELL_CLOGGER_REPLACE_CDU
+
+Put "COMSDBGUTIL_clogger_stub.DLL" into the ROM file as "comsdbgutil.dll". Probably won't work for SIS install.
+
+=item FSHELL_ROM_INCLUDE(ibyname)
+
+Optional function-like macro, can be defined to override default IBY export path. Only a few platforms need to override this.
+
+=item FSHELL_ROM_INCLUDE2(srciby,destiby)
+
+Optional function-like macro, can be defined to override default IBY export path. Only a few platforms need to override this.
+
+=item FSHELL_[NO_]COPYTOSHADOWMEMORY_SUPPORT
+
+The kernel supports Epoc::CopyToShadowMemory.
+
+=item FSHELL_[NO_]LBS_SUPPORT
+
+LBS libraries (Symbian or S60) are available.
+
+=item FSHELL_[NO_]SQL_SUPPORT
+
+SQLite libraries are available.
+
+=item FSHELL_[NO_]EGL_SUPPORT
+
+Embedded-system Graphics Library is available. If FSHELL_NO_WSERV_SUPPORT is defined, it is assumed EGL is not supported either.
+
+=item FSHELL_[NO_]OPENVG_SUPPORT
+
+Open Vector Graphics Library is available. If FSHELL_NO_WSERV_SUPPORT is defined, it is assumed OpenVG is not supported either.
+
+=item FSHELL_ARM11XX_SUPPORT
+
+Defined if the target platform is ARM11. Eg ARM1136 or ARM1176. Do NOT define for Cortex A8/A9. Only used by fdb.
+
+=item FSHELL_ARM_MEM_MAPPED_DEBUG
+
+Defined if the target platform supports ARM PRB. Should be defined for Cortex A8/A9. Only used by fdb.
+
+=item FSHELL_[NO_]DOBJECTIX_SUPPORT
+
+On newer baselines DObjectIx has been replaced. This macro is to (hopefully temporarily) guard code that assumes that DObjectIx is being used.
+
+=item FSHELL_[NO_]CRYPTO_SUPPORT
+
+Cryptographic libraries are available.
+
+=item FSHELL_[NO_]SHA2_SUPPORT
+
+SHA2 message digest implementation is available.
+
+=item FSHELL_[NO_]MD4_SUPPORT
+
+MD4 message digest implementation is available.
+
+=item FSHELL_FLEXIBLEMM_AWARE
+
+Indicates that the baseline is recent enough to be aware of the flexible memory model. It doesn't necessarily mean that the flexible model is actually the one being used. It generally guards kernel APIs that weren't introduced until the FMM was (such as Kern::ChunkUserBase).
+
+=item FSHELL_[NO_]SPCRE_SUPPORT
+
+The regular expression libraries spcre.dll and libpcre.dll are available.
+
+=item FSHELL_DYNAMICSTARTUP_SUPPORT
+
+The Dynamic Startup Configuration (DSC) APIs such as RDscStore are available.
+
+=item FSHELL_MEMSPY_SUPPORT
+
+The MemSpy Engine APIs are available.
+
+=item FSHELL_TESTEXECUTE_SUPPORT
+
+The TestExecute APIs are available.
+
+=item FSHELL_TRACECORE_SUPPORT
+
+The TraceCore APIs are available.
+
+=back
+
+A couple of further macros follow - these are specifically for platforms that provide an custom implementation of the relevant command rather than using fshell's built-in version.
+
+=over 4
+
+=item FSHELL_NO_SUPPORT_BUILTIN_REBOOT
+
+=item FSHELL_NO_SUPPORT_BUILTIN_VARIANT
+
+=back
+
+=head2 Example platform.mmh file
+
+An example platform.mmh is included below. This is for an imaginary platform based on the S^4 release, that is text-only but supports most other things. Generally the older and/or more restricted the platform is, the more C<FSHELL_NO_...> macros you have to define.
+
+	// platform.mmh for the imaginary Mythic platform
+	// This would belong in \fshell\build\mythic\platform.mmh
+
+	#ifndef FSHELL_PLATFORM_MMH
+	#define FSHELL_PLATFORM_MMH
+
+	// We support all Platsec capabilities
+	#define FSHELL_CAP_ALL
+	#define FSHELL_PROTECTED_UIDS
+
+	// We're based on S^4
+	#define FSHELL_PLATFORM_FOUNDATION 4
+
+	// We are Mythic v1
+	#define FSHELL_PLATFORM_MYTHIC 1
+
+	// We are text-only
+	#define FSHELL_NO_WSERV_SUPPORT
+
+	// We have a recent kernel that supports the flexible memory model
+	#define FSHELL_FLEXIBLEMM_AWARE
+	#define FSHELL_NO_DOBJECTIX_SUPPORT
+
+	// For the sake of argument, say we don't support Location Based Services but we do support regexes
+	#define FSHELL_NO_LBS_SUPPORT
+	#define FSHELL_SPCRE_SUPPORT
+
+	#endif // FSHELL_PLATFORM_MMH
+
+=head1 Copyright
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+

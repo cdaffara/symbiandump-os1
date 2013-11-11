@@ -1,0 +1,244 @@
+# Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+# #  NB! LINKBASE :  Code execute address also set coreldr.lnk file 
+# #  MUST REFLECT CORELOADER ADDRESS RELOCATION IN BOTH FILES!!
+#
+
+ifeq ($($(NAME)_omap3_resricted_coreldr_flm),)
+$(NAME)_omap3_resricted_coreldr_flm := 1
+
+## THESE MACROS NEED TO BE SET EXPLICITLY TO TRUE OR BLANK
+
+## Use this macro if it is required to use the MMU
+## if the MMU is not require either comment it out or set it FALSE
+USE_MMU :=
+
+## This macro enables benchmarking code. Comment out or set FALSE if not required
+WRITE_TIMINGS :=
+
+## This macro causes the page tables to be output. Comment out or set FALSE if not required
+## If this option is selected then the MMU code will be enabled
+DUMP_PAGE_TABLES :=
+
+## Make sure all 3 macros are either TRUE or FALSE
+# Enforce USE_MMU if page table is to be dumped
+ifeq "$(DUMP_PAGE_TABLES)" "TRUE"
+  USE_MMU := TRUE
+else
+  DUMP_PAGE_TABLES := FALSE
+endif
+
+ifneq "$(USE_MMU)" "TRUE"
+  USE_MMU := FALSE
+endif
+
+ifneq "$(WRITE_TIMINGS)" "TRUE"
+  WRITE_TIMINGS := FALSE
+endif
+
+# Set the directories
+GENSRCDIR := $(EXTENSION_ROOT)/../../../../../../kernelhwsrv/kerneltest/e32utils/nandboot/coreldr
+XSRSRCDIR := $(EXTENSION_ROOT)/../../../../../../kernelhwsrv/kerneltest/e32utils/nandboot/coreldr/unistore2
+SPECSRCDIR := $(EXTENSION_ROOT)/../../../assp/common/nandboot/coreldr_largeblk
+
+VARIANTINC := $(INC_PATH)/tiomap3/variant/$(VARIANT_PATH)
+VARIANTINC2 := $(EXTENSION_ROOT)/../../../assp/common/bootstrap
+VARIANTINC3 := $(EXTENSION_ROOT)/../../34xx_sdp/nand
+VARIANTINC4 := $(INC_PATH)/tiomap3/variant/common
+
+GENINC1 := $(INC_PATH) $(EPOCROOT)/epoc32/include
+GENDRIVERINC := $(INC_PATH)/drivers
+GENINC2 := $(INC_PATH)/drivers/unistore2
+GENINCPATH := $(GENSRCDIR) $(SPECSRCDIR) $(XSRSRCDIR) $(VARIANTINC) $(VARIANTINC2) $(VARIANTINC3) $(VARIANTINC4) $(GENINC1) $(GENDRIVERINC) $(GENINC2)
+
+# Set the source/include/target directories
+GSRCDIR := ../../../assp/common/nandboot
+VINCDIR := ../../../h4/inc
+GINCDIR := ../../../shared/inc
+EPOCINCDIR := $(INC_PATH)/tiomap3/variant/34xx_sdp
+
+# Build directory
+BUILDLOC := $(EPOCBLD)/omap3_restricted_coreldr_flm/$(PLATFORM_PATH)
+
+# Set the target name
+TARGETDIR := $(EPOCROOT)/epoc32/release/$(PLATFORM_PATH)
+BINTARGET := $(TARGETDIR)/$(NAME).bin
+TMPTARGET := $(BUILDLOC)/$(NAME).elf
+
+# Rules
+vpath %.s . $(SPECSRCDIR) $(SRCDIR)
+vpath %.inc . $(SPECSRCDIR) $(EPOCINCDIR)
+vpath %.ginc . $(BUILDLOC)
+
+INCLUDES :=
+
+VHEADERS := nanddevice.h
+BUILTINCLUDES := nanddevice.inc config.inc
+BUILTINCLUDES2 := nand_plat.inc
+
+ASMSOURCE := coreldrasm_largeblk.s
+GENCPPSOURCE := coreldr.cpp inflate.cpp
+XSRCPPSOURCE := coreldrxsr.cpp
+
+# Only link in the MMU stuff if required
+GENASMSOURCE :=
+ifeq "$(USE_MMU)" "TRUE"
+  GENASMSOURCE := coreldrmmu.s 
+endif
+
+HEADERS := inflate.h coreldr.h
+SPECHEADERS := nand_plat.h
+
+## Address at which coreloader binary is loaded and then started from
+#
+# On H4 this number is base of ram + 48MB (permitting 48MB core images)
+# this number is pretty arbitrary and may be raised higher into ram
+# if necessary as long as the corresponding change is also made to
+# KCoreLoaderAddress in variant_bootstrap.inc
+#
+LINKBASE := 0x83000000
+
+# Build up logical TRUE defines
+ASM_TRUE_MACROS :=
+
+ifeq "$(USE_MMU)" "TRUE"
+  ASM_TRUE_MACROS := $(ASM_TRUE_MACROS) USE_MMU
+endif 
+
+ifeq "$(WRITE_TIMINGS)" "TRUE"
+  ASM_TRUE_MACROS := $(ASM_TRUE_MACROS) WRITE_TIMINGS
+endif 
+
+ifeq "$(DUMP_PAGE_TABLES)" "TRUE"
+  ASM_TRUE_MACROS := $(ASM_TRUE_MACROS) DUMP_PAGE_TABLES
+endif 
+
+# Build up logical FALSE defines
+ASM_FALSE_MACROS :=
+
+ifeq "$(USE_MMU)" "FALSE"
+  ASM_FALSE_MACROS := $(ASM_FALSE_MACROS) USE_MMU
+endif 
+
+ifeq "$(WRITE_TIMINGS)" "FALSE"
+  ASM_FALSE_MACROS := $(ASM_FALSE_MACROS) WRITE_TIMINGS
+endif 
+
+ifeq "$(DUMP_PAGE_TABLES)" "FALSE"
+  ASM_FALSE_MACROS := $(ASM_FALSE_MACROS) DUMP_PAGE_TABLES
+endif 
+
+
+# Arm RVCT tools
+ASM_TRUE_MACROS := $(ASM_TRUE_MACROS) USE_CXSF 
+
+OBJEXT := o
+INCEXT := inc
+
+ARMCCFLAGS := --arm -c -Otime --cpp --enum_is_int
+ARMCCFLAGS := $(ARMCCFLAGS) $(foreach dir,$(GENINCPATH),$(join -I, $(dir)))
+ARMCCFLAGS := $(ARMCCFLAGS) -DEKA2
+ARMCCFLAGS := $(ARMCCFLAGS) -DSYMBIAN_SUPPORT_UNISTORE2
+
+ARMCCFLAGS := $(ARMCCFLAGS) --preinclude $(EPOCROOT)/epoc32/include/rvct/rvct.h
+
+ifdef MACRO
+ARMCCFLAGS := $(ARMCCFLAGS) -D$(MACRO)
+endif
+
+ifeq "$(CFG)" "UDEB"
+ARMCCFLAGS := $(ARMCCFLAGS) -D_DEBUG
+endif
+
+ASM_TRUE_MACRO_CMD := $(foreach macro,$(ASM_TRUE_MACROS),--predefine "$(macro) SETL {TRUE}")
+ASM_FALSE_MACRO_CMD := $(foreach macro,$(ASM_FALSE_MACROS),--predefine "$(macro) SETL {FALSE}")
+ASM_LINKBASE_MACRO := --predefine "_LINKBASE_ SETA $(LINKBASE)"
+
+AFLAGS := -g --keep $(ASM_TRUE_MACRO_CMD) $(ASM_FALSE_MACRO_CMD) $(ASM_LINKBASE_MACRO) -I$(BUILDLOC) $(foreach dir,$(GENINCPATH),$(join -I, $(dir)))
+LFLAGS := --entry BootEntry --ro-base $(LINKBASE) --FIRST BootEntry --map
+SYMOPT := --symdefs
+ASMTYP := ARMASM
+LINKFILE :=
+
+# Include base commonly used functions with RVCT toolchain
+include $(EPOCROOT)/epoc32/tools/makefile_templates/base/base_rvct_common.mk
+
+
+# CPP source processing
+FULLCPPSOURCE := $(addprefix $(GENSRCDIR)/,$(GENCPPSOURCE))
+
+# Header processing
+FULLHEADERS := $(addprefix $(GENSRCDIR)/,$(HEADERS))
+FULLSPECHEADERS := $(addprefix $(VARIANTINC)/,$(SPECHEADERS))
+
+FULLVHEADERS := $(addprefix $(GENDRIVERINC)/,$(VHEADERS))
+FULLBUILTINCLUDES := $(addprefix $(BUILDLOC)/,$(BUILTINCLUDES))
+
+$(eval $(call base__h2inc,$(FULLBUILTINCLUDES),$(FULLVHEADERS)))
+
+FULLVHEADERS2 := $(addprefix $(VARIANTINC)/,$(SPECHEADERS))
+FULLBUILTINCLUDES2 := $(addprefix $(BUILDLOC)/,$(BUILTINCLUDES2))
+
+$(eval $(call base__h2inc,$(FULLBUILTINCLUDES2),$(FULLVHEADERS2)))
+
+# Object names
+GENCPPOBJECTS := $(foreach f,$(GENCPPSOURCE),$(basename $(f)).$(OBJEXT))
+FULLGENCPPOBJECTS := $(addprefix $(BUILDLOC)/,$(GENCPPOBJECTS))
+
+XSRCPPOBJECTS := $(foreach f,$(XSRCPPSOURCE),$(basename $(f)).$(OBJEXT))
+FULLXSRCPPOBJECTS := $(addprefix $(BUILDLOC)/,$(XSRCPPOBJECTS))
+
+ASMOBJECTS := $(foreach f,$(ASMSOURCE),$(basename $(f)).$(OBJEXT))
+FULLASMOBJECTS := $(addprefix $(BUILDLOC)/,$(ASMOBJECTS))
+
+GENASMOBJECTS := $(foreach f,$(GENASMSOURCE),$(basename $(f)).$(OBJEXT))
+FULLGENASMOBJECTS := $(addprefix $(BUILDLOC)/,$(GENASMOBJECTS))
+
+FULLOBJECTS := $(FULLASMOBJECTS) $(FULLGENASMOBJECTS) $(FULLGENCPPOBJECTS) $(FULLXSRCPPOBJECTS)
+
+
+FULLINCLUDES := $(addprefix $(SPECSRCDIR)/,$(INCLUDES))
+FULLPLATINCLUDES := $(addprefix $(PLATSRCDIR)/,$(PLATINCLUDES))
+FULLGENINCLUDES := $(addprefix $(GENSRCDIR)/,$(GENINCLUDES))
+FULLBLDINCLUDES := $(addprefix $(H2BLDDIR)/,$(BLDINCLUDES))
+
+
+# Link
+$(eval $(call base__link,$(TMPTARGET),$(FULLOBJECTS)))
+
+# Strip
+$(eval $(call base__strip,$(BINTARGET),$(TMPTARGET)))
+
+# CPP objects
+$(eval $(call base__compile,$(FULLGENCPPOBJECTS),$(BUILDLOC)/%.$(OBJEXT),$(GENSRCDIR)/%.cpp $(FULLHEADERS) $(FULLSPECHEADERS)))
+
+$(eval $(call base__compile,$(FULLXSRCPPOBJECTS),$(BUILDLOC)/%.$(OBJEXT),$(XSRSRCDIR)/%.cpp $(FULLHEADERS) $(FULLSPECHEADERS)))
+
+# Asm objects
+$(eval $(call base__asm,$(FULLGENASMOBJECTS),$(BUILDLOC)/%.$(OBJEXT),$(GENSRCDIR)/$(GENASMSOURCE) $(FULLINCLUDES) $(FULLBUILTINCLUDES) $(FULLBUILTINCLUDES2) $(FULLBUILTINCLUDES3) $(FULLDRIVERINCLUDES) $(FULLARMINCLUDES) $(FULLBLDINCLUDES) $(FULLGENINCLUDES) $(FULLPLATINCLUDES)))
+
+$(eval $(call base__asm,$(FULLASMOBJECTS),$(BUILDLOC)/%.$(OBJEXT),$(SPECSRCDIR)/$(ASMSOURCE) $(FULLINCLUDES) $(FULLBUILTINCLUDES) $(FULLBUILTINCLUDES2) $(FULLBLDINCLUDES) $(FULLGENINCLUDES) $(FULLPLATINCLUDES)))
+
+#
+TARGET :: $(TARGETDIR) $(BUILDLOC) $(BINTARGET) 
+
+# --what to show releasables
+$(eval $(call whatmacro,$(BINTARGET),USERFLM))
+# Create directory
+CREATABLEPATHS := $(TARGETDIR) $(BUILDLOC)
+$(call makepath,$(CREATABLEPATHS))
+# Clean up
+$(eval $(call GenerateStandardCleanTarget,$(CLEANTARGETS),$(BUILDLOC)))
+
+endif

@@ -1,0 +1,99 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// directgdiadapter.dll DirectGDI Accelerated and Unified Rendering adaptation. /
+// This dll will provide device dependent API set.
+// 
+//
+
+/**
+ @file
+ @publishedPartner
+ @prototype
+*/
+
+TARGET			directgdiadapter_vg.dll
+TARGETTYPE		dll
+CAPABILITY		All -Tcb
+UID			0x1000008D 0x102858E9
+VENDORID		0x70000001
+LINKAS			directgdiadapter.dll
+NOEXPORTLIBRARY
+
+USERINCLUDE		../hwsrc
+USERINCLUDE		../cmnsrc
+USERINCLUDE		../../directgdiinterface/inc
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+SOURCEPATH 		../hwsrc
+SOURCE			directgdidriverimpl.cpp
+SOURCE			directgdidriverinternal.cpp
+SOURCE			directgdidriverprocessstate.cpp
+SOURCE			directgdiimagetargetimpl.cpp
+SOURCE			directgdiimagesourceimpl.cpp 
+SOURCE			vgengine.cpp
+SOURCE			vgimagecache.cpp
+SOURCE			glyphimagecache.cpp
+SOURCE			glyphlutab.cpp
+SOURCE 			confighelper.cpp
+SOURCE			clippingregionmanager.cpp
+
+SOURCEPATH 		../cmnsrc
+SOURCE 			directgdiimageref.cpp
+SOURCE 			directgdidrawableref.cpp
+
+LIBRARY			euser.lib
+LIBRARY			estor.lib
+LIBRARY			gdi.lib
+LIBRARY			libOpenVG.lib
+LIBRARY			libOpenVGU.lib
+LIBRARY			libEGL.lib
+LIBRARY			fbscli.lib
+
+LIBRARY			graphicsresource.lib
+
+#ifdef WINS
+DEFFILE 		/epoc32/include/graphics/def/bwins/directgdiadapter.def
+#else
+DEFFILE 		/epoc32/include/graphics/def/eabi/directgdiadapter.def
+#endif
+
+UNPAGED
+
+#ifdef WINS
+LIBRARY ewsd.lib
+#else
+EPOCALLOWDLLDATA
+#endif
+
+//The default maximum size in bytes for image cache store, which caches a VGImage for each 
+//read-only CFbsBitmap used.
+MACRO KDirectGdiAdapterDefaultMaxImageCacheSize=0x00000000
+//The default maximum cache size in bytes for Glyph Images. 
+//If Glyph Storage exceeds this value, the least useable tree will be deleted.
+MACRO KDirectGdiAdapterDefaultMaxGlyphImageCacheSize=0x0010000
+
+//Enable MACRO below to enable extra logging from DirectGDI, e.g. config matching with EGL
+//MACRO _DEBUG_DIRECTGDI
+
+
+// Enable MACRO below to draw glyphs without stenciling (uses VG_IMAGE_MODE_MULTIPLY).
+// Potential performance improvement, at cost of memory.
+//MACRO DRAWGLYPH_MULTIPLY_MODE
+
+// Buffers all DrawGlyph commands and renders them when EndDrawGlyph() is called, allowing for better
+// reuse of the glyph-cache, but requires more memory for buffering them.
+//MACRO DRAWGLYPH_BUFFERED
+
+SMPSAFE

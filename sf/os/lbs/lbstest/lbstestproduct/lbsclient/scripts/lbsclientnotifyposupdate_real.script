@@ -1,0 +1,286 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName  lbsclientnotifyposupdate_real
+//! @SYMScriptTestEnvironment TestExecute
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+//Before we start LBS, select the network reg status txt file to use.
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+PRINT Set Autonomous Mode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0001
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0001
+//! @SYMTestCaseDesc            Request a single location update (default options) from GPS
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set Requestor details.
+//!                             2. Request Location Update.
+//!                             3. Wait for location request to complete.
+//!                             4. Verify that location info is returned as expected.
+//!                             5. Verify that the location request is logged.
+//! @SYMTestExpectedResults     Location request will complete with KErrNone and position info will be published
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0001
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0001
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0002
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0002
+//! @SYMTestCaseDesc            Request Location Update while the system-wide n++location on/offn++ parameter is turned off
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Turn off self-locate in admin settings
+//!                             2. Request Location Update
+//!                             3. Wait for location request to complete.
+//!                             4. Verify that the request completes with KErrAccessDenied
+//! @SYMTestExpectedResults     Request fails with KErrArgument
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0005
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0002
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0003
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0003
+//! @SYMTestCaseDesc            Request Location Update, and cancel before request completes
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Request Location Update
+//!                             2. Cancel Location Update
+//!                             3. Verify that the requests completes as appropriate according to result from Cancel
+//! @SYMTestExpectedResults     CancelRequest completes with KErrNone and location request completes with KErrCancel or KErrNone or CancelRequest completes with KErrNotFound and location request completes with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0006
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0003
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0004
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0004
+//! @SYMTestCaseDesc            Request Location Update without connecting to position server - panic expected
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Request Location Update (without first connecting to position server)
+//! @SYMTestExpectedResults     Client panics with EPositionServerBadHandle
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP !PanicCode=6 120 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0007
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0004
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0005
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0005
+//! @SYMTestCaseDesc            Request Multiple Location Updates on same subsession concurrently
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Open a subsession
+//!                             2. Request Location Update on subsession
+//!                             3. Request another Location Update on subsession
+//! @SYMTestExpectedResults     Client panics with EPositionDuplicateRequest
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP !PanicCode=15 120 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0008
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0005
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0006
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0006
+//! @SYMTestCaseDesc            Multiple sequential Location Update requests
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Request Location Update
+//!                             2. Wait for request to complete
+//!                             3. Verify that request completed successfully
+//!                             4. Repeat above a number of times (read from config)
+//!                             5. Verify that location infos are as expected.
+//!                             (6. Verify that the location requests are logged) not yet supported
+//! @SYMTestExpectedResults     All Requests complete successfully
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0019
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0019
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0006
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0007
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0007
+//! @SYMTestCaseDesc            Location Update request in Assisted-if-possible (EGpsPreferTerminalBased) mode with network available
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EGpsPreferTerminalBased mode in admin settings
+//!                             2. Register (with NetSim) for notification of assistance data requests
+//!                             3. Request Location Update
+//!                             4. Wait for request to complete
+//!                             5. Verify that assistance data was requested
+//!                             6. Verify that positioninfo returned indicates that prefferred positionmode was used, using appropriate error
+//!                             7. Verify that location info is returned as expected.
+//!                             (8. Verify that the location request is logged.) not yet supported
+//! @SYMTestExpectedResults     Request completes successfully and position info indicates that prefferred positioning mode was not used (EPositionModeReasonNetworkError)
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0020
+RUN_TEST_STEP 900 LbsClientTestServer LbsClientStep_Assistance c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0020
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0007
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+
+// Before we restart LBS, select the lbsprofile.ini  to use for the following tests.
+PRINT select the lbsprofile.ini  to use (copy .ini file to appropriate place)
+
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	CopyFile c:\testdata\configs\lbstestprofile.ini c:\private\10282253\lbs\lbsprofile.ini 
+REMOVE_PREFIX
+
+PRINT Start LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0008
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0008
+//! @SYMTestCaseDesc            Request a single location update by setting required quality profile Id in admin
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set KSettingQualityProfileSelfLocate and valid id in admin settings.
+//!                             2. open Rpositioner with default positioning module
+//!                             3. Request Location Update.
+//!                             4. Wait for location request to complete.
+//!                             5. verify Position received within the time range
+//!                             6. Verify that location info is returned as expected.
+//!                             7. Verify that the location request is logged.
+//! @SYMTestExpectedResults     Location request will complete with KErrNone and position info will be published
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0022
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0022
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0008
+
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0009
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0009
+//! @SYMTestCaseDesc            Confirm that NotifyPositionUpdate will timeout after a specified period.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set KSettingQualityProfileSelfLocate and valid id in admin settings.
+//!                             2. open Rpositioner with default positioning module
+//!                             3. Request Location Update.
+//!                             4. Wait for location request to complete. NOTE : Ensure NotifyPositionUpdate will return KErrTimedOut
+//! @SYMTestExpectedResults     We should receive NotifyPositionUpdate will return KErrTimedOut
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0024
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0024
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0009
+
+
+// Re-select the lbsprofile.ini .
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+//If the test run in default admin we need to stop and start LBS before starting a test 
+//this will make sure AGPS module request assistance data,which will result in a initial reference network position being returned.  
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+PRINT Start LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+
+// Now execute a selection of the above tests with AGPS module requesting assistance data
+// which will result in a initial reference network position being returned.
+
+// Selecting the default admin values will ensure the AGPS module requests assistance data.
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+
+START_TESTCASE                LBS-Client-NotifyPosUpdateReal-0010
+//! @SYMTestCaseID              LBS-Client-NotifyPosUpdateReal-0010
+//! @SYMTestCaseDesc            Request a single location update (default options) from GPS
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set Requestor details.
+//!                             2. Request Location Update.
+//!                             3. Wait for location request to complete.
+//!                             4. Verify that location info is returned as expected.
+//!                             5. Verify that the location request is logged.
+//! @SYMTestExpectedResults     Location request will complete with KErrNone and position info will be published
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0101
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_NotifyPosUpdate c:\testdata\configs\LbsClientNotifyPosUpdate_real.ini LBS-NotifyPosUpdate-0101
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+DELAY 1000
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-NotifyPosUpdateReal-0010
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

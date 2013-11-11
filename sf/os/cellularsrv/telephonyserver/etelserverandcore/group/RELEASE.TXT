@@ -1,0 +1,2485 @@
+14/03/02
+========
+Update call ownership handling to be in line with the core etel api document
+and the server document.
+
+14/12/01
+========
+Defect fix to the EFaxTest code, to prevent the Phase E Hangup error -134 from being
+construed incorrectly as an error and failed test case.
+
+21/11/01
+========
+Fixed defect TRN-54JEDN, related to not forcing a CObjectCon add when adding a new object.
+It now checks to see if the object is already in the CObjectCon list.  This is required for
+TSYs that pre-allocate a pool of call objects.
+
+13/11/01
+========
+Fixed some trivial CW warnings.  Left the more tricky ones (4 in each build of ETel.DLL)
+until we've got more time to ensure the correct solution.
+
+07/11/01
+========
+
+Removed GSMBAS and HAYES from ETEL component. 
+This includes removal of all source code, documentation and test code
+Reason is that GSMBAS is now replaced by ETELMM and HAYES is a redundant TSY that is replaced
+by MMTY
+
+
+26/10/01
+========
+Fixed defect SIH-53EM6P: In et_core.cpp (lines 1221-1248), this request has now been made just 
+"multiple completion enabled" and not flow controlled.  This means TSY should have the 
+phone capabilities ready to return synchronously to the client when the GetCaps request is 
+received.
+
+02/10/01
+========
+Fixed defect DOE-4Z6C6Y: Provide an API for ETel clients to know how many clients in total have an handle open on a call object
+Created TInt RCall::ReferenceCount()
+
+17/09/01
+========
+1. Added RTelSubSessionBase::CancelAsyncReq to enable extension API classes to use
+this to cancel an asynchronous request rather than define a lot of xxCancel methods
+
+2. Moved ETel heap and stack size definitions into new etelsize.h header
+
+11/09/01
+========
+Fixed defect  DOE-4ZSJEU: Display "New log" in the setel logfile.
+
+16/08/01
+========
+Fixed defect  DOE-4ZNE66: ETel now allows zero length callnames in OpenExistingCall.
+
+07/08/01
+========
+Fixed defect HED-4VQHUC: ETel now uses Flogger for logging rather than fileserver.
+
+23/07/01
+========
+1. Fixed defect SHY-4VMNAY raised in 6.1 Defects database. If a global chunk already 
+exists, we now have an additional call to the OpenGlobal method to open a handle to 
+the global chunk (access has been set to Read/Write). This fix has been implemented in 
+RFax::TProgress* CCallBase::CreateFaxProgressChunk(). Affected file: et_core.cpp.
+
+2. Turned the echo off in the method CFaxModem::HangupProcedureL(). Fixes defect
+PBN-4TZLX7 raised in 6.1 Defects database. Affected file Cfaxmodm.cpp. This fix 
+enables sms' to be read after an incoming fax has been received.
+
+15/06/01
+========
+1) Increased the ECM timer to 2 min. This fixes defect SEC-4X3BY5. 
+   Affected file: cfaxmdrv.cpp.
+
+01/06/01
+========
+1) Updated Efaxtest.CPP file to use the new V6.2 CommDb structure.
+
+30/04/01
+========
+Added code to increase the timers when receiving a fax page if the reception is using
+ECM. This fixes defect EDNHKAO-4VGFG4. Affected file: cfaxmdrv.cpp.
+
+04/04/01
+========
+Add multiple inclusion prevention macro and symbian boilerplating at the top of exterror.h
+
+29/03/01
+========
+Fixed Fax Server defect that occured during some cancelling conditions.  The Fax Server
+"logon" to the TSY thread was creating a stray signal event in the ETel Server thread
+under some close down scenarios.  The cancel functionality has been modified so that
+it does not terminate the thread.  Only a Close will terminate the Fax Server thread and
+consume the death event.
+
+
+30/01/01
+========
+1) Changed Fax Class 2 and Class 2.0 "hang-up status" timer from 5s to 20s. Delays for
+   the "+FHS" and "+FHNG" hang-up status report message in GSM typically range from
+   4s-10s.  This fixes defect EDNHMAN-4SZEBW (V3 Defects Database - migration to mainline).
+2) Added code to increase the timers during Phase C by 60 seconds if the reception is
+   using ECM.  This fixes defect EDNHKAO-4R6A7H (V3 Defects Database - migration to
+   mainline).
+
+10/01/01
+========
+1) Modifed UID3 and rearranged the ordinals of GSMBAS.DLL in order to break BC, but keep SC.
+   Required due to public exposure of ETel Basic GSM API in early SDKs.
+
+08/01/01
+========
+Corrected Fax Server function names, so that all functions that leave have a 'L' prepended,
+as per Symbian Coding Standards.  Fixes defect CLE-4RGNHG (V4 Defects Database).
+
+05/01/01
+========
+1) Added code to check for "NO CARRIER" response from modem that might be received in ECM
+   mode, in Fax Class 2.0, at the start of phase D data (\ETel\FaxSvr\CFax20.cpp).  This
+   fixes defect EDNHMAN-4RYJBC (V3 Defects Database - migration to mainline).
+2) Added two new error codes to ETel.H: KErrEtelPortAlreadyLoaned and
+   KErrEtelCallAlreadyActive to fix defect EDNACLE-4RGHJQ (V3 Defects Database
+   - migration to mainline).
+
+28/11/00
+========
+1) Added comments to \ETel\Inc\ET_ClSvr.h and \ETel\Inc\BscGsmCs.h to indicate the
+   enumeration values.
+2) Modified \ETel\SETel\ET_Man.cpp, CPhoneManager::LoadPhoneModuleL to stop loading and
+   instanciating the phone factory class twice when load phone module is called twice (with
+   the same TSY).  Updated the TETel test code to check.
+3) Corrected problem in the MakeIni test program where the Ir Mobile phone settings where
+   using the "office" location rather than the "mobile" location.
+4) Propagated the defect in the GSM TSY where the buffer created to handle initialisation
+   strings was not bug enough to cope with some longer strings.
+
+06/09/00
+========
+Bugfix for EDNPTUN-4NJE2W and EDNHKLN-4LCBK4.
+RTimer is now Close()'d in RTelServer::Connect()
+(only occurred in WINS)
+
+18/05/00
+========
+1) Removed over-aggressive ASSERT from CPhoneBase::CancelService, defect EDNATHE-4KEFZZ.
+2) Removed over-aggressive Panic on zero length phone numbers in ETel Core API, defect EDNATHE-4JYM9R.
+
+03/05/00
+========
+Fixed defect EDNGLAY-4HTCXF - Fax component will now work with no chargecard settings
+
+02/05/00
+========
+Added conditional compilation to the Hayes TSY - if NO_HAYESTSY_IN_ROM is defined,
+the Hayes TSY won't appear in the ROM
+
+13/04/00
+========
+
+Added a reserved virtual function and TAny pointer to CPhoneFactoryBase and CTelObject to
+assist with future BC.
+
+22/03/00
+========
+1. EDNMSWN-4HLJNH, EDNMSWN-4HMELU and EDNKSHY-4HGF22 fixed 
+- CreateNarrowBufferLC and CreateUnicodeBufferLC in et_phone.cpp changed so that modified (word-aligned) aSize1 and aSize2 parameters are not used for client descriptor size.  
+Also the use of TDes::Right() is now TDes::Mid()
+Also the aSize1, aSize2 parameters are passed by reference now rather than by value.
+
+2. Removed inclusion of D32SND.H from ETEL. This header file is becoming obsolete.
+
+3. Change request ACLE-4H6DL9 
+Changed KShortNetworkNameSize from 8 to 20 and KLongNetworkNameSize from 16 to 30
+
+
+13/03/00
+========
+1) Fixed integer arithmetic rounding bug in line 392 of FaxSvr\CFax1.cpp.  See source for
+more details.
+
+2) Removed UserHal::ResetAutoSwitchOffTimer() as per EDNJHAS-4GWRH9.
+
+3) Tidied existing documentation, adding 2 fax docs.  Removed some dangerously outdated
+documentation.
+
+
+Version 606
+===========
+
+1) Clarified RTelServer::EnumeratePhones() by changing parameter name from aIndex to 
+aNoOfPhones.
+
+2) ETel server can now cope with TSYs which contain phones of the same name. If,say, two
+TSYs both contain at least one phone with identical names the server will allow both TSYs to 
+be loaded, and when RTelServer::GetPhoneInfo() is called the phone name of the phone in the
+second TSY will be altered. The server ensures this name is always mapped to the correct
+phone.
+
+This means that clients should never hardcode phonenames if there is a possibility of an
+alternative TSY being introduced into the system, since that TSY may contain a phone with
+an identical name and if loaded first, the wrong phone will be opened.
+
+Use of RTelServer::GetTsyName() by phone index will serve to ensure the correct phone is
+opened since the TSY name which each phone belongs to can be checked.
+
+3) Revised the future-proofing up/down calls between server and TSY. These are now
+
+IMPORT_C virtual TInt CTelObject::UpCallOption(const TInt aOptionNumber, TAny* aData);
+
+and 
+
+virtual TInt CTelObject::DownCallOption(const TInt aOptionNumber, TAny* aData);
+
+The TSY should overload the DownCallOption() if required. The server will implement
+UpCallOption() if required.
+
+4) Merged in bug fixes from EPOC5u - (a) the cancelling of CGsmPhoneBookSearch and 
+CBasicGsmRetrieveDetectedNetworks operation,
+				(b) the value of KErrEtelGsmBase is now -4000.
+
+Version 605
+===========
+
+Changes to test code.
+
+Version 604
+===========
+
+Released on src_epoc, built against mainline baseline 00029
+
+Defect fix for the value of KErrEtelGsmBase ( it was -3000, it is now -4000 ) - as it
+clashed with the NETDIAL error definitions
+
+Tested with TGSM under WINS UDEB
+
+
+Version 602
+===========
+
+This release re-adds those exported functions that broke the mainline build when they 
+were removed in 601 (see point 7) because ETelAgsm uses the CGsmPhoneBookSearch protected
+functions. The CBasicGsmRetrieveDetectedNetwork protected functions remain un-exported.
+
+
+Version 601
+===========
+
+This release is for the mainline. Breaks binary compatibility for ETel.dll and 
+GsmBas.dll but maintains source compatibility for clients. Minor break in source 
+compatibility for TSYs due to point 1.
+
+1) Narrow UIDs and narrow-specific code has been removed. This has led to the removal 
+of two functions from TDataPackage, Des1() and Des2(), since these were used to return
+either a narrow or a unicode pointer depending on build. Now we have just Unicode builds
+so these are obsolete. Des1u() and Des2u() can be used in their place.
+
+Added ASSERTs on the remaining functions of TDataPackage to ensure the TSY does not ask for
+an invalid parameter for a particular IPC. The panic will be EEtelFaultDes1DoesNotExist or
+EEtelFaultDes2DoesNotExist.
+
+2) Fixed bug reported in ER5u database: EDNDMAY-4A6HZQ - "Unnecessary use of floating point
+arithmetic in ETEL". This was originally fixed in ETel 558 on ER5u share.
+
+3) Fixed bug reported in ER5 database: EDNMSWN-4AMJ2C - "GetBearerServiceInfo returns old
+information even when not connected".
+
+4) Contains the Fax ICF, outlined in ER5 database: EDNARAO-488JRS = "Sending a fax does not
+work properly", which involves minor changes in the Fax Server, ie, delaying the point at
+which software flow control is switched off until after an OK has been received for Fax 
+Classes 1 and 2.
+
+5) Fixed bug reported in ER5 database: EDNAWIR-462NV8 = "ETel Server Thread function does
+not check error on loading library".
+
+6) Fixed bug reported in ER5u database: EDNMSWN-4BXHW6 - "RTelServer::Connect() uses default 
+msg slots rather than client requested number". This was originally fixed in ETel 561 on 
+ER5u share and has been migrated to this share.
+
+7) Removed unnecessary protected exports from CBasicGsmRetrieveDetectedNetworks and 
+CGsmPhoneBookSearch. This also fixes a bug from ER5u where the CBasicGsmRetrieveDetectedNetworks
+class exported these protected functions in WINS only, because the EXPORT_C macro
+had been omitted from the implementation of the functions.
+
+Version 600
+===========
+
+This release is for the Crystal DFRD.
+
+1.	Converted HAYES.TSY and FAXCLI.DLL and testcode to use new COMMDB.
+
+2.	Fixed VC6 warnings.
+
+3.	Fixed bug EDNAWIR-4ALKET in CCallHayes and CLineHayes destructors
+	in HAYES.TSY.
+
+
+Version 557
+===========
+
+This release is for the Crystal DFRD.
+
+Changes are made only to the fax components of etel.
+
+These include 
+1) Support for 2D functionality
+2) Support for ECM (Error Correction Mode) functionality.
+
+The fax components FaxCLient and FaxServer are no longer binary compatible with any
+previous versions due to changes to the Faxclient and FaxServer API .
+
+The test code was also modified to provide test coverage for the new functionality.
+
+The FaxServer API was also changes and some member data are now protected instead of public.
+
+Version 556
+===========
+	e32		187
+	f32		146
+	c32		551
+	dbms		057
+	commdb		052
+	dial		551
+	ealwl		085
+	faxio		013
+	faxstrm		014
+	faxdef		012
+	store		062
+	e32utils	027
+	e32tools	121
+	e32toolp	109
+	eiktools	133
+
+This has been released onto the ER5u share. The last release of ETel on ER5u was 552,
+and there have been binary incompatible changes since then. It is, however, BC with 555.
+
+1) Removed Faxcli's dependancies on FaxIO and C32.
+
+2) Updated mnt file to cope with latest MAKMAKE changes. There will still be warnings when
+building,however, since DOEBLD.BAT (part of eiktools) still uses the \makework command
+on MAKMAKE. These can be safely ignored.
+
+3) Updated RComCopy.rbt. The correct files are now copied to the ARM for testing.
+
+4) Removed narrow builds from ebld.bat and mnt.cmd, and rebuilt against FaxIO and FaxStrm
+which supersede FaxStore on ER5u.
+
+Version 555
+===========
+
+1) Fixed memory leak bug in ET_CLI.cpp. If a call to ConstructL() fails, the Destruct()
+function is called to clear up any allocated memory.
+
+2) Fixed bug in CPtrHolder::ConstructL(). The return values of RArray::Append() are now
+checked, and if not KErrNone it will leave.
+
+3) Split ET_phone.cpp into two .cpp files : ET_phone.cpp now contains CTelObject and
+CSubSessionExtBase implementation, which ET_Core.cpp contains CPhoneBase, CLineBase,
+CCallBase and CFaxBase definitions.
+
+4) Added Auto-registration ability to ETel. This means that some notifications have a
+hard-coded number of server-side slots associated with them, which should guarantee that
+events will not be lost for any notification where it is important that they are captured.
+A new pure virtual function has been added to MTelObjectTSY, NumberOfSlotsL(const TInt aIpc), 
+which returns the number of slots in a notification's buffer. This is the TSY's 
+responsibility. Two new header files are provided which give default standard values for 
+each notification - ETBuffer.h for the Core API and ETBscBuf.h for the Basic GSM API.
+The TSY can choose to use these values or not. If a notification is not mentioned in these
+header files, it is because the default is one slot.
+
+5) Fixed bug in RBasicGsmPhone::SetAlarm() client API code, which was calling 
+RTelSubSessionBase::Get() instead of RTelSubSessionBase::Set().
+
+6) Unicode fixes in Core API:
+
+	- TTelNumberC is now a TDesC.
+	- Fax AnswerBack string is now a TBuf.
+	- Fax Identifier string is now a TBuf.
+
+7) Unicode fixes in Basic GSM API:
+
+	- The iShortName and iLongName members of class TNetworkInfo are now TBuf's.
+	- TGsmPassword is now a TBuf.
+	- All four members of structure MBasicGsmPhoneId::TId are now TBuf's.
+	- The iText member of structure MBasicGsmPhoneClockAndAlarm::TAlarm is now a TBuf.
+	- The iText member of structure RGsmPhoneBook::TEntry is now a TBuf.
+	- typedef RGsmPhoneBook::TSearchString is now a TBuf.
+	- The iTelNumber member of structure TGsmTelNumber is now a TBuf.
+
+8) ETel server now allows functions to take one narrow parameter and one unicode parameter.
+The modified RCall::Dial function, which now takes a Unicode dial string in the UNICODE
+build, makes use of this functionality which is provided by 4 new functions at the 
+RTelSubSessionBase level: 2 Get() functions and 2 Set() functions, each taking one 8-bit
+and one 16-bit parameter. Synchronous and asynchronous variants are provided.
+
+9) Removed BARRED_PHONEBOOK #definition from Basic GSM API, as it is not part of the GSM
+07.07 specs. It will be added to the Advanced GSM API.
+
+10) Added 12 to the size of TSms::TPdu, as the size of the SC address was not taken into
+account.
+
+11) Fixed bug in ETel server which prevented RCall::GetBearerServiceInfo from receiving any
+updated information.
+
+12) WINS only. Altered the timer in RTelServer::Connect() from 0.4s to 0.5s, as the 
+continuous opening and closing of the server in the WINS environment was causing a panic
+at random times, caused by the imperfect reproduction of the thread priorities on WINS.
+(On ARM, the ETel server thread will be at higher priority than any client thread).
+
+13) Fax Server bug fix. CFaxClass2::AnalyseFHNG() function has been removed.
+
+14) ETel Server bug fix for requests which are both flow control obeyed and multiple 
+completion. 
+
+15) Updated SvrDesgn.Doc, CoreApi.Doc and BsGsmApi.Doc.
+
+Version 554
+===========
+
+Same dependancies as 553.
+
+1) Isolated tests in TETEL.EXE which leak memory client side due to testing bad client 
+scenarios which do not close handles properly, and moved these out of the UHEAP_MARK
+section. Ensures that if the UHEAP_MARK_END detects memory loss, it is not intentional!
+
+2) Updated TGSM.EXE and DGSM.TSY to ensure every test runs OK in the aftermath of the
+removal of specific RegisterXXX() functions.
+
+3) Altered server/TSY interface, removing the NotifyOnAnything() functions and support for
+Registration of notifications (ie the CheckAndSetRegistrationParams).
+
+4) Made the server unicode-compliant so that the UNICODE Get() and Set() functions will
+work. This has meant a non-BC change on the server-TSY interface, in that the parameters of
+CTelObject::ExtFunc() has changed to
+
+ExtFunc(const TTsyReqHandle, const TInt, const TDataPackage& )
+
+where the class TDataPackage is defined in ET_Tsy.h. It contains the pointers to the data
+associated with the function call, whether narrow or unicode, and provides the TSY with 
+functions to access whichever it needs. In most cases the data is a structure which has
+been packaged up into a (narrow) descriptor on the client side - for these cases the TSY
+can simply call TDataPackage::Ptr1() or Ptr2() which returns a TAny* pointer that should be
+cast into the relevant type. 
+
+The functions Des1() and Des2() should be used if the client-
+side function takes a TDes& parameter. In the rarer case of the client-side function taking
+a TDes8, the TSY can call Des1n()/Des2n() to ensure it receives a pointer to a narrow 
+descriptor. The equivalent Des1u()/Des2u() functions are added in case a client-side
+function ever takes an explicit TDes16& parameter.
+
+There is currently no way for a clientside function to pass down one narrow parameter and one
+unicode parameter. This may be added in the future and should be a BC change on both
+interfaces of ETel (top and bottom), but will mean a decent increase in complexity in the
+server because currently both parameters are stored in the same buffer which is either
+8 bit or 16 bit.
+
+5) Tidied up Cleanup Stack errors in server. 
+	(a) CTelObject::WriteBackAndCompleteReq() and 
+	    CTelObject::WriteBackAndCompleteBufferedReq both called RMessage::WriteL().
+
+	These now trap the leave.
+
+6) In Basic GSM API, the class CGsmDetectedNetworkResults has been renamed
+CGsmNetworkList and its functions genericised in order for the Advanced GSM API to make
+use of it. This is a binary compatible change but not source compatible.
+
+7) Documents CoreAPI.doc, BsGsmApi.doc and SvrDesgn.doc have been updated.
+
+Testing
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmURel
+EFaxTest   		
+TETel	    Y 		Y		   Y		   Y		  Y
+TGsm	    Y  		Y		   Y		   Y		  Y
+T_HyRes1   		Y		   		   Y		  n/a
+
+Version 553
+===========
+
+	e32		166
+	f32		132
+	c32		507
+	dbms		057
+	commdb		027
+	dial		505
+	ealwl		070
+	faxstore	021
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	100
+	e32toolp	100
+	eiktools	132
+
+This release has been placed on the src-era share not the ER5u share because:
+1) When delivered to externees, the narrow build is required.
+2) The ER5u share is currently going through a transition phase.
+
+Changes:
+
+1) Altered the mnt.cmd and ebld.bat files back again to allow narrow builds.
+2) Added TCallParamsPckg typedef to Basic API.
+3) Uses Faxstore not FaxIO, since FaxIO is not on the src-era share.
+4) Implemented RTelServer::GetTsyVersionNumber() - it no longer returns KErrNotSupported,
+   but the version number of the TSY. This has required no change to the TSY.
+
+Tested: All except EFaxtest.
+
+BC with 552.
+
+Version 552
+===========
+
+1) Added BLD.INF file.
+
+2) Built against ER5u baseline.
+
+3) Changed to depend on new FAXIO and FAXSTRM rather than FAXSTORE.
+
+Version 551
+===========
+
+THIS BREAKS BINARY COMPATIBILITY WITH 550. But not source compatibility.
+
+1) Increased stack size in Fax client from 0x1400 to 0x4000.
+
+2) Removed NotifyOnAnything functions from Core and Basic.
+
+3) Removed Booleans from "NotifyInfo" structures since now only used by GetInfo(),
+	and renamed them to TxxxInfo from TxxxNotifyInfo.
+
+4) Removed Text mode support from TSms, and changed KPduSize to 165 (true size without
+	text structures).
+
+5) Removed Register/Deregister functions.
+
+6) Added GetTsyVersionNumber() to RTelServer.
+
+No testing done as yet.
+
+
+Version 550
+===========
+
+This is the first ER5u release. All narrow builds have been removed.
+
+1) mnt gettestrel now pulls down the test TSY's (DSTD, DSTDNC, DBAD and DGSM).
+
+2) Extended error handling functionality has been added to the server.
+
+Version 050
+===========
+
+1) Fixed bug where it was possible for the TSY to go into an infinite loop of 
+   sending ATs in while doing quick initialisation.
+
+Version 049
+===========
+
+1) Implemented workaround for serial driver bug where the serial driver gets into a bad 
+state after a comms line fail.  This is worked around by resetting the baud rate which
+kicks the driver enough to make it start responding again.
+
+Version 048
+===========
+
+SERVER:
+
+1) Fixed bug in CTelObject::UpdateBuffer(), where if the new data were being copied from a
+non-registered function to a registered function (with a multi-slot buffer) the wrong 
+type of message was being looked up.
+
+2) If TSY completes a request with KErrCancel without the cancel function being called,
+the server used to give an unhandled exception, now it panics with 
+EEtelFaultCancelErrorWithoutCancelled.
+
+3) RTelSubSessionBase::TTsyKnowledge implementation was flawed in the server. It now 
+forces the TSY to receive every client's request by masking out the multiple 
+completion characteristic, even if the TSY sets it.
+
+4) When a CDestroyDummySubSession object had decremented the reference count on a CTelObject
+it was assuming the CTelObject was destroyed and did not tell the CTelObject to NULL its 
+pointer to itself (it deletes itself as a CAsyncOneShot should). Now it does.
+
+5) If CTelObject::CheckAndSetRegistrationParams() returned an error, there was a possibility
+of the outstanding request to be registered already being asked to cancel. Some 
+rearrangement was necessary to ensure that on a Registration request reaching the server
+all that is done before CheckAndSetRegistrationParams() is called on the TSY is a couple of
+checks are made and the data buffer is copied across to pass the parameters to the TSY.
+
+TSY :
+
+1) Bug report EDN551995 fixed. Dial Cancel() would not work if the Dial command had just
+been written but the write hadn't completed. Answer Cancel() and Connect Cancel() similarly.
+
+2) Increased timeout of AT+FCLASS=? query from 1 second to 2 seconds.
+
+3) CCallHayes::RecoverDataPortAndRelinquishOwnership() now calls the correct completion
+function RecoverDataPortAndRelinquishOwnershipCompleted() rather than
+RelinquishOwnershipCompleted(). This means the server is now aware that the data port is
+no longer loaned. NB This bug would only occur if there was another client willing to 
+acquire ownership of the call.
+
+
+MISC :
+
+1) in Mnt.cmd deleted unnecessary secondary GetEalwl command.
+
+2) "mnt putrel" was attempting to release *.map files from the ..\WINS\ directories and 
+obviously failing, but without an error.
+
+3) Updated Basic GSM API document.
+
+Version 047
+===========
+
+Same dependancies as 046.
+
+Only change is bug fix in Fax Server. It was reporting a file error if the \logs\fax
+directory did not exist. Now it will put the log file in \system\ directory if \logs\fax
+does not exist.
+
+Version 046
+===========
+Dependancies
+
+	e32		166
+	f32		132
+	c32		507
+	dbms		057
+	commdb		026
+	dial		505
+	ealwl		070
+	faxstore	021
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	098
+	e32toolp	100
+	eiktools	132
+
+1) Moved definition of Fax server UID's from TSY to FaxServ.h (Fax server's exported header
+file).
+
+2) TSY now allows all handshaking to be applied when a client loans the data port. It is
+then the client's responsibility to mask out any appropriate handshaking constants. This
+allows TCPIP to detect a dropped carrier.
+
+3) Split out the advanced GSM into a separate project (ETelAgsm).
+
+4) Tidied up the MNT.CMD file.
+
+5) Fixed TSY panic bug, where a KErrCommsFrame during Initialisation did not cause all 
+the chat strings to be deleted. Report in EDN440375.
+
+6) EBLD.BAT's "EBLD ALL" command tried to rebuild WINS again. This has been fixed.
+
+7) FAXSVR:
+
+Fix implemented for defect EDN654383  (application panic when canceling a fax)
+
+Fix implemented for defect EDN832685  (a break instruction was missing from a for(;;) loop)
+
+8) Testing:
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmRel
+EFaxTest   		Y						  Y
+TETel	    Y 		Y		   Y		   Y		  Y
+TGsm	    Y  		Y		   Y		   Y		  Y
+T_HyRes1   		Y		   Y		   		  n/a
+
+Version 045
+===========
+Dependancies
+
+	e32		165
+	f32		131
+	c32		507
+	dbms		057
+	commdb		025
+	dial		505
+	ealwl		070
+	faxstore	021
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	098
+	e32toolp	100
+	eiktools	132
+
+BC with 044, except FaxSvr.dll
+
+1) Fixed Panic in Quick Init bug.
+2) Made Fax Server dynamically loadable by a TSY, rather than statically linked, to 
+speed up the load time.
+
+Version 044
+===========
+Dependancies - same as 043
+
+Quick release to put right the source incompatible changes. All instances of Initialize
+have been rewritten Initialise. Therefore, source compatible with 042 but not 043.
+
+
+Version 043
+===========
+Dependancies
+
+	e32		164
+	f32		131
+	c32		507
+	dbms		057
+	commdb		025
+	dial		505
+	ealwl		070
+	faxstore	021
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	098
+	e32toolp	100
+	eiktools	132
+
+Binary Compatible with 042 but not source compatible.
+
+CORE API:
+
+1) The following functions/enums have been Americanised (from "s" to "z") :
+
+RPhone::Initialise()
+RPhone::InitialiseCancel()
+
+MPhoneBaseTSY::ControlledInitialisation()
+MPhoneBaseTSY::ControlledInitialisationCancel()
+
+enum EEtelPhoneInitialiseCancel (in ET_ClSvr.h)
+
+const TInt KErrEtelInitialisationFailure=KErrEtelCoreBase-6; (in ETel.h)
+
+2) Removed KDefaultInterval from ETel.h, as unused.
+
+3) Added RTelServer::GetTsyName(const TInt aIndexOfPhone, TDes& aTsyName) 
+to core API. This allows a client to know which phone belongs to which TSY, and so can 
+open the correct one.
+
+4) New error code KErrEtelModemSettingsCorrupt = KErrEtelCoreBase-18. This is returned by 
+the TSY if CommDB passes back an error when attempting to read the default settings, on
+the construction of CPhoneHayes.
+
+TSY:
+
+1) RPhone::GetCaps() has been made synchronous on the TSY side.
+
+2) Modified Recover Data Port sequence to be slightly quicker (by one second).
+
+3) Checks for null pointers included in dtr's for CPhoneHayes, CHeartBeatRunner and
+CTsyConfig. Fixes bug reported in EDN760205.
+
+FAX:
+
+1) Removed StartC32() from FaxCli and FaxSvr. ETel is not responsible for StartC32, as it
+runs within the C32 process itself.
+
+2) Altered Fax client such that it makes use of fix CORE:3 above. It now does not need to
+be hardcoded to know which phone belongs in which TSY.
+
+3) Jerry:
+
+FaxCli
+
+	Fixed a bug were the fax client was attempting to use the modem even if it was used by 
+	someone else. This caused some panics in the messaging application. When a user was 
+	connected to an e.mail account and accidentally tried to send a fax the messaging app was 
+	panicing
+
+Faxsvr
+	Changes included to support the SIEMENS M1 module.
+	
+	The changes for the M1 support introduced a bug where the faxserver was setting the 
+	compression of the fax to be sent to the compression capability supported by the modem
+	not the actual compression method of the fax document. This had the effect of getting 
+	transmitter stalled errors, and if the fax was sent "correctly" only the header was 
+	printed at the remote machine.
+
+	AnalyseFHNG() function added to the fax server (for class 2 only) to enhance the logging 
+	capabilities. The faxlog now contains much more readable information about the possible
+	causes of a failed fax session.
+
+Testing :
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmRel
+EFaxTest   		Y						  Y
+TETel	   		Y		   Y		   Y		  Y
+TGsm	      		Y		   Y		   Y		  Y
+T_HyRes1   		Y		   Y		   Y		  n/a
+
+Version 042
+===========
+Dependancies
+
+	e32		163
+	f32		130
+	c32		506
+	dbms		057
+	commdb		025
+	dial		505
+	ealwl		070
+	faxstore	021
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	098
+	e32toolp	100
+	eiktools	132
+
+Binary Compatible with 041.
+
+CORE :
+
+1) ETel's stack size down from 40k to 8k.
+
+2) Registration of a buffer size of 1 meant that even if the data was overwritten due to 
+a slow client, the KErrOverflow error was never returned. This has been fixed in the server.
+
+3) Server no longer calls ReqModeL() on completion of a TSY request - it stores the mode
+that it determines when the client request first reaches the server.
+
+4) Altered when the Read is posted in the I/O class to ensure the TSY never post a Read
+twice before the first completes.
+
+5) Bug fix for EDN418326. TSY now overloads various CTelObject::ReqModeL() functions, and
+includes the ET_Clsvr.h file which contains the IPC numbers. This allows the TSY to 
+complete all IPC's which obey flow control with KErrInUse if the data port is loaned, rather
+than the server queuing it until the port is recovered.
+
+The TSY can make a decision on what to do if a function is called which obeys flow control
+because it retrieves information obtained from the initialisation, but which is synchronous
+on both client and server sides, and the data port is loaned. The TSY could temporarily 
+remove its ObeyFlowControl status in that case.
+
+6) RecoverDataPort() now checks that the client is owner of the call, or a priority client.
+
+7) CPhoneHayes::ControlledInitialise() now checks whether the Automatic Init sequence has
+only just completed, and if so does not re-initialise but completes immediately with
+whatever error the Init sequence completed with. This allows clients to call RPhone::
+Initialise() while the TSY is auto-initialising, which will complete as soon as the modem
+has been initialised. This helps to prevent the blocking of certain functions which are 
+synchronous on both client and TSY sides but obey flow control because they retrieve 
+information obtained during the Init sequence, so the server would queue them until it had
+finished. A client may now know when it is OK to call one of these functions.
+
+BASIC :
+
+1) Added asynchronous and cancel variants to the following functions in the Basic Gsm API:
+
+MBasicGsmPhoneClockAndAlarm::ReadClock()
+MBasicGsmPhoneClockAndAlarm::SetClock()
+MBasicGsmPhoneClockAndAlarm::EnumerateAlarm()
+MBasicGsmPhoneClockAndAlarm::GetAlarm()
+MBasicGsmPhoneClockAndAlarm::SetAlarm()
+MBasicGsmPhoneBookSupport::GetPhoneBookInfo()
+
+The last function's async and cancel variants used two of the free slots allocated to 
+prevent BC breaking. The others were simply added, as no client is using them currently.
+This has been tested to ensure BC is maintained.
+
+2) Bug in client side Text Mode SMS code fixed.
+
+3) Bug in RBasicGsmPhone::NotifyChangeOfNetworkSearchMode() client side code fixed. It was
+passing down the wrong descriptor.
+
+4) Moved all CBS related functionality from Basic to Advanced GSM API. This has maintained
+BC by the replacing of the functions with nulled functions.
+
+MISCELLANEOUS :
+
+1) Mnt file environment variables tidied up.
+
+2) Testing :
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmRel
+EFaxTest   								  Y
+TETel	   Y		Y		   Y		   Y		  Y
+TGsm	   Y   		Y		   Y		   Y		  Y
+T_HyRes1   		Y		   Y		   		  n/a
+
+Version 041
+===========
+
+Dependancies - same as 039
+
+BC maintained.
+
+1) Added asynchronous and cancel variants to the following functions in the Basic Gsm API:
+
+RSmsMessaging::SetMode()
+RSmsMessaging::GetDefaultSCAddress()
+RSmsMessaging::GetMessageStoreInfo()
+
+2) Just tested TGSM as nothing else has changed.
+
+
+Version 040
+===========
+
+Dependancies - same as 039
+
+1) Fixed bug in TSY, handling Comms Frame error during initialisation.
+
+2) SetFaxSettings no longer obeys flow control, as it is synchronous and therefore should
+not be queued by the ETel server. This requires change to Fax client so that if it is 
+called before the modem capabilities have been discovered in the initialisation sequence,
+it will be re-posted.
+
+Also a small change to CCallFaxHayes::SetFaxSettings() so that KErrEtelModemNotFound returned
+if the state is not in an initialised state (ie may still be initialising.)
+
+3) Optimised Fax client so that cancelling is quicker (don't attempt to hang up if call is
+already idle).
+
+4) Modified EBLD.BAT so that the directories \z\system\data etc are not added to
+\epoc32\release\marm\xxxx.
+
+5) Fixed callback bug EDN791409 - ETel wasn't reading the RING's on callback.
+
+6) Fax server now looks for "NO DIAL TONE" as well as "NO DIALTONE".
+
+7) Moved the masking out of FailDSR in Init sequence from just after the Null Write has 
+completed to once the first OK has been received. This means that if the user has 
+inadvertently got the cable connected to the PC rather than a modem, the error code should
+be KErrEtelNoModemDetected rather than KErrCommsLineFail.
+
+8) Documentation not quite up to date with USSD.
+
+9) Fixed bug in waiting for a RING before proceeding with init sequence - if a RING had 
+occurred but not for some time the initialisation sequence could hang as it waited to be
+called back after the next one came in.
+
+10) USSD commands moved from Basic to Advanced API, maintaining BC (this has been checked.)
+
+11) Bug fixes made to Advanced GSM client side code, in parcelling up the data.
+
+12) Several Advanced GSM functions modified.
+
+Version 039
+===========
+
+Dependancies
+
+	e32		161
+	f32		127
+	c32		505
+	dbms		057
+	commdb		024
+	dial		504
+	ealwl		070
+	faxstore	021
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	095
+	e32toolp	098
+	eiktools	128
+
+Beta release. --- NO LONGER (4/2/99)
+
+1) Modified hang up sequence - DTR low period was increased from 100 to 500 milliseconds,
+and the DTR raised period was increased from 100 to 200 milliseconds. This causes the 
+modem to respond with NO CARRIER to the following ATH, or +++, command.
+
+2) Changed default value of loudspeaker control value from "Always on" to "On until Carrier",
+in the default constructor of the RCall::TCallParams structure.
+
+3) Client-side Bug fix in overloaded functions for RCall::AnswerIncomingCall() 
+and RCall::Connect() which do not take the RCall::TCallParamsPckg structure - they now
+just pass down a NULL descriptor to the TSY which interprets this as meaning it should
+read out the call parameters from the Comms Database. RCall::Dial() did this already.
+
+4) TSY bug fix. If a modem command sequence calculates that it cannot execute before the
+next RING comes in, it waits for the RING and then begins. However, if a RING didn't come
+in the sequence would not be restarted. This has been fixed.
+
+5) RPhone::InitialiseCancel() function added. Tested to ensure BC kept.
+   Initialise Cancel implemented between server and TSY.
+
+6) RSmsStorage::Write() should take a TInt& aIndex, not a const TInt aIndex, as the value
+is returned.
+
+7) Moved CBasicPtrHolder class out of public header.
+
+8) Fixed DTR being held high if call is dropped while data port is loaned (this seemed to 
+be the problem anyway.) Looks like none of ETel's writes were completing due to handshaking;
+masked it all out.
+
+Jerry : (FAX)
+
+Fixed a bug where the faxserver was trying to set the modem attached 
+to the user settings without checking these were supported by the modem.
+Now the fax works with the M1 module.
+
+
+Version 038
+===========
+
+Dependancies
+
+	e32		160
+	f32		126
+	c32		505
+	dbms		056
+	commdb		024
+	dial		504
+	ealwl		070
+	faxstore	021
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	095
+	e32toolp	098
+	eiktools	128
+
+1) RelinquishOwnership now checks whether the quick initialisation sequence is running
+before attempting to hang up, and cancels the sequence first if it is.
+
+2) Moved the ownership of CATQuickInit from CCallHayes to CCallDataHayes to improve 
+memory efficiency.
+
+3) Work around for ESock thread hanging with Netdial using ETel, using IrDA. Fixed in 
+the Initialisation sequence by not queueing a null read until the RPhone::Open has 
+completed.
+
+4) Work around for KErrAccessDenied error from DBMS when first reading a string using
+CommsDB, on the ARM with NetDial and IrDA running (timing problem?).
+
+5) Bug fix in initialisation sequence. If it leaves half way through with an error,
+the next time it is started the queueing of a null read will not cause a comms server panic.
+
+6) Bug fix in Notifications Handler, which was completing a call status notification
+for all calls, not the one designated to answer.
+
+7) Modified FaxCli, and Hayes.TSY, to work with Auto Fax Class.
+
+8) Hayes TSY, if asked to wait for a RING by either NotifyIncomingCall or AnswerIncomingCall
+will tickle the OS every 10 seconds until it is answered to ensure no automatic switch off
+occurs.
+
+9)	Testing
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmDeb
+EFaxTest   								  Y
+TETel	   		Y		   Y		   		  Y
+TGsm	      		Y		   Y		   		  Y
+T_HyRes1   		Y		   Y		   		  n/a
+
+
+Version 037
+===========
+Dependancies
+
+	e32		159
+	f32		125
+	c32		504
+	dbms		056
+	commdb		022
+	dial		504
+	ealwl		070
+	faxstore	019
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	095
+	e32toolp	098
+	eiktools	128
+
+1) RTelServer::GetPhoneInfo() now returns a value of 0 for its iExtensions member.
+2) FaxCli now checks the name of the phones it gets back from all loaded TSY's, and
+opens the one appropriate to the connected modem table's TSY.
+
+3) Interface between TSY and Fax server has swapped around. Now the Fax server exports the
+functions for the TSY to call, and provides an abstract base class for the TSY to implement
+which holds the completion functions. This allows other TSY's apart from Hayes.TSY to use
+the fax server, such as GSMBSC.TSY. NB : this means that GSMTSY version 013 and lower
+will not work with this release of ETEL.
+
+4) Logs for ETel server and Hayes TSY have been renamed to "SETEL.TXT" and "ETEL.TXT" 
+respectively.
+
+5) Resource files introduced for Hayes.TSY
+
+6) Jerry on fax:
+
+The efaxtest code has now an improved interface where the backspace key works as it should.
+The faxserver code now includes some enhancements from the faxtrans code which were not 
+implemented in the faxserver code. See bug report EDN094835 for details.
+
+Changed efaxtest mmp file because of a stack overflow problems in the wins Unicode Debug version.
+
+Faxserver code has a new public header file (faxserv.h). The problem was that the faxserver could use only the 
+Hayes.tsy, and was not aware of the existence of gsm.tsy. So the depedencies ware swapped around and now any client
+(tsy) can use the faxserver. This dictated changes in the public interface (exported functions) so this 
+version of faxserver is not binary compatible with previous versions (sorry ;-)).
+Changes to the faxserver.mmp file were also made, as some depedencies were removed.
+the same applies for the faxcli.mmp file.
+
+Fixed a bug in the faxserver where if state was returning with -137 (WrongModemType) an exception was raised.
+Fixed bug EDN094835 were a faxsession could go on indefinitely if the receiver hang up. Now the faxsession ends 
+after thee failed attempts.
+Fixed a bug where a fax file with not supported compression (or corrupted) could cause an exception under wins.
+
+7) Added RAdvGsmLine::GetCallInfoAdvGsm(const TInt aIndex,RAdvGsmCall::TCallNotifyInfo)
+to the advanced GSM API, into the MAdvGsmLineStatusAndCallInfo mixin (formerly known as
+MAdvGsmLineStatus).
+
+Version 036
+===========
+Dependancies
+
+	e32		158
+	f32		124
+	c32		503
+	dbms		055
+	commdb		022
+	dial		503
+	ealwl		070
+	faxstore	019
+	faxdef		004
+	store		051
+	e32utils	024
+	e32tools	095
+	e32toolp	098
+	eiktools	128
+
+
+Maintains Binary Compatibility, but breaks source compatibility due to name changes
+in the Basic GSM API.
+
+
+====
+CORE
+====
+
+1) During Pre-Connection initialisation, if a RING has just occurred then a timeout of 
+half a second is completed before continuing, to ensure modem is in a ready state.
+
+2) Fixed a Relinquish Ownership bug in the TSY.
+
+3) FailDCD handshaking masked out during connection, as a NO CARRIER message is far
+   stabler to cope with than a KErrCommsLineFail error from the comms server.
+
+4) Fixed AT+FCLASS=0 bug.
+
+5) ETel server now moves all TSY names to upper case, rendering the LoadPhoneModule()
+case insensitive.
+
+6) TSY no longer checks the TSY name in the default connected modem table in the Comms
+database against its own name. It is valid for 2 TSY's to be simultaneously loaded in 
+which case 1 or neither of the TSY's will have the database specified name.
+
+7) TSY now will not allow a phone to be opened if some other TSY already has a phone 
+opened.
+
+FAX:
+
+8) fixed a bug in the wins deb variant which could cause an unhandled exception if 
+state returned -137 (WrongModemType).
+
+9) In EFaxtest, the fax test code:
+
+Returns error messages instead of error codes.
+the backspace key now works so the entry can be edited.
+There is no need for the user to type t before the telephone number.
+
+10) Changed string in CFAXMODM.cpp to update the string printed in the faxlogs.
+
+11) FaxCli, the fax client DLL, now queries the TSY for the name of the phone to open,
+rather than the hardcoded "Phone1".
+
+=====
+BASIC
+=====
+
+1) Changed name of member data iTypeOfAddress in structure TGsmTelNumber to iTypeOfNumber.
+
+2) Changed name of RGsmPhoneBook::AddressChangedNotification() to EntryChangedNotification().
+
+3) Changed name of CGsmDetectedNetworkResults to CGsmNetworkResults so it can be used by 
+both Retrieving Detected Networks and (Advanced) Retrieving Preferred Networks
+
+===
+ADV
+===
+
+1) Changed MAdvGsmLineBarring::BarringModeNotification(TRequestStatus& aStatus,
+TBarringType& aType, TBarringSetting& aSetting) to take TBarringMode instead of 
+TBarringSetting.
+
+2) Moved SIM capabilities from line level to phone level.
+
+3) Advanced phone book search now takes type TSearchVariety which contains both search
+type (basic text, wildcard text or number) and order (by index or alphanumerical).
+
+4) Get and Set Preferred Network Info now uses MAdvGsmPhoneNetwork::TAdvNetworkInfo instead
+of RBasicGsmPhone::TBscNetworkId. The new structure includes the latter plus the short and
+long name of the network. The Master List network info uses the same structure, thus
+eliminating the need for TStaticNetworkInfo. The storage class CGsmPreferredNetworkResults
+is also obsolete as the re-named CGsmStaticNetworkResults class (to CAdvGsmNetworkResults)
+now holds MAdvGsmPhoneNetwork::TAdvNetworkInfo objects.
+
+5) DTMF phase entered and left notifications have been replaced with one notification,
+MAdvGsmCallDTMF::NotifyDTMFEvent() which returns whether the event is entering or leaving
+DTMF, and whether it was automatically started or manually.
+
+6) MAdvGsmCallDTMF::StartDTMFTone() and MAdvGsmCallDTMF::StopDTMFTone() functions added.
+This allows the client to deal with a user pressing a key on the keypad and actually 
+sending that tone while the key is depressed.
+
+7) Moved SetAocMode and GetAocMode from call level to phone level. AOC cannot be enabled and
+disabled on a per call basis, indeed it cannot be enabled or disabled at the network 
+side at all. All this should do is tell the TSY or signalling stack that it should not
+propagate AOC information upwards. The question is whether we need it at all if clients
+can request it when they need it.
+
+
+
+Version 035
+===========
+Dependancies
+
+	e32		157
+	f32		123
+	c32		502
+	dbms		054
+	commdb		020
+	dial		502
+	ealwl		069
+	faxstore	019
+	faxdef		003
+	store		050
+	e32utils	024
+	e32tools	095
+	e32toolp	098
+	eiktools	128
+
+Maintains Binaray Compatibility.
+
+1) Pace Microlin Surfer was not answering properly during PPP callback. Problem fixed in 
+Hayes TSY by lowering and raising DTR if "NO CARRIER" is discovered when data port is 
+recovered.
+
+2) Initialisation with IR modem - the first write may take a while to complete. So
+timeout has been increased from 1 second to 5 seconds.
+
+3) Nokia 9000i does not accept values greater than 2 for the speaker control command "ATM",
+although 3 is usually a valid command. So TSY now ignores an ERROR coming back from this 
+set command.
+
+4) Re-initialisation bug in TSY, where another Read was not posted, has been fixed in the
+CATIO::Read() function, which now checks whether a Read is pending and does not queue 
+another if it is. This allows the rest of the TSY to queue a Read even if it's not clear 
+whether one has been queued already.
+
+5) The last release of ETel had an unintentional break of BC in GSMBAS.DLL for which a 
+fix was posted. This fix is now incorporated into this release. The problem was that with
+RGsmPhoneBook::AddressAddedNotification and RGsmPhoneBook::AddressRemovedNotification being
+replaced by AddressChangedNotification, the IPC's for these requests were removed - thus
+changing the values of all the later enumerated IPC's. The IPC's have been replaced but
+are now dummy values.
+
+6) The "Own Number" phonebook name definition in ETelBGsm.h has been removed as this
+functionality really belongs in the Advanced Phone.
+
+
+Version 034
+===========
+
+Dependancies
+
+	e32		157
+	f32		123
+	c32		502
+	dbms		054
+	commdb		020
+	dial		502
+	ealwl		069
+	faxstore	019
+	faxdef		003
+	store		050
+	e32utils	024
+	e32tools	095
+	e32toolp	098
+	eiktools	128
+
+1) Boiler-plating source code to Symbian copyright completed.
+2) Logs (ETEL.LOG and SETEL.LOG) now written to c:\logs\etel\ if it exists.
+3) Implemented EBLD maintenance batch file.
+4) Converted to LITERAL descriptors where appropriate.
+5) Fixed TSY bug where Callback was causing it to panic.
+6) Fixed ETel advanced client-side bug in RAdvGsmLine::NotifyGsmStatusChange().
+7) Fax client FaxCli.dll now reads the Comms database to discover the current TSY to 
+load up, rather than the hardcoded Hayes.TSY.
+8) Previously, when a RING was detected by the TSY and no call had had AnswerIncomingCall()
+called on it, the TSY automatically "created" a data call from its Pre-Allocated Call and
+let the client know its name using a RLine::NotifyIncomingCall() or a RLine::NewCallAdded().
+There is no way of knowing whether the incoming call is data or fax on a terrestrial modem
+so the TSY chose data by default.
+
+Problem: A client calling RLine::NotifyIncomingCall() on a fax line will not be notified
+because the TSY has made up its mind it is a data call.
+
+Soln: Once a RING occurs, and no call has had AnswerIncomingCall() called on it, the TSY
+will check which line has had NotifyIncomingCall() placed on it. If just the fax line, the
+TSY will create just a fax call - similarly for data. If both have been placed, the TSY 
+will create both and then the client with the highest priority will answer first. If neither
+notification is placed the same will happen.
+
+9) As a caveat of (8), the NotifyIncomingCall request no longer has the 
+KReqModeRePostImmediately capability (assigned by the ETel Server), as this reduces the
+possibility of having NotifyIncomingCall outstanding on both lines which would result in the
+less desirable situation of having two calls created when the modem rings.
+
+10) Advanced GSM API. Altered functions 
+(i)MAdvPhoneLineIdentity::ColpModeNotification()
+to take the parameter TColpMode instead of TColpSetting (allowing the return value of 
+EColpModeUnknown), and
+
+(ii)MAdvPhoneLineIdentity::ClirModeNotification()
+to take the parameter TClirMode instead of TClirSetting (allowing the return value of
+EClirModeUnknown)
+
+11) Basic GSM API. Added Reset() functions to both CGsmDetectedNetworkResults 
+and CGsmPhoneBookResults. This allows a client to clear all results from the class 
+and reuse it.
+
+12) Fixed client-side bug in async version of RAdvGsmPhone::SetPreferredNetworkInfo().
+
+Version 033
+===========
+
+Dependancies
+
+	e32		156
+	f32		122
+	c32		502
+	dbms		054
+	commdb		020
+	dial		502
+	ealwl		069
+	faxstore	018
+	faxdef		003
+	store		050
+	e32utils	020
+	e32tools	095
+	e32toolp	096
+
+Documentation not up to date in this release.
+
+Core is binary compatible on the client side, but not on the TSY side. So the Hayes.TSY
+(part of this project) has been modified to build against it, and GSMTSY (separate project)
+must be rebuilt against it.
+
+Both the Basic and the Advanced GSM DLL's have unavoidably had to break BC.
+
+CORE
+====
+1) CTelObject::ArrayOfMemberDataSizes() now passes the IPC of the request.
+
+2) Problem : The CallParams structure passed down with Dial(), Answer() or Connect() is set to 
+default if constructed with default c'tr, and not default if constructed with copy c'tr.
+The TSY checks the default member and if set to true pulls out the information from Comm DB,
+otherwise it uses the information in the structure. However, if the client creates the
+CallParams structure prior to its member data being filled in, the default will still be set
+to true.
+
+ Fix : Hayes.TSY no longer checks the default member. If the Dial() function without the
+CallParams structure as a parameter is used, the packaged descriptor is set to zero length
+which tells the TSY to use Comm DB. Otherwise, the overloaded Dial() function with CallParams
+structure being called, whatever information is in the CallParams structure will be used
+by the TSY.
+
+3) FaxCli now no longer passes down the call params structure with Dial/Answer/Connect,
+using the overloaded functions which don't take it as a parameter. The Hayes.TSY pulls the
+values out of Comm DB.
+
+4) Ownership of a call is now on session-level, not sub-session. 
+
+
+GSM
+===
+1) Added Advanced Phone mixin for the phone's static and SIM capabilities.
+2) Added Advance Line mixin for line-level SIM capabilities. SIM capabilities are caused
+   by the Customer Service Profile information on the SIM.
+3) Basic Gsm - phone book address added and removed notifications have been replaced by
+	a changed notification.
+4) RGsmPhoneBook::GetInfo() now returns the more complete structure scoped in RBasicGsmPhone.
+5) Basic Network functions have been enhanced - see below.
+
+6) SetNetwork() split into two functions - SetNetworkMode(), which uses the last current
+   network ID if Manual is selected, and - SetManualNetwork(), which selects a particular
+   network by ID, manually.
+
+7) Additional functions in Basic Phone Network, for retrieving Network Registration status
+	and search mode. Corresponding member data added to TPhoneNotifyInfo.
+
+8) RBasicGsmPhone::NotifyBatteryPowerCaps() and RBasicGsmPhone::NotifyNetworkInfoCaps()
+have been removed, since these capabilities are static not dynamic.
+
+9) Added MBasicGsmPhoneNetwork::RetrieveDetectedNetworksL() which returns a pointer to 
+a CGsmDetectedNetworkResults object which contains information about each detected network.
+This information can then be queried client-side, preventing the problem caused by multiple
+clients calling EnumerateDetectedNetworks() before GetDetectedNetworkInfo() - the second
+function would not be guaranteed to return the correct information. 
+
+The asynchronous version of this function is performed by a separate class,
+CBasicGsmRetrieveDetectedNetworks, in a similar manner to the Basic Phone Book async search.
+Both synch and asynch variants return a pointer to CGsmDetectedNetworkResults, 
+a container class for the information.
+
+10) The same has been done for MAdvGsmPhoneNetwork::RetrievePreferredNetworksL() for the
+same reason.
+
+11) CLIP, CLIR and COLP have been moved to the advanced phone level under the 
+mixin LineIdentity
+
+12) MAdvGsmLineStatus::TGsmStatus has an extra enum EStatusConnecting, in addition to 
+Dialling and Answering.
+
+13) MAdvGsmLineBarring::ChangeBarringMode() now has an asynchronous variant.
+
+14) Minor modifications to Call Forwarding API. Removed BatchCallForwardingInfo as it does
+not map onto GSM network commands well.
+
+15) Send SS Strings added on Advanced Phone API.
+
+16) The structure TCurrentNetworkInfo, returned by 
+MBasicGsmPhoneNetwork::GetCurrentNetworkInfo(), now contains the class TNetworkInfo as well
+ as the location area code and cell ID integers.
+
+17) The "SIM LAST DIALLING" phonebook type has been removed from the Basic API.
+
+
+Version 032
+===========
+Dependancies
+
+	e32		156
+	f32		122
+	c32		502
+	dbms		053
+	commdb		018
+	dial		502
+	ealwl		069
+	faxstore	017
+	faxdef		003
+	store		050
+	e32utils	020
+	e32tools	095
+	e32toolp	096
+
+	BC with 031 (except GSMADV.dll)
+
+1)  Added a PtrHolder class for the Advanced API, so none of the mixins have any member
+	data and the TPtr's are accessed via CAdvPtrHolder.
+2)  In ETelBgsm.h, increased size of the TBuf's in the MBasicGsmPhoneId::TId structure
+	from 20 to 50.
+3)  Hayes.TSY now checks the UID of the fax server.
+4)  Added a new type of reqMode for the server-TSY requests; KReqModeRePostImmediately.
+    Previously KReqModeMultipleCompletionEnabled had the dual meaning that the server 
+    would only allow one request of that particular IPC down to the TSY at any one time,
+    buffering the rest and completing all together, and that once completed the server
+    would immediately pass it down again to the TSY. 
+
+    Now KReqModeMultipleCompletionEnabled has only the first meaning while KReqModeRePostImmediately
+    has the second meaning. 
+    Typically the TSY would assign the following values to groups of IPCs:
+				
+	Those which the 	**Bit mask empty**
+	TSY completes 		
+	synchronously
+
+	Those which the		KReqModeFlowControlObeyed 
+	TSY completes
+	asynchronously
+	and require
+	communication with
+	the modem
+
+	Those which are
+	notifications,		(KReqModeRePostImmediately | KReqModeMultipleCompletionEnabled)
+	or which remain
+	outstanding until
+	an event occurs
+	and then some 
+	information is
+	fetched.
+
+	Same as above, but	KReqModeRePostImmediately
+	for some reason
+	the TSY needs to have
+	the request from each
+	client.
+
+	Those which fetch	KReqModeMultipleCompletionEnabled
+	information
+	asynchronously.
+
+	 
+5)	Registration bugs fixed in the server. 
+	Now can only register an IPC which the TSY declares to have the 
+	KReqModeRePostImmediately characteristic. Otherwise returns KErrNotSupported.
+
+
+6)	Bug fix in server allocation of buffer space for the client's data. 
+	Data with length 8- and 16-bit can now be stored on the ARM without panicing due to
+	word alignment problems.
+
+7)	Testing
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmDeb     MarmURel 
+EFaxTest   Y		Y		   Y		   Y		  Y		Y
+TETel	   Y		Y		   Y		   Y		  Y		Y
+TGsm	   Y   		Y		   Y		   Y		  Y		Y
+MakeIni	   Y		Y		   Y		   Y		  Y		Y
+T_HyRes1   Y		Y		   Y		   Y		  n/a		n/a
+
+
+Version 031
+===========
+Dependancies
+
+	e32		156
+	f32		122
+	c32		502
+	dbms		053
+	commdb		017
+	dial		502
+	ealwl		069
+	faxstore	017
+	faxdef		003
+	store		050
+	e32utils	020
+	e32tools	095
+	e32toolp	096
+
+!!REAL ALPHA RELEASE!!
+
+Unfortunately breaks BC with 030 for Etel.dll, GsmBas.dll and GsmAdv.dll. 
+(1) Does not export the internal CPtrHolder - the CBasicPtrHolder class is no longer derived from it.
+(2) RTelSubSessionBase functions - Get,Set,CancelReq,GetAndMerge,Register,Deregister - 
+	have been changed from public to protected.
+(3) This has forced changes in the implementation of RGsmPhoneBook and its derived class
+   RAdvGsmPhoneBook, where the active objects CGsmPhoneBookSearch, CAdvGsmPhoneBookRead
+and CAdvGsmPhoneBookSearch need to access these functions - they are provided with extra
+protected functions in RGsmPhoneBook to access them, and elevated to friend status.
+(4) This has resulted in a need for a RAdvGsmPhoneBook copy constructor.
+(5) Custom1 code updated.
+(6) Tetel code will need to be updated since not all the Rxx objects are closed occasionally 
+	causing a heap check panic at the end.
+(7) Advanced API has been brought into line with Basic API, in that the mixins have become
+    abstract with only pure virtual functions in.
+
+	WinsDeb		WinsURel	
+TETel	   Y		Y		
+TGsm	   Y   		Y		
+MakeIni	   Y		Y		
+
+Version 030
+===========
+Dependancies
+
+	e32		156
+	f32		122
+	c32		502
+	dbms		053
+	commdb		017
+	dial		502
+	ealwl		069
+	faxstore	017
+	faxdef		003
+	store		050
+	e32utils	020
+	e32tools	095
+	e32toolp	096
+
+!!ALPHA RELEASE!! 
+
+Breaks BC with 029, even for ETel.dll as the size of the Rxxx classes have necessarily
+altered (see below).
+
+(1) Functional freeze. In order to maintain BC from here on in, the Rxxx classes must always
+remain the same size. If a new function has to be added to one of these classes it could
+mean the addition of a TPtr member variable thus breaking BC. 
+
+To fix this problem, each Rxxx class in core (ETel.h) and basic GSM (ETelBgsm.h) have
+a pointer to a CPtrHolder object which contains an array of TPtr's - thus adding a extra
+TPtr to this will not increase the size of the Rxxx classes, just the internal CPtrHolder
+class.
+
+(2) Extra slots for possible future additional functions in the Basic GSM Mixin classes have
+been introduced in order not to break BC. The v'table is therefore not altered.
+
+(3) Client-side Bug fixed in RBasicGsmPhoneBook's asynchronous search, due to the 
+copy constructor of the RBasicGsmPhoneBook not functioning properly.
+
+(4) Client-side Bug fixed in RBasicGsmPhoneBook::ReadFirst().
+
+(5) Logging in Release variants for (a) Etel server and (b) Hayes.TSY is now v.limited, and 
+is started fresh each time (a) the etel server is started / (b) the phone is opened.
+Logging in Debug variants remains the same. 
+This should allow the debug variant of the Hayes.TSY to be placed in RAM if necessary, 
+and it will be used in place of the Hayes.TSY in ROM. 
+To replace the release ETel.dll with the debug variant, a new ROM will have to be built
+containing the debug ETel.dll since it is statically linked.
+
+(6) Client-side Bug fixed in asynchronous version of MBasicGsmPhoneNetwork::SetNetwork()
+
+(7) RSmsMessaging::SelectCBSMessages() passes in a TUint16 and a TUint8. On the ARM this
+    causes a triple beep reset in the TSY due to the HBufC allocation in the server not
+    accounting for word boundaries. Quick fix now on the client side but will have to
+    investigate.
+
+(8) Testing:
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmDeb     MarmURel 
+EFaxTest   		Y		   Y				  Y		
+TETel	   Y		Y		   Y		   Y		  Y		Y
+TGsm	   Y   		Y		   Y		   Y		  Y		Y
+MakeIni	   Y		Y		   Y		   Y		  Y		Y
+T_HyRes1   		Y		   Y				  n/a
+
+Fax sending on Rack seems problematical. Used Pace Microlin and Fax Class 1, and 
+progress jumped from Phase B to faxline 1100 in Phase C. The received fax was blank.
+
+Version 029
+===========
+Dependancies
+
+	e32		156
+	f32		122
+	c32		502
+	dbms		053
+	commdb		017
+	dial		502
+	ealwl		069
+	faxstore	017
+	faxdef		002
+	store		050
+	e32utils	020
+	e32tools	095
+	e32toolp	096
+
+This release is BC for "core" clients, ie those which do not use the GSM extensions,
+but non-BC for GSM clients. 
+
+(1) GSM.DLL has been split into GSMBAS.DLL containing basic GSM functionality and 
+GSMADV.DLL containing advanced GSM functionality. Only the former is for ER5, the latter
+is not part of the code freeze on 6th Nov 98.
+(2) The index of a CBS message has been made a member of the TCbs structure so 
+RSmsMessaging::ReadCbsMessage() no longer takes aIndex as a separate parameter.
+(3) Added RSmsMessaging::SelectCbsMessages(const TUint16 aId,const TCbs::TDcs aDcs)
+which enables a client to choose certain CBS messages and not be told about the rest.
+(4) CGsmPhoneBookSearchResults renamed CGsmPhoneBookResults (as it's used for Read results
+as well).
+(5) RAdvGsmPhoneBook has been added to the advanced GSM API, containing advanced phone book
+functionality - 
+	(i) Retrieve first empty index in phone book.
+	(ii) Determine whether a particular phonebook entry is being used.
+	(iii) Multiple Read.
+	(iv) Ability to perform basic functionality across all phonebooks, by providing a 
+	     name, "AllPhoneBooks", to open a phone book object with.
+	(v) Search by number.
+	(vi) Search any text (not just comparing with the first letters of an entry).
+	(vii) Write and Delete with extra parameter PIN2.
+(6) BscGsmCS.h and AdvGsmCS.h now both include "ETelBgsm.h" and "ETelAgsm.h" respectively,
+which are the GSM API files.
+(7) Ability added to core for certain IPC's, when registered, each client's request will
+be passed down to the TSY rather than just one. This solves the problem posed by reading
+CBS messages where some clients may want to filter out some CBS messages using the 
+SelectCBS function. Then the TSY knows which request is from which client and can complete
+the appropriate one.
+
+Passed all WINS tests. Passed limited MARM tests due to RACK-D resource limitations - 
+that is NARROW DEB, TETEL, MAKEINI and EFAXTEST.
+
+Version 028
+===========
+Dependancies
+
+	e32		156
+	f32		122
+	c32		502
+	dbms		053
+	commdb		017
+	dial		502
+	ealwl		068
+	faxstore	017
+	faxdef		002
+	store		050
+	e32utils	020
+	e32tools	095
+	e32toolp	096
+
+This release is UNICODE UID compliant. All the components are updated to UNICODE 
+UID compliant versions. It has also been tested for DEB/REL compatibility and passed all
+tests for all variants on both WINS and the RACK-D. This includes backward compatibility
+tests on WINS (using test code from 027) and deb/rel tests (using rel components in a debug 
+environment and vice versa). 
+
+
+Version 027	 
+===========
+Dependancies
+
+	e32		142
+	f32		112
+	c32		500
+	dbms		051
+	commdb		014
+	dial		400
+	ealwl		068
+	faxstore	014
+	faxdef		002
+	store		049
+	e32utils	020
+	e32tools	094
+	e32toolp	092
+
+This is a VC5 release and is deb/rel compatible.
+
+1) C'tr for RBasicGsmPhone is now exported.
+2) Dynamic call caps in core API and Hayes.TSY.
+3) Documentation on API's brought up to date.
+4) RCall::TCallNotifyInfo now contains call's name.
+5) Extra functionality for Call Groups (Basic GSM API).
+6) Some functions were not exported in their declarations -fixed TDateTime, 
+	MAdvGsmLineForwarding::SetCallForwardingStatusOnNoReply() and its Cancel
+7) RCall::Dial(), RCall::Answer and RCall::Connect() now have alternative declarations
+   which do not take a TCallParams struct as a parameter.
+8) The iStore member of RSmsMessaging::TMsgLocation struct has been changed from a TBuf8
+   (which returned narrow names such as "ME","SM") to a TName which will return the more
+   user-friendly names defined in the header, which are also the names used to open 
+   RSmsStorage objects.
+
+9) Testing:
+
+	WinsRel		WinsDeb		WinsURel	WinsuDeb	MarmRel
+EFaxTest   Y				   Y				  Y
+TETel	   Y		Y		   Y		   Y		  Y
+TGsm	   Y   		Y		   Y		   Y		  Y
+MakeIni	   Y		Y		   Y		   Y		  Y
+T_HyRes1   		Y						  n/a
+
+Version 026
+===========
+Dependancies
+
+	e32		142
+	f32		112
+	c32		500
+	dbms		051
+	commdb		014
+	dial		400
+	ealwl		068
+	faxstore	014
+	faxdef		002
+	store		049
+	e32utils	020
+	e32tools	094
+	e32toolp	092
+
+Binary Compatible with 025.
+
+1) Some fixes to GSM.DLL client side phone book access search and delete functionality.
+
+2) Added missing SetSessionHandle() call to RSmsStorage and RGsmPhoneBook Open()
+functions.
+
+
+Version 025
+===========
+Dependancies
+
+	e32		142
+	f32		112
+	c32		500
+	dbms		051
+	commdb		014
+	dial		400
+	ealwl		068
+	faxstore	014
+	faxdef		002
+	store		049
+	e32utils	020
+	e32tools	094
+	e32toolp	092
+
+Binary Compatible with 024.
+
+1) RSmsMessaging::SetSCDefaultAddress now works.
+2) Fixed client-side bug in RSmsStorage::WriteNotification().
+3) In ET_Tsy.h, added #ifndef __ET_TSY_H #define __ET_TSY_H, so that it won't be included 
+	more than once.
+4) Unicode compliant fax test code (EFaxtest).
+5) Bug fixes in Registration/Deregistration of commands/notifications.
+
+
+Version 024
+===========
+Dependancies
+
+	e32			142
+	f32			112
+	c32			500
+	dbms		051
+	commdb		014
+	dial		400
+	ealwl		068
+	faxstore	014
+	faxdef		002
+	store		049
+	e32utils	020
+	e32tools	094
+	e32toolp	092
+
+Binary Compatible with 023 except for ETEL WINS DEB.
+
+1) Fixed bug in ETEL WINS DEB def file (missing ordinal).
+
+2) Fixed bugs in GSM RGsmPhoneBook read functions which did not record
+   the index of the last read entry on the client side.
+   
+Version 023
+===========
+Dependancies
+
+	e32	 142
+	f32	 112
+	c32	 500
+	dbms	 050
+	commdb   013
+	dial	 400
+	ealwl	 068
+	faxstore 014
+	faxdef   002
+	store	 049
+	e32utils 020
+	e32tools 094
+	e32toolp 092
+
+Not binary compatible with 022. 
+1) MBasicGsm*** and MAdvGsm*** (*** = Call/Line/Phone) have been replaced by RBasicGsm***
+   which inherits from R***, and RAdvGsm** which inherits from RBasicGsm***. The different
+   areas of GSM functionality have been hived off into smaller mixin classes which both 
+   RBasicGsm*** and RAdvGsm*** inherit from.
+2) Dynamic call/line/phone capabilities changing added to core and GSM APIs.
+3) Old method Answer() only succeeded on a call with Ringing status, and attempted to answer 
+   immediately.
+   New method AnswerIncomingCall() may be called on an idle call and remains outstanding 
+   on the call until (a) it is cancelled or (b) a call comes in, upon which it is answered 
+   with that call. Only one server side call object in the Hayes TSY may have this
+   outstanding at any one time, and only one client may have it outstanding at any one time.
+4) R***::NotifyInfo() and its associated cancel function is now no longer only at the core 
+   level; there are RAdvGsm***::NotifyInfoAdvGsm() functions in Advanced API and 
+   RBasicGsm***::NotifyInfoBasicGsm() in the Basic API.
+5) RPhoneBook functionality changed slightly. Extra functions:
+
+	ReadFirst(TEntry& aEntry) const;
+	ReadPrevious(TEntry& aEntry) const;
+	ReadNext(TEntry& aEntry) const;
+
+	RPhoneBook::TEntry now contains the index of the entry.
+	
+	Search is now performed by calling CGsmPhoneBookSearchResults* SearchLC(const TSearchString& aSearch)
+
+	which returns a class containing the results. The functions
+
+	TInt GetNextEntry(RGsmPhoneBook::TEntry& aEntry);
+	TInt GetPreviousEntry(RGsmPhoneBook::TEntry& aEntry);
+	TInt GetEntry(TInt aIndex,RGsmPhoneBook::TEntry& aEntry);
+	TInt AddEntry(const RGsmPhoneBook::TEntry& aEntry);
+
+	can now be called on that CGsmPhoneBookSearchResults class to retrieve those results.
+
+6) RSmsMessaging class has extra function:
+
+GetDefaultSCAddress(TGsmTelNumber& aSCAddress) 
+
+to return the default Service Centre address on the SIM.
+
+7) Testing:
+
+	WinsRel	WinsDeb	WinsURel	WinsuDeb	MarmRel
+EFaxTest   Y	  Y        Y		   Y		  Y
+TETel	   Y	  Y	   Y		   Y		  Y
+TGsm	   Y	  Y	   Y 		   Y		  Y
+MakeIni	   Y      Y	   Y  		   Y		  Y
+T_HyRes1          Y  	   		   Y 		  N/A
+
+Version 022
+===========
+
+Dependancies
+
+	e32	 127
+	f32	 095
+	c32	 049
+	dbms	 050
+	commdb   007
+	dial	 015
+	ealwl	 059
+	faxstore 014
+	faxdef   002
+	store	 048
+	e32utils 018
+	e32tools 092
+	e32toolp 091
+
+1) GSM API Modifications, in particularly splitting CBS messaging from SMS messaging. Also
+   MakeEmergencyCall() introduced to Advanced.
+2) Priority client bug fixes.
+3) Customer specific code placed in Custom directories.
+
+Version 021
+===========
+
+Dependancies
+
+	e32	 127
+	f32	 095
+	c32	 049
+	dbms	 050
+	commdb   007
+	dial	 015
+	ealwl	 059
+	faxstore 014
+	faxdef   002
+	store	 048
+	e32utils 018
+	e32tools 092
+	e32toolp 091
+
+1) RCall::Open() now means open a new call, which returns a name allocated by the TSY.
+2) RCall::OpenByName() added to open a handle on an existing call.
+3) Fax Server initialisation ensures there will be no clashes with incoming RING.
+4) Added Priority Client code, which ensures certain priority session's 
+	requests will not fail from lack of memory.
+5) Register interest in and notify on new calls added on a line.
+6) NotifyOnAnything() added to RLine, RCall, RGsmMultiPartyCall, RGsmCall, RGsmLine 
+	and RGsmPhone.
+7) Get Call Duration and Notify Call Duration Changed (by one second) added, with a timer
+	on the server side.
+
+Version 020
+===========
+
+Dependancies
+
+	e32	 127
+	f32	 095
+	c32	 049
+	dbms	 050
+	commdb   006
+	dial	 015
+	ealwl	 059
+	faxstore 013
+	faxdef   001
+	store	 048
+	e32utils 018
+	e32tools 092
+	e32toolp 091
+
+1) ETel server buffers notifications automatically to prevent loss of events.
+2) ETel server buffers data for commands if they are registered first, with a user-defined
+  	number of slots.
+3) TSY is notified when data changes in CommDb, and updates.
+4) Improved functionality in fax client - immediate receive, polling and faxback.
+
+Version 019
+===========
+
+Dependancies
+
+	e32	 127
+	f32	 095
+	c32	 049
+	commdb   004
+	dial	 015
+	ealwl	 059
+	faxstore 013
+	faxdef   001
+	store	 048
+	e32utils 018
+	e32tools 092
+	e32toolp 091
+
+1) Split out Custom Gsm API from Advanced
+No other modifications
+
+Version 018
+===========
+
+Dependancies
+
+	e32	 127
+	f32	 095
+	c32	 049
+	commdb   004
+	dial	 015
+	ealwl	 059
+	faxstore 013
+	faxdef   001
+	store	 048
+	e32utils 018
+	e32tools 092
+	e32toolp 091
+
+1) No longer has dependancy on Dialstor. Dependancy on CommDb added.
+2) RCall::LoanDataPort() now has an asynchronous version.
+3) Call parameters are now passed with the Dial(), Answer() and Connect() functions.
+   SetCallParams() has been removed.
+4) Testing:
+
+	WinsRel	WinsDeb	WinsURel	WinsuDeb	MarmRel
+EFaxTest   Y	  Y        Y		   Y		  Y
+TETel	   Y	  Y	   Y		   Y		  Y
+TGsm	   Y	  Y	   Y 		   Y		  Y
+MakeIni	   Y      Y	   Y  		   Y		  Y
+T_HyRes1   Y      Y  	   Y		   Y 		  N/A
+
+Key
+---
+Y=Test Passed
+X=Test Failed
+N/A=Not Applicable
+
+
+Version 017
+===========
+
+Dependancies
+
+	e32	 127
+	f32	 095
+	c32	 049
+	dialstor 105
+	dial	 011
+	ealwl	 059
+	faxstore 013
+	faxdef   001
+	store	 045
+	e32utils 018
+	e32tools 081
+
+1) Unicode Fax working with narrow header line
+2) Fax Progress reporting moved to global chunk
+3) GSM API split into three sections: Basic, Advanced and Custom
+3) General Debugging
+4) Testing:
+
+	WinsRel	WinsDeb	WinsURel	WinsuDeb	MarmRel
+EFaxTest   Y	  Y        Y		   Y		  Y
+TETel	   Y	  Y	   Y		   Y		  Y
+TGsm	   Y	  Y	   Y 		   Y		  Y
+MakeIni	   Y      Y	   Y  		   Y		  Y
+T_HyRes1   Y      Y  	   Y		   Y 		  N/A
+
+NB Some timing problems have been observed on WinsDeb build of T_Hyres1.  Investigation continues.
+
+Key
+---
+Y=Test Passed
+X=Test Failed
+N/A=Not Applicable
+
+
+Version 016
+===========
+
+Dependancies
+
+	e32	 114
+	f32	 084
+	c32	 049
+	dialstor 105
+	dial	 011
+	ealwl	 059
+	faxstore 013
+	faxdef   001
+	store	 045
+	e32utils 018
+	e32tools 081
+
+1) Dependancy on FaxDef added
+2) Releases upgraded to allow UNICODE builds
+3) Testing:
+
+	WinsRel	WinsDeb	WinsURel	WinsuDeb	MarmRel
+EFaxTest   Y	  Y        X		   X		  Y
+TETel	   Y	  Y	   Y		   Y		  Y
+TGsm	   Y	  Y	   Y 		   Y		  Y
+MakeIni	   Y      Y	   Y  		   Y		  Y
+T_HyRes1   X      X  	   X		   X 		  N/A
+
+Key
+---
+Y=Test Passed
+X=Test Failed
+N/A=Not Applicable
+
+Work continues to get all the test code working on all platforms
+
+
+
+Version 015
+===========
+
+Dependancies
+
+	e32	 114
+	f32	 084
+	c32	 049
+	dialstor 102
+	dial	 011
+	ealwl	 059
+	faxstore 012
+	store	 045
+	e32utils 018
+	e32tools 081
+
+GSM Headers, DLL, Design documentaion and test code upgraded to ETel GSM API V3.
+
+
+
+Version 014
+===========
+
+Dependancies
+
+	e32	 114
+	f32	 084
+	c32	 049
+	dialstor 102
+	dial	 011
+	ealwl	 059
+	faxstore 012
+	store	 045
+	e32utils 018
+	e32tools 081
+
+Second Phase Fax Server integration.
+Modifed to work with DialStor102 records.
+
+Unicode build removed because faxstore does not have a Unicode build.  Therefore, compilation validated under
+Arm and Wins Rel and Deb only.
+
+Testing:	TETEL	 Wins Rel\Deb; Arm Rel
+		TGSM	 Wins Rel\Deb; Arm Rel
+		T_HyRes1 Wins Rel\Deb
+		EFaxTest Wins Rel\Deb; Arm Rel		Multipage faxes Rx & Tx on Wins Builds are reliable.
+							Arm Rel build Rx & Tx work unreliably.  Work continues.
+							Fax Cancelling is also buggy.  Again work continues.
+
+
+
+Version 013
+===========
+
+Dependancies
+
+	e32	 114
+	f32	 084
+	c32	 049
+	dialstor 006
+	dial	 011
+	ealwl	 059
+	faxstore 012
+	store	 045
+	e32utils 018
+	e32tools 081
+
+First Phase Fax Server integration.
+
+Unicode build removed because dialstor does not have a Unicode build.  Therefore, compilation validated under
+Arm and Wins Rel and Deb only.
+
+Testing:	TETEL	 Wins Rel\Deb; Arm Rel
+		TGSM	 Wins Rel\Deb; Arm Rel
+		T_HyRes1 Wins Rel\Deb			There is a known reliability problem - debugging continues
+		EFaxTest Wins Deb			Wins Rel and Arm work continues
+							Single page faxes have been successfully Tx & Rx
+
+
+Fax Details:
+
+We have successfully sent and received faxes using a selection of fax modems (class 1 class 2 class 2)
+at speeds of up to 14400 bps.
+
+Current omissions/defects/bugs:
+
+1. We have only tested WINS debug narrow builds and have only managed to run the code successfully under
+   the MSVC debugger (i.e. it won't axecute successfully).
+2. Fax transmissions always terminate with a stub header on an extra page and an error -25 (KErrEof).
+3. Some pages can be shown not to transmit in total (they get truncated) but this has only appeared with
+   complex dithering on tests.
+3. Fax receptions answer only after the third ring instead the second.
+4. The progress structure doesn't seem to be propogating back to the UI.  This is probably the cause of (2) above.
+
+
+
+Version 011
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb and Marm Rel only.
+
+Modifications
+
+Server:
+	New Header file structure
+	Implemented CreateDummySession() for better abnormal closure handling
+	ReqModeL() is now implemented in the server for Core API
+	Casting replaced by REINTERPRET_CAST and CONST_CAST
+	Added much const'ness
+	Added fax configuration functions
+
+Hayes.TSY:
+	Fax functions implemented
+	Fax Stub Functionality DLL Added
+
+Version 010
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb and Marm Rel only.
+
+Modifications
+
+Server:
+	Core API Reviewed and Modified
+	Code Review modifications made
+	Client Panic processing improved
+
+Hayes.TSY:
+	Notifications implemented
+	Responder test code implemented
+
+GSM Extensions:
+	Client-side code for V1 API and test code written
+
+Version 009
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+	eiktools 122
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb and Marm Rel only.
+
+Modifications
+
+Server:
+	Improved low memory testing
+	Improved clean-up after server connection closed or client crashed
+
+Hayes.TSY:
+	Answer data calls
+	Improved status information
+	Tidied enumeration and information for phones and lines
+
+GSM Extensions:
+	First Version header and API Design Document
+
+
+
+Version 008
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+	eiktools 122
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb and Marm Rel only.
+
+Modifications
+
+Server:
+	Panics Client if duplicate request made
+	TSY name need not be used when opening phone
+	Session Closure now closes any open sub-sessions
+	Performs duplicate Phone Name check when loading TSY
+Hayes.TSY:
+	Code for notifications added
+	Various error scenarios tested and bugs fixed
+
+
+Version 007
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+	eiktools 122
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb and Marm Rel only.
+
+Modifications
+
+Server:
+	Exported Headers tidied
+	Polution of Global Namespace minimised
+	Opening Object from Server not longer requires TSY Name
+	RTelServer::EnumeratePhones and PhoneInfo functionality corrected
+	Call Ownership functionality added
+Hayes.TSY Added:
+	ComPort Loaning and recovering implemented
+	Phone, Line and Call Enumeration and Info tidied
+	On-Line initialisation procedure implemented
+
+	
+
+Version 006
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+	eiktools 122
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb and Marm Rel only.
+
+Modifications
+
+Server:
+	Flow Control Suspend and Resume functions implemented
+	Cancel functionality corrected
+	Tests added for Flow Control
+Hayes.TSY Added:
+	Data Mode Escape Sequence
+	On-Line command
+	Data Call
+	Ground work for ComPort loading
+	
+
+
+
+Version 005
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+	eiktools 122
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb only.
+
+Modifications
+
+Server:
+	Open through multiple sub-session levels, e.g. open a call from a phone by specifying "Line::CallName"
+Hayes.TSY:
+	Get and Set Pause Length (S8) on RPhone
+	Set Speaker Monitor level (ATMx)
+	Added basic Initialisation sequence
+
+
+Version 004
+===========
+
+Dependancies
+
+	e32 114
+	f32 084
+	c32 048
+	e32utils 018
+	e32tools 081
+	eiktools 122
+
+Compilation Validated under Wins Rel and Deb, narrow and unicode; Arm Rel and Deb narrow only.  Tested on
+Wins rel and deb only.
+This test uses the following configuration: Nokia 9000 in Fax/Modem mode, Wins build.
+
+Other than this the functionality supported by Hayes.TSY is currently limited.
+
+
+
+
+Version 0.1 (001)
+=================
+   Use
+                e32=107
+                f32=074
+                c32=044
+                ealwl=059
+                store=043
+                e32utils=018
+                e32tools=067
+                eiktools=122
+
+This version is known as 'Static Etel' because it only supports very
+limited funtionalities. These limitations are described as follows :
+	0) !!! ONLY Win32 DEBUG VERSION SUPPORTED !!! 
+	1) Only one server and one session supported
+	2) Supported for RTelServer and RPhone only ( not RLine and
+       RCall).
+	3) All functions within RTelServer are supported
+	4) Only the following functions are supported for RPhone:
+	IMPORT_C void SignalStrength (TRequestStatus &aStatus,TUint& aSignalStrength) const;
+	IMPORT_C void SendMessage (TRequestStatus &aStatus,TMessagePDU  & aMessage ) const;
+	IMPORT_C void ReadMessage (TRequestStatus &aStatus,TMessagePDU  & aMessage ) const;
+	IMPORT_C void SignalStrengthCancel();
+	IMPORT_C void SendMessagePDUCancel();
+	IMPORT_C void ReadMessagePDUCancel();
+	IMPORT_C TInt Open(RTelServer &aSession,const TDesC &aName,TPhoneAccess aMode);
+	IMPORT_C TInt EnumerateLines(TUint &aCount) ;
+    5) Etel has been tested with M1 Module (file M1.TSY) - test code
+       T_ETEL.CPP
+
+Instruction to get release from R: drive
+----------------------------------------
+        At fresh drive type
+        pgetbld etel group 001
+        mnt blddeb
+        mnt btstdeb
+        mnt rtst - M1 must be connected ( with appropreate SIM card) 
+        to PC Com 1 before runing this test
+
+Version 0.1 (002)
+=================
+
+        1) No new services other than release 001
+        2) Now supported Arm variants
+        3) Additional mudule DTSY.TSY is now part of the release.
+This module is known as Dummy Tsy which is use mainly to test etel.dll
+without any hardware. Clients of Etel can use this to test their code
+prior to hardware availability by create dummy scenarios.
+        4) Test code for testing with Dummy Tsy is called TETELDLL
+ 
+Version 0.1 (003)
+=================
+
+Revamp the whole thing for RPhone,RLine,RCall

@@ -1,0 +1,152 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Secondary PDP-context UMTS Driver integration tests using PPP as the NIF.
+//
+
+//! @file TE_SpudNetworkSide_ppp.script
+
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MkDir c:\private\
+RUN_UTILS  MkDir c:\private\101F7989\
+RUN_UTILS  MkDir c:\private\101F7989\esock\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+
+LOAD_SUITE TE_SpudNetworkSide
+
+// TestSection suffix numbers correspond to SIM TSY's test section numbers. i.e. PrimaryActivationFails201 uses SIM TSYs test201 
+
+//
+// Configure CommDB for the tests using PPP as lower NIF
+//
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\TestData\Configs\TE_SpudNetworkSide_ppp.xml
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_nifman_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_nifman_config.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSideLoopbackCSY.ini c:\loopback.ini
+
+START_TESTCASE          NET-Spud-NetworkSide-1101
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1101
+//! @SYMTestCaseDesc Stop the interface when SPUD is starting lower NIF for the primary context.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions SPUD starts the lower NIF, which "takes a long time to start", i.e. no LinkLayerUp / Down. Stop SPUD using RConnection::Stop(EStopNormal)
+//! @SYMTestExpectedResults KLinkLayerClosed / KErrCancel progress.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType IT 
+// Note: this test case uses CSpudSecondaryStartingStop by design, because the sequence of events is identical, the only difference is timing.
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudSecondaryStartingStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopPrimaryStartingLowerNif1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1101
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_config.txt c:\config.txt
+
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1102
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1102
+//! @SYMTestCaseDesc Error on Start of a lower NIF for primary context.  
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start Spud. Spud starts a lower NIF for the primary context, which returns an error.
+//! @SYMTestExpectedResults starting Spud fails. RConnection::Start returns an error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 30 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_platsec.ini PrimaryLowerNifStartError210
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1102
+
+
+# Wait for Nifman Idle timeout to kill the interface
+DELAY 10000
+
+START_TESTCASE          NET-Spud-NetworkSide-1103
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1103
+//! @SYMTestCaseDesc Network Deletes primary context when lower NIF was started, and SPUD waits for LinkLayerUp.  
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start Spud. Spud starts the lower NIF for the primary, which "takes a long time to start, i.e. no LinkLayerUp/Down. SIM TSY deletes the primary context.
+//! @SYMTestExpectedResults Start on Spud fails. Nifman progress 8000 with KErrDisconnected is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 30 TE_SpudNetworkSide CSpudPrimaryEventOnLowerNifStarting z:\testdata\configs\te_spudNetworkSide.ini PrimaryDeleteOnLowerNifStart212
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1103
+
+
+// The following tests use different CommDB entries
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\TestData\Configs\TE_SpudNetworkSide_PppLoopback.xml
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSideLoopbackCSY_serial.ini c:\loopback.ini
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1104
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1104
+//! @SYMTestCaseDesc Sanity check: successfully activate Primary context using PPP as a lower NIF
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interface using PPP. Also start a PPP server connected to the port from the SPUD. SIM TSY, etc successfully activate the primary context.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SPUD is started: RConnection::Start on SPUD returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPppPrimary z:\testdata\configs\te_spudNetworkSide.ini PppPrimaryOk
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1104
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1105
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1105
+//! @SYMTestCaseDesc Successfully activate a secondary context and send data using the secondary context, using PPP as the lower NIF
+//! @SYMFssID NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions Open a socket with QoS parameters. Also start 2 PPP server instances on loopback ports opposite the primary and secondary contexts of the SPUD. Send data to and from the secondary context of SPUD.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SPUD is started: RConnection::Start on SPUD returns KErrNone. Send as well as RecvFrom complete successfully.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 600 TE_SpudNetworkSide CSpudPppSecondarySend z:\testdata\configs\te_spudNetworkSide.ini PppSecondarySend
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1105
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+

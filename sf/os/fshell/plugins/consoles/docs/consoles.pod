@@ -1,0 +1,323 @@
+# consoles.pod
+#
+# Copyright (c) 2008-2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+__END__
+
+=head1 Console Implementations
+
+=head2 Overview
+
+Since its inception, Symbian OS has supported a simple console API; C<CConsoleBase>. The tool-kit provides various implementations of this interface, each suited to different circumstances. This document is intended to provide an overview of the console implementations that are available, and their main pros and cons.
+
+=head2 Consoles Provided By Symbian OS
+
+=head3 econs.dll
+
+The console implementation for the text window server. Provided by Symbian OS.
+
+Pros:
+
+=over 5
+
+=item *
+
+Has few dependencies.
+
+=item *
+
+Supported on the WINSCW emulator.
+
+=item *
+
+Supports multiple concurrent C<CConsoleBase> clients. Each get a separate window. Different windows can be brought into the foreground by dragging using a pointer.
+
+=item *
+
+Light-weight - boots quickly and is reasonably fast in use.
+
+=item *
+
+Can be run remotely via a serial connection using a VT100 screen driver implementation.
+
+=item *
+
+Reasonably bug free.
+
+=back
+
+Cons:
+
+=over 5
+
+=item *
+
+Does not support scrolling. Once text has disappeared from the top of the console it can not be retrieved.
+
+=item *
+
+Requires hardware with a full keyboard.
+
+=item *
+
+Does not support color or attributes.
+
+=back
+
+Typically, this console is used for minimal base-port ROMs and the early stages of product bring up. However, because it boots quickly under the emulator, it is also the console of choice for emulator based debugging of console applications.
+
+=head3 econseik.dll
+
+A console implementation for the graphical window server.
+
+Pros:
+
+=over 5
+
+=item *
+
+None.
+
+=back
+
+Cons:
+
+=over 5
+
+=item *
+
+Buggy. Slow to redraw.
+
+=item *
+
+Tends to select a font that is small and hard to read.
+
+=item *
+
+Does not play nicely with UI frameworks because its window obscures the entire screen. On some UI platforms this makes it impossible to navigate away from.
+
+=item *
+
+Does not support scrolling. Once text has disappeared from the top of the console it cannot be retrieved.
+
+=item *
+
+Requires hardware with a full keyboard.
+
+=item *
+
+Does not support color or attributes.
+
+=back
+
+This console doesn't have much to recommend it. The fshell makes it obsolete with Guicons.
+
+=head2 Consoles Provided By FShell
+
+=head3 Guicons
+
+A console implementation for the graphical window server. Currently only supported on S60, but has minimal UI framework dependencies making it easy to port.
+
+Pros:
+
+=over 5
+
+=item *
+
+Does not require a full keyboard - can use whatever text entry capabilities the handset its running on supports.
+
+=item *
+
+Provides its own fixed width fonts that are easy to read.
+
+=item *
+
+Supports multiple console clients via tabbed windows.
+
+=item *
+
+Supports scrolling.
+
+=item *
+
+Supports color and attributes.
+
+=back
+
+Cons:
+
+=over 5
+
+=item *
+
+Can only be used locally, and so hardware with limited text input capabilities can be painful to use.
+
+=back
+
+This is the console of choice for running on a handset with a full graphical ROM, if remote connectivity is not available.
+
+=head3 L<vt100cons|vt100cons>
+
+A console implementation that will communicate with a VT100 compatible terminal (or terminal emulator such as HyperTerminal) via a serial connection. There are variants that work over TCP connnections (F<vt100tcpcons.dll>), Bluetooth (F<vt100btcons.dll>) and USB (F<vt100usbcons.dll>).
+
+Pros:
+
+=over 5
+
+=item *
+
+Overcomes limitations of the host hardware by using the keyboard and screen of a remote machine.
+
+=item *
+
+Supports file transfers between the host hardware and the remote machine via L<fshell's|fshell> L<ymodem|ymodem> and L<xmodem|xmodem> commands.
+
+=item *
+
+Supports color and attributes.
+
+=item *
+
+The TCP variant supports both passive (i.e. incoming) and active (i.e. outgoing) connections. This, (perhaps used in conjunction with SSH tunnels) can provide an extremely flexible means of establishing a link.
+
+=back
+
+Cons:
+
+=over 5
+
+=item *
+
+Can only host a single console client per serial channel. However, since L<fshell|fshell> allows multiple commands to share a single console, this doesn't tend to be a major limitation.
+
+=back
+
+This is the remote console of choice when running on target (i.e. non-emulated) hardware.
+
+=head3 L<terminalkeyboardcons|terminalkeyboardcons>
+
+On platforms that support the Terminal Keyboard and Trace Core, this console allows the Carbide Terminal Keyboard plugin to be used directly with fshell, even in gui environments when the normal eshell terminalkeyboard plugin won't work.
+
+Pros:
+
+=over 5
+
+=item *
+
+Works over whatever transport that TraceCore can use (so will work over XTI even when no physical serial ports are available).
+
+=item *
+
+Works in GUI (DFS) builds - unlike the standard eshell plugin.
+
+=back
+
+Cons:
+
+=item *
+
+Requires Carbide and the Carbide Terminal Keyboard plugin to be installed.
+
+=item *
+
+Limited by what the Carbide Terminal Keyboard plugin allows - so no ymodem support.
+
+=back
+
+=head3 L<rcons|rcons>
+
+A console implementation that connects via TCP to a Win32 executable (called L<rcons.exe|rcons.exe>) that hosts console windows remotely.
+
+Pros:
+
+=over 5
+
+=item *
+
+Supports multiple concurrent C<CConsoleBase> clients. Each get a separate native Windows window.
+
+=item *
+
+Supports scrolling.
+
+=back
+
+Cons:
+
+=over 5
+
+=item *
+
+Only supports active (i.e. outgoing) TCP connections to the host PC. This can cause problems if the host PC is protected by a firewall.
+
+=item *
+
+Does not support color or attributes.
+
+=item *
+
+Does not support file transfers.
+
+=back
+
+This console has been largely superceded by L<vt100cons|vt100cons> (or one of its variants) for target use. However, it is still useful on the emulator because a) it is easy to get up an running, and b) new windows automatically appear (rather than needing to explicitly connect a terminal emulator).
+
+=head3 win32cons
+
+A specialized console for running the WINSCW emulator directly in a DOS box. A batch file F<\epoc32\tools\fshell.bat> is provided for convenience.
+
+Pros:
+
+=over 5
+
+=item *
+
+Interfaces with the Windows command prompt (F<cmd.exe>).
+
+=back
+
+Cons:
+
+=over 5
+
+=item *
+
+Only supported on the emulator.
+
+=back
+
+The console of choice for running L<fshell|fshell> commands as part of a build process because errors and warnings are reported directly to whatever is controlling the build (normally F<make>).
+
+=head3 nullcons.dll
+
+A console that provides no input and throws away all output. The console of choice for running L<fshell|fshell> commands headlessly.
+
+=head3 iocons.dll
+
+A console implementation that exposes L<fshell's|fshell> console sharing functionality via the C<CConsoleBase> API. Used internally to support legacy Symbian console applications.
+
+=head3 defcons.dll
+
+A dummy console implementation that L<fshell|fshell> (or, more specifically F<iosrv>) uses internally to find a suitable default console implementation. You should never explicitly instanciate this console yourself.
+
+=head1 See Also
+
+L<fshell|fshell>
+
+L<rcons|rcons>
+
+L<vt100cons|vt100cons>
+
+=head1 Copyright
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+
+=cut

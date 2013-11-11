@@ -1,0 +1,80 @@
+# winsockprt.cif
+#
+# Copyright (c) 2007-2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+__END__
+
+=head1 winsockprt
+
+=head2 Introduction
+
+C<winsockprt> is a Symbian OS network protocol module (a plug-in to ESock) that allows Symbian OS sockets to communicate via underlying WinSock sockets.
+
+There are various means of providing the Symbian OS emulator with a network connection (including WinTAP and NT-RAS). In the most part these other technologies are preferable to C<winsockprt> because they use the real Symbian TCP/IP stack, and so provide a more faithful emulation. However, they also tend to be more complex to configure. By contrast, C<winsockprt> is enabled with a single command and needs no further configuration.
+
+=head2 Installation
+
+Beyond building F<fshell> for your development environment, there is no further installation necessary.
+
+=head2 Usage
+
+By default C<winsockprt> is disabled. To enable it, type:
+
+  wsp enable
+
+or
+
+  wsp e
+
+Once it is enabled, any attempt by Symbian code to open a socket (or resolver) on the implicit connection (i.e. without using C<RConnection>) will result in C<winsockprt> interacting with the WinSock library to provide a connection.
+
+To disable C<winsockprt> and go back to using the Symbian TCP/IP stack, type:
+
+  wsp disable
+
+or
+
+  wsp d
+
+To see the current state of the C<winsockprt>, type:
+
+  wsp status
+
+or
+
+  wsp s
+
+=head2 Caveats
+
+No attempt is made to intercept the C<RConnection> API, which means that code that uses this will continue to attempt to establish a real connection. If this succeeds, then any sockets attached to the connection will again be routed through the WinSock library. However, if it was possible to establish a real connection, then there probably isn't much point in using C<winsockprt> - better to disable it and go back to using the real TCP/IP stack.
+
+=head2 Explicit Usage
+
+It is actually still possible to open C<winsockprt> sockets even when the module is disabled. Disabled only means that the module isn't taking the place of the Symbian TCP/IP stack. Whether disabled or not, C<winsockprt> always registers the following protocols with ESock and makes them available to clients:
+
+  KProtocolWinsockTcp
+  KProtocolWinsockUdp
+
+These are defined in F<\epoc32\include\winsockprt.h> and allow software to explicitly use WinSock sockets along side normal Symbian sockets. This facility can be used by L<rcons|rcons> to provide remote console via WinSock on the emulator without distrupting other TCP/IP clients.
+
+=head2 Future Development
+
+Old versions of C<winsockprt> used to replace various parts of the Symbian networking sub-system in order to try to convince clients that a suitable connection is available. In the multi-homed world of modern Symbian OS releases this behaviour is probably not appropriate. Instead therefore, to use C<winsockprt> from via software the opens an explicit C<RConnection> suitable IAP and Network entries will need to be present in the CommDb. There is a Null Agent (C<nullagt>) that could be used to pretend to establish a connection. However, at the time of writing, there is nothing equivalent to a Null NIF that would also be needed to create a truely fake connection. It might be worth writing such a thing is this limitation is frequently hit.
+
+=head1 See Also
+
+L<rcons|rcons>
+
+=head1 Copyright
+
+Copyright (c) 2005-2010 Accenture. All rights reserved.
+
+=cut

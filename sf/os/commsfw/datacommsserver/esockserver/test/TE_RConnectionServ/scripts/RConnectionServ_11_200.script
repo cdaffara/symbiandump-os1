@@ -1,0 +1,97 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName te_RConnectionServ
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+
+START_TESTCASE			COMINF-ESOCK-RConnectionServ-6701
+//! @SYMTestCaseID		COMINF-ESOCK-RConnectionServ-6701
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RConnectionServ::Connect()
+//RConnectionServ::AccessPointStatusQuery()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+// Start by unloading esock, reseting commsdat and reloading esock
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\TestData\configs\RConnectionServ\RConnectionServ.cfg -o c:\RConnectionServ.ced.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini ConnectSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini OpenConn1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini InitAvailability1
+
+// Connect at *link* tier
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini CreateConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini ConnectConnectionServ1
+
+// Request all changes to AP active status
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini APNotifRequest
+
+// Start connection on bearer and detect change at AP
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini StartConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini ReceiveNotif1_1
+
+// Now close the connection and wait for idle timeout and check that notif now there for the idle connection stopping
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini StopConn1
+
+// But after interim period that no notif arrives
+// timeout is 30 seconds.. 15 seconds are delayed here
+DELAY 15000
+
+// this test step waits 5 sec, by which time no notification should have arrived
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini ReceiveNotif1_2
+
+// wait the final 10 sec
+DELAY 10000
+
+// by now it should have timed out
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini ReceiveNotif1_3
+
+// Cancel the notification request
+RUN_TEST_STEP 100 te_esockteststepsSuite CancelAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini CancelNotif1
+
+// Close and cleanup resources
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini CloseConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_200.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// Shutdown
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			COMINF-ESOCK-RConnectionServ-6701
+
+
+
+
+

@@ -1,0 +1,81 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Using relative paths for sourcepath and user includes
+// 
+//
+
+TARGET		tscdvserver.exe
+TARGETTYPE		exe
+UID           	0x1000007A 0x10273369
+VENDORID 0x70000001
+
+CAPABILITY		ProtServ SwEvent
+
+userinclude	../../../graphicstest/graphicstestharness/inc
+userinclude	../tsrc ../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+
+SOURCEPATH  .
+SOURCEPATH  ../tsrc
+SOURCE		TScdvServer.cpp
+SOURCE      	TLLD.CPP
+SOURCE		TScdvScaling.cpp
+SOURCE		TScdvTest.cpp
+#ifdef SYMBIAN_BUILD_GCE
+#undef __WINS__
+SOURCE 		tscdvdevorientation.cpp
+SOURCE		TDirectScreenBitmap.cpp
+#elif defined(__WINS__)
+SOURCE		TDirectScreenBitmap.cpp
+#endif
+
+SOURCE      TRWindows.cpp
+#if defined(WINS)
+SYSTEMINCLUDE 	../swins
+SOURCEPATH		../swins
+SOURCE			WINS.CPP
+#endif
+
+#ifdef SYMBIAN_BUILD_GCE
+MACRO SYMBIAN_GRAPHICS_GCE
+#endif // SYMBIAN_BUILD_GCE
+
+
+library		euser.lib
+library		hal.lib
+library		scdv.lib
+library		estlib.lib
+library		gdi.lib
+library     lookuptable.lib
+library		fbscli.lib
+library		ws32.lib
+ 
+LIBRARY	    	testexecuteutils.lib tgraphicsharness.lib
+LIBRARY	    	testexecutelogclient.lib
+
+#if defined (WINS)
+START WINS
+win32_library       gdi32.lib
+win32_library       user32.lib
+win32_library       kernel32.lib
+END
+#endif
+
+// We're quite heavy on the stack... 4k in WinS isn't enough...
+EPOCSTACKSIZE	0x6000
+EPOCHEAPSIZE	0x1000	0x400000
+
+SMPSAFE
+

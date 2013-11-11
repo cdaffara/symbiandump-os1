@@ -1,0 +1,299 @@
+# vt100cons.pod
+#
+# Copyright (c) 2008-2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+__END__
+
+=head1 vt100cons
+
+=head2 Introduction
+
+A Symbian console implementation (sub-class of C<CConsoleBase>) for communicating with a VT100 terminal (or, more likely, a terminal emulator such as the Windows HyperTerminal program) over a C32 hosted serial connection. This console makes it possible to run console based tools on any handset that can be connected to via a serial connection. See the L<main consoles page|consoles> for a comparison of the various consoles.
+
+Note, the console provides no mechanism for remote clients to automatically connect and launch console tools. The launching of the required console tool must be initiated on the handset, causing F<vt100cons.dll> to be loaded. It will then attempt to establish a serial connection to the terminal that is expected to be listening on the other end of the connection.
+
+There are six variants:
+
+=over 5
+
+=item 1 F<vt100cons.dll>
+
+Uses a regular C<RComm> based serial connection. The most basic implementation, for communicating over plain old serial ports.
+
+=item 1 F<vt100btcons.dll>
+
+Accepts an incoming bluetooth serial port connection.
+
+=item 1 F<vt100tcpcons.dll>
+
+Uses a TCP/IP connection. Can either actively connect to a remote host, or passively listen for connections.
+
+=item 1 F<vt100usbcons.dll>
+
+Like vt100cons.dll but with some extra USB-specific setup.
+
+=item 1 F<vt100debugport.dll>
+
+This is a textshell-only variant of vt100cons.dll that does not require C32 support.
+
+=item 1 F<vt100busdevcons.dll>
+
+Like vt100cons.dll but uses C<RBusDevComm> directly rather than going through C32. Like vt100debugport.dll it doesn't rely on C32, but it has better console emulation support.
+
+=back
+
+=head2 Serial Variant
+
+=head3 Configuration
+
+The console implementation expects to be provided with a set of configuration data in the title parameter of the C<CConsoleBase> constructor. This string may consist of the following keyword / value pairs:
+
+=over 5
+
+=item * C<pdd=name>
+
+If present, the named physical device driver will be loaded. May be omitted, in which case ecdrv (on the emulator) or euart1 (on target) is assumed.
+
+=item * C<ldd=name>
+
+If present, the named logical device driver will be loaded. May be omitted, in which case ecomm is assumed.
+
+=item * C<csy=name>
+
+If present, the named C32 CSY module will be loaded. May be omitted, in which case ecuart is assumed.
+
+=item * C<port=name>
+
+Specifies the serial port name to be opened. Must be specified. If no other configuration items are specified the C<port=> prefix may be omitted.
+
+=item * C<rate=value>
+
+If present, set the baud rate of the serial port. Allowed values are: 115200, 57600, 19200, 9600. If specified, the port is configured with the following settings: rate as specified; data bits 8; stop bits 1; parity none; handshake 0, terminator count 0. For virtual serial ports (eg USB ACMs or Bluetooth serial ports) it is generally not necessary to configure hardware attributes so the rate parameter should not be specified.
+
+=item * C<debug>
+
+If present, the console will print out some debugging diagnostics to the underlying console during construction.
+
+=back
+
+Each keyword and value must be separated by an equals ('=') character. There may be whitespace either side of this. Each keword / value pair must be separated by a comma (',') character. Again, there may be whitespace either side of this. The name values may not contain either equals or comma characters as no form of escaping is currently supported.
+
+=head3 Example Configuration Strings
+
+=over 5
+
+=item * Simple use of a C<LOOPBACK.CSY> channel.
+
+ 'loopback::0'
+
+With this example, it is assumed that C<LOOPBACK.CSY> is already loaded. This may, for example be done by whatever is using the other end of the looped back channel.
+
+=item * Use of a C<EUCART.CSY> on the emulator.
+
+ 'pdd=ecdrv, ldd=ecomm, csy=ecuart, port=comm::0'
+
+This will cause both physical and logical device drivers suitable for supporting the C<ECUART.CSY> to be loaded, in addition to the CSY itself. Note, if any of these are already loaded, the KErrAlreadyExists error will be ignored.
+
+=item * Use of a hardware serial port.
+
+ 'pdd=euart1, ldd=ecomm, csy=ecuart, port=comm::0, rate=115200'
+
+=back
+
+=head3 Getting the Configuration String into the Console Implementation
+
+If the console object is being created by the traditional method of calling the function C<Console::NewL>, the configuration string can be specified as the first parameter. For example:
+
+  CConsoleBase* cons = Console::NewL(_L("loopback::0"), TSize(KConsFullScreen, KConsFullScreen));
+
+Note, C<Console::NewL> will attempt to create a C<CConsoleBase> implementation by dynamically loading first F<econs.dll> and (if that fails) F<econseik.dll>. One way to force F<vt100cons.dll> to be used in preference is to put this file in the handset ROM, but name it F<econs.dll>. However, with F<fshell> installations it is more normal for another console implementation named F<iocons.dll> to replace F<econs.dll>. This is a layering console - it doesn't provide a real implementation, but instead allows an underlying console implementation to be used (and shared with other processes). The name of the underlying console implementation is defined in F<\system\console\iosrv.ini>. Change the C<console> keyword value in this file to F<vt100cons.dll> to change the default console implementation used by all console based tools.
+
+Alternatively, if L<fshell|fshell> (or any of F<fshell>'s external C<CCommandBase> derived L<commands|commands>) are being used, both console implementation and title string (the configuration string for F<vt100cons>) can be specified using the command line options C<--console> and C<--console-title>. For example:
+
+  fshell --console vt100cons --console-title 'pdd=euart1, ldd=ecomm, csy=ecuart, port=comm::0, rate=115200'
+
+=head2 USB Variant
+
+Vt100usbcons behaves the same as the serial variant, with the exception that it waits for USB to enumerate into a personality that supports ACM if not already present. In other words it waits for the USB cable to be inserted before trying to open the port. If necessary it also waits for the user to select a config that includes some USB serial ports. 
+
+vt100usbcons.dll is configured via the C<--console-title> string in a similar way to the serial variant. The follow keyword / value pairs are supported:
+
+=over 5
+
+=item * C<port=name>
+
+The USB port name. This is platform specific but is usually C<ACM::0> or C<ACM::1>. Generally this will be taken care of already in the platform-specific configuration and you can just launch the "fshell (USB)" icon or run "comm.script".
+
+=item * C<personality=value>
+
+If it is necessary to start a USB personality before connecting, specify the personality number here, for example C<personality=1>. This parameter is not usually needed except on some text-shell builds.
+
+=back
+
+Example usage:
+
+  fshell --console vt100usbcons --console-title port=ACM::1,personality=1
+
+For compatibility with earlier releases, the C<port=> may be ommitted if there are no other configuration parameters. For example "fshell --console vt100usbcons --console-title ACM::1".
+
+=head2 Bluetooth Variant
+
+Advertises a Bluetooth Serial Port called "Bluetooth Serial Console" and waits for a connection. There are no C<--console-title> configuration options for vt100btcons.
+
+=head3 Configuration
+
+Bluetooth should be enabled on the phone, and it should be paired with the computer. This can be performed using the bluetooth UIs on the phone and PC.
+
+Configuring the PC to correctly connect to the right Bluetooth port can be quite tricky on Windows if the phone already has a Bluetooth serial port configured, for example to provide wireless modem support or mRouter. This is because the Windows UI is not designed to allow configuration of multiple Bluetooth Serial ports. On Windows XP with the default bluetooth stack, the following sequence usually works:
+
+=over 5
+
+=item 1
+
+Ensure that the device and PC are paired, and the device is in discoverable mode.
+
+=item 1
+
+Start the vt100btcons listening, by launching the F<fshell (BT)> icon or by running C<fshell --console vt100btcons>.
+
+=item 1
+
+Launch the Bluetooth Setup Wizard on the PC.
+
+=item 1
+
+Select "I know the service I want to use" in the setup wizard, then choose "Bluetooth Serial Port" from the service list.
+
+=item 1
+
+Choose the relevant bluetooth device. (You may have to change the filter to say "Show phones and modems").
+
+=item 1
+
+If the computer says it has found a port named "<phonename> Bluetooth Serial Console" then it has found the right port first time round and you can skip to step 11. If it says anything else such as "<phonename> Serial port" you need to continue to the next step.
+
+=item 1
+
+Select "Start the connection" and click "Finish". (Don't select "Create a shortcut and restart wizard").
+
+=item 1
+
+Open a terminal program (eg TeraTerm, HyperTerm) and connect to the port you've just created and started. This is not the fshell Bluetooth serial port, but having it connected while re-running the search generally means the PC finds the correct port next time round. You can check that it doesn't give you the fshell prompt "c:\>" but instead probably responds C<OK> if you type C<AT>.
+
+=item 1
+
+Leaving the TeraTerm (or whatever) window connected, go back into the Bluetooth Setup Wizard and rerun "I know the service I want to use", and re-select your device.
+
+=item 1
+
+All being well you will get a dialog appear saying "Connection shortcut for service 'Bluetooth Serial Console' and device '<phonename>' already exists. Do you want to create another shortcut?". Click "Yes".
+
+=item 1
+
+The PC should now report it has completed setup for "<phonename> Bluetooth Serial Console". This is the shortcut you actually want. At this point you can close the TeraTerm connection you had to the other BT serial port. Do that, then click finish in the setup wizard, and it will re-initialise the connection this time to the right serial console port. Connect in teraterm and you should see the fshell "c:\>" prompt appear (you may have to press return first).
+
+=back
+
+=head3 Using the console
+
+Start the vt100btcons listening if it isn't already, by launching the F<fshell (BT)> icon or by running C<fshell --console vt100btcons>. A console will open on the device saying C<Waiting for Bluetooth connection>.
+
+On the PC run the "<phonename> Bluetooth Serial Console" shortcut in the "My Bluetooth Places" that you created during setup. If you're running a different flavour of OS or Bluetooth stack, do whatever is appropriate to start the Bluetooth connection. When the connection is established, the device UI should say C<BT device 'x' connected>. If you only have one bluetooth serial port set up on the PC you can sometimes skip this step completely and it will happen automatically when you open the COM port.
+
+Connect to the appropriate COM port in your preferred terminal emulator. You should see the fshell C<< c:\> >> prompt appear. If you don't, press the return key to initialise the console.
+
+Depending on the Bluetooth stack and how you set up the connection, and the OS version running on the device, the PC may still connect to the wrong port (such as mRouter) instead of the console when the serial connection is established. If this happens, you'll see garbage appearing in your terminal emulator, or you'll get a prompt which only responds to C<AT>. Generally if you disconnect and then re-establish the bluetooth serial connection, it should connect the console on the 2nd attempt. If not you may have to delete the bluetooth config on the PC and try the instructions above in the "Configuration" section.
+
+=head2 TCP/IP Variant
+
+=head3 Configuration
+
+The TCP/IP variant (F<vt100tcpcons.dll>) either listens on a particular TCP port for an incoming connection, or actively connects to a specified remote host. Typically the remote end of the connection is a terminal emulator such as HyperTerminal using TCP/IP as its transport. F<vt100tcpcons.dll> is configured via the C<--console-title> string in a similar way to the serial variant. The follow keyword / value pairs are supported:
+
+=over 5
+
+=item * C<host=string>
+
+Specifies the TCP host to connect to. Can be either a name or an IP address. If not specified, no active connection is attempted, instead the console will passively listen for in-coming connections on the specified port (see below).
+
+=item * C<port=number>
+
+Specifies the TCP port number to listen upon. Mandatory.
+
+=item * C<iap=number>
+
+Specifies the identifier of the Internet Access Provider to be used to establish a network connection. Use the fshell L<iap|fshell::commands::iap> command to get a list of available IAPs.
+
+=item * C<network=number>
+
+Specifies the identifier of the network to be used to establish a network connection. This doesn't appear to be required.
+
+=item * C<protocol=number>
+
+Specifies the ESock protocol to be used. By default selects the Symbian TCP/IP implementation. However, when running on the emulator setting this to 9000 will cause L<winsockprt|winsockprt> to be selected instead.
+
+=item * C<debug=number>
+
+If C<number> is non-zero, debug information relating to the establishment of the TCP connection will be displayed via the underlying console (usually guicons, or if not available C<User::InfoPrint>).
+
+=item * C<implicit=number>
+
+If C<number> is non-zero, no attempt to use the C<RConnection> API will be made and instead all sockets will be associated with the implicit connection. This option is present primarily to support the emulator when using L<winsockprt|winsockprt>, which don't support connections properly. Note, if you're not using winsockprt and are using vt100tcpcons in server (i.e. listening) mode, you will need to ensure that a connection is active if you use implicit mode. This is because passively listening on a socket is not enough to bring up the implicit connection. This does not apply to winsockprt, because that is always effectively connected.
+
+=back
+
+For example:
+
+  fshell --console vt100tcpcons --console-title 'port=8080, iap=6'
+
+=head2 Debugport variant
+
+This console is intended for use only when comm port support is not present in the ROM but the debug port is functional. Generally this only happens early on during a baseport. It uses the text windowserver for input and RDebug::Print for output, the upshot being you get a (mostly) VT100-compatible fshell prompt over the device's debug port without needing C32 comms support (although a working debug port with serial keyboard driver obviously is). There are some limitations on use of this console due to the fact that the text windowserver swallows many control sequences:
+
+=over 5
+
+=item *
+
+Binary mode is not available. This means that xmodem/ymodem cannot be used.
+
+=item *
+
+Console size detection is not supported, and must be disabled in iosrv.ini (eg by including iosrv.ini.noautodetect). The console will always be assumed to be 80x24.
+
+=item *
+
+Commands such as fed that rely heavily on control keys may not work properly (or at all).
+
+=item *
+
+Navigation keys such as pageup/down, home/end, function keys, fwd delete and escape will not work. (Escape sort of works, taking effect only on the next keypress).
+
+=back
+
+There are no C<--console-title> options for vt100debugport.dll. Usage:
+
+    fshell --console vt100debugport
+
+Note that use of vt100debugport is incompatible with using the C<FSHELL_REPLACE_ECONS> macro. If you intend to use vt100debugport you must not specify the replace econs macro.
+
+=head2 RBusDevComm variant
+
+This console is intended for early on in board bring-up when C32 is not available, but there is a working uart driver. Compare to vt100debugport.dll, which is only worth using when there isn't even a uart driver available but the debug port and serial keyboard driver are available. Unlike vt100debugport.dll, this console does not have any serial emulation restrictions so the full range of services such as binary mode and control keys are available. The C<--console-title> argument is used to specify the port number and other options in a similar way to vt100cons:
+
+    fshell --console vt100busdevcons.dll --console-title port=2
+
+If an option isn't specified, the following are assumed: pdd=euart (ecdrv on emulator), ldd=ecomm, rate=EBpsAutobaud.
+
+=head1 Copyright
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+
+=cut

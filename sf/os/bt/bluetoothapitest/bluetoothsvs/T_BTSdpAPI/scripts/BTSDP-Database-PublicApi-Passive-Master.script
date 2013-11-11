@@ -1,0 +1,1873 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTSdpAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the CSdpDatabase class
+//! 							as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT SDP related classes.
+//! 							Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Symbio
+//! @SYMCreationDate			21/09/2006
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\sdp\
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\sdp\t_RSdpdatabase\
+
+LOAD_SUITE	UCCControlTE
+LOAD_SUITE	T_BTSdpAPI	-SharedData
+DELAY		2000
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini BuildRunSamplesDatabaseActiveSlave
+
+DELAY		10000
+
+// ****************************************************************************
+// Set up BT Addresses
+// ****************************************************************************
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-SetBTAddresses
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect
+			COMMAND		CBluetoothSocket1	NewL		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0001command3NewL
+			COMMAND		TRfcommSockAddr1	Construct
+			COMMAND		TRfcommSockAddr1	SetFamily		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0001command6SetFamily
+			COMMAND		TRfcommSockAddr1	SetPort		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult	
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase		
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct
+			COMMAND		TBTDevAddrLocal	OpenHostResolver		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BTSDP-Database-PublicApi-Passive-SetBTAddresses-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TBTDevAddrLocal	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult		
+END_TESTCASE BTSDP-Database-PublicApi-Passive-SetBTAddresses
+
+
+// ****************************************************************************
+// T_RSdpdatabase
+// ****************************************************************************	
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3661
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3661
+//! @SYMAPI						RSdpDatabase
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with a value,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								3. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								5. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								6. Read an input service record UUID from test data if successful.
+//!								7. Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								8. Read an input attribute ID from test data if successful.
+//!								9. Read the CSdpAttrValueInt object from test data if successful.
+//!								10.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								11.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								12.Close the SDP database subsession using Close() function.
+//!								13.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3661-0001command2NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3661-0001command8Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3661-0001command9CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3661-0001command10UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3661-0001command12NewIntL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3661-0001command14UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			ASYNC_DELAY	5000000
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3661
+
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3662
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3662
+//! @SYMAPI						RSdpDatabase
+//!						
+//! @SYMTestCaseDesc			Updated multiple service records with attribute value,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								3. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								5. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								6. Read Multiple input service record UUIDs from test data if successful.
+//!								7. Creates multiple new service records with the service record UUIDs using CreateServiceRecordL() function and return KErrNone if successed.
+//!								8. Read an input attribute ID from test data if successful.
+//!								9. Read the CSdpAttrValueInt object from test data if successful.
+//!								10.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								11.Re-Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								12.Updates a service record attribute again with a new value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								13.Deletes the multiple service records using DeleteRecordL() function and return KErrNone if successed.
+//!								14.Close the SDP database subsession using Close() function.
+//!								15.Close the client process using Close() function. 
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults  	Updated multiple service records with attribute value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3662-0001command2NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3662-0001command8Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3662-0001command9CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3662-0001command10CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3662-0001command11CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3662-0001command12CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3662-0001command13CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3662-0001command14UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3662-0001command16NewIntL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3662-0001command18UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3662
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3663
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3663
+//! @SYMAPI						RSdpDatabase
+//!
+//! @SYMTestCaseDesc			Updated multiple service records using CSdpAttrValueDES object UUID list with attribute value,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	NewDESL(), StartListL(), EndListL(), BuildUUIDL() from CSdpAttrValueDES 
+//!													Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueDES object using NewDESL() function and return KErrNone if successed.
+//!								2. Start to build a list of UUIDs using StartListL() function and return KErrNone if successed.
+//! 							3. Build multiple UUIDs using BuildUUIDL() and return KErrNone if successed.
+//!								4. Stop to build a list of UUIDs using EndListL() and return KErrNone if successed. 
+//!								5. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								6. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								7. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								8. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								9. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								10.Creates multiple new service records from CSdpAttrValueDES object UUID list using CreateServiceRecordL() function and return KErrNone if successed.
+//!								11.Read an input attribute ID from test data if successful.
+//!								12.Read the CSdpAttrValueInt object from test data if successful.
+//!								13.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								14.Re-Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								15.Updates a service record attribute again with a new value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								16.Deletes the multiple service records using DeleteRecordL() function and return KErrNone if successed.
+//!								17.Close the SDP database subsession using Close() function.
+//!								18.Close the client process using Close() function. 
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	Updated multiple service records using CSdpAttrValueDES object UUID list with attribute value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3663-0001command4BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3663-0001command5BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3663-0001command6BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3663-0001command7BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3663-0001command8BuildUUIDL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3663-0001command11NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3663-0001command17Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3663-0001command18CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3663-0001command19CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3663-0001command20UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3663-0001command22NewIntL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3663-0001command24UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3663
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3664
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3664
+//! @SYMAPI						RSdpDatabase
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with different type of objects : DesC8, Desc16, integer, CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								3. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								5. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								6. Read an input service record UUID from test data if successful.
+//!								7. Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								8. Read an input attribute ID from test data if successful.
+//!								9. Read the CSdpAttrValueInt object from test data if successful.
+//!								10.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								11.Updates a service record attribute with a value of Desc16 using UpdateAttributeL() function and return KErrNone if successed.
+//!								12.Updates a service record attribute with a value of DesC8 using UpdateAttributeL() function and return KErrNone if successed.
+//!								13.Updates a service record attribute with a value of integer using UpdateAttributeL() function and return KErrNone if successed.
+//!								14.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								15.Close the SDP database subsession using Close() function.
+//!								16.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults  	Updated a service record attribute with different type of value: Desc16, DesC8 and integer in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3664-0001command2NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3664-0001command8Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3664-0001command9CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3664-0001command10UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3664-0001command11UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3664-0001command12UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3664-0001command13UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3664
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3665
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3665
+//! @SYMAPI						RSdpDatabase
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with different type of objects : DesC8, Desc16, integer, CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString,
+//!								then delete the multiple attributes,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								3. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								5. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								6. Read an input service record UUID from test data if successful.
+//!								7. Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								8. Read an input attribute ID from test data if successful.
+//!								9. Read the CSdpAttrValueInt object from test data if successful.
+//!								10.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								11.Updates a service record attribute with a value of Desc16 using UpdateAttributeL() function and return KErrNone if successed.
+//!								12.Updates a service record attribute with a value of DesC8 using UpdateAttributeL() function and return KErrNone if successed.
+//!								13.Updates a service record attribute with a value of integer using UpdateAttributeL() function and return KErrNone if successed.
+//!								14.Delete multiple attributes from service record using DeleteAttributeL() function and return KErrNone if successed.
+//!								15.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								16.Close the SDP database subsession using Close() function.
+//!								17.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	Updated a service record attribute with different type of value: Desc16, DesC8 and integer in a CSdpAttrValue, then delete the multiple attributes successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3665-0001command2NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3665-0001command8Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3665-0001command9CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command10UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command11UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command12UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command13UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3665-0001command15NewIntL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command17UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command18UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command19UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command20UpdateAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command21DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command22DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command23DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command24DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command25DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3665-0001command26DeleteAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3665
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3666
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3666
+//! @SYMAPI						RSdpDatabase
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with different type of objects : CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt
+//!													NewBoolL() from CSdpAttrValueBoolean
+//!													NewStringL() from CSdpAttrValueString												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new CSdpAttrValueBoolean object using NewBoolL() function and return KErrNone if successed.
+//!								3. Allocate and construct a new CSdpAttrValueString object using NewStringL() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								5. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								6. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								7. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								8. Read an input service record UUID from test data if successful.
+//!								9. Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								10.Read an input attribute ID from test data if successful.
+//!								11.Read the CSdpAttrValueInt object from test data if successful.
+//!								12.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								13.Read an input attribute ID from test data if successful.
+//!								14.Read the CSdpAttrValueBoolean object from test data if successful.
+//!								15.Updates a service record attribute with a value encapsulated in a CSdpAttrValueBoolean using UpdateAttributeL() function and return KErrNone if successed.
+//!								16.Read an input attribute ID from test data if successful.
+//!								17.Read the CSdpAttrValueString object from test data if successful.
+//!								18.Updates a service record attribute with a value encapsulated in a CSdpAttrValueString using UpdateAttributeL() function and return KErrNone if successed.
+//!								19.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								20.Close the SDP database subsession using Close() function.
+//!								21.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	Updated a service record attribute with different type of object: CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			CREATE_OBJECT	CSdpAttrValueBoolean	attrValueBoolean	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3666-0001command2NewIntL
+			COMMAND		attrValueBoolean	NewBoolL		BTSDP-Database-PublicApi-Passive-3666-0001command4NewBoolL
+			COMMAND		attrValueString	NewStringL		BTSDP-Database-PublicApi-Passive-3666-0001command6NewStringL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3666-0001command12Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3666-0001command13CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3666-0001command14UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3666-0001command15UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3666-0001command16UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3666
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3667
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3667
+//! @SYMAPI						RSdpDatabase
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with different type of objects : CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString,
+//!								then Updated the service record attribute again with new type of values,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt
+//!													NewBoolL() from CSdpAttrValueBoolean
+//!													NewStringL() from CSdpAttrValueString												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new CSdpAttrValueBoolean object using NewBoolL() function and return KErrNone if successed.
+//!								3. Allocate and construct a new CSdpAttrValueString object using NewStringL() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								5. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								6. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								7. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								8. Read an input service record UUID from test data if successful.
+//!								9. Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								10.Read an input attribute ID from test data if successful.
+//!								11.Read the CSdpAttrValueInt object from test data if successful.
+//!								12.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								13.Read an input attribute ID from test data if successful.
+//!								14.Read the CSdpAttrValueBoolean object from test data if successful.
+//!								15.Updates a service record attribute with a value encapsulated in a CSdpAttrValueBoolean using UpdateAttributeL() function and return KErrNone if successed.
+//!								16.Read an input attribute ID from test data if successful.
+//!								17.Read the CSdpAttrValueString object from test data if successful.
+//!								18.Updates a service record attribute with a value encapsulated in a CSdpAttrValueString using UpdateAttributeL() function and return KErrNone if successed.
+//!								19.Re-Allocate and construct a new CSdpAttrValueInt object again using NewIntL() function and return KErrNone if successed.
+//!								20.Re-Allocate and construct a new CSdpAttrValueBoolean object again using NewBoolL() function and return KErrNone if successed.
+//!								21.Re-Allocate and construct a new CSdpAttrValueString object again using NewStringL() function and return KErrNone if successed.
+//!								22.Read an input attribute ID from test data if successful.
+//!								23.Read the CSdpAttrValueInt object from test data if successful.
+//!								24.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								25.Read an input attribute ID from test data if successful.
+//!								26.Read the CSdpAttrValueBoolean object from test data if successful.
+//!								27.Updates a service record attribute with a value encapsulated in a CSdpAttrValueBoolean using UpdateAttributeL() function and return KErrNone if successed.
+//!								28.Read an input attribute ID from test data if successful.
+//!								29.Read the CSdpAttrValueString object from test data if successful.
+//!								30.Updates a service record attribute with a value encapsulated in a CSdpAttrValueString using UpdateAttributeL() function and return KErrNone if successed.
+//!								31.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								32.Close the SDP database subsession using Close() function.
+//!								33.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	Updated a service record attribute with different type of object: CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString,
+//! 							then re-create the CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString again and update them to serive record attribute successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			CREATE_OBJECT	CSdpAttrValueBoolean	attrValueBoolean	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3667-0001command2NewIntL
+			COMMAND		attrValueBoolean	NewBoolL		BTSDP-Database-PublicApi-Passive-3667-0001command4NewBoolL
+			COMMAND		attrValueString	NewStringL		BTSDP-Database-PublicApi-Passive-3667-0001command6NewStringL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3667-0001command12Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3667-0001command13CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3667-0001command14UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3667-0001command15UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3667-0001command16UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3667-0001command18NewIntL
+			COMMAND		attrValueBoolean	NewBoolL		BTSDP-Database-PublicApi-Passive-3667-0001command20NewBoolL
+			COMMAND		attrValueString	NewStringL		BTSDP-Database-PublicApi-Passive-3667-0001command22NewStringL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3667-0001command24UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3667-0001command25UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3667-0001command26UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3667
+
+START_TESTCASE BTSDP-Database-PublicApi-Passive-Master-3668
+//! @SYMTestCaseID				BTSDP-Database-PublicApi-Passive-Master-3668
+//! @SYMAPI						RSdpDatabase
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with different type of objects : DesC8, Desc16, integer, CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString,
+//!								then Updated the service record attribute again with new type of values,
+//!								and prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL() from CSdpAttrValueInt
+//!													NewBoolL() from CSdpAttrValueBoolean
+//!													NewStringL() from CSdpAttrValueString
+//!													NewDESL(), StartListL(), EndListL(), BuildUUIDL() from CSdpAttrValueDES															
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueDES object using NewDESL() function and return KErrNone if successed.
+//!								2. Start to build a list of UUIDs using StartListL() function and return KErrNone if successed.
+//! 							3. Build multiple UUIDs using BuildUUIDL() and return KErrNone if successed.
+//!								4. Stop to build a list of UUIDs using EndListL() and return KErrNone if successed. 
+//!								5. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								6. Allocate and construct a new CSdpAttrValueBoolean object using NewBoolL() function and return KErrNone if successed.
+//!								7. Allocate and construct a new CSdpAttrValueString object using NewStringL() function and return KErrNone if successed.
+//!								8. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								9. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								10.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								11.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								12.Creates multiple new service records from CSdpAttrValueDES object UUID list using CreateServiceRecordL() function and return KErrNone if successed.
+//!								13.Repeate read Multiple input service record UUIDs from test data if successful.
+//!								14.Creates multiple new service records with the service record UUIDs using CreateServiceRecordL() function and return KErrNone if successed.
+//!								15.Read an input attribute ID from test data if successful.
+//!								16.Read the CSdpAttrValueInt object from test data if successful.
+//!								17.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								18.Read an input attribute ID from test data if successful.
+//!								19.Read the CSdpAttrValueBoolean object from test data if successful.
+//!								20.Updates a service record attribute with a value encapsulated in a CSdpAttrValueBoolean using UpdateAttributeL() function and return KErrNone if successed.
+//!								21.Read an input attribute ID from test data if successful.
+//!								22.Read the CSdpAttrValueString object from test data if successful.
+//!								23.Updates a service record attribute with a value encapsulated in a CSdpAttrValueString using UpdateAttributeL() function and return KErrNone if successed.
+//!								24.Re-Allocate and construct a new CSdpAttrValueInt object again using NewIntL() function and return KErrNone if successed.
+//!								25.Re-Allocate and construct a new CSdpAttrValueBoolean object again using NewBoolL() function and return KErrNone if successed.
+//!								26.Re-Allocate and construct a new CSdpAttrValueString object again using NewStringL() function and return KErrNone if successed.
+//!								27.Read an input attribute ID from test data if successful.
+//!								28.Read the CSdpAttrValueInt object from test data if successful.
+//!								29.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								30.Read an input attribute ID from test data if successful.
+//!								31.Read the CSdpAttrValueBoolean object from test data if successful.
+//!								32.Updates a service record attribute with a value encapsulated in a CSdpAttrValueBoolean using UpdateAttributeL() function and return KErrNone if successed.
+//!								33.Read an input attribute ID from test data if successful.
+//!								34.Read the CSdpAttrValueString object from test data if successful.
+//!								35.Updates a service record attribute with a value encapsulated in a CSdpAttrValueString using UpdateAttributeL() function and return KErrNone if successed.
+//!								36.Updates a service record attribute with a value of Desc16 using UpdateAttributeL() function and return KErrNone if successed.
+//!								37.Updates a service record attribute with a value of DesC8 using UpdateAttributeL() function and return KErrNone if successed.
+//!								38.Updates a service record attribute with a value of integer using UpdateAttributeL() function and return KErrNone if successed.
+//!								39.Delete multiple attributes from service record using DeleteAttributeL() function and return KErrNone if successed.
+//!								40.Deletes multiple service records using DeleteRecordL() function and return KErrNone if successed.
+//!								41.Close the SDP database subsession using Close() function.
+//!								42.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	Updated a service record attribute with different type of object: DesC8, Desc16, integer, CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString,
+//! 							then re-create the desc8, desc16, integer, CSdpAttrValueInt, CSdpAttrValueBoolean and CSdpAttrValueString again and update them to serive record attribute successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			CREATE_OBJECT	CSdpAttrValueBoolean	attrValueBoolean	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3668-0001command4BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3668-0001command5BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3668-0001command6BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3668-0001command7BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Database-PublicApi-Passive-3668-0001command8BuildUUIDL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3668-0001command11NewIntL
+			COMMAND		attrValueBoolean	NewBoolL		BTSDP-Database-PublicApi-Passive-3668-0001command13NewBoolL
+			COMMAND		attrValueString	NewStringL		BTSDP-Database-PublicApi-Passive-3668-0001command15NewStringL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Database-PublicApi-Passive-3668-0001command21Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3668-0001command22CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3668-0001command23CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3668-0001command24CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3668-0001command25CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3668-0001command26CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Database-PublicApi-Passive-3668-0001command27CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command28UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command29UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command30UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command31UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command32UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command33UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Database-PublicApi-Passive-3668-0001command35NewIntL
+			COMMAND		attrValueBoolean	NewBoolL		BTSDP-Database-PublicApi-Passive-3668-0001command37NewBoolL
+			COMMAND		attrValueString	NewStringL		BTSDP-Database-PublicApi-Passive-3668-0001command39NewStringL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command41UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command42UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command43UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command44UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command45UpdateAttributeL
+			COMMAND		database	UpdateAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command46UpdateAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command47DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command48DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command49DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command50DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command51DeleteAttributeL
+			COMMAND		database	DeleteAttributeL		BTSDP-Database-PublicApi-Passive-3668-0001command52DeleteAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Database-PublicApi-Passive-Master-3668
+
+
+// ****************************************************************************
+// RSdp Tests
+// ****************************************************************************
+
+START_TESTCASE BTSDP-Rsdp-PublicApi-Passive-Master-3761
+//! @SYMTestCaseID				BTSDP-Rsdp-PublicApi-Passive-Master-3761
+//! @SYMAPI						RSdp
+//!
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve, then check the number of open subsessions on the database.
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close(), ResourceCountMarkStart(), ResourceCountMarkEnd(), ResourceCount() from RSdp
+//!													NewIntL() from CSdpAttrValueInt
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								3. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								5. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								6. Read an input service record UUID from test data if successful.
+//!								7. Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								8. Read an input attribute ID from test data if successful.
+//!								9. Read the CSdpAttrValueInt object from test data if successful.
+//!								10.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								11.Open multiple SDP database subsessions using Open() function and return KErrNone if successed.
+//!								12.Start the counter to keep track of how many open subsessions and return KErrNone if successed.
+//!								13.Get the number of open subsessions are on the database.
+//!								14.Function passes if the number of open subsessions are same as expected number.
+//!								15.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								16.Close the SDP database subsession using Close() function.
+//!								17.Close the client process using Close() function.  
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Medium
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//!								Get the number of open subsessions on the database are same as expected number. 
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Rsdp-PublicApi-Passive-3761-0001command2NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3761-0001command8Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3761-0001command9CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Rsdp-PublicApi-Passive-3761-0001command10UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Rsdp-PublicApi-Passive-3761-0001command12NewIntL
+			COMMAND		database	UpdateAttributeL		BTSDP-Rsdp-PublicApi-Passive-3761-0001command14UpdateAttributeL
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3761-0001command15Open
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3761-0001command16Open
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3761-0001command17Open
+			COMMAND		rsdp	ResourceCountMarkStart
+			COMMAND		rsdp	ResourceCount		BTSDP-Rsdp-PublicApi-Passive-3761-0001command20ResourceCount
+			COMMAND		rsdp	ResourceCountMarkEnd
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+END_TESTCASE   BTSDP-Rsdp-PublicApi-Passive-Master-3761
+
+
+START_TESTCASE BTSDP-Rsdp-PublicApi-Passive-Master-3762
+//! @SYMTestCaseID				BTSDP-Rsdp-PublicApi-Passive-Master-3762
+//! @SYMAPI						Rsdp
+//!						
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve, then check check the version of the database server name, version number on the database.
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close(), Version() from RSdp
+//!													NewIntL() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								3. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								5. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								6. Read Multiple input service record UUIDs from test data if successful.
+//!								7. Creates multiple new service records with the service record UUIDs using CreateServiceRecordL() function and return KErrNone if successed.
+//!								8. Read an input attribute ID from test data if successful.
+//!								9. Read the CSdpAttrValueInt object from test data if successful.
+//!								10.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								11.Re-Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								12.Update a service record attribute again with a new value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								13.Get the version of the database server name, version number and return KErrNone if successed. 
+//!								14.Function passes if the version name and version number of the database server are same as expected.
+//!								15.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								16.Close the SDP database subsession using Close() function.
+//!								17.Close the client process using Close() function. 
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Medium
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//!								Get the version of the database server name, version number on the database are same as expected.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command2NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3762-0001command8Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command9CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command10CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command11CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command12CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command13CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command14UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command16NewIntL
+			COMMAND		database	UpdateAttributeL		BTSDP-Rsdp-PublicApi-Passive-3762-0001command18UpdateAttributeL
+			COMMAND		rsdp	Version		BTSDP-Rsdp-PublicApi-Passive-3762-0001command20Version
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Rsdp-PublicApi-Passive-Master-3762
+
+START_TESTCASE BTSDP-Rsdp-PublicApi-Passive-Master-3763
+//! @SYMTestCaseID				BTSDP-Rsdp-PublicApi-Passive-Master-3763
+//! @SYMAPI						Rsdp
+//!						
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve, then check the number of open subsessions on the database and
+//!								check the version of the database server name, version number on the database
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close(), ResourceCountMarkStart(), ResourceCountMarkEnd(), ResourceCount() from RSdp
+//!													NewIntL() from CSdpAttrValueInt
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								3. Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								4. Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								5. Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								6. Read an input service record UUID from test data if successful.
+//!								7. Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								8. Read an input attribute ID from test data if successful.
+//!								9. Read the CSdpAttrValueInt object from test data if successful.
+//!								10.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								11.Open multiple SDP database subsessions using Open() function and return KErrNone if successed.
+//!								12.Start the counter to keep track of how many open subsessions and return KErrNone if successed.
+//!								13.Get the number of open subsessions are on the database.
+//!								14.Function passes if the number of open subsessions are same as expected number.
+//!								15.Get the version of the database server name, version number and return KErrNone if successed. 
+//!								16.Function passes if the version name and version number of the database server are same as expected.
+//!								17.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								18.Close the SDP database subsession using Close() function.
+//!								19.Close the client process using Close() function. 
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Medium
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//!								Get the number of open subsessions on the database are same as expected number.
+//!								Get the version of the database server name, version number on the database are same as expected.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command4BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command5BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command6BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command7BuildUUIDL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command8BuildUUIDL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command11NewIntL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3763-0001command17Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command18CreateServiceRecordL
+			COMMAND		database	CreateServiceRecordL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command19CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command20UpdateAttributeL
+			COMMAND		attrValueInt	NewIntL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command22NewIntL
+			COMMAND		database	UpdateAttributeL		BTSDP-Rsdp-PublicApi-Passive-3763-0001command24UpdateAttributeL
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3763-0001command25Open
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3763-0001command26Open
+			COMMAND		database	Open		BTSDP-Rsdp-PublicApi-Passive-3763-0001command27Open
+			COMMAND		rsdp	ResourceCountMarkStart
+			COMMAND		rsdp	ResourceCount		BTSDP-Rsdp-PublicApi-Passive-3763-0001command30ResourceCount
+			COMMAND		rsdp	ResourceCountMarkEnd
+			COMMAND		rsdp	Version		BTSDP-Rsdp-PublicApi-Passive-3763-0001command32Version
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-Rsdp-PublicApi-Passive-Master-3763
+
+
+// ****************************************************************************
+// CSdpAttrValueInt Tests
+// ****************************************************************************
+
+START_TESTCASE BTSDP-AttrValInt-PublicApi-Passive-Master-3861
+//! @SYMTestCaseID				BTSDP-AttrValInt-PublicApi-Passive-Master-3861
+//! @SYMAPI						CSdpAttrValueInt
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with integer type of objects : CSdpAttrValueInt,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL(), DataSize(), Type(), Int(), DoesIntFit(), Des() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueInt object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object signed integer value using Int() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueInt object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueInt object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueInt object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command2NewIntL
+			COMMAND		attrValueInt	DataSize		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command3DataSize
+			COMMAND		attrValueInt	Type		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command4Type
+			COMMAND		attrValueInt	Int		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command5Int
+			COMMAND		attrValueInt	DoesIntFit		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command6DoesIntFit
+			COMMAND		attrValueInt	Des		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValInt-PublicApi-Passive-3861-0001command15UpdateAttributeL
+			COMMAND		attrValueInt	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+END_TESTCASE   BTSDP-AttrValInt-PublicApi-Passive-Master-3861
+
+
+START_TESTCASE BTSDP-AttrValInt-PublicApi-Passive-Master-3862
+//! @SYMTestCaseID				BTSDP-AttrValInt-PublicApi-Passive-Master-3862
+//! @SYMAPI						CSdpAttrValueInt
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with 32 bits of integer type of objects : CSdpAttrValueInt,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL(), DataSize(), Type(), Int(), DoesIntFit(), Des() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueInt object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object signed integer value using Int() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueInt object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueInt object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueInt object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the 32 bits of integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command2NewIntL
+			COMMAND		attrValueInt	DataSize		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command3DataSize
+			COMMAND		attrValueInt	Type		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command4Type
+			COMMAND		attrValueInt	Int		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command5Int
+			COMMAND		attrValueInt	DoesIntFit		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command6DoesIntFit
+			COMMAND		attrValueInt	Des		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValInt-PublicApi-Passive-3862-0001command15UpdateAttributeL
+			COMMAND		attrValueInt	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValInt-PublicApi-Passive-Master-3862
+
+START_TESTCASE BTSDP-AttrValInt-PublicApi-Passive-Master-3863
+//! @SYMTestCaseID				BTSDP-AttrValInt-PublicApi-Passive-Master-3863
+//! @SYMAPI						CSdpAttrValueInt
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with negative 32 bits of integer type of objects : CSdpAttrValueInt,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL(), DataSize(), Type(), Int(), DoesIntFit(), Des() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueInt object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object signed integer value using Int() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueInt object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueInt object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueInt object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the negative 32 bits of integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command2NewIntL
+			COMMAND		attrValueInt	DataSize		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command3DataSize
+			COMMAND		attrValueInt	Type		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command4Type
+			COMMAND		attrValueInt	Int		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command5Int
+			COMMAND		attrValueInt	DoesIntFit		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command6DoesIntFit
+			COMMAND		attrValueInt	Des		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValInt-PublicApi-Passive-3863-0001command15UpdateAttributeL
+			COMMAND		attrValueInt	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValInt-PublicApi-Passive-Master-3863
+
+START_TESTCASE BTSDP-AttrValInt-PublicApi-Passive-Master-3864
+//! @SYMTestCaseID				BTSDP-AttrValInt-PublicApi-Passive-Master-3864
+//! @SYMAPI						CSdpAttrValueInt
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with 16 bits of integer type of objects : CSdpAttrValueInt,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL(), DataSize(), Type(), Int(), DoesIntFit(), Des() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueInt object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object signed integer value using Int() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueInt object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueInt object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueInt object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the 16 bits of integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command2NewIntL
+			COMMAND		attrValueInt	DataSize		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command3DataSize
+			COMMAND		attrValueInt	Type		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command4Type
+			COMMAND		attrValueInt	Int		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command5Int
+			COMMAND		attrValueInt	DoesIntFit		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command6DoesIntFit
+			COMMAND		attrValueInt	Des		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValInt-PublicApi-Passive-3864-0001command15UpdateAttributeL
+			COMMAND		attrValueInt	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValInt-PublicApi-Passive-Master-3864
+
+START_TESTCASE BTSDP-AttrValInt-PublicApi-Passive-Master-3865
+//! @SYMTestCaseID				BTSDP-AttrValInt-PublicApi-Passive-Master-3865
+//! @SYMAPI						CSdpAttrValueInt
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with negative 16 bits of integer type of objects : CSdpAttrValueInt,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewIntL(), DataSize(), Type(), Int(), DoesIntFit(), Des() from CSdpAttrValueInt												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueInt object using NewIntL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueInt object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object signed integer value using Int() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueInt object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueInt object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueInt using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueInt object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the negative 16 bits of integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrValueInt	NewIntL		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command2NewIntL
+			COMMAND		attrValueInt	DataSize		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command3DataSize
+			COMMAND		attrValueInt	Type		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command4Type
+			COMMAND		attrValueInt	Int		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command5Int
+			COMMAND		attrValueInt	DoesIntFit		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command6DoesIntFit
+			COMMAND		attrValueInt	Des		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValInt-PublicApi-Passive-3865-0001command15UpdateAttributeL
+			COMMAND		attrValueInt	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValInt-PublicApi-Passive-Master-3865
+
+
+// ****************************************************************************
+// CSdpAttrValueUint Tests
+// ****************************************************************************
+
+START_TESTCASE BTSDP-AttrValUint-PublicApi-Passive-Master-3961
+//! @SYMTestCaseID				BTSDP-AttrValUint-PublicApi-Passive-Master-3961
+//! @SYMAPI						CSdpAttrValueUint
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with 32 bits of unsigned integer type of objects : CSdpAttrValueUint,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewUintL(), DataSize(), Type(), Uint(), DoesIntFit(), Des() from CSdpAttrValueUint												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueUint object using NewUintL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueUint object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object unsigned integer value using Uint() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueUint object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueUint object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueUint using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueUint object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the 32 bits of unsigned integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrValueUint	NewUintL		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command2NewUintL
+			COMMAND		attrValueUint	DataSize		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command3DataSize
+			COMMAND		attrValueUint	Type		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command4Type
+			COMMAND		attrValueUint	Uint		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command5Uint
+			COMMAND		attrValueUint	DoesIntFit		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command6DoesIntFit
+			COMMAND		attrValueUint	Des		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValUint-PublicApi-Passive-3961-0001command15UpdateAttributeL
+			COMMAND		attrValueUint	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+END_TESTCASE   BTSDP-AttrValUint-PublicApi-Passive-Master-3961
+
+
+START_TESTCASE BTSDP-AttrValUint-PublicApi-Passive-Master-3962
+//! @SYMTestCaseID				BTSDP-AttrValUint-PublicApi-Passive-Master-3962
+//! @SYMAPI						CSdpAttrValueUint
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with 128 bits of unsigned integer type of objects : CSdpAttrValueUint,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewUintL(), DataSize(), Type(), Uint(), DoesIntFit(), Des() from CSdpAttrValueUint												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueUint object using NewUintL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueUint object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object unsigned integer value using Uint() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueUint object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueUint object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueUint using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueUint object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the 128 bits of unsigned integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrValueUint	NewUintL		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command2NewUintL
+			COMMAND		attrValueUint	DataSize		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command3DataSize
+			COMMAND		attrValueUint	Type		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command4Type
+			COMMAND		attrValueUint	DoesIntFit		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command5DoesIntFit
+			COMMAND		attrValueUint	Des		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command6Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command12Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command13CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValUint-PublicApi-Passive-3962-0001command14UpdateAttributeL
+			COMMAND		attrValueUint	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValUint-PublicApi-Passive-Master-3962
+
+START_TESTCASE BTSDP-AttrValUint-PublicApi-Passive-Master-3963
+//! @SYMTestCaseID				BTSDP-AttrValUint-PublicApi-Passive-Master-3963
+//! @SYMAPI						CSdpAttrValueUint
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with 64 bits of unsigned integer type of objects : CSdpAttrValueUint,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewUintL(), DataSize(), Type(), Uint(), DoesIntFit(), Des() from CSdpAttrValueUint												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueUint object using NewUintL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueUint object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object unsigned integer value using Uint() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueUint object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueUint object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueUint using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueUint object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the 64 bits of unsigned integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrValueUint	NewUintL		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command2NewUintL
+			COMMAND		attrValueUint	DataSize		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command3DataSize
+			COMMAND		attrValueUint	Type		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command4Type
+			COMMAND		attrValueUint	DoesIntFit		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command5DoesIntFit
+			COMMAND		attrValueUint	Des		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command6Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command12Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command13CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValUint-PublicApi-Passive-3963-0001command14UpdateAttributeL
+			COMMAND		attrValueUint	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValUint-PublicApi-Passive-Master-3963
+
+START_TESTCASE BTSDP-AttrValUint-PublicApi-Passive-Master-3964
+//! @SYMTestCaseID				BTSDP-AttrValUint-PublicApi-Passive-Master-3964
+//! @SYMAPI						CSdpAttrValueUint
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with 32 bits of unsigned integer type of objects : CSdpAttrValueUint,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewUintL(), DataSize(), Type(), Uint(), DoesIntFit(), Des() from CSdpAttrValueUint												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueUint object using NewUintL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueUint object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object unsigned integer value using Uint() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueUint object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueUint object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueUint using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueUint object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the 32 bits of unsigned integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrValueUint	NewUintL		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command2NewUintL
+			COMMAND		attrValueUint	DataSize		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command3DataSize
+			COMMAND		attrValueUint	Type		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command4Type
+			COMMAND		attrValueUint	Uint		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command5Uint
+			COMMAND		attrValueUint	DoesIntFit		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command6DoesIntFit
+			COMMAND		attrValueUint	Des		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValUint-PublicApi-Passive-3964-0001command15UpdateAttributeL
+			COMMAND		attrValueUint	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValUint-PublicApi-Passive-Master-3964
+
+START_TESTCASE BTSDP-AttrValUint-PublicApi-Passive-Master-3965
+//! @SYMTestCaseID				BTSDP-AttrValUint-PublicApi-Passive-Master-3965
+//! @SYMAPI						CSdpAttrValueUint
+//!
+//! @SYMTestCaseDesc			Updated a service record attribute with 16 bits of unsigned integer type of objects : CSdpAttrValueUint,
+//!								then verify the integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then prepare, set up the service record for the master device to retrieve
+//!								Uses API elements:	Constructor(), Open(), Close(), CreateServiceRecordL(), UpdateAttributeL(), DeleteRecord() from RSdpDatabase
+//!													Constructor(), Connect(), Close() from RSdp
+//!													NewUintL(), DataSize(), Type(), Uint(), DoesIntFit(), Des() from CSdpAttrValueUint												
+//! @SYMTestActions				1. Allocate and construct a new CSdpAttrValueUint object using NewUintL() function and return KErrNone if successed.
+//!								2. Get the current size of CSdpAttrValueUint object using DataSize() function
+//!								3. Read the expected size from test data and compare if actual size is as expected
+//!								4. Test failed if sizes doesn't match.
+//!								5. Verify the object type using Type() function. Test pass if expected type is ETypeInt.
+//!								6. Test failed if type doesn't match.
+//!								7. Verify the object unsigned integer value using Uint() function. Test pass if expected signed integer value
+//!									is same as actual signed integer value.
+//!								8. Verify the object can be stored in an integer value using DoesIntFit() function.
+//!								9. Test pass if object can be stored in an integer value and return ETrue as expected.
+//!								10.Test failed if object can't be stored in an integer value and return EFalse.
+//!								11.Use Des() function to retrieve CSdpAttrValueUint object's data pointer descriptor.
+//!								12.Read an input integer from test data and compare it with the contents in data pointer descriptor
+//!									and check if actual integer value is same as expected input integer value.
+//!								13.Allocate and construct a new RSdp object using RSdp() function and return KErrNone if successed.
+//!								14.Connect a client process to the database using Connect() function and return KErrNone if successed.
+//!								15.Allocate and construct a new RSdpDatabase object using RSdpDatabase() function and return KErrNone if successed.
+//!								16.Opens a SDP database subsession using Open() function and return KErrNone if successed.
+//!								17.Read an input service record UUID from test data if successful.
+//!								18.Creates a new service record with the service record UUID using CreateServiceRecordL() function and return KErrNone if successed.
+//!								19.Read an input attribute ID from test data if successful.
+//!								20.Read the CSdpAttrValueUint object from test data if successful.
+//!								21.Updates a service record attribute with a value encapsulated in a CSdpAttrValueUint using UpdateAttributeL() function and return KErrNone if successed.
+//!								22.Deconstructs CSdpAttrValueUint object.
+//!								23.Deletes the service records using DeleteRecordL() function and return KErrNone if successed.
+//!								24.Close the SDP database subsession using Close() function.
+//!								25.Close the client process using Close() function.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Verify the 16 bits of unsigned integer object's data size, type, Integer value, data pointer descriptor,
+//!								and check if the object can hold the Integer value,
+//!								then updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrValueUint	NewUintL		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command2NewUintL
+			COMMAND		attrValueUint	DataSize		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command3DataSize
+			COMMAND		attrValueUint	Type		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command4Type
+			COMMAND		attrValueUint	Uint		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command5Uint
+			COMMAND		attrValueUint	DoesIntFit		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command6DoesIntFit
+			COMMAND		attrValueUint	Des		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command7Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command13Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command14CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-AttrValUint-PublicApi-Passive-3965-0001command15UpdateAttributeL
+			COMMAND		attrValueUint	~
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Database-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE   BTSDP-AttrValUint-PublicApi-Passive-Master-3965
+
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveExecutionResultSamplesDatabaseActiveSlave
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StopTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StopSyncService
+
+

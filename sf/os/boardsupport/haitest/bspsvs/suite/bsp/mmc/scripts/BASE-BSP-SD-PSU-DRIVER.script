@@ -1,0 +1,344 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE	T_mmcsd
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0001
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0001
+//! @SYMTestCaseDesc		Load MMC/SD Logical Device Driver
+//! @SYMTestPriority		high
+//! @SYMTestActions		Load  D_MMCSDIF LDD Driver
+//! @SYMTestExpectedResults	KErrNone
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			User::LoadLogicalDevice(const TDesC {ref});
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	LoadDriver		BASE-BSP-SD-DRIVER-LDDName-CMD0001
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0001
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0002
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0002
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Display the MMC/SD card Bus inactivity Timeout
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Reads the bus inactivity count
+//!				5. Display the bus inactivity count
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	Displayed the bus inactivity count
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCPsu::PsuInfo(TPBusPsuInfo {ref});
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	PsuInfo			BASE-BSP-SD-DRIVER-PsuInfo-CMD002
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0002
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0003
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0003
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Set the supported voltage setting to be used when the stack is next powered up
+//!				the voltage level, or range of voltages supported in OCR format
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Set the voltages supported in OCR format
+//!				5. Display voltages supported in OCR format
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	KErrNotSupported
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCPsu::DoSetVoltage();
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	SetVoltage		BASE-BSP-SD-DRIVER-Supported-PSUVoltageOCR-CMD0003
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0003
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0004
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0004
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Set the MMC/SD card Current VCC state as OFF
+//!				Uses API elements:
+//!				DMMCPsu::iVcc()
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Set the MMC/SD card Current VCC state
+//!				5. Display Current VCC state
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	VCC state Displayed OFF
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCPsu::SetState(TPBusPsuState);
+//!				DMMCSocket::{DPBusPsuBase {ptr}}iVcc
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	SetState		BASE-BSP-SD-DRIVER-VccStateOFF-CMD0004
+		COMMAND		mmcsdpsu1	VccState		BASE-BSP-SD-DRIVER-VccStateOFF-CMD0004
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0004
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0005
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0005
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Set the MMC/SD card VCC state as EPsuOnCurLimit
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Set the MMC/SD card Current VCC state EPsuOnCurLimit
+//!				5. Display Current PSU state
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	Current VCC state Displayed
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCPsu::SetState(TPBusPsuState);
+//!				DMMCSocket::{DPBusPsuBase {ptr}}iVcc
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	SetState		BASE-BSP-SD-DRIVER-VccStatePsuOnCurLimit-CMD0005
+		COMMAND		mmcsdpsu1	VccState		BASE-BSP-SD-DRIVER-VccStatePsuOnCurLimit-CMD0005
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0005
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0006
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0006
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Set Current VCC state EPsuOnFull
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Set the MMC/SD card Current VCC state
+//!				5. Display Current VCC state
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	Current VCC state Displayed
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCSocket::{DPBusPsuBase {ptr}}iVcc
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	SetState		BASE-BSP-SD-DRIVER-VccStatePsuOnFull-CMD0006
+		COMMAND		mmcsdpsu1	VccState		BASE-BSP-SD-DRIVER-VccStatePsuOnFull-CMD0006
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0006
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0007
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0007
+//! @SYMTestCaseDesc		MMC/SD Socket Power Supply Test - Current Bus State.
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Check TPBusPsuState
+//!				5. Display the BusPsuState
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	Displayed the platform status while turn on
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCSocket::iState();
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	PbusState		BASE-BSP-SD-DRIVER-PbusState-CMD0007
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0007
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0008
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0008
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Reads PSU Unit number.
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Reads PSU Unit number
+//!				5. Display the PSU Unit number
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	KErrNone
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCPsu::iPsuNum();
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	PsuNumber		BASE-BSP-SD-DRIVER-PsuNumber-CMD0008
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0008
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0009
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0009
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Reads Meadia Change number.
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Reads Meadia Change number
+//!				5. Display the Meadia Change number
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	KErrNone
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCPsu::iMediaChangeNum()
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	MediaChangeNumber	BASE-BSP-SD-DRIVER-MediaChangeNumber-CMD0009
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0009
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0010
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0010
+//! @SYMTestCaseDesc		MMC/SD Power Supply Test - Reads platform has current limit check support.
+//! @SYMTestPriority		high
+//! @SYMTestActions		1. Create  RMMCSDTestControllerInterface Handle object.
+//!				2. Load the Driver
+//!				3. Open the driver connection
+//!				4. Reads platform has current limit check support
+//!				5. Display the platform status
+//!				6. Close the driver connection
+//!				7. Destroy the object
+//! @SYMTestExpectedResults	KErrNotSupported
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			DMMCPsu::iCurrLimited()
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1	
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-SD-DRIVER-StackNumber
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-SD-DRIVER-SessionWrapperName
+		COMMAND		mmcsdpsu1	PsuCurLimit		BASE-BSP-SD-DRIVER-PsuCurLimit-CMD0010
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0010
+
+
+START_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0011
+//! @SYMTestCaseID		BASE-BSP-SD-DRIVER-DMMCPsu-0011
+//! @SYMTestCaseDesc		UnLoad MMC/SD Logical Device Driver.
+//! @SYMTestPriority		high
+//! @SYMTestActions		Load D_MMCSDIF LDD Driver
+//! @SYMTestExpectedResults	KErrNone
+//! @SYMTestType		CIT
+//! @SYMCreationDate		1/4/2008
+//! @SYMAuthor			Saravanakumar
+//! @SYMTestStatus		Implemented
+//! @SYMAPI			User::FreeLogicalDevice(const TDesC{ref});
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-SD-PSU-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	UnLoadDriver		BASE-BSP-SD-DRIVER-LDDName-CMD0001
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SD-DRIVER-DMMCPsu-0011

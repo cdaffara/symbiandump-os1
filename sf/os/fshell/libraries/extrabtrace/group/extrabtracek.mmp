@@ -1,0 +1,50 @@
+// extrabtracek.mmp
+// 
+// Copyright (c) 2005 - 2010 Accenture. All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+// 
+// Initial Contributors:
+// Accenture - Initial contribution
+//
+
+#include <fshell/common.mmh>
+
+FSHELL_TRACE_KERNEL_INCLUDE(..\..\..\..\)
+
+target			extrabtracek.ldd
+targettype		ldd
+uid				0x100000af FSHELL_UID_EXTRABTRACEK
+
+userinclude		..\inc
+userinclude		..\src
+
+#include <kernel\kern_ext.mmh>
+
+sourcepath		..\src
+
+#ifndef SMP // Sampler not supported on smp
+	#if defined(MARM)
+		#ifdef GCCE
+			// Workaround for the gcce makmake module doing weird things with -S when compiling .cia files
+			// And for GCCE.h's definition of __NAKED__ being wrong
+			source			usampler_cia.cpp
+		#else
+			source			usampler.cia
+		#endif
+	#endif
+source			sampler.cpp
+#endif
+
+source			extrabtracek.cpp
+source			eventhandler.cpp
+
+start wins
+win32_headers
+end
+
+library			ekern.lib
+
+capability		all

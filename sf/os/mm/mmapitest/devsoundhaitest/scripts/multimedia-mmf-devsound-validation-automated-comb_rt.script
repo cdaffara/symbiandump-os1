@@ -1,0 +1,461 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: 
+//
+//
+//! @file
+//! @SYMTestSuiteName multimedia-mmf-devsound-validation-automated-comb_rt
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the CMMFDevSound
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: CMMFDevSound
+// The tests are fully automated.
+//
+
+
+
+LOAD_SUITE t_devsound
+
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0001
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0001
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                CMMFDevSound::InitializeL(MDevSoundObserver {ref}, TMMFState )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings {ref} )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities {ref} )
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::RecordInitL()
+//!                CMMFDevSound::Stop()
+//!                
+//! TEST_BLOCK 002
+//!                CMMFDevSound::InitializeL(MDevSoundObserver {ref}, TFourCC, TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(TMMFPrioritySettings {ref})
+//!                CMMFDevSound::PlayToneSequenceL(TDesC8 {ref})
+//!@SYMAuthor			jguillermo
+//!@SYMCreationDate		8/25/2008 
+//!@SYMTestCaseDesc		Calendar alarm during voice recording
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Create DevSound instance
+//!                2. Initialize DevSound (Mode = EMMFStateRecording; FourCC = AMR)
+//!                3. Set Priority ( Priority = {Priority,PriorityVoiceRecording}; Preference = {PriorityPreference,PriorityPreferenceVoiceRecording} ; PriorityState=EMMFStateRecording)
+//!                4. Capabilities
+//!                5. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                6. Replace file (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\CalendarAlarmDuringRecAMRNB.amr)
+//!                7. Record 20 seconds
+//!                8. Stop 5 seconds
+//!                9. Close file
+//!                10. Initialize DevSound (Mode = EMMFStatePlaying; FourCC = AMR)
+//!                11. Set Priority ( Priority = {Priority,PriorityAudioPlayback}; Preference = {PriorityPreference,PriorityPreferenceAudioPlayback}; PriorityState=EMMFStatePlaying)
+//!                12. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                13. Open file (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\CalendarAlarmDuringRecAMRNB.amr)
+//!                14. Play EOF
+//!                15. Close file
+//!                16. Delete DevSound instance
+//! TEST_BLOCK 002
+//!                1. Create DevSound instance
+//!                2. Initialize Devsound ( Mode = EMMFStateTonePlaying; FourCC=ILBC)
+//!                3. Set priority settings delay 10s ( Priority = {Priority,PriorityCalendarAlarm}; Preference = {PriorityPreference,PriorityPreferenceCalendarAlarm}; PriorityState=EMMFStateTonePlaying)
+//!                4. Play tone sequence (Filename = {drive,mmc}\multimedia\mmf\devsound\nrt\Nokia_ringing_tone.nrt)
+//!                5. Delete DevSound instance.
+//!                
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Calendar alarm during voice recording
+//! TEST_BLOCK 001
+//!                Record AMR file during 20s and play recorded file
+//! TEST_BLOCK 002
+//!                Play tone sequence
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	100	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-SetPrioritySettings_command03
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-SetConfigL_command05
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-ReplaceFile_command06
+		COMMAND		devsound1		RecordInitL
+		ASYNC_DELAY  20000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-InitializeL_command10
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-SetPrioritySettings_command11
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-SetConfigL_command12
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0001-OpenFile_command13
+		COMMAND		    devsound1		PlayInitL
+		OUTSTANDING
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	100	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0002-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0002-SetPrioritySettings_command03
+		DELAY  10000000 
+		COMMAND		devsound1		PlayToneSequenceL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0001-0002-PlayToneSequenceL_command04
+		OUTSTANDING
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0001
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0002
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0002
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                CMMFDevSound::InitializeL(MDevSoundObserver {ref}, TMMFState )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings {ref} )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities {ref} )
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::RecordInitL()
+//!                CMMFDevSound::Stop()
+//!                
+//! TEST_BLOCK 002
+//!                CMMFDevSound::InitializeL(MDevSoundObserver {ref}, TFourCC, TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(TMMFPrioritySettings {ref})
+//!                CMMFDevSound::SetDTMFLengths(TTimeIntervalMicroSeconds32 {ref}, TTimeIntervalMicroSeconds32 {ref}, TTimeIntervalMicroSeconds32 {ref})
+//!                CMMFDevSound::PlayInitL()
+//!@SYMAuthor			jpacho
+//!@SYMCreationDate		7/28/2008 
+//!@SYMTestCaseDesc		DTMF tones during voice recording
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Create Devsound instance 
+//!                2. Initialize Devsound (Mode = EMMFStateRecording; FourCC = {SpecialFourCC,RAW})
+//!                3. Set Priority (Priority = {Priority,PriorityNormal}; Preference = {PriorityPreference,PriorityPreferenceQuality}; PriorityState = EMMFStateRecording)
+//!                4. Capabilities
+//!                5. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                6. Replace file (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\PlayDTMFDuringRecPCM.pcm)
+//!                7. Record 30s 
+//!                8. Stop 5s
+//!                9.Close file 
+//!                10. Initialize Devsound (Mode = EMMFStatePlaying; FourCC = {SpecialFourCC,RAW})
+//!                11. Set Priority (Priority = {Priority,PriorityNormal}; Preference = {PriorityPreference,PriorityPreferenceQuality}; PriorityState = EMMFStatePlaying)
+//!                12. Capabilities
+//!                13. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                14.Open file (Filename =  {drive,mmc}\multimedia\mmf\devsound\Recording\PlayDTMFDuringRecPCM.pcm)
+//!                15. Start Play 20 seconds
+//!                16.Close file 
+//!                17. Delete devsound instance
+//! TEST_BLOCK 002
+//!                1. Create DevSound instance
+//!                2. Initialize Devsound ( Mode = EMMFStateTonePlaying; FourCC= ILBC)
+//!                3. Set priority settings ( Priority = {Priority,PriorityNormal}; Preference = {PriorityPreference,PriorityPreferenceQuality}; PriorityState=EMMFStateTonePlaying)
+//!                4. Set DTMF Lengths (ToneOnLength = 300000; ToneOffLength = 100000; PauseLength = 100000)
+//!                5. Start DTMF Play (DTMFString = 1234567890)
+//!                6. Set DTMF Lengths (ToneOnLength = 300000; ToneOffLength = 100000; PauseLength = 100000)
+//!                7. Start DTMF Play (DTMFString = 1234567890)
+//!                8. Destroy DevSound instance
+//!                
+//!@SYMTestStatus		Delivered
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                DTMF tones during voice recording
+//! TEST_BLOCK 001
+//!                RAW recording for 30s and play for 20s
+//! TEST_BLOCK 002
+//!                DTMF play
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	90	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-SetPrioritySettings_command03
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-SetConfigL_command05
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-ReplaceFile_command06
+		COMMAND		devsound1		RecordInitL
+		ASYNC_DELAY  30000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-InitializeL_command10
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-SetPrioritySettings_command11
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-SetConfigL_command13
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0001-OpenFile_command14
+		COMMAND		devsound1		PlayInitL
+		ASYNC_DELAY  20000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	90	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound2
+		COMMAND		devsound2		NewL
+		COMMAND		devsound2		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0002-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound2		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0002-SetPrioritySettings_command03
+		COMMAND		devsound2		SetDTMFLengths			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0002-SetDTMFLengths_command04
+		COMMAND		devsound2		PlayDTMFStringL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0002-PlayDTMFStringL_command05
+		ASYNC_DELAY  3000000 
+		COMMAND		devsound2		SetDTMFLengths			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0002-SetDTMFLengths_command06
+		COMMAND		devsound2		PlayDTMFStringL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0002-0002-PlayDTMFStringL_command07
+		ASYNC_DELAY  3000000 
+		COMMAND		devsound2		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0002
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0003
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0003
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                CMMFDevSound::InitializeL(MDevSoundObserver {ref}, TMMFState )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings {ref} )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities {ref} )
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::RecordInitL()
+//!                CMMFDevSound::Stop()
+//!                
+//! TEST_BLOCK 002
+//!                CMMFDevSound::InitializeL(MDevSoundObserver{ref}, TFourCC , TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(const 
+//!                CMMFDevSound::PlayToneSequenceL(TDesC8 {ref})
+//!                CMMFDevSound::Stop()
+//!                CMMFDevSound::Pause()
+//!                
+//!@SYMAuthor			myanez
+//!@SYMCreationDate		8/25/2008 
+//!@SYMTestCaseDesc		Incoming SMS during voice recording
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Create DevSound Instance
+//!                2. Replace File (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\IncomingSMSDuringRecAMRNB.amr)
+//!                3. Initialize Devsound ( Mode = EMMFStateRecording; FourCC= AMR)
+//!                4. Set Priority Settings ( Priority = {Priority,PriorityVoiceRecording}; Preference = {PriorityPreference,PriorityPreferenceVoiceRecording} ; PriorityState=EMMFStateRecording)
+//!                5. Capabilities 
+//!                6. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                7.Start Record for 20 seconds
+//!                8. Stop for 5 seconds
+//!                9. Close File
+//!                10. Open File (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\IncomingSMSDuringRecAMRNB.amr)
+//!                11. Initialize Devsound (Mode = EMMFStatePlaying; FourCC = AMR)
+//!                12. Set Priority (Priority = {Priority,PriorityAudioPlayback}; Preference = {PriorityPreference,PriorityPreferenceAudioPlayback}; PriorityState=EMMFStatePlaying)
+//!                13. Capabilities 
+//!                14. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                15. Start Play
+//!                16.Close File
+//!                17. Destroy DevSound Instance
+//! TEST_BLOCK 002
+//!                1. Create DevSound instance
+//!                2. Initialize Devsound ( Mode = EMMFStateTonePlaying; FourCC= ILBC)
+//!                3. Set priority settings ( Priority = {Priority,PriorityIncomingCall}; Preference = {PriorityPreference,PriorityPreferenceIncomingCall}; PriorityState=EMMFStateTonePlaying)
+//!                4. Pause for 10 seconds(Pause=TRUE)
+//!                5. Play tone sequence 10 seconds(Filename = {drive,mmc}\multimedia\mmf\devsound\nrt\Nokia_ringing_tone.nrt)
+//!                6. Stop
+//!                7. Destroy DevSound instance
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Incoming SMS during voice recording
+//! TEST_BLOCK 001
+//!                AMR recording with expected error -13
+//! TEST_BLOCK 002
+//!                Play tone sequence
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	60	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-ReplaceFile_command02
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-InitializeL_command03
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-SetPrioritySettings_command04
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-SetConfigL_command06
+		COMMAND		!AsyncError=-13    devsound1		RecordInitL
+		ASYNC_DELAY  20000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-OpenFile_command11
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-InitializeL_command12
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-SetPrioritySettings_command13
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0001-SetConfigL_command15
+		COMMAND		  devsound1		PlayInitL
+		OUTSTANDING
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	60	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0002-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0002-SetPrioritySettings_command03
+		COMMAND		devsound1		Stop			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0002-Stop_command04
+		DELAY  10000000 
+		COMMAND		devsound1		PlayToneSequenceL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0003-0002-PlayToneSequenceL_command05
+		ASYNC_DELAY  10000000 
+		COMMAND		devsound1		Stop
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0003
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0004
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0004
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                CMMFDevSound::InitializeL(MDevSoundObserver{ref}, TFourCC , TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings{ref})
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities{ref})
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::RecordInitL()
+//! TEST_BLOCK 002
+//!                CMMFDevSound::InitializeL(MDevSoundObserver{ref}, TFourCC , TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(const 
+//!                CMMFDevSound::PlayToneSequenceL(TDesC8 {ref})
+//!                
+//!@SYMAuthor			etorres
+//!@SYMCreationDate		7/28/2008 
+//!@SYMTestCaseDesc		Mixing rule - Stop and play beep and perform
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Create Devsound instance 
+//!                2. Initialize Devsound (Mode = EMMFStateRecording; FourCC = AMR)
+//!                3. Set Priority (Priority = {Priority,PriorityVoiceRecording}; Preference = {PriorityPreference,PriorityPreferenceVoiceRecording} ; PriorityState = EMMFStateRecording)
+//!                4. Capabilities
+//!                5. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                6. ReplaceFile (Filename={drive,mmc}\multimedia\mmf\devsound\Recording\MixingRuleSBR.amr)
+//!                7. Record 20 s
+//!                8. Stop 5s
+//!                9. CloseFile
+//!                10. Initialize Devsound (Mode = EMMFStatePlaying; FourCC = AMR)
+//!                11. Set Priority (Priority = {Priority,PriorityAudioPlayback}; Preference = {PriorityPreference,PriorityPreferenceAudioPlayback}; PriorityState = EMMFStatePlaying)
+//!                12. Capabilities
+//!                13. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                14. OpenFile (Filename={drive,mmc}\multimedia\mmf\devsound\Recording\MixingRuleSBR.amr)
+//!                15. Play EOF
+//!                16. CloseFile
+//!                17. Delete devsound instance
+//! TEST_BLOCK 002
+//!                1. Create DevSound instance
+//!                2. Initialize devsound ( Mode = EMMFStateTonePlaying; FourCC= ILBC)
+//!                3. Set priority settings 1s ( Priority={Priority,PriorityCalendarAlarm}; Preference={PriorityPreference,PriorityPreferenceCalendarAlarm}; PriorityState=EMMFStateTonePlaying)
+//!                4. Play tone sequence EOF (Filename = {drive,mmc}\multimedia\mmf\devsound\nrt\Nokia_ringing_tone.nrt)
+//!                5. Delete DevSound instance.
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Mixing rule - Stop and play beep and perform
+//! TEST_BLOCK 001
+//!                AMR recording for 20s and playback until EOF
+//! TEST_BLOCK 002
+//!                Play tone sequence
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	50	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-SetPrioritySettings_command03
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-SetConfigL_command05
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-ReplaceFile_command06
+		COMMAND		devsound1		RecordInitL
+		ASYNC_DELAY  20000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-InitializeL_command10
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-SetPrioritySettings_command11
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-SetConfigL_command13
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0001-OpenFile_command14
+		COMMAND		devsound1		PlayInitL
+		OUTSTANDING
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	20	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rt.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0002-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0002-SetPrioritySettings_command03
+		DELAY  1000000 
+		COMMAND		devsound1		PlayToneSequenceL			MULTIMEDIA-MMF-DevSound-Comb_Rt-0004-0002-PlayToneSequenceL_command04
+		OUTSTANDING
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RT-0004

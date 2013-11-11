@@ -1,0 +1,98 @@
+# btrace.cif
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+==name btrace
+
+==short-description
+
+Configures and fetches data from the btrace buffer.
+
+==long-description
+
+The Symbian OS kernel provides an efficient binary logging mechanism called btrace. This command can be used to configure what data are written to this buffer, and also allows the data to be retrieved. It is functionally similar to the btrace.exe that is released as part of Symbian OS. The main differences are:
+
+=over 5
+
+=item a)
+
+It can repeatedly dump the contents of the buffer each time it gets to a particular percentage full (via the C<-F> and C<-t> options).
+
+=item b)
+
+If run without any arguments or in verbose mode (C<-v>), the current btrace configuration is displayed
+
+=back
+
+When using atrace to configure what is written to the buffer, if any primary filters are specified using the C<-f> option, all filters are disabled, then the buffer is emptied, then the specified filters are switched on (and thus primed). If a mode is specified, it is set before considering filters or filename arguments. Therefore it is a good idea when retrieving data from the buffer (by specifying a filename) to also specify C<-m0> to switch off output, otherwise the writing to file may never complete if atrace data is constantly being written.
+
+The arguments needed to begin profiling are C<-m1 -f3,9,15,18>. Then run C<uprofiler start> as normal. To stop run C<uprofiler stop> (optional), then invoke this command with arguments C<-m0 filename.utf>.
+
+==see-also
+
+L<atrace|atrace>
+
+==argument filename file_name optional
+
+The name of the file to write the current trace buffer contents to.
+
+==option uint f filter multiple
+
+Set a primary filter (for suitable values see C<BTrace::TCategory>, defined in F<\epoc32\include\e32btrace.h>).
+
+==option uint s secondary multiple
+
+Set a secondary filter.
+
+==option uint m mode
+
+Set capture mode (for suitable values see C<RBTrace::TMode>, defined in F<\epoc32\include\d32btrace.h>).
+
+==option uint b buffer
+
+Set the buffer size (in KB).
+
+==option bool d dump
+
+Dump contents of trace buffer to debug port. The data is printed in hexdump format.
+
+==option bool F follow
+
+Monitor the trace buffer and automatically write its contents when it gets to (by default) 50% full.
+
+==option uint t threshold
+
+Set the percentage of data present in the trace buffer that triggers a write. Defaults to 50%. If set to zero, the trace buffer will be flushed every time data is written to it. Intended to be used in conjunction with C<--follow>.
+
+==option bool T timestamp2
+
+Enable the btrace timestamp2 field. This causes each btrace frame to store both the fast counter value and the nano-kernel tick count value (ordinarily only the fast counter value is stored).
+
+==option bool v verbose
+
+Print verbose output.
+
+==option bool e test
+
+Tests that data can be written to and read from btrace successfully.
+
+==option bool r reset
+
+Sets the trace buffer's mode to disabled, discards its current contents and removes all filters.
+
+==option uint c text-trace-mode
+
+Set the kernel text trace mode (C<Kern::SetTextTraceMode>). This is included as a btrace option because the default setting C<ESerialOutDefault> will prevent C<RDebug::Print>s from going to the debugport when btrace is configured to capture rdebug.
+
+==copyright
+
+Copyright (c) 2007-2010 Accenture. All rights reserved.
+

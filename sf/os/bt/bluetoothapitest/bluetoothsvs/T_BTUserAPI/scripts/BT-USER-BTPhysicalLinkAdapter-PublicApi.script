@@ -1,0 +1,336 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the RBTPhysicalLinkAdapter classe
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Zoe Chen
+//! @SYMCreationDate			03/04/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	T_BTUserAPI
+DELAY		500
+
+
+// ****************************************************************************
+// RBTPhysicalLinkAdapter
+// **************************************************************************** 
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0001
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0001
+//! @SYMAPI							RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc				Create a RBTPhysicalLinkAdapter object
+//!									Uses API elements: 	RBTPhysicalLinkAdapter()
+//! @SYMTestActions					Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			RBTPhysicalLinkAdapter object was created successfully
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0001
+
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0002
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0002
+//! @SYMAPI							RBTPhysicalLinkAdapter, CBluetoothPhysicalLinks and RSocketServ
+//! @SYMTestCaseDesc				Open a physical link adapter on an existing physical link
+//!									Uses API elements: 	NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!														RBTPhysicalLinkAdapter(), Open()2 and Close() from RBTPhysicalLinkAdapter
+//!														RSocketServ(), Connect() and Close() from RSocketServ
+//! @SYMTestActions					1. Create and start a session on the socket server
+//!									2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!									3. Bring in a new member to the piconet with a device address(11111111) using 
+//!									   CreateConnection() function. Return KErrNone if successful
+//!									4. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!									5. Open a physical link adapter on an existing physical link with a device address(11111111)
+//!									   using Open()2 function. Return KErrNone if successful
+//!									6. Close the physical link adapter using Close() function
+//!									7. Delete the socket using destructor
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			KErrNone returned
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinks1	
+			CREATE_OBJECT	RSocketServ	RSocketServ1	
+			COMMAND		RSocketServ1	RSocketServ	
+			COMMAND		RSocketServ1	Connect	
+			COMMAND		CBluetoothPhysicalLinks1	NewL		BT-USER-BTPhysicalLinkAdapter-PublicApi-0002-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinks1	CreateConnection		BT-USER-BTPhysicalLinkAdapter-PublicApi-0002-0001command6CreateConnection
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+			COMMAND		RBTPhysicalLinkAdapter1	Open		BT-USER-BTPhysicalLinkAdapter-PublicApi-0002-0001command9Open
+			COMMAND		RBTPhysicalLinkAdapter1	Close	
+			COMMAND		CBluetoothPhysicalLinks1	~	
+			COMMAND		RSocketServ1	Close	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0002
+
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0003
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0003
+//! @SYMAPI							RBTPhysicalLinkAdapter, CBluetoothPhysicalLinks and RSocketServ
+//! @SYMTestCaseDesc				Check whether the physical link adapter is open
+//!									Uses API elements: 	NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!														RBTPhysicalLinkAdapter(), Open()2 and IsOpen() from RBTPhysicalLinkAdapter
+//!														RSocketServ(), Connect() and Close() from RSocketServ
+//! @SYMTestActions					1. Create and start a session on the socket server
+//!									2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!									3. Bring in a new member to the piconet with a device address(11111111) using 
+//!									   CreateConnection() function. Return KErrNone if successful
+//!									4. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!									5. Check whether the physical link adapter is open using IsOpen() function. 
+//!									6. Verify that the result (False) is as expected (False)
+//!									7. Open a physical link adapter on an existing physical link with a device address(11111111)
+//!									   using Open()2 function. Return KErrNone if successful
+//!									8. Check whether the physical link adapter is open using IsOpen() function.
+//!									9. Verify that the result (True) is as expected (True)
+//!									10. Delete the socket using destructor
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			True if the physical link adapter is open, otherwise false
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinks1	
+			CREATE_OBJECT	RSocketServ	RSocketServ1	
+			COMMAND		RSocketServ1	RSocketServ	
+			COMMAND		RSocketServ1	Connect	
+			COMMAND		CBluetoothPhysicalLinks1	NewL		BT-USER-BTPhysicalLinkAdapter-PublicApi-0003-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinks1	CreateConnection		BT-USER-BTPhysicalLinkAdapter-PublicApi-0003-0001command6CreateConnection
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+			COMMAND		RBTPhysicalLinkAdapter1	IsOpen		BT-USER-BTPhysicalLinkAdapter-PublicApi-0003-0001command9IsOpen
+			COMMAND		RBTPhysicalLinkAdapter1	Open		BT-USER-BTPhysicalLinkAdapter-PublicApi-0003-0001command10Open
+			COMMAND		RBTPhysicalLinkAdapter1	IsOpen		BT-USER-BTPhysicalLinkAdapter-PublicApi-0003-0001command11IsOpen
+			COMMAND		CBluetoothPhysicalLinks1	~	
+			COMMAND		RSocketServ1	Close	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0003
+
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0004
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0004
+//! @SYMAPI							RBTPhysicalLinkAdapter, CBluetoothPhysicalLinks and RSocketServ
+//! @SYMTestCaseDesc				Update the set of baseband packet types that are allowed locally
+//!									Uses API elements: 	NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!														RBTPhysicalLinkAdapter(), Open()2, RequestChangeSupportedPacketTypes() and Close() from RBTPhysicalLinkAdapter
+//!														RSocketServ(), Connect() and Close() from RSocketServ
+//! @SYMTestActions					1. Create and start a session on the socket server
+//!									2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!									3. Bring in a new member to the piconet with a device address(11111111) using 
+//!									   CreateConnection() function. Return KErrNone if successful
+//!									4. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!									5. Open a physical link adapter on an existing physical link with a device address(11111111)
+//!									   using Open()2 function. Return KErrNone if successful
+//!									6. Update the set of baseband packet types that are allowed locally using 
+//!									   RequestChangeSupportedPacketTypes() function. Return KErrNone if successful
+//!									7. Close the physical link adapter using Close() function
+//!									8. Delete the socket using destructor
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			KErrNone returned
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinks1	
+			CREATE_OBJECT	RSocketServ	RSocketServ1	
+			COMMAND		RSocketServ1	RSocketServ	
+			COMMAND		RSocketServ1	Connect	
+			COMMAND		CBluetoothPhysicalLinks1	NewL		BT-USER-BTPhysicalLinkAdapter-PublicApi-0004-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinks1	CreateConnection		BT-USER-BTPhysicalLinkAdapter-PublicApi-0004-0001command6CreateConnection
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+			COMMAND		RBTPhysicalLinkAdapter1	Open		BT-USER-BTPhysicalLinkAdapter-PublicApi-0004-0001command9Open
+			COMMAND		RBTPhysicalLinkAdapter1	RequestChangeSupportedPacketTypes		BT-USER-BTPhysicalLinkAdapter-PublicApi-0004-0001command10RequestChangeSupportedPacketTypes
+			COMMAND		RBTPhysicalLinkAdapter1	Close	
+			COMMAND		CBluetoothPhysicalLinks1	~	
+			COMMAND		RSocketServ1	Close	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0004
+
+
+// ****************************************************************************
+// Negative test cases
+// ****************************************************************************
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0005
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0005
+//! @SYMAPI							RBTPhysicalLinkAdapter and RSocketServ
+//! @SYMTestCaseDesc				Open a physical link adapter on a socket which is not open and connected
+//!									Uses API elements: 	RBTPhysicalLinkAdapter(), Open()1 and Close() from RBTPhysicalLinkAdapter
+//!														RSocketServ(), Connect() and Close() from RSocketServ
+//! @SYMTestActions					1. Create and start a session on the socket server
+//!									2. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!									3. Open a physical link adapter on an existing physical with a RSocket object link
+//!									   using Open()1 function. Return KErrNone if successful
+//!									4. Close the physical link adapter using Close() function
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			KErrNotReady(-18) returned at step 2
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			CREATE_OBJECT	RSocket	RSocket1	
+			CREATE_OBJECT	RSocketServ	RSocketServ1	
+			COMMAND		RSocketServ1	RSocketServ	
+			COMMAND		RSocketServ1	Connect	
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+			COMMAND	!Error=-18	RBTPhysicalLinkAdapter1	Open		BT-USER-BTPhysicalLinkAdapter-PublicApi-0005-0001command6Open
+			COMMAND		RBTPhysicalLinkAdapter1	Close	
+			COMMAND		RSocketServ1	Close	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0005
+
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0007
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0007
+//! @SYMAPI							RBTPhysicalLinkAdapter, CBluetoothPhysicalLinks and RSocketServ
+//! @SYMTestCaseDesc				Block a role switch
+//!									Uses API elements: 	NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!														RBTPhysicalLinkAdapter(), Open()2, AllowRoleSwitch(), PreventRoleSwitch() and Close() from RBTPhysicalLinkAdapter
+//!														RSocketServ(), Connect() and Close() from RSocketServ
+//! @SYMTestActions					1. Create and start a session on the socket server
+//!									2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!									3. Bring in a new member to the piconet with a device address(22222222) using 
+//!									   CreateConnection() function. Return KErrNone if successful
+//!									4. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!									5. Open a physical link adapter on an existing physical link with a device address(22222222)
+//!									   using Open()2 function. Return KErrNone if successful
+//!									6. Ensure this object does not block a role switch using AllowRoleSwitch() function.
+//!									   Return KErrNone if successful
+//!									7. Block a role switch using PreventRoleSwitch() function. Return KErrNone if successful
+//!									8. Close the physical link adapter using Close() function
+//!									9. Delete the socket using destructor
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			KErrDisconnected(-36) returned at step 6 and 7
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinks1	
+			CREATE_OBJECT	RSocketServ	RSocketServ1	
+			COMMAND		RSocketServ1	RSocketServ	
+			COMMAND		RSocketServ1	Connect	
+			COMMAND		CBluetoothPhysicalLinks1	NewL		BT-USER-BTPhysicalLinkAdapter-PublicApi-0007-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinks1	CreateConnection		BT-USER-BTPhysicalLinkAdapter-PublicApi-0007-0001command6CreateConnection
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+			COMMAND		RBTPhysicalLinkAdapter1	Open		BT-USER-BTPhysicalLinkAdapter-PublicApi-0007-0001command9Open
+			COMMAND	!Error=-36	RBTPhysicalLinkAdapter1	AllowRoleSwitch	
+			COMMAND	!Error=-36	RBTPhysicalLinkAdapter1	PreventRoleSwitch	
+			COMMAND		RBTPhysicalLinkAdapter1	Close	
+			COMMAND		CBluetoothPhysicalLinks1	~	
+			COMMAND		RSocketServ1	Close	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0007
+
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0008
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0008
+//! @SYMAPI							RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc				Check whether the physical link adapter is open
+//!									Uses API elements: RBTPhysicalLinkAdapter() and IsOpen()
+//! @SYMTestActions					1. Create an empty RBTPhysicalLinkAdapter object
+//!									2. Verify that if the physical link adapter is open
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			Returned False
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+			COMMAND		RBTPhysicalLinkAdapter1	IsOpen		BT-USER-BTPhysicalLinkAdapter-PublicApi-0008-0001command2IsOpen
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0008
+
+
+START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0009
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0009
+//! @SYMAPI							RBTPhysicalLinkAdapter and RSocketServ
+//! @SYMTestCaseDesc				Open a physical link adapter on a socket which is not open and connected
+//!									Uses API elements: 	RBTPhysicalLinkAdapter(), Open()2 and Close() from RBTPhysicalLinkAdapter
+//!														RSocketServ(), Connect() and Close() from RSocketServ
+//! @SYMTestActions					1. Create and start a session on the socket server
+//!									2. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!									3. Open a physical link adapter without an existing physical links using Open()2 function.
+//!									   Return KErrNone if successful
+//!									4. Close the physical link adapter using Close() function
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			KErrNone returned
+//! @SYMTestType					CIT
+
+	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+			CREATE_OBJECT	RSocketServ	RSocketServ1	
+			COMMAND		RSocketServ1	RSocketServ	
+			COMMAND		RSocketServ1	Connect	
+			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+			COMMAND		RBTPhysicalLinkAdapter1	Open		BT-USER-BTPhysicalLinkAdapter-PublicApi-0009-0001command6Open
+			COMMAND		RBTPhysicalLinkAdapter1	Close	
+			COMMAND		RSocketServ1	Close	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0009
+
+
+//!START_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0006
+//! @SYMTestCaseID					BT-USER-BTPhysicalLinkAdapter-PublicApi-0006
+//! @SYMAPI							RBTPhysicalLinkAdapter and RSocketServ
+//! @SYMTestCaseDesc				Open a physical link adapter on a socket which is not open and connected
+//!									Uses API elements: 	RBTPhysicalLinkAdapter() and Open()2
+//! @SYMTestActions					1. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!									2. Open a physical link adapter without an existing physical links
+//! @SYMTestStatus					Implemented
+//! @SYMTestPriority				Low
+//! @SYMTestExpectedResults			Panic at step 2
+//! @SYMTestType					CIT
+
+//!	START_TEST_BLOCK	10	T_BTUserAPI	\bluetooth\user\BT-USER-BTPhysicalLinkAdapter-PublicApi.ini
+//!			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapter1	
+//!			CREATE_OBJECT	RSocketServ	RSocketServ1	
+//!			COMMAND		RBTPhysicalLinkAdapter1	RBTPhysicalLinkAdapter	
+//!			COMMAND		RBTPhysicalLinkAdapter1	Open		BT-USER-BTPhysicalLinkAdapter-PublicApi-0006-0001command2Open
+//!	END_TEST_BLOCK	!PanicCode=3	!PanicString=KERN-EXEC
+
+//!END_TESTCASE BT-USER-BTPhysicalLinkAdapter-PublicApi-0006
+
+
+DELAY		2000

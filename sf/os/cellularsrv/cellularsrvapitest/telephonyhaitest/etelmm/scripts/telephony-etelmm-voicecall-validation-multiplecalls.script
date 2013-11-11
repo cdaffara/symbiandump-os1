@@ -1,0 +1,344 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName telephony-etelmm-voicecall-validation-multiplecalls
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the RMmCustomAPI; RMobileLine; RMobilePhone; RTelServer; RMobileConferenceCall and RMobileCall
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: RMmCustomAPI; RMobileLine; RMobilePhone; RTelServer; RMobileConferenceCall and RMobileCall
+// Voice Call tests are intended for semi-automatic testing because dialing/ answering calls require user interaction.
+//
+
+
+
+LOAD_SUITE t_etelmm
+
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0001
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0001
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref};const TDesC{ref});
+//!                RLine::OpenNewCall(RLine{ref};TDes{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                RCall::Dial(TRequestStatus{ref};const TTelNumberC{ref});
+//!                RCall::Hold (TRequestStatus{ref});
+//!                RCall::Resume (TRequestStatus{ref});
+//!                RCall::Swap(TRequestStatus{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Dial a call and hold it, then make a second call and swap it with the first one
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initialize custom API (RMobilePhone=mobilePhone)
+//!                5. Open line (RMobilePhone=mobilePhone;Line = Voice1)
+//!                6. Open new Call1 (RMobileLine=mobileLine;Call = 1)
+//!                7. Open new Call2 (RMobileLine=mobileLine;Call = 2)
+//!                8. Get VoiceCall capabilities for Call1 (Call = 1)
+//!                9. Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                10. Get VoiceCall capabilities for Call2 (Call = 2)
+//!                11. Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                12. Dial Call1 (Call = 1;PhoneNumber = {PHONENUMBERS, PhoneNumber1};CallTimeout = 10)
+//!                13.Get Hold capabilities for Call1 (Call = 1)
+//!                14. Check Hold capabilities (Capabilities = Hold)
+//!                15.Hold Call1 (Call = 1)
+//!                16.Dial Call2 (Call = 2;PhoneNumber = {PHONENUMBERS, PhoneNumber2};CallTimeout = 10)
+//!                17.Get Swap capabilities for Call1 (Call = 1)
+//!                18.Check Swap capabilities (Capabilities = Swap)
+//!                19.Swap calls (Call = 1)
+//!                20.Get Call1 duration (Call = 1)
+//!                21.Hang up Call1 (Call = 1)
+//!                22.Get Call2 duration (Call = 2)
+//!                23.Hang up Call2 (Call = 2)
+//!                24.Close Call1 (Call = 1)
+//!                25.Close Call2 (Call = 2)
+//!                26.Close line
+//!                27.Close custom API
+//!                28.Close mobile phone
+//!                29.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. First call is dialed and hold, then a second call is dialed and finally swap the calls.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-multiplecalls.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Open_command04
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Open_command05
+		COMMAND		mobileCall		OpenNewCall			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-OpenNewCall_command06
+		COMMAND		mobileCall		OpenNewCall			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-OpenNewCall_command07
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-GetCaps_command08
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-CheckCaps_command09
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-GetCaps_command10
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-CheckCaps_command11
+		COMMAND		mobileCall		Dial			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Dial_command12
+		ASYNC_DELAY  30000000 
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-GetCaps_command13
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-CheckCaps_command14
+		COMMAND		mobileCall		Hold			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Hold_command15
+		OUTSTANDING
+		DELAY  5000000 
+		COMMAND		mobileCall		Dial			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Dial_command16
+		ASYNC_DELAY  30000000 
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-GetCaps_command17
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-CheckCaps_command18
+		COMMAND		mobileCall		Swap			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Swap_command19
+		OUTSTANDING
+		DELAY  5000000 
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-GetCallDuration_command20
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-HangUp_command21
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-GetCallDuration_command22
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-HangUp_command23
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Close_command24
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0001-0001-Close_command25
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0001
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0002
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0002
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref},const TDesC{ref});
+//!                RLine::OpenNewCall(RLine{ref},TDes{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                RCall::Dial(TRequestStatus{ref},const TTelNumberC{ref});
+//!                RMobileConferenceCall::CreateConference(TRequestStatus{ref});
+//!                RMobileConferenceCall::EnumerateCalls(TInt{ref});
+//!                RMobileConferenceCall::Open(RMobilePhone{ref});
+//!                RMobileConferenceCall::Close();
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Open a conference call between the testing device and two other phones.
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initialize custom API (RMobilePhone=mobilePhone)
+//!                5. Open line (RMobilePhone=mobilePhone;Line = Voice1)
+//!                6. Open new Call1 (RMobileLine=mobileLine;Call = 1)
+//!                7. Open new Call2 (RMobileLine=mobileLine;Call = 2)
+//!                8. Get VoiceCall capabilities for Call1 (Call = 1) 
+//!                9. Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                10. Get VoiceCall capabilities fro Call2 (Call = 2)
+//!                11. Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                12. Dial Call1 (Call = 1;PhoneNumber = {PHONENUMBERS, PhoneNumber1};CallTimeout = 10)
+//!                13.Get Hold capabilities for Call1 (Call = 1)
+//!                14.Check Hold capabilities (Capabilities = Hold)
+//!                15.Hold Call1 (Call = 1)
+//!                16.Dial Call2 (Call = 2;PhoneNumber = {PHONENUMBERS, PhoneNumber2};CallTimeout = 10)
+//!                17.Open conference call (RMobilePhone=mobilePhone)
+//!                18.Create conference call 
+//!                19.Enumerate calls in the conference call (NumOfCalls = 2)
+//!                20.Get Call1 duration (Call = 1)
+//!                21.Hang up Call1 (Call = 1)
+//!                22.Get Call2 duration (Call = 2)
+//!                23.Hang up Call2 (Call = 2) 
+//!                24.Close conference call 
+//!                25.Close Call1 (Call = 1)
+//!                26.Close Call2 (Call = 2)
+//!                27.Close line
+//!                28.Close custom API
+//!                29.Close mobile phone
+//!                30.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Open a conference call between the testing device and other two phones.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-multiplecalls.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileConferenceCall		conferenceCall
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Open_command04
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Open_command05
+		COMMAND		mobileCall		OpenNewCall			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-OpenNewCall_command06
+		COMMAND		mobileCall		OpenNewCall			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-OpenNewCall_command07
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-GetCaps_command08
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-CheckCaps_command09
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-GetCaps_command10
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-CheckCaps_command11
+		COMMAND		mobileCall		Dial			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Dial_command12
+		ASYNC_DELAY  30000000 
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-GetCaps_command13
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-CheckCaps_command14
+		COMMAND		mobileCall		Hold			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Hold_command15
+		OUTSTANDING
+		DELAY  5000000 
+		COMMAND		mobileCall		Dial			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Dial_command16
+		ASYNC_DELAY  30000000 
+		COMMAND		conferenceCall		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Open_command17
+		COMMAND		conferenceCall		CreateConference
+		OUTSTANDING
+		COMMAND		conferenceCall		EnumerateCalls			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-EnumerateCalls_command19
+		DELAY  5000000 
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-GetCallDuration_command20
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-HangUp_command21
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-GetCallDuration_command22
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-HangUp_command23
+		OUTSTANDING
+		COMMAND		conferenceCall		Close
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Close_command25
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0002-0001-Close_command26
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0002
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0003
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0003
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref},const TDesC{ref});
+//!                RLine::OpenNewCall(RLine{ref},TDes{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                RCall::Dial(TRequestStatus{ref},const TTelNumberC{ref});
+//!                RCall::Hold (TRequestStatus{ref});
+//!                RMobileCall::Transfer(TRequestStatus{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Dial a call and hold it, then call a second call and tranfer it to the first call
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initialize custom API (RMobilePhone=mobilePhone)
+//!                5. Open line (RMobilePhone=mobilePhone;Line = Voice1)
+//!                6. Open new Call1 (RMobileLine=mobileLine;Call = 1)
+//!                7. Open new Call2 (RMobileLine=mobileLine;Call = 2)
+//!                8. Get VoiceCall capabilities for Call1 (Call = 1)
+//!                9. Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                10.Get VoiceCall capabilities for Call2 (Call = 2)
+//!                11.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                12. Dial Call1 (Call = 1;PhoneNumber = {PHONENUMBERS, PhoneNumber1};CallTimeout = 10)
+//!                13.Get Hold capabilities for Call1 (Call = 1)
+//!                14.Check Hold capabilities (Capabilities = Hold)
+//!                15.Hold Call1 (Call = 1)
+//!                16.Dial Call2 (Call = 2;PhoneNumber = {PHONENUMBERS, PhoneNumber2};CallTimeout = 10)
+//!                17.Get Transfer capabilities for Call1 (Call = 1)
+//!                18.Check Transfer capabilities (Capabilities = Transfer)
+//!                19.Get Transfer capabilities for Call2 (Call = 2)
+//!                20.Check Transfer capabilities (Capabilities = Transfer)
+//!                21.Transfer calls (Call = 2)
+//!                22.Get Call1 duration (Call = 1)
+//!                23.Hang up Call1 (Call = 1)
+//!                24.Get Call2 duration (Call = 2)
+//!                25.Hang up Call2 (Call = 2)
+//!                26.Close Call1 (Call = 1)
+//!                27.Close Call2 (Call = 2)
+//!                28.Close line
+//!                29.Close custom API
+//!                30.Close mobile phone
+//!                31.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. First call is dialed and hold, then a second call is dialed and the second call is transferred to the first call.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-multiplecalls.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Open_command04
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Open_command05
+		COMMAND		mobileCall		OpenNewCall			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-OpenNewCall_command06
+		COMMAND		mobileCall		OpenNewCall			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-OpenNewCall_command07
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-GetCaps_command08
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-CheckCaps_command09
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-GetCaps_command10
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-CheckCaps_command11
+		COMMAND		mobileCall		Dial			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Dial_command12
+		OUTSTANDING
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-GetCaps_command13
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-CheckCaps_command14
+		COMMAND		mobileCall		Hold			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Hold_command15
+		OUTSTANDING
+		DELAY  5000000 
+		COMMAND		mobileCall		Dial			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Dial_command16
+		OUTSTANDING
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-GetCaps_command17
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-CheckCaps_command18
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-GetCaps_command19
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-CheckCaps_command20
+		COMMAND		mobileCall		Transfer			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Transfer_command21
+		OUTSTANDING
+		DELAY  5000000 
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-GetCallDuration_command22
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-HangUp_command23
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-GetCallDuration_command24
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-HangUp_command25
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Close_command26
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-MultipleCalls-0003-0001-Close_command27
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-MULTIPLECALLS-0003

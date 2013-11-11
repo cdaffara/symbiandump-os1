@@ -1,0 +1,71 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// MmfBtSwCodecWrapper.dll Hardware device wrapper for reference software audio devices  
+// __CYCLE_MMF_DATABUFFERS__ tries to replicate the conditions described in INC021405
+// ('Play-EOF-Play on HwAccelerated solution Panics'). Each time DevSound returns a 
+// buffer it will be different to the previous one supplied. This simulates implementations
+// where multiple buffers are available.
+// A similar thing happens on OMAP hardware.
+// MACRO __CYCLE_MMF_DATABUFFERS__
+// __USE_MMF_TRANSFERBUFFERS__ enables devsound to create CMMFTransferBuffers rather than 
+// CMMFDescriptorBuffers
+// MACRO __USE_MMF_TRANSFERBUFFERS__
+// __USE_MMF_PTRBUFFERS__ enables devsound to create CMMFPtrBuffers rather than 
+// CMMFDescriptorBuffers
+// note this MACRO cannot be used in conjunction with __CYCLE_MMF_DATABUFFERS__ and/or __USE_MMF_TRANSFERBUFFERS__
+// MACRO __USE_MMF_PTRBUFFERS__
+// 
+//
+
+/**
+ @file
+*/
+
+
+
+target          mmfbtswcodecwrapper.dll
+CAPABILITY ALL -TCB
+targettype      DLL
+
+UID      0x1000008D 0x101F9EEE //static interface DLL Uid KSharedLibraryUid
+VENDORID 0x70000001
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+userinclude	../../src/RoutingSoundDevice
+userinclude	../../src/A2dpBlueTooth/client
+userinclude	../../src/A2dpBlueTooth/server
+
+SOURCEPATH	../../src/swcodecwrapper
+
+source		mmfBtSwCodecWrapper.cpp
+source		mmfBtSwCodecDataPath.cpp
+source		mmfBtSwCodecPlayDataPath.cpp
+source		mmfBtSwCodecRecordDataPath.cpp
+source		mmfBtSwCodecConvertDataPath.cpp
+source		mmfBtSwCodecUtility.cpp
+
+
+library		euser.lib  
+library		mmfserverbaseclasses.lib 
+library		ecom.lib
+library		btroutingsounddevice.lib
+
+deffile         MmfBtSwCodecWrapper.def
+nostrictdef
+
+
+start           wins
+baseaddress     0x4F140000
+end

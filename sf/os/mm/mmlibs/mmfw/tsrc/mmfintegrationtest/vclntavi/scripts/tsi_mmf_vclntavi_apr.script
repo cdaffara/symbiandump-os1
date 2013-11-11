@@ -1,0 +1,163 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Video Client APR Integration tests for Video Controller and XviD Codec
+// 
+//
+
+LOAD_SUITE tsi_mmf_vclntavi.dll
+
+/////////////////////////////// POSITIVE TESTS /////////////////////////////////////
+
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0001-HP
+//!@SYMTestCaseDesc           One-time registration for same event by a player. (with main use case - Register after getting kicked off)
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Medium Priority iAudioPlayer - High Priority 1. Create one video client and one audio Client 2. Open and
+//! play iVideoPlayer 3. Open and play iAudioPlayer 4. Register iVideoPlayer for notification 5. Check if registration is successful 6. iAudioPlayer completes
+//! playing 7. Check if iVideoPlayer receives the notification. 8.  iVideoPlayer starts playing again. 9.  Play iAudioPlayer. iVideoPlayer should receive
+//! play error 10.iAudioPlayer completes play 11. Check if iVideoPlayer receives the notification.
+//!@SYMTestExpectedResults    For first time 1.Registration of video player should be successful . 2.video player should receive error(KErrInUse) when
+//! Audio Player is still playing. 3.Video player should receive notification when Audio player completes playing.  During second time 1.iVideoPlayer should
+//! receive notification.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0001-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0002-HP
+//!@SYMTestCaseDesc           Register before opening Video player and receive notification of a resource available event (when resource is currently
+//! unavailable and then available).
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Low Priority iAudioPlayer - High Priority 1. Create One video client and one audio Client 2.Register iVideoPlayer
+//! for notification 3.Check if registration is successful. 4.Open iVideoPlayer   5. Open and play iAudioPlayer 6. Play iVideoPlayer (get Play Error as iAudioPlayer
+//! is still playing) 7. iAudioPlayer completes playing 8. Check if iVideoPlayer is notified.
+//!@SYMTestExpectedResults    1.Registration of video player should be successful. 2.video player should receive error(KErrInUse) when Audio Player starts
+//! playing. 3.Video player should receive notification when Audio player completes playing.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0002-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0003-HP
+//!@SYMTestCaseDesc           Register (after Open and before Play of video) , receive notification of a resource available event (when video resource
+//! is currently unavailable and then available) and position checking of video player.
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Low Priority iAudioPlayer - High Priority 1. Create one video client and one audio client. 2. Open iVideoPlayer
+//! 3. Register iVideoPlayer for notification 4. Check if registration is successful, and notification is not received immediately. 5. Play iVideoPlayer.
+//! 6. Open and play iAudioPlayer 7. iVideoPlayer gets PlayError. 8. Note the position when iVideoPlayer got play error (paused). 9. iAudioPlayer completes
+//! playing. 10. Check if iVideoPlayer is notified (and check the notification position, should be equal to one at 8). 11. Play iVideoPlayer from the notified
+//! position.
+//!@SYMTestExpectedResults    1.Registration of video player should be successful. 2.video player should receive error(KErrInUse) when Audio Player starts
+//! playing. 3.Video player should receive notification when Audio player completes playing. 4. The video player should start playing from the position where
+//! it had got play error.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0003-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0004-HP
+//!@SYMTestCaseDesc           Register after the highest priority client (Audio) completes playing and receive the notification of a resource availalble
+//! event.
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Low Priority iAudioPlayer - High Priority 1. Create One video client and one audio Client 2. Open and play
+//! iVideoPlayer 3. Open and play iAudioPlayer 4. iAudioPlayer completes playing 5. Register iVideoPlayer for notification 6. Check if registration is successful
+//! 7. Check if iVideoPlayer doesnot receive the notification. 8. Play iVideoPlayer. 9. Play IAudioPlayer. 10. IVideoPlayer will get play error. 11. IAudioPlayer
+//! Completes playing. 12. IVideoPlayer receives notification.
+//!@SYMTestExpectedResults    1.Registration of video player should be successful. 2.Video player should receive notification when Audio player completes
+//! playing.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0004-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0005-HP
+//!@SYMTestCaseDesc           Receive notification by same priority players in the order of registration (with main use case)
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Medium priority  iAudioPlayer[1] - High Priority  iAudioPlayer[2] - Medium Priority 1. Create one video client
+//! and two audio Clients. 2. Open and play iVideoPlayer 3. Open and play iAudioPlayer[1] 4. iVideoPlayer gets play error as iAudioPlayer[1] has started
+//! playing. 5. Register iVideoPlayer for notification. 6. Open and Play iAudioPlayer[2] (gets Play Error) 7. Register iAudioPlayer[2] for notification.
+//! 8. iAudioPlayer[1] completes playing. 9. Check if  iVideoPlayer receives the notification.
+//!@SYMTestExpectedResults    1.Registration of the video & audio players should be successful. 2.video player should receive error(KErrInUse) when Audio
+//! Player is still playing. 3.video Player should receive notification when Audio player[1] completes playing, as it has registered first for notificati
+//!on.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0005-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0006-HP
+//!@SYMTestCaseDesc           Cancellation of the notification request. (with main use case)
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Low Priority  iAudioPlayer - High Priority 1. Create one video client and one audio Client 2. Open and play
+//! iVideoPlayer 3. Open and play  iAudioPlayer 4. Register  iVideoPlayer for notification. 5. Check if registration is successful. 6.Cancel the notification
+//! request for   iVideoPlayer. 7. iAudioPlayer completes playing 8. Check if  iVideoPlayer is NOT notified.
+//!@SYMTestExpectedResults    1.Registration of video player should be successful. 2.video player should receive error(KErrInUse) when Audio Player is
+//! still playing. 3.Video player should not receive notification when Audio player completes playing.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0006-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0007-HP
+//!@SYMTestCaseDesc           Test for WillResumePlay() using 3 clients. (with main use case)
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer[0] -  Low Priority  iAudioPlayer[1] - High Priority  iVideoPlayer -Medium Priority 1. Create one video client
+//! and two audio clients. 2. Open and play iAudioPlayer[0]. 3. Open and play iVideoPlayer 4. Register iAudioPlayer[0] for notification 5. Open and play
+//! iAudioPlayer[1] 6. Register  iVideoPlayer for notification 7. iAudioPlayer[1] completes playing 8.  iVideoPlayer is notified. 9.  iVideoPlayer calls
+//! WillResumePlay() 10. Check after 5 seconds,  iAudioPlayer[0] does not get the notification. 11.  iVideoPlayer starts playing. 12.  iVideoPlayer completes
+//! playing. 13. Check if  iAudioPlayer[0] gets the notification now.
+//!@SYMTestExpectedResults    The low priority Client should NOT receive notification if the medium priority client calls WillResumePlay() .
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0007-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+
+
+/////////////////////////////// NEGATIVE TESTS /////////////////////////////////////
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0101-HP
+//!@SYMTestCaseDesc           Try to Register Multiple times.
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Low Priority iAudioPlayer - High Priority 1. Create One video client and one audio Client 2. Open and play
+//! iVideoPlayer 3. Register iVideoPlayer for notification 4. Check if registration is successful, and notification is not received immediately. 5. Open
+//! and play iAudioPlayer 6. Register iVideoPlayer for notification again. 7. Check if registration returns KErrAlreadyExists.
+//!@SYMTestExpectedResults    Registration of video player should be successful first time, for the second time however, KErrAccessDenied should be re
+//!turned.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0101-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0102-HP
+//!@SYMTestCaseDesc           Cancel when no resource Notification is requested.
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Medium Priority 1. Create One video Client. 2. Open & play iVideoPlayer 3. Cancel the (without registering)
+//! notification request for iVideoPlayer.
+//!@SYMTestExpectedResults    iVideoPlayer should not be notified . KErrCancel should be returned by the video player.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0102-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0103-HP
+//!@SYMTestCaseDesc           Register for notification with an unsupported event type
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Medium Priority 1. Create one video client. 2. Open  and play iVideoPlayer 3. Register iVideoPlayer for notification
+//! passing an unsupported event type as parameter.  4. Check if registration is successful .
+//!@SYMTestExpectedResults    KErrNotSupported should be returned by the video player.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0103-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MMF-VCLNTAVIAPR-I-0104-HP
+//!@SYMTestCaseDesc           Cancellation of  notification with an unsupported event type
+//!@SYMREQ                    REQ6419
+//!@SYMTestPriority           2
+//!@SYMTestActions            iVideoPlayer - Medium Priority 1. Create one video client. 2. Open & play iVideoPlayer 3. Register iVideoPlayer for notification.
+//! 4. Cancel the notification request for iVideoPlayer, passing an unsupported event type as parameter.
+//!@SYMTestExpectedResults    KErrNotSupported should be returned by the video palyer.
+RUN_TEST_STEP 120000 TSI_MMF_VCLNTAVI MM-MMF-VCLNTAVIAPR-I-0104-HP c:\vclntavi\video_avi.ini
+TEST_COMPLETE

@@ -1,0 +1,2483 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName           T_BTGavdp
+//! @SYMScriptTestEnvironment   This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription
+//! @SYMAuthor                  Niandong Qiao, Jianhui Ren, Kevin Zeng
+//! @SYMCreationDate            05-06-2008
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\gavdp\
+
+LOAD_SUITE    t_btgavdpapi    -SharedData
+DELAY    500
+
+
+// ****************************************************************************
+// Set up BT Addresses
+// ****************************************************************************
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   CBluetoothSocket    bluetoothsocket1
+        COMMAND         bluetoothsocket1    RSocketServerConnect
+        COMMAND         bluetoothsocket1    NewL                 BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0001-NewL_Command02
+        STORE           bluetoothsocket1
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0001
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0002
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  CBluetoothSocket    bluetoothsocket1
+        CREATE_OBJECT   TBTDevAddr          addrremote
+        COMMAND         addrremote          Construct
+        COMMAND         addrremote          OpenHostResolver     BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0002-OpenHostResolver_Command02
+        COMMAND         addrremote          SetHostNameL         BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0002-SetHostNameL_Command03
+        COMMAND         addrremote          GetDeviceAddress     BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0002-GetDeviceAddress_Command04
+        OUTSTANDING
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses-0002
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-SetBTAddresses
+DELAY    5000
+
+// ****************************************************************************
+// RGavdp Tests
+// ****************************************************************************
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0001
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0001
+//! @SYMAPI                     RGavdp::RGavdp();
+//!                             RGavdp::Open(MGavdpUser {ref}, RSocketServ {ref});
+//!                             RGavdp::Close()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Create a RGavdp object by default constructor and then open and close it.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. RGavdp object was created without causing panic.
+//!                             2. Method RGavdp::Open() return KErrNone.
+//!                             3. Method RGavdp::Close() called without causing panic.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0001-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                BT-GAVDP-PublishedPartner-Active-Slave-0001-0001-Open_Command04
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0001-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0001
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0002
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0002
+//! @SYMAPI                     RGavdp::RegisterSEP(TAvdtpSEPInfo {ref});
+//!                             RGavdp::BeginConfiguringLocalSEP(TSEID);
+//!                             RGavdp::AddSEPCapability(const TAvdtpServiceCapability {ref});
+//!                             RGavdp::CommitSEPConfiguration();
+//!                             MGavdpUser::GAVDP_ConfigurationConfirm()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Configure a local SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method RGavdp::RegisterSEP() return KErrNone.
+//!                             2. Method RGavdp::BeginConfiguringLocalSEP() return KErrNone.
+//!                             3. Method RGavdp::AddSEPCapability() return KErrNone.
+//!                             4. Method RGavdp::CommitSEPConfiguration() called without causing panic.
+//!                             5. The callback function MGavdpUser::GAVDP_ConfigurationConfirm() is called when locally-initiated configuration procedure successfully completes.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0002-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0002-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0002-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0002
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0003
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0003
+//! @SYMAPI                     RGavdp::Connect(const TBTDevAddr {ref});
+//!                             MGavdpUser::GAVDP_ConnectConfirm(const TBTDevAddr {ref});
+//!                             RGavdp::Shutdown()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Connect to a remote device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Shutdown the GAVDP.
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method Connect() return KErrNone.
+//!                             2. The call back function MGavdpUser::GAVDP_ConnectConfirm() is called  when a signalling channel has successfully been created.
+//!                             3. Method Shutdown()return KErrNone.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0003-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0003-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         gavdp               Shutdown
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0003-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0003
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0004
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0004
+//! @SYMAPI                     RGavdp::DiscoverRemoteSEPs();
+//!                             MGavdpUser::GAVDP_SEPDiscovered(const TAvdtpSEPInfo {ref});
+//!                             MGavdpUser::GAVDP_SEPDiscoveryComplete()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Discover remote SEPs on peer device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method DiscoverRemoteSEPs() return KErrNone.
+//!                             2. The call back function MGavdpUser::GAVDP_SEPDiscovered() is called when a remote SEP has been discovered .
+//!                             3. The call back function MGavdpUser::GAVDP_SEPDiscoveryComplete() is called when no more SEPs have been discovered on the remote device.
+//!                             4. Number of discovered SEPs is as expected.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0004-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0004-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0004-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0004
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0005
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0005
+//! @SYMAPI                     RGavdp:: GetRemoteSEPCapabilities(TSEID, const TAvdtpServiceCategories {ref});
+//!                             MGavdpUser::GAVDP_SEPCapability(TAvdtpServiceCapability {ptr});
+//!                             MGavdpUser::GAVDP_SEPCapabilityComplete()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Get all capabilities of a remote SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Get all capabilities of a remote SEP.
+//!                             13. Wait for call back to GAVDP_SEPCapability() and MGavdpUser::GAVDP_SEPCapabilityComplete()
+//!                             14. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method MGavdpUser::GetRemoteSEPCapabilities() return KErrNone.
+//!                             2. The call back function MGavdpUser::GAVDP_SEPCapability() is called when a capability from a remote SEP has been retrieved.
+//!                             3. The call back function MGavdpUser::GAVDP_SEPCapabilityComplete() is called when remote SEP has no more capabilities to be discovered.
+//!                             4. Received capabilities is same as capabilities of remote SEP.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport2
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport2
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery2
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect2
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         captransport2       new
+        COMMAND         capreport2          new
+        COMMAND         caprecovery2        new
+        COMMAND         caprecovery2        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetRecoveryType_Command37
+        COMMAND         caprecovery2        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetMaxWindowSize_Command38
+        COMMAND         caprecovery2        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetMinWindowSize_Command39
+        COMMAND         capprotect2         new
+        COMMAND         capprotect2         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetContentProtectionType_Command41
+        COMMAND         capprotect2         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-SetContentProtectionData_Command42
+        COMMAND         gavdp               GetRemoteSEPCapabilities    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001-GetRemoteSEPCapabilities_Command43
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0005-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0005
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0006
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0006
+//! @SYMAPI                     RGavdp::BeginConfiguringRemoteSEP(TSEID, TSEID);
+//!                             RGavdp::AddSEPCapability(const TAvdtpServiceCapability {ref});
+//!                             RGavdp::CommitSEPConfiguration();
+//!                             MGavdpUser::GAVDP_ConfigurationConfirm()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Configure remote SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method BeginConfiguringRemoteSEP() return KErrNone.
+//!                             2. Method AddSEPCapability() return KErrNone.
+//!                             3. Method CommitSEPConfiguration() called without causing panic.
+//!                             4. The callback function MGavdpUser::GAVDP_ConfigurationConfirm() is called when locally-initiated configuration procedure successfully completes.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0006-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0006-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0006-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0006
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0007
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0007
+//! @SYMAPI                     RGavdp::CreateBearerSockets(TSEID);
+//!                             MGavdpUser::GAVDP_BearerReady(RSocket, const TAvdtpSockAddr {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Create bearers.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create bearers
+//!                             17. Abort stream
+//!                             18. Wait for call back to MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             19. Close bearers
+//!                             20. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method CreateBearerSockets() return KErrNone.
+//!                             2. The call back function GAVDP_BearerReady() is called when a bearer has been created for a session in the stream.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0007-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-CreateBearerSockets_Command54
+        OUTSTANDING
+        
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0007-0001-AbortStream_Command56
+        OUTSTANDING
+        DELAY           5000000
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0007-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0007
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0008
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0008
+//! @SYMAPI                     RGavdp::StartStream(TSEID);
+//!                             MGavdpUser::GAVDP_StartStreamsConfirm();
+//!                             RGavdp::AbortStream(TSEID);
+//!                             MGavdpUser::GAVDP_AbortStreamConfirm()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Start stream and then abort stream.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create bearers
+//!                             17. Start stream
+//!                             18. Wait for call back to MGavdpUser::GAVDP_StartStreamsConfirm()
+//!                             19. Abort stream
+//!                             20. Wait for call back to MGavdpUser::GAVDP_ MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             21. Close bearers
+//!                             22. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method StartStream() called without causing panic.
+//!                             2. The call back function GAVDP_StartStreamsConfirm() is called when the locally-initiated Start stream has successfully completed.
+//!                             3. Method AbortStream() called without causing panic.
+//!                             4. The call back function GAVDP_AbortStreamConfirm() is called when the locally-initiated Abort stream has successfully completed.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0008-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-CreateBearerSockets_Command54
+        OUTSTANDING
+        
+        COMMAND         gavdp               StartStream                 BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-StartStream_Command56
+        OUTSTANDING
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0008-0001-AbortStream_Command58
+        OUTSTANDING
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0008-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0008
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0009
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0009
+//! @SYMAPI                     RGavdp::CreateBearerSockets(TSEID, TBool, TBool)
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Send data through created socket.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create bearers
+//!                             17. Start stream
+//!                             18. Wait for call back to MGavdpUser::GAVDP_StartStreamsConfirm()
+//!                             19. Send data
+//!                             20. Wait for call back to RunL()
+//!                             21. Abort stream
+//!                             22. Wait for call back to MGavdpUser::GAVDP_ MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             23. Close bearers
+//!                             24. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Send data return KErrNone.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0009-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-CreateBearerSockets_Command54
+        OUTSTANDING
+        
+        COMMAND         gavdp               StartStream                 BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-StartStream_Command56
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Send                        BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-Send_Command59
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0009-0001-AbortStream_Command61
+        OUTSTANDING
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0009-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0009
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0010
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0010
+//! @SYMAPI                     RGavdp::SuspendStream(TSEID);
+//!                             MGavdpUser::GAVDP_SuspendStreamsConfirm()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Suspend stream and then restart the stream.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create bearers
+//!                             17. Start stream
+//!                             18. Wait for call back to MGavdpUser::GAVDP_StartStreamsConfirm()
+//!                             19. Suspend stream
+//!                             20. Wait for call back to MGavdpUser::GAVDP_SuspendStreamsConfirm()
+//!                             21. Start stream
+//!                             22. Wait for call back to MGavdpUser::GAVDP_StartStreamsConfirm()
+//!                             23. Abort stream
+//!                             24. Wait for call back to MGavdpUser::GAVDP_ MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             25. Close bearers
+//!                             26. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method SuspendStream() called without causing panic.
+//!                             2. The call back function GAVDP_SuspendStreamsConfirm() is called when the locally-initiated Suspend stream has successfully completed.
+//!                             3. Method StartStream() called without causing panic.
+//!                             4. The call back function GAVDP_StartStreamsConfirm() is called when the locally-initiated Start stream has successfully completed.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0010-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-CreateBearerSockets_Command54
+        OUTSTANDING
+        
+        COMMAND         gavdp               StartStream                 BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-StartStream_Command56
+        OUTSTANDING
+        COMMAND         gavdp               SuspendStream               BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-SuspendStream_Command58
+        OUTSTANDING
+        COMMAND         gavdp               StartStream                 BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-StartStream_Command60
+        OUTSTANDING
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0010-0001-AbortStream_Command62
+        OUTSTANDING
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0010-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0010
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0011
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0011
+//! @SYMAPI                     RGavdp::SendSecurityControl(TSEID, const TDesC8 {ref});
+//!                             MGavdpUser::GAVDP_SecurityControlConfirm(const TDesC8 {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Send security control data to remote SEP and without changed by ACP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Get all capabilities of a remote SEP.
+//!                             13. Wait for call back to GAVDP_SEPCapability() and MGavdpUser::GAVDP_SEPCapabilityComplete()
+//!                             14. Send security control data to remote SEP
+//!                             15. Wait for call back to MGavdpUser::GAVDP_SecurityControlConfirm()
+//!                             16. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method SendSecurityControl() called without causing panic.
+//!                             2. The call back function GAVDP_SecurityControlConfirm() is called when the locally-initiated Security Control message successfully completed.
+//!                             3. The data returned by the ACP is same to that supplied by INT.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport2
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport2
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery2
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect2
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         captransport2       new
+        COMMAND         capreport2          new
+        COMMAND         caprecovery2        new
+        COMMAND         caprecovery2        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetRecoveryType_Command37
+        COMMAND         caprecovery2        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetMaxWindowSize_Command38
+        COMMAND         caprecovery2        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetMinWindowSize_Command39
+        COMMAND         capprotect2         new
+        COMMAND         capprotect2         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetContentProtectionType_Command41
+        COMMAND         capprotect2         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SetContentProtectionData_Command42
+        COMMAND         gavdp               GetRemoteSEPCapabilities    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-GetRemoteSEPCapabilities_Command43
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SEID_Command46
+        COMMAND         gavdp               SendSecurityControl         BT-GAVDP-PublishedPartner-Active-Slave-0011-0001-SendSecurityControl_Command47
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0011-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0011
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0012
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0012
+//! @SYMAPI                     RGavdp::SendSecurityControl(TSEID, const TDesC8 {ref});
+//!                             MGavdpUser::GAVDP_SecurityControlConfirm(const TDesC8 {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Send security control data to remote SEP and changed by ACP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Get all capabilities of a remote SEP.
+//!                             13. Wait for call back to GAVDP_SEPCapability() and MGavdpUser::GAVDP_SEPCapabilityComplete()
+//!                             14. Send security control data to remote SEP
+//!                             15. Wait for call back to MGavdpUser::GAVDP_SecurityControlConfirm()
+//!                             16. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method SendSecurityControl() called without causing panic.
+//!                             2. The call back function GAVDP_SecurityControlConfirm() is called when the locally-initiated Security Control message successfully completed.
+//!                             3. The data returned is changed by the ACP.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport2
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport2
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery2
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect2
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         captransport2       new
+        COMMAND         capreport2          new
+        COMMAND         caprecovery2        new
+        COMMAND         caprecovery2        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetRecoveryType_Command37
+        COMMAND         caprecovery2        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetMaxWindowSize_Command38
+        COMMAND         caprecovery2        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetMinWindowSize_Command39
+        COMMAND         capprotect2         new
+        COMMAND         capprotect2         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetContentProtectionType_Command41
+        COMMAND         capprotect2         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SetContentProtectionData_Command42
+        COMMAND         gavdp               GetRemoteSEPCapabilities    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-GetRemoteSEPCapabilities_Command43
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SEID_Command46
+        COMMAND         gavdp               SendSecurityControl         BT-GAVDP-PublishedPartner-Active-Slave-0012-0001-SendSecurityControl_Command47
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0012-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0012
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0013
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0013
+//! @SYMAPI                     MGavdpUser::GAVDP_ReleaseIndication(TSEID)
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Send data and then close bearers and remote device will callback to MGavdpUser::GAVDP_ReleaseIndication().
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create bearers
+//!                             17. Start stream
+//!                             18. Wait for call back to MGavdpUser::GAVDP_StartStreamsConfirm()
+//!                             19. Send data
+//!                             20. Wait for call back to RunL()
+//!                             21. Close bearers
+//!                             22. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Close bearers without causing panic.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0013-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-CreateBearerSockets_Command54
+        OUTSTANDING
+        
+        COMMAND         gavdp               StartStream                 BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-StartStream_Command56
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Send                        BT-GAVDP-PublishedPartner-Active-Slave-0013-0001-Send_Command59
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               CloseBearerSockets
+        DELAY           5000000
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0013-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0013
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0014
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0014
+//! @SYMAPI                     RGavdp::Cancel()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Cancel a command of start stream.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor and try to call Cancel().
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create bearers
+//!                             17. Start stream
+//!                             18. Cancel the start stream command
+//!                             19. Abort stream
+//!                             20. Wait for call back to MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             21. Close bearers
+//!                             22. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method Cancel() called without causing panic.
+//!                             2. The call back function GAVDP_StartStreamsConfirm() will not be called.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0014-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Cancel
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-CreateBearerSockets_Command54
+        OUTSTANDING
+        
+        COMMAND         gavdp               StartStream                 BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-StartStream_Command56
+        COMMAND         gavdp               Cancel
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0014-0001-AbortStream_Command58
+        OUTSTANDING
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0014-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0014
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0015
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0015
+//! @SYMAPI                     RGavdp::MaxSecurityControlLength()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Returns the deprecated value KMaxAvdtpSecurityControlInfo.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Get KMaxAvdtpSecurityControlInfo
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Return value of RGavdp::MaxSecurityControlLength() is as expected.
+//! @SYMTestType                CIT
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RGavdp              gavdp
+        COMMAND         gavdp               new
+        COMMAND         gavdp               MaxSecurityControlLength    BT-GAVDP-PublishedPartner-Active-Slave-0015-0001-MaxSecurityControlLength_Command5
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0015
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0016
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0016
+//! @SYMAPI                     MGavdpUser::GAVDP_Error(TInt, const TDesC8 {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            GAVDP error occurs.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create bearers
+//!                             17. Suspend stream
+//!                             18. Wait for call back to MGavdpUser::GAVDP_Error()
+//!                             19. Abort stream
+//!                             20. Wait for call back to MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             21. Close bearers
+//!                             22. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_Error() is called when a GAVDP error occurs.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0016-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AddSEPCapability_Command49
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-CreateBearerSockets_Command54
+        OUTSTANDING
+        
+        COMMAND     !AsyncError=-18     gavdp       SuspendStream       BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-SuspendStream_Command56
+        OUTSTANDING
+        
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0016-0001-AbortStream_Command58
+        OUTSTANDING
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0016-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0016
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0017
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0017
+//! @SYMAPI                     RGavdp::Connect(const TBTDevAddr {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Negative test, connect to a not ready remote device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_Error().
+//!                             10. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function MGavdpUser::GAVDP_ConnectConfirm() is called with error number -34 after the method Connect() is called.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0017-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND !AsyncError=-34 gavdp       Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0017-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0017-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0017
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0018
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0018
+//! @SYMAPI                     RGavdp::CommitSEPConfiguration()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Configure remote SEP, and rejected by romte side.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                               13.4. TAvdtpContentProtectionCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_Error()
+//!                             16. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The callback function MGavdpUser::GAVDP_Error() is called with error number -18178 when locally-initiated configuration rejected by romte side.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0018-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command45   
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetContentProtectionType_Command47
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-SetContentProtectionData_Command48
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-AddSEPCapability_Command49
+        COMMAND    !AsyncError=-18178     gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0018-0001-CommitSEPConfiguration_Command52
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0018-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0018
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0019
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0019
+//! @SYMAPI                     RGavdp::Listen()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Negative test, call listen() again at the remote side after remote SEP has been connected.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Shutdown the GAVDP.
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method Connect() return KErrNone.
+//!                             2. The call back function MGavdpUser::GAVDP_ConnectConfirm() is called  when a signalling channel has successfully been created.
+//!                             3. Method Shutdown()return KErrNone.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0019-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0019-0001-Connect_Command29
+        OUTSTANDING
+        DELAY           5000000
+        COMMAND         gavdp               Shutdown
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0019-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0019
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0020
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0020
+//! @SYMAPI                     RGavdp::BeginConfiguringRemoteSEP(TSEID, TSEID);
+//!                             RGavdp::AddSEPCapability(const TAvdtpServiceCapability {ref});
+//!                             RGavdp::CommitSEPConfiguration();
+//!                             MGavdpUser::GAVDP_ConfigurationConfirm()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Reconfiguration of remote SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                               13.2. TAvdtpReportingCapabilities
+//!                               13.3. TAvdtpRecoveryCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Abort stream
+//!                             17. Wait for call back to MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             18. Begin reconfiguration of a remote SEP
+//!                             19. Add SEP capabilities:
+///!                               19.1. TAvdtpContentProtectionCapabilities
+//!                             20. Commit the remote SEP configuration
+//!                             21. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             22. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method BeginConfiguringRemoteSEP() return KErrNone in both callings.
+//!                             2. Method AddSEPCapability() return KErrNone in both callings.
+//!                             3. Method CommitSEPConfiguration() called without causing panic in both callings.
+//!                             4. The callback function MGavdpUser::GAVDP_ConfigurationConfirm() is called when locally-initiated configuration/reconfiguration procedure successfully completes.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0020-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command38
+        COMMAND         capreport3          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command40
+        COMMAND         caprecovery3        new
+        COMMAND         caprecovery3        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetRecoveryType_Command42
+        COMMAND         caprecovery3        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetMaxWindowSize_Command43
+        COMMAND         caprecovery3        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetMinWindowSize_Command44
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command45   
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-CommitSEPConfiguration_Command46
+        OUTSTANDING
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AbortStream_Command48
+        OUTSTANDING
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         capprotect3         new
+        COMMAND         capprotect3         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetContentProtectionType_Command52
+        COMMAND         capprotect3         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-SetContentProtectionData_Command53
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-AddSEPCapability_Command54
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0020-0001-CommitSEPConfiguration_Command46
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0020-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0020
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0021
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0021
+//! @SYMAPI                     RGavdp::CreateBearerSockets(TSEID);
+//!                             MGavdpUser::GAVDP_BearerReady(RSocket, const TAvdtpSockAddr {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Create transport bearer without reporting and recovery bearers.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Begin configuration of a remote SEP
+//!                             13. Add SEP capabilities:
+//!                               13.1. TAvdtpMediaTransportCapabilities
+//!                             14. Commit the remote SEP configuration
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             16. Create transport bearer
+//!                             17. Wait for call back to MGavdpUser::GAVDP_BearerReady()
+//!                             18. Abort stream
+//!                             19. Wait for call back to MGavdpUser::GAVDP_AbortStreamConfirm()
+//!                             20. Close bearer
+//!                             21. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method CreateBearerSockets() return KErrNone.
+//!                             2. The call back function GAVDP_BearerReady() is called when the transport bearer has been created for a session in the stream.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0021-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TSEID                                 remoteseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport3
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport3
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery3
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect3
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         remoteseid          new
+        COMMAND         remotesepinfo1      SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-SEID_Command35
+        COMMAND         gavdp               BeginConfiguringRemoteSEP   BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-BeginConfiguringRemoteSEP_Command36
+        COMMAND         captransport3       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-AddSEPCapability_Command38
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-CommitSEPConfiguration_Command39
+        OUTSTANDING
+        
+        COMMAND         gavdp               CreateBearerSockets         BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-CreateBearerSockets_Command41
+        OUTSTANDING
+        
+        COMMAND         gavdp               AbortStream                 BT-GAVDP-PublishedPartner-Active-Slave-0021-0001-AbortStream_Command43
+        OUTSTANDING
+        DELAY           5000000
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0021-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0021
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0022
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Active-Slave-0022
+//! @SYMAPI                     RGavdp:: GetRemoteSEPCapabilities(TSEID, const TAvdtpServiceCategories {ref});
+//!                             MGavdpUser::GAVDP_Error()
+//! @SYMAuthor                  Felix Rao
+//! @SYMCreationDate            08-07-2008
+//! @SYMTestCaseDesc            Negative test, get capabilities which remote device does not support.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (source & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Connect to a remote device.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Discover SEPs of remote device.
+//!                             11. Wait for call back to MGavdpUser::GAVDP_SEPDiscovered() and MGavdpUser::GAVDP_SEPDiscoveryComplete().
+//!                             12. Get NonSBCCodecCapabilities which remote device does not support.
+//!                             13. Wait for call back to MGavdpUser::Gavdp_Error() to indicate not supported capabilities.
+//!                             14. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method MGavdpUser::GetRemoteSEPCapabilities() return KErrNone.
+//!                             2. The call back function MGavdpUser::Gavdp_Error() is called with error number -5.
+//! @SYMTestType                CIT
+    START_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0022-0001
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-active-slave.ini
+        SHARED_ACTIVE_SCHEDULER
+        RESTORE_OBJECT  TBTDevAddr          addrremote
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        CREATE_OBJECT   TAvdtpSEPInfo                         remotesepinfo1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc2
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-RegisterSEP_Command08
+        COMMAND         localseid           new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Connect                     BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-Connect_Command29
+        OUTSTANDING
+        
+        COMMAND         remotesepinfo1      new
+        COMMAND         gavdp               DiscoverRemoteSEPs          BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-DiscoverRemoteSEPs_Command32
+        OUTSTANDING
+        
+        COMMAND         capnonsbc2          new                         BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-new_Command34
+        COMMAND  !AsyncError=-5   gavdp    GetRemoteSEPCapabilities    BT-GAVDP-PublishedPartner-Active-Slave-0022-0001-GetRemoteSEPCapabilities_Command35
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE           addrremote
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    END_SYNCHRONISED_TESTCASE    BT-GAVDP-PublishedPartner-Active-Slave-0022-0001
+END_TESTCASE BT-GAVDP-PublishedPartner-Active-Slave-0022
+

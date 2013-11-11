@@ -1,0 +1,1315 @@
+' Generate-report.ebs
+'
+' This is a RoseScript utility with which a user can traverse a 
+' Rational Rose model and generate a Microsoft Word Document
+' from the template "Formal.dot"
+'
+' A lot of the early versions of this script were derived from
+' work previously published on the Rational Developer's Network
+' and made freely available.
+'
+' TBD:
+'       3. Provide cleaning subroutine or external utility to curb growth of %TEMP%
+'               with rosedXXX.wmf files of rendered diagrams.
+'       4. Provide a package selection drop-down on the Dialog so that many projects can 
+'               coexist in the same model (bonus - reduces the probability of a 
+'               mook accidentally choosing to document the EPOC32 "include" package).
+'
+Const DefaultTool$ = "ReportGen"
+Const PRODUCTDEFAULTWORDDOCFILENAME     = 103
+'
+' Different report type specs
+'
+Const RepAnalysisType = 0
+Const RepDesignType = 1
+Const RepAnalysisNDesignType = 2
+Const RepTestType = 3
+'
+' Model verification options
+'
+Const RepVerifyNot = 0
+Const RepVerifySection = 1
+Const RepVerifyEmbed = 2
+'
+' There is a state machine in here and these are the states
+'
+Const RPh_StartUp = 0
+Const RPh_Dynamic = 1
+Const RPh_Static = 2
+Const RPh_TailBoiler = 3
+Const RPh_Crosscheck = 4
+'
+' For proofreading purposes
+'
+Const MissingTextStr$ = "ATTENTION: Do You Need Documentation For This Item?"
+'
+' Useful type declaraions
+'
+'
+' Told you there was a state machine in here
+'
+Type GeneratorStateType
+    Phase As Integer
+End Type
+'
+' Configurability - if this was Python, I'd serialise it
+' and make it a config file
+'
+Type ReportOptionsType
+    Title As String
+    FileName As String
+    Template As String
+    Generate As Boolean
+    WhiteBlock As Boolean
+    ClassDiagrams As Boolean
+    ScenarioDiagrams As Boolean
+    StateDiagrams As Boolean
+    UseCaseDiagrams As Boolean
+    CppSyntax As Boolean
+    PublicOnly As Boolean
+	FEBoiler As Boolean
+	BEBoiler As Boolean
+	SupportSubheadingTags As Boolean
+    HighlightDocGaps As Boolean
+    DocType As Integer
+    VerifyType As Integer
+End Type
+'
+' When verifying the model, we need to establish relationships
+' between scenario/sequence diagrams and their title. Also, on each iteration, we need to 
+' check that we don't create duplicate entries where a method is used
+' more than once in the same context.
+'
+Type DiagEntry
+    FigureTitle As String
+    Diagram As ScenarioDiagram
+    SeenBefore As Boolean
+End Type
+'
+' Globals - don't we just lurve Basic?
+'
+Private ReportOptions As ReportOptionsType
+Private GeneratorState As GeneratorStateType
+'
+' An array of DiagEntry
+'
+Public GlobalDiagList() As DiagEntry
+'
+' So, the documentation doesn't explain how one would elicit the
+' size of a dynamic array, so the counts have to be externalised.
+' Just exactly how crap is that?
+'
+Public DiagListCount As Integer
+Public GlobalDiagListSize As Integer
+
+Public LicensedRoseApplication As Application
+Private resIFace As Object
+
+Public RWU_DiagramCount As Integer
+'
+' Sort of like an Application Constructor - yech!
+'
+Sub WordUtilInit()
+    Let RWU_DiagramCount = 1
+    Let DiagListCount = 0
+    Let GlobalDiagListSize = 0
+    ReDim GlobalDiagList(0)
+End Sub
+
+'
+' Helper function
+'
+Sub Para(WordApp As Object)
+    WordApp.InsertPara
+End Sub
+'
+' For banging in a huge bunch of whitespace
+'
+Sub WhiteBlock(WordApp As Object)
+    Para WordApp
+    Para WordApp
+    Para WordApp
+    Para WordApp
+    Para WordApp
+End Sub
+'
+' Helper for page breaks
+'
+Sub Break(WordApp As Object)
+    WordApp.InsertPageBreak
+End Sub
+'
+' This is to overcome the limitations of Word as a programmable application
+' and all I can say is that the details are nasty.
+'
+Sub ReplaceFinalParagraphKludge (WordApp As Object)
+    WordApp.linedown
+    WordApp.charright 1, 1  ' go right one character and select
+    WordApp.insertpara      ' overwrite the selected para marker with a new one
+    WordApp.lineup
+End Sub
+'
+' Will need to reset the state on these objects regularly
+'
+Sub ResetGlobalDiagList
+    For i% = 0 To GlobalDiagListSize-1
+        GlobalDiagList(i).SeenBefore = False
+    Next i
+End Sub
+'
+' We need this for extracting diagrams and rendering them
+' on the file system before inserting them into a Word
+' document. Note that this does not clean up after itself
+' which means that you are likely to accumulate rosedXXX.wmf
+' files in your %TEMP% directory. The good news is that it
+' transparently reuses files on each run, so this is not inevitable
+' and unrestrained growth.
+'
+Function GetTmpFileName
+    Dim tmpFileName As String
+    Dim tmpPathName As String
+    
+    tmpPathName = Environ("TEMP")
+    If tmpPathName = ""     Then
+        tmpPathName = CurDir
+    End If
+    Do
+        tmpFileName = tmpPathName + "\rosed" & RWU_DiagramCount & ".wmf"
+        If Not Dir(tmpFileName)="" Then
+            Kill(tmpFileName)
+        End If
+    Loop Until (Dir(tmpFileName)="")
+    RWU_DiagramCount = RWU_DiagramCount + 1
+    GetTmpFileName = tmpFileName
+End Function
+
+'----------------------------------------------------------------------------
+'
+' Specialist Word-related subroutines
+'
+'
+' Generic Diagram insertion
+'
+Sub WordInsertDiagram(fileName As String, WordApp As Object)
+    'ReplaceFinalParagraphKludge WordApp
+    WordApp.CenterPara
+    WordApp.InsertPicture fileName, false, false
+    Para WordApp
+	ReplaceFinalParagraphKludge WordApp
+End Sub
+'
+' Each diagram type is literally a different type in the object model, so
+' since Basic has no polymorphic facilities, we have to resort to
+' coding up a subroutine for each type. Yawn!
+'
+Sub WordInsertScenarioDiagram(aDiagram As ScenarioDiagram, WordApp As Object)
+    Dim tmpFileName As String
+    Let tmpFileName = GetTmpFileName
+    aDiagram.RenderEnhanced tmpFileName
+    WordInsertDiagram tmpFileName, WordApp
+End Sub
+
+Sub WordInsertStateDiagram(aDiagram As StateDiagram, WordApp As Object)
+    Dim tmpFileName As String
+    Let tmpFileName = GetTmpFileName
+    aDiagram.RenderEnhanced tmpFileName
+    WordInsertDiagram tmpFileName, WordApp
+End Sub
+
+Sub WordInsertClassDiagram(aDiagram As ClassDiagram, WordApp As Object)
+    Dim tmpFileName As String
+    Let tmpFileName = GetTmpFileName
+    aDiagram.RenderEnhanced tmpFileName
+    WordInsertDiagram tmpFileName, WordApp
+End Sub
+
+'
+' So we want to be able to translate our "depth" in the model into the
+' appropriate heading style in Word.
+'
+Function GetWordHeadingStyleName(HeadingNumber As Integer) As String
+    GetWordHeadingStyleName = "Heading " & CStr(HeadingNumber)
+End Function
+'
+' Generalised heading insertion by number
+'
+Sub WordInsertHeading(aLevel As Integer, aString As String, WordApp As Object)
+        ' If you do not do it, it will not run.
+    ReplaceFinalParagraphKludge WordApp
+        ' Here's the real code that actually does something
+    WordApp.FormatStyle GetWordHeadingStyleName(aLevel)      
+    WordApp.Insert aString
+    Para WordApp
+    WordApp.FormatStyle "Normal"
+End Sub
+
+Sub WordInsertDocumentation(HeadingLevel As Integer, Documentation As String, WordApp As Object)
+	'
+	' It was requested that the script support the insertion of
+	' an HTML-like tag in the object documentation that would force the 
+	' insertion of a subheading in the output text.
+	' This will interefere with the real HTML generation capabilities
+	' of Rose, so it was originally only supported as a variant on the 
+	' script. This presents boring maintenance duplication issues, however, so it
+	' was reincorporated as a configurable option. Unfortunately, it does change 
+	' the signature of this method such that it requires a HeadingLevel even when it 
+	' doesn't use one. 
+	'
+	Dim Astr As String
+	Dim Bstr As String
+	Dim Cstr As String
+
+    If Documentation <> "" Then
+		If ReportOptions.SupportSubheadingTags Then
+			Astr = Trim(Documentation)
+			Print "Astr: ", Astr
+			x% = InStr(1,Astr,"<h>",1)
+			y% = InStr(1,Astr,"</h>",1)
+			While x% <> 0 And y% <> 0
+				Cstr = Left(Astr,x%-1)
+				Print "Cstr : ", Cstr
+        		WordApp.FormatStyle "Normal"
+        		WordApp.Insert Trim(Cstr)
+        		Para WordApp
+
+				Bstr = Mid(Astr,x%+3,y%-(x%+3))
+				Print "Bstr : ", Bstr
+				WordInsertHeading HeadingLevel,Trim(Bstr),WordApp
+
+				Astr = Right(Astr,Len(Astr)-(y%+3))
+				Print "Astr : ",Astr
+				x% = InStr(1,Astr,"<h>",1)
+				y% = InStr(1,Astr,"</h>",1)
+			Wend
+        	WordApp.FormatStyle "Normal"
+        	WordApp.Insert Trim(Astr)
+        	Para WordApp
+		Else
+        	WordApp.FormatStyle "Normal"
+        	WordApp.Insert Trim(Documentation)
+        	Para WordApp
+		End If
+    Else
+        ' Oh no - we seem to have missed out a piece of documentation.
+        ' Another proofreading setting will highlight this lacuna for
+        ' you in lucky red text.
+        If ReportOptions.HighlightDocGaps Then
+            WordApp.FormatStyle "Body Text"
+            WordApp.Insert MissingTextStr
+            Para WordApp
+        End If
+    End If
+	'
+    ' To assist in the proofreading phases, it seemed useful
+    ' to have a mode in which large chunks of whitespace were
+    ' inserted into the document at every point where the hard working
+    ' editor might wish to scribble notes and comments during the development
+    ' of the text. Run the script with this set and print out the resultant document
+    ' and you have a doc that facilitates the inveterate scribbler.
+    ' I'm a great believer in appropriate technology.
+	'
+    If ReportOptions.WhiteBlock Then
+        WhiteBlock WordApp
+    End If
+
+End Sub
+'
+' Of course we want each of our diagrams to be numbered and titled.
+' It's the done thing, and it's the thing that gets done here.
+'
+Sub WordInsertFigureName(aFigureName As String, WordApp As Object)
+    WordApp.FormatStyle "Centered"
+    WordApp.Insert "Figure " + CStr(RWU_DiagramCount-1) & ": " & aFigureName
+    Para WordApp
+    WordApp.FormatStyle "Normal"
+End Sub
+'
+' Unfortunately, we have to operate slightly differently for scenarios, because of
+' the verifications we may wish to run.
+'
+Sub WordInsertScenarioFigureName(aFigureName As String, WordApp As Object, XCEntry As DiagEntry)
+    Dim tstr$
+    tstr = "Figure " + CStr(RWU_DiagramCount-1) & ": " & aFigureName
+    WordApp.FormatStyle "Centered"
+    'WordApp.Insert "Figure " + CStr(RWU_DiagramCount-1) & ": " & aFigureName
+    WordApp.Insert tstr
+    Para WordApp
+    WordApp.FormatStyle "Normal"
+        ' Need  to keep track of titles applied to scenario diagrams.
+    XCEntry.FigureTitle = tstr
+    Let GlobalDiagList(DiagListCount) = XCEntry
+    DiagListCount = DiagListCount + 1
+End Sub
+
+
+'---------------------------------------------------------------------------
+'
+' Some handy utility muffins.
+'
+
+Public Function GetResourceString(resourceID As Long) As String
+    
+    If (resIFace Is Nothing) then
+        Set resIFace = CreateObject("rvsreportgenres.rvsrepgeninterface")
+    End If
+    
+    GetResourceString = resIFace.GetString(resourceID)
+End Function
+
+
+Function GetLicensedRoseApplication() As Application
+    Set GetLicensedRoseApplication = RoseApp.GetLicensedApplication("{A567222E-CBBE-11D0-BC0B-00A024C67143}")
+End Function
+
+Function ReportDialogLoop(controlname$, action%, suppvalue%) As Integer
+    If controlname$ = "Browse" Then
+        FileName$ = SaveFilename$ ("Create a Word document",  "Word Documents:*.DOC")
+        If FileName$ <> "" Then
+            DlgText "FileName", FileName$
+        End If
+        ReportDialogLoop = 1
+    End If
+End Function
+
+Function EnclosingDirPath(FileName As String)
+    ' Extracts the enclosing directory path from a file name
+    Dim Pos1, Pos2, Pos3
+    On Error GoTo EnclosingDirPath_exception
+    
+    Pos3 = 255
+    Pos2 = 1
+    Pos1 = 1
+    Do
+        Pos3 = InStr(Pos2 + 1, FileName, "\")
+        If Pos3 <> 0 Then
+            Pos1 = Pos2
+            Pos2 = Pos3
+        Else
+            Exit Do
+        End If
+    Loop
+    
+    EnclosingDirPath = Left(FileName, Pos2 - 1)
+    Exit Function
+    
+EnclosingDirPath_exception:
+    Resume EnclosingDirPath_end
+EnclosingDirPath_end:
+    'Exit with the full path
+    EnclosingDirPath = FileName
+End Function
+
+Function GetAllOfClasses(aCategory As Category) As ClassCollection
+    
+    Dim theCatClassCollection As New ClassCollection
+    Dim theCatClass As Class, theCatInnerClass As Class
+    Dim I As Integer, J As Integer
+    
+    For I = 1 To aCategory.Classes.Count
+        Set theCatClass =  aCategory.Classes.GetAt(I)
+        theCatClassCollection.Add theCatClass
+        For J = 1 To theCatClass.GetAllNestedClasses.Count
+            Set theCatInnerClass = theCatClass.GetAllNestedClasses.GetAt(J)
+            theCatClassCollection.Add theCatInnerClass
+        Next J
+    Next I
+    
+    Set GetAllOfClasses = theCatClassCollection
+End Function
+
+Function MakeFileName (Path As String, FileName As String) As String
+    ' Check to see if the last character is a separator
+    If Instr ("\/", Right$(Path, 1)) Then
+        MakeFileName$ = Path & FileName
+    Else
+        MakeFileName$ = Path & "\" & FileName
+    End If
+End Function
+
+Function ChangeFileExtension (FullFileName As String, NewExtension As String) As String
+    FilePath$ = FileParse$ (FullFileName, 2)
+    FileRoot$ = FileParse$ (FullFileName, 4)
+    ChangeFileExtension$ = MakeFileName$ (FilePath$, FileRoot$ & "." & NewExtension$)
+End Function
+
+'------------------------------------------------------------------------------
+'
+' Rose collections are unsorted. This is not considered sightly.
+'
+
+Sub sortalpha( aCategory As Category, myAlpha() As String)
+    Dim theCatClassCollection As ClassCollection
+    Set theCatClassCollection = GetAllOfClasses(aCategory)
+    
+    For ike = 1 To theCatClassCollection.count
+        myAlpha(ike) = theCatClassCollection.GetAt(ike).Name
+    Next ike
+    arraysort myAlpha
+    
+    Set theCatClassCollection = Nothing
+End Sub
+
+Sub sortalphaclassdiagrams( aCategory As Category, myAlpha() As String)
+    Dim classDiagrams As ClassDiagramCollection
+    Set classDiagrams = aCategory.ClassDiagrams
+    
+    For ike = 1 To classDiagrams.count
+        myAlpha(ike) = classDiagrams.GetAt(ike).Name
+    Next ike
+    arraysort myAlpha
+    
+    Set classDiagrams = Nothing
+End Sub
+
+Sub sortalphascenariodiagrams( aCategory As Category, myAlpha() As String)
+    Dim scenarioDiagrams As ScenarioDiagramCollection
+    Set scenarioDiagrams = aCategory.ScenarioDiagrams
+    
+    For ike = 1 To ScenarioDiagrams.count
+        myAlpha(ike) = ScenarioDiagrams.GetAt(ike).Name
+    Next ike
+    arraysort myAlpha
+    
+    Set ScenarioDiagrams = Nothing
+End Sub
+
+
+'------------------------------------------------------------------------------
+'
+' These higher level procedures pretty much do what their names say they do.
+'
+Sub SearchForClassDiagramsInPackage(WordApp As Object, aCategory As Category, HeadingNumber As Integer)
+    
+    Dim classDiagrams As ClassDiagramCollection
+    Dim aClassDiagram As ClassDiagram
+    Dim Alpha() As String
+
+    Set classDiagrams = aCategory.ClassDiagrams
+    ReDim Alpha(classDiagrams.Count)
+    SortAlphaClassDiagrams aCategory, alpha
+
+    If classDiagrams.Count Then
+        'Dim theClass As Class
+        'Dim NestedClasses As ClassCollection
+        
+        For CLSID = 1 To classDiagrams.Count
+            Ike = classDiagrams.FindFirst(Alpha(CLSID))
+            Set aClassDiagram = classDiagrams.GetAt(Ike)
+        	If Not (aClassDiagram.IsUseCaseDiagram) Then
+				WordInsertHeading HeadingNumber, aClassDiagram.Name, WordApp
+            	WordInsertClassDiagram aClassDiagram, WordApp
+            	WordInsertFigureName aClassDiagram.Name, WordApp
+            	WordInsertDocumentation HeadingNumber+1, aClassDiagram.Documentation, WordApp
+        	End If
+        Next CLSID
+    End If
+
+
+    'For clsID = 1 To classDiagrams.Count
+     '   Set aClassDiagram=classDiagrams.GetAt(clsID)
+     '   If Not (aClassDiagram.IsUseCaseDiagram) Then
+	 '		WordInsertHeading HeadingNumber, aClassDiagram.Name, WordApp
+     '       WordInsertClassDiagram aClassDiagram, WordApp
+     '       WordInsertFigureName aClassDiagram.Name, WordApp
+     '       WordInsertDocumentation HeadingNumber+1, aClassDiagram.Documentation, WordApp
+      '  End If
+    'Next clsID
+End Sub
+
+Sub SearchForSeqAndCollabDiagramsInPackage(WordApp As Object, aCategory As Category, HeadingNumber As Integer)
+    
+    Dim ScenarioDiagrams As ScenarioDiagramCollection
+    Dim aScenarioDiagram As ScenarioDiagram
+    Dim Alpha() As String
+    
+    Set ScenarioDiagrams = aCategory.ScenarioDiagrams
+    ReDim Alpha(ScenarioDiagrams.Count)
+    SortAlphaScenarioDiagrams aCategory, alpha
+
+    Dim XCEntry As DiagEntry
+    GlobalDiagListSize = GlobalDiagListSize + ScenarioDiagrams.Count
+    ReDim Preserve GlobalDiagList(GlobalDiagListSize)
+    For ScenID = 1 To ScenarioDiagrams.Count
+		Ike = ScenarioDiagrams.FindFirst(Alpha(ScenID))
+        Set aScenarioDiagram=ScenarioDiagrams.GetAt(Ike)
+		WordInsertHeading HeadingNumber, aScenarioDiagram.Name, WordApp
+        WordInsertScenarioDiagram aScenarioDiagram, WordApp
+        Set XCEntry.Diagram = aScenarioDiagram
+        WordInsertScenarioFigureName aScenarioDiagram.Name, WordApp, XCEntry
+        WordInsertDocumentation HeadingNumber+1, aScenarioDiagram.Documentation, WordApp
+    Next ScenID
+End Sub
+
+Sub SearchForClassDiagramsInUseCase(WordApp As Object, aUseCase As UseCase, HeadingNumber As Integer)
+    
+    Dim classDiagrams As ClassDiagramCollection
+    Dim aClassDiagram As ClassDiagram
+    
+    Set classDiagrams = aUseCase.ClassDiagrams
+    
+    For clsID = 1 To classDiagrams.Count
+        Set aClassDiagram=classDiagrams.GetAt(clsID)
+        If Not (aClassDiagram.IsUseCaseDiagram) Then
+			WordInsertHeading HeadingNumber, aClassDiagram.Name, WordApp			
+            WordInsertClassDiagram aClassDiagram, WordApp
+            WordInsertFigureName aClassDiagram.Name, WordApp
+            WordInsertDocumentation HeadingNumber+1, aClassDiagram.Documentation, WordApp
+        Else
+            If (aClassDiagram.IsUseCaseDiagram) And (ReportOptions.UseCaseDiagrams) Then
+				WordInsertHeading HeadingNumber, aClassDiagram.Name, WordApp
+                WordInsertClassDiagram aClassDiagram, WordApp
+                WordInsertFigureName aClassDiagram.Name, WordApp
+                WordInsertDocumentation HeadingNumber+1, aClassDiagram.Documentation, WordApp
+            End If
+        End If
+    Next clsID
+End Sub
+
+
+Sub SearchForSeqAndCollabDiagramsInUseCase(WordApp As Object, aUseCase As UseCase, HeadingNumber As Integer)
+    
+    Dim ScenarioDiagrams As ScenarioDiagramCollection
+    Dim aScenarioDiagram As ScenarioDiagram
+    
+    Set ScenarioDiagrams = aUseCase.ScenarioDiagrams
+    Dim XCEntry As DiagEntry
+    GlobalDiagListSize = GlobalDiagListSize + ScenarioDiagrams.Count
+    ReDim Preserve GlobalDiagList(GlobalDiagListSize)
+    For ScenID = 1 To ScenarioDiagrams.Count
+        Set aScenarioDiagram=ScenarioDiagrams.GetAt(ScenID)
+		WordInsertHeading HeadingNumber, aScenarioDiagram.Name, WordApp
+        WordInsertScenarioDiagram aScenarioDiagram, WordApp
+        Set XCEntry.Diagram = aScenarioDiagram
+        WordInsertScenarioFigureName aScenarioDiagram.Name, WordApp, XCEntry
+        WordInsertDocumentation HeadingNumber+1, aScenarioDiagram.Documentation, WordApp
+    Next ScenID
+End Sub
+
+
+
+Sub SearchForStateDiagramsInPackage(WordApp As Object, aCategory As Category, HeadingNumber As Integer)
+    Dim aStateMachineOwner As StateMachineOwner
+    Dim aStateMachineCollection As StateMachineCollection
+    Dim aStateMachine As StateMachine
+    Dim aStateDiagram As StateDiagram
+    Dim aStateDiagramCollection As StateDiagramCollection
+    Dim aStateCollection As StateCollection
+    Dim aState As State
+    
+    Set aStateMachineOwner = aCategory.StateMachineOwner
+    Set aStateMachineCollection = aStateMachineOwner.StateMachines
+    If aStateMachineCollection.Count Then
+        For SMID = 1 To aStateMachineCollection.Count
+            Set aStateMachine = aStateMachineCollection.GetAt(SMID)
+            Set aStateDiagramCollection = aStateMachine.Diagrams
+            WordInsertHeading HeadingNumber, aStateMachine.Name, WordApp
+            If aStateDiagramCollection.Count Then
+                For SDID = 1 To aStateDiagramCollection.Count
+                    Set aStateDiagram = aStateDiagramCollection.GetAt(SDID)
+					WordInsertHeading HeadingNumber, aStateDiagram.Name, WordApp
+                    WordInsertStateDiagram aStateDiagram, WordApp
+                    WordInsertFigureName aStateDiagram.Name, WordApp
+                    WordInsertDocumentation HeadingNumber+1, aStateDiagram.Documentation, WordApp
+                Next SDID
+            End If
+            Set aStateCollection = aStateMachine.States
+            If aStateCollection.Count Then
+                For STID = 1 To aStateCollection.Count
+                    Set aState = AstateCollection.GetAt(STID)
+                    WordInsertHeading HeadingNumber+1, aState.Name, WordApp
+                    WordInsertDocumentation HeadingNumber+1, aState.Documentation, WordApp
+                Next STID
+            End If
+        Next SMID
+    End If
+End Sub
+'
+' Cunningly, we find that Use Case diagrams are not a distinct type,
+' but are a specialised state of ClassDiagram
+' Ho ho, go figure.
+'
+Sub SearchForUseCaseDiagramsInPackage(WordApp As Object, aCategory As Category, HeadingNumber As Integer)
+    Dim ClassDiagrams As ClassDiagramCollection
+    Dim aClassDiagram As ClassDiagram
+
+    Set ClassDiagrams = aCategory.ClassDiagrams
+    For ClsID = 1 To ClassDiagrams.Count
+        Set aClassDiagram = ClassDiagrams.GetAt(ClsID)
+        If aClassDiagram.IsUseCaseDiagram Then
+			WordInsertHeading HeadingNumber, aClassDiagram.Name, WordApp
+            WordInsertClassDiagram aClassDiagram, WordApp
+            WordInsertFigureName aClassDiagram.Name, WordApp
+            WordInsertDocumentation HeadingNumber+1, aClassDiagram.Documentation, WordApp
+        End If
+    Next ClsID
+End Sub
+
+
+'------------------------------------------------------------------------------
+'
+' We live in a C++ world, so we need to be able to show our attributes
+' in a way familiar to code monkeys.
+'
+Sub GenerateAttribute(WordApp As Object, anAttribute As Attribute, HeadingNumber As Integer)
+    Dim theAttribute As String
+    
+    If ReportOptions.CppSyntax Then
+        Select Case anAttribute.ExportControl
+            Case rsPublicAccess
+                theAttribute = "Public:   "
+            Case rsProtectedAccess
+                theAttribute = "Protected:   "
+            Case rsPrivateAccess
+                theAttribute = "Private:   "
+        End Select
+        theAttribute = theAttribute & anAttribute.Type & " "
+    End If
+    
+    theAttribute = theAttribute & anAttribute.Name
+    If ReportOptions.CppSyntax Then
+        If Len(anAttribute.InitValue) > 0 Then
+            theAttribute = theAttribute & " = " & anAttribute.InitValue
+        End If
+    End If
+    
+    WordInsertHeading HeadingNumber, theAttribute, WordApp
+    WordInsertDocumentation HeadingNumber+1, anAttribute.Documentation, WordApp
+End Sub
+'
+' We like our attributes grouped according to their access specification, of course
+'
+Sub GenerateClassAttributeAccessGroup(WordApp As Object, attColl As AttributeCollection, HeadingNumber As Integer)
+    If attColl.Count Then
+        For AttrID = 1 To attColl.Count
+            GenerateAttribute WordApp, attColl.GetAt(AttrID), HeadingNumber
+        Next AttrID
+    End If
+End Sub
+'
+' So this procedure iterates across the lot and groups them accordingly.
+' However, I'm pretty sure we would frown on any public class attributes, wouldn't we? 
+' And I always think that protected class attributes have to be well justified. 
+' Generally they are used to get round analysis errors, otherwise.
+'
+Sub GenerateClassAttributes(WordApp As Object, aClass As Class, HeadingNumber As Integer)
+    Dim PublicAttributes As New AttributeCollection
+    Dim ProtectedAttributes As New AttributeCollection
+    Dim PrivateAttributes As New AttributeCollection
+    Dim anAttribute As Attribute
+    
+    If aClass.Attributes.Count Then
+        For AttrID = 1 To aClass.Attributes.Count
+            Set anAttribute = aClass.Attributes.GetAt(AttrID)
+            Select Case anAttribute.ExportControl
+                Case rsPublicAccess
+                    PublicAttributes.Add anAttribute
+                Case rsProtectedAccess
+                    ProtectedAttributes.Add anAttribute
+                Case rsPrivateAccess
+                    PrivateAttributes.Add anAttribute
+            End Select
+        Next AttrID
+        WordInsertHeading HeadingNumber, aClass.Name & " Attributes", WordApp
+        GenerateClassAttributeAccessGroup WordApp, PublicAttributes, HeadingNumber+1
+        If Not ReportOptions.PublicOnly Then
+            GenerateClassAttributeAccessGroup WordApp, ProtectedAttributes, HeadingNumber+1
+            GenerateClassAttributeAccessGroup WordApp, PrivateAttributes, HeadingNumber+1
+        End If
+    End If
+End Sub
+
+'------------------------------------------------------------------------------
+' 
+' So here we go, doing the same with operations as we did with attributes.
+'
+Function GenerateParameter (aParameter As Parameter) As String
+    Code$ = aParameter.Name + ":" + aParameter.Type
+    GenerateParameter = Code$
+End Function
+
+Sub GenerateOperation(WordApp As Object, anOperation As Operation, HeadingNumber As Integer)
+    Dim theOperation As String
+    
+    If ReportOptions.CppSyntax Then
+        Select Case anOperation.ExportControl
+            Case rsPublicAccess
+                theOperation = "Public:   "
+            Case rsProtectedAccess
+                theOperation = "Protected:   "
+            Case rsPrivateAccess
+                theOperation = "Private:   "
+        End Select
+    End If
+    
+    theOperation = theOperation + anOperation.Name
+    
+    If ReportOptions.CppSyntax Then
+        Params$ = ""
+        If anOperation.Parameters.Count Then
+            For OperID = 1 To anOperation.Parameters.Count - 1
+                Params$ = Params$ + GenerateParameter(anOperation.Parameters.GetAt(OperID))
+                Params$ = Params$ + ", "
+            Next OperID
+            Params$ = Params$ + GenerateParameter(anOperation.Parameters.GetAt(anOperation.Parameters.Count))
+        End If
+        theOperation = theOperation & "( " & Params$ & ")"
+    End If
+    WordInsertHeading HeadingNumber, theOperation, WordApp
+    WordInsertDocumentation HeadingNumber+1, anOperation.Documentation, WordApp
+        If ReportOptions.VerifyType = RepVerifyEmbed Then
+                GenerateMethodUsageEntry anOperation, WordApp
+        End If
+
+End Sub
+
+Sub GenerateClassOperationAccessGroup(WordApp As Object, attColl As OperationCollection, HeadingNumber As Integer)
+    If attColl.Count Then
+        For AttrID = 1 To attColl.Count
+            GenerateOperation WordApp, attColl.GetAt(AttrID), HeadingNumber
+        Next AttrID
+    End If
+End Sub
+
+
+Sub GenerateClassOperations(WordApp As Object, aClass As Class, HeadingNumber As Integer)
+    Dim PublicOperations As New OperationCollection
+    Dim ProtectedOperations As New OperationCollection
+    Dim PrivateOperations As New OperationCollection
+    Dim anOperation As Operation
+    
+	WordApp.FormatStyle "Normal"
+	If ReportOptions.VerifyType = RepVerifyEmbed Then
+		Para WordApp
+		WordApp.FormatFont Bold:=True
+		WordApp.Insert aClass.Name
+		WordApp.FormatFont Bold:=False
+
+    	If aClass.Operations.Count = 0 Then
+			WordApp.Insert " has no operations defined in this model."
+			'Para WordApp
+		Else
+			WordApp.Insert " has " 
+			WordApp.Insert CStr(aClass.Operations.Count)
+			WordApp.Insert " operations defined in this model:"
+			'Para WordApp
+	 	End If
+	 End If
+	 If aClass.Operations.Count <> 0 Then
+        For OperID = 1 To aClass.Operations.Count
+            Set anOperation = aClass.Operations.GetAt(OperID)
+            Select Case anOperation.ExportControl
+                Case rsPublicAccess
+                    PublicOperations.Add anOperation
+                Case rsProtectedAccess
+                    ProtectedOperations.Add anOperation
+                Case rsPrivateAccess
+                    PrivateOperations.Add anOperation
+            End Select
+        Next OperID
+        'WordInsertHeading HeadingNumber, aClass.Name & " Operations", WordApp
+        GenerateClassOperationAccessGroup WordApp, PublicOperations, HeadingNumber
+        If Not ReportOptions.PublicOnly Then
+            GenerateClassOperationAccessGroup WordApp, ProtectedOperations, HeadingNumber
+            GenerateClassOperationAccessGroup WordApp, PrivateOperations, HeadingNumber
+        End If
+    End If
+End Sub
+
+'------------------------------------------------------------------------------
+
+
+Sub GenerateTheClassBody(WordApp As Object, aClass As Class, HeadingNumber As Integer)
+    WordInsertDocumentation HeadingNumber+1, aClass.Documentation, WordApp
+    If aClass.Persistence Then
+        WordApp.Insert "Persistent Class"
+        Para WordApp
+    End If
+    
+    Dim SuperClasses As ClassCollection
+    Dim theSuperClass As Class
+    Set SuperClasses = aClass.GetSuperClasses
+    If SuperClasses.Count Then
+        ClassList$ = ""
+        For CLSID = 1 To SuperClasses.Count
+            Set theSuperClass = SuperClasses.GetAt(CLSID)
+            If ClassList$ <> "" Then
+                ClassList$ = ClassList$ & ", "
+            End If
+            ClassList$ = ClassList$ & theSuperClass.Name
+        Next CLSID
+        WordApp.Insert "Derived from " & ClassList$
+        Para WordApp
+    End If
+    
+    GenerateClassAttributes WordApp, aClass, HeadingNumber+1
+    GenerateClassOperations WordApp, aClass, HeadingNumber+1
+End Sub
+'
+' For each class in the category
+'
+Sub GenerateLogicalClass(WordApp As Object, aClass As Class, HeadingNumber As Integer)
+    On Error Resume Next
+    
+    WordInsertHeading HeadingNumber, aClass.Name, WordApp
+    GenerateTheClassBody WordApp, aClass, HeadingNumber
+End Sub
+
+Sub PrintClassesForCategory (WordApp As Object, aCategory As Category, HeadingNumber As Integer, myAlpha() As String)
+    Dim lastNoNameClassIndex As Integer
+    Dim theCatClassCollection As ClassCollection
+    Set theCatClassCollection = GetAllOfClasses(aCategory)
+    
+    If theCatClassCollection.Count Then
+        Dim theClass As Class
+        Dim NestedClasses As ClassCollection
+        
+        For CLSID = 1 To theCatClassCollection.Count
+            If(myAlpha(CLSID) = "") Then
+                If (lastNoNameClassIndex = 0) Then
+                    Ike = theCatClassCollection.FindFirst("")
+                    lastNoNameClassIndex  = Ike
+                Else
+                    Ike = theCatClassCollection.FindNext(lastNoNameClassIndex,"")
+                    lastNoNameClassIndex  = Ike
+                End If
+            Else
+                Ike = theCatClassCollection.FindFirst(myAlpha(CLSID))
+            End If
+            Set theClass = theCatClassCollection.GetAt(Ike)
+            GenerateLogicalClass WordApp, theClass, HeadingNumber+1
+        Next CLSID
+    End If
+    Set theClassCollection = Nothing
+End Sub
+
+
+Sub PrintCategoryClasses(WordApp As Object, aCategory As Category, HeadingNumber As Integer)
+    Dim Alpha() As String
+    Dim theCatClassCollection As ClassCollection
+    
+	If HeadingNumber > 1 Then
+    	WordInsertHeading HeadingNumber, aCategory.Name, WordApp
+	End If
+    WordInsertDocumentation HeadingNumber+1, aCategory.Documentation, WordApp
+    
+    Set theCatClassCollection = GetAllOfClasses(aCategory)
+    ReDim Alpha(theCatClassCollection.Count)
+    SortAlpha aCategory, alpha
+    
+    If ReportOptions.ClassDiagrams Then
+        SearchForClassDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    End If
+    
+    If ReportOptions.StateDiagrams Then
+        SearchForStateDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    End If
+        
+    If ReportOptions.UseCaseDiagrams Then
+        SearchForUseCaseDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    End If
+    
+    If ReportOptions.ScenarioDiagrams Then
+        SearchForSeqAndCollabDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    End If
+
+	'PrintClassesForCategory WordApp, aCategory, HeadingNumber, Alpha
+    
+End Sub
+
+Sub GenerateUseCase (WordApp As Object, aUseCase As UseCase, HeadingNumber As Integer)
+    WordInsertHeading HeadingNumber, aUseCase.Name, WordApp
+    WordInsertDocumentation HeadingNumber+1, aUseCase.Documentation, WordApp
+    If ReportOptions.ClassDiagrams Then
+        SearchForClassDiagramsInUseCase WordApp, aUseCase, (HeadingNumber+1)
+    End If
+    If ReportOptions.ScenarioDiagrams Then
+        SearchForSeqAndCollabDiagramsInUseCase WordApp, aUseCase, (HeadingNumber+1)
+    End If
+End Sub
+
+Sub PrintCategoryUseCases(WordApp As Object, aCategory As Category, HeadingNumber As Integer)
+    Dim Alpha() As String
+    Dim theCatClassCollection As ClassCollection
+    
+	If HeadingNumber > 1 Then
+    	WordInsertHeading HeadingNumber, aCategory.Name, WordApp
+	End If
+    WordInsertDocumentation HeadingNumber+1, aCategory.Documentation, WordApp
+    
+    SearchForClassDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    SearchForStateDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    SearchForUseCaseDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    SearchForSeqAndCollabDiagramsInPackage WordApp, aCategory, (HeadingNumber+1)
+    
+    If aCategory.UseCases.Count Then
+        Dim theUseCase As UseCase
+        Dim numberOfApplicableUseCases As Integer
+        Dim UseCaseNames$()
+        numberOfApplicableUseCases = 0
+        For ucID = 1 To aCategory.UseCases.Count
+            Set theUseCase = aCategory.UseCases.GetAt(ucID)
+            ReDim Preserve UseCaseNames$(numberOfApplicableUseCases +1)
+            UseCaseNames$(numberOfApplicableUseCases) = theUseCase.Name
+            numberOfApplicableUseCases = numberOfApplicableUseCases +1
+        Next ucID
+        
+        ArraySort UseCaseNames$()
+        
+        For i% = 1 To numberOfApplicableUseCases
+            ucID = aCategory.UseCases.FindFirst(UseCaseNames$(i%))
+            Set theUseCase = aCategory.UseCases.GetAt(ucID)
+            If theUseCase Is Nothing Then
+            Else
+                GenerateUseCase WordApp, theUseCase, (HeadingNumber +1)
+            End If
+        Next i%
+    End If
+    
+End Sub
+
+
+Sub PrintCategory(WordApp As Object, aCategory As Category, HeadingNumber As Integer)
+    Dim Beta() As String
+    If aCategory.Name <> "Undocument" Then
+    Select Case GeneratorState.Phase
+        Case RPh_Dynamic
+			If HeadingNumber = 1 Then
+				WordInsertHeading HeadingNumber, "Analysis", WordApp
+			End If
+            Call PrintCategoryUseCases(WordApp, aCategory, HeadingNumber)
+			Call PrintCategoryClasses(WordApp, aCategory, HeadingNumber)
+        Case RPh_Static
+			If HeadingNumber = 1 Then
+				WordInsertHeading HeadingNumber, "Design", WordApp
+			End If
+            Call PrintCategoryClasses(WordApp, aCategory, HeadingNumber)
+        Case RPh_StartUp
+        Case RPh_TailBoiler
+        Case RPh_Crosscheck
+    End Select
+    ReDim Beta(aCategory.Categories.Count)
+    For Ike = 1 To aCategory.Categories.Count
+        Beta(Ike) = aCategory.Categories.GetAt(Ike).Name
+    Next Ike
+    ArraySort Beta
+    For CatID = 1 To aCategory.Categories.Count
+        Ike = aCategory.Categories.FindFirst(Beta(CatID))
+        Call PrintCategory(WordApp, aCategory.Categories.GetAt(Ike), HeadingNumber+1)
+    Next CatID
+	End If 
+End Sub
+
+Sub GenerateBehaviouralAnalysisSection(WordApp As Object)
+    Break WordApp
+    'WordInsertHeading 1, "Behavioural Analysis", WordApp
+    GeneratorState.Phase = RPh_Dynamic
+    PrintCategory WordApp, LicensedRoseApplication.CurrentModel.RootUseCaseCategory, 1
+End Sub
+
+Sub GenerateStaticRelationshipSection(WordApp As Object)
+    Break WordApp
+    'WordInsertHeading 1, "Static Relationships", WordApp
+    GeneratorState.Phase = RPh_Static
+    PrintCategory WordApp, LicensedRoseApplication.CurrentModel.RootCategory, 1
+End Sub
+
+
+Sub GenerateMethodUsageEntry(Op As Operation, WordApp As Object)
+    ResetGlobalDiagList
+    Dim Mc As MessageCollection
+    Dim Used As Boolean
+    Used = False
+	WordApp.FormatStyle "Normal"
+    For i% = 0 To GlobalDiagListSize-1
+        Set Mc = GlobalDiagList(i).Diagram.GetMessages
+        For j% = 1 To Mc.Count
+            If Mc.GetAt(j).GetOperation Is Not Nothing Then
+                If Mc.GetAt(j).GetOperation.GetUniqueId = Op.GetUniqueId Then
+                    Used = True
+                    If GlobalDiagList(i).SeenBefore = False Then
+                        WordApp.Insert "Used in "
+                        WordApp.Insert GlobalDiagList(i).FigureTitle
+                        Para WordApp
+                        GlobalDiagList(i).SeenBefore = True
+                    End If
+                End If
+            End If
+        Next j
+    Next i
+    If Used = False Then
+        WordApp.Insert "Not used in any Sequence or Collaboration in this view of the model."
+        Para WordApp
+    End If
+End Sub
+
+Sub GenerateScenarioCrosscheckSection(WordApp As Object)
+    Break WordApp
+    GeneratorState.Phase = RPh_Crosscheck
+    
+    WordInsertHeading 1, "Model Verification and Checking", WordApp
+    
+    Dim AllClasses As ClassCollection
+    Dim Op2 As Operation
+    Dim Ops As OperationCollection
+    Dim Used As Boolean
+    Set AllClasses = LicensedRoseApplication.CurrentModel.GetAllClasses
+    
+    For i% = 1 To AllClasses.Count
+        Dim UsedClassOps As New OperationCollection
+        Dim UnusedClassOps As New OperationCollection
+        WordInsertHeading 2,AllClasses.GetAt(i).Name,WordApp
+        
+        Set Ops = AllClasses.GetAt(i).Operations
+        For j% = 1 To Ops.Count
+            Set Op2 = Ops.GetAt(j)
+            WordApp.FormatFont Bold:=True
+            WordApp.Insert Op2.Name
+            WordApp.FormatFont Bold:=False    
+            Para WordApp
+            GenerateMethodUsageEntry Op2, WordApp
+        Next j
+    Next i 
+End Sub
+
+Sub GenerateTailEndBoilerPlate(WordApp As Object)
+    GeneratorState.Phase = RPh_TailBoiler
+    Break WordApp
+    WordInsertHeading 1, "Further Information", WordApp
+    WordInsertHeading 2, "People", WordApp
+    WordInsertHeading 2, "References", WordApp
+    WordInsertHeading 2, "Open Issues", WordApp
+    WordInsertHeading 2, "Glossary", WordApp
+    WordInsertHeading 2, "Document History", WordApp
+    WordInsertHeading 2, "Document Review Date", WordApp
+End Sub
+
+Sub GenerateReport(WordApp As Object)
+Dim UsedOperations As New OperationCollection
+    WordApp.EndOfDocument
+	If ReportOptions.FEBoiler = True Then
+    	WordInsertHeading 1, "Introduction", WordApp
+    	WordInsertHeading 2, "Overview", WordApp
+    	WordInsertHeading 2, "Purpose and Scope", WordApp
+	End If
+    
+    Select Case ReportOptions.DocType
+        Case RepAnalysisType
+            GenerateBehaviouralAnalysisSection WordApp
+        Case RepDesignType
+            GenerateStaticRelationshipSection WordApp
+        Case RepAnalysisNDesignType
+            GenerateBehaviouralAnalysisSection WordApp
+            GenerateStaticRelationshipSection WordApp
+        Case RepTestType
+    End Select
+    
+    If ReportOptions.VerifyType = RepVerifySection Then
+        GenerateScenarioCrosscheckSection WordApp
+    End If
+
+	If ReportOptions.BEBoiler = True Then
+    	GenerateTailEndBoilerPlate WordApp
+	End If
+End Sub
+
+Begin Dialog ReportDialog ,,224,320,"Generate Symbian Documentation",.ReportDialogLoop
+
+	Text 8,4,148,8,"Report &Title",.TitleText
+	TextBox 12,16,202,12,.Title
+
+	Text 8,32,112,8,"&Template File Name:",.TemplateFileNameText
+	TextBox 12,44,202,12,.TemplateFileName
+
+	Text 8,60,112,8,"&Report File Name:",.FileNameText
+	TextBox 12,72,202,12,.FileName
+
+	PushButton 174,87,44,14,"Browse",.Browse
+
+	GroupBox 8,102,92,60,"Report Document Type",.ReportTypeGroup
+	OptionGroup .ReportType
+	OptionButton 12,114,80,8,"Analysis",.AnalysisReport
+	OptionButton 12,126,80,8,"Design",.DesignReport
+	OptionButton 12,138,80,8,"Analysis and Design",.AnalysisNDesignReport
+	OptionButton 12,150,80,8,"Test",.TestReport
+
+	GroupBox 102,102,116,60,"Usage Verification",.VerifyTypeGroup
+	OptionGroup .VerifyType
+	OptionButton 106,114,80,8,"None",.NoVerify
+	OptionButton 106,126,80,8,"Added Section",.SectionVerify
+	OptionButton 106,138,80,8,"Embedded in Text",.EmbedVerify
+
+	GroupBox 8,170,212,30,"Proofreading Options",.Proofing
+	CheckBox 12,182,92,8,"Expanded Whitespace",.WhiteBlock
+	CheckBox 106,182,92,8,"Highlight Gaps",.HighlightDocGaps
+
+	GroupBox 8,205,212,80,"Content Options",.Content
+	CheckBox 12,220,92,8,"Class Diagrams",.ClassDiagrams
+	CheckBox 12,232,92,8,"Scenario Diagrams",.ScenarioDiagrams
+	CheckBox 12,244,92,8,"State Diagrams",.StateDiagrams
+	CheckBox 12,256,92,8,"Use Case Diagrams",.UseCaseDiagrams
+	CheckBox 12,268,92,8,"C++ Syntax",.CppSyntax
+
+	CheckBox 106,220,92,8,"Public Items Only",.PublicOnly
+	CheckBox 106,232,92,8,"Front-end Boilerplate",.FEBoiler
+	CheckBox 106,244,92,8,"Back-end Boilerplate",.BEBoiler
+	CheckBox 106,256,92,8,"Use <h>Subhead</h>",.SubTag
+
+	PushButton 8,292,76,14,"&Generate",.Generate
+	CancelButton 144,292,76,14
+End Dialog
+
+
+Sub Main
+    Dim MyDialog As ReportDialog
+    
+    Set LicensedRoseApplication = GetLicensedRoseApplication()
+    LicensedRoseApplication.CurrentModel.DefaultTool = DefaultTool$
+    'NewDirectory$ = EnclosingDirPath(LicensedRoseApplication.ApplicationPath)
+    NewDirectory$ = CurDir$
+    
+    If NewDirectory$ <> "" Then
+        If Mid$(NewDirectory$, 2, 1) = ":" Then
+            ChDrive NewDirectory$
+        End If
+        ChDir NewDirectory$
+    Else
+        MsgBox "Error: Directory not found."
+        Exit Sub
+    End If
+    
+	'
+	' Right, let's set some sensible default values
+	'
+    DefaultFileName$ = GetResourceString(PRODUCTDEFAULTWORDDOCFILENAME)
+    ModelName$ = LicensedRoseApplication.CurrentModel.GetFileName()
+    If ModelName$ = "" Then
+        MyDialog.FileName$ = MakeFileName$(NewDirectory$, DefaultFileName$)
+        MyDialog.Title$ = FileParse$(DefaultFileName, 4)
+    Else
+        MyDialog.FileName$ = ChangeFileExtension$(ModelName$, "doc")
+        MyDialog.Title$ = FileParse$(ModelName$, 4)
+    End If
+	MyDialog.TemplateFileName$ = ChangeFileExtension$(ModelName$, "dot")
+    '
+	' Let's assume we're not proofreading at the moment
+	'
+    MyDialog.WhiteBlock = False
+    MyDialog.HighlightDocGaps = False
+	'
+	' I think we want all the diagrams we can get
+	'
+    MyDialog.ClassDiagrams = True
+    MyDialog.ScenarioDiagrams = True
+    MyDialog.StateDiagrams = True
+    MyDialog.UseCaseDiagrams = True
+	'
+	' We are a C++ shop, after all
+	'
+    MyDialog.CppSyntax = True
+	'
+	' We can see everything for now
+	'
+    MyDialog.PublicOnly = False
+	'
+	' The options to generate boilerplate and tagged headings are turned off
+	'
+	MyDialog.FEBoiler = False
+	MyDialog.BEBoiler = False
+	MyDialog.SubTag = False
+	'
+	' Let's assume that we want to run across the entire model for the time being
+	'
+    MyDialog.ReportType = RepAnalysisNDesignType
+	'
+	' The default is to verify in the body of the document
+	'
+    MyDialog.VerifyType = RepVerifyEmbed
+
+    '
+	' Right let's give the user a chance to set some preferences, in case
+	' they differ from these eminently sensible ones.
+	'
+    Result = Dialog (MyDialog)
+    If Result = 0 Then 
+        Exit Sub
+    End If
+	' 
+	' I suppose that if we give them the UI to change them, we ought to actually
+	' take notice of them
+	'
+    If Result = 2 Then
+        ReportOptions.Generate = TRUE
+        ReportOptions.Title = MyDialog.Title
+        ReportOptions.FileName = MyDialog.FileName
+		ReportOptions.Template = MyDialog.TemplateFileName
+        ReportOptions.WhiteBlock = MyDialog.WhiteBlock
+        ReportOptions.HighlightDocGaps = MyDialog.HighlightDocGaps
+        ReportOptions.ClassDiagrams = MyDialog.ClassDiagrams
+        ReportOptions.ScenarioDiagrams = MyDialog.ScenarioDiagrams
+        ReportOptions.StateDiagrams = MyDialog.StateDiagrams
+        ReportOptions.UseCaseDiagrams = MyDialog.UseCaseDiagrams
+        ReportOptions.CppSyntax = MyDialog.CppSyntax
+        ReportOptions.PublicOnly = MyDialog.PublicOnly
+		ReportOptions.FEBoiler = MyDialog.FEBoiler
+		ReportOptions.BEBoiler = MyDialog.BEBoiler
+		ReportOptions.SupportSubheadingTags = MyDialog.SubTag
+        
+        ReportOptions.DocType = MyDialog.ReportType
+        ReportOptions.VerifyType = MyDialog.VerifyType
+        
+        GeneratorState.Phase = RPh_StartUp
+        RoseAppDirectory$ = EnclosingDirPath(LicensedRoseApplication.ApplicationPath)
+		If Not FileExists (ReportOptions.Template) Then
+        	ReportOptions.Template = RoseAppDirectory$ &"\Formal.dot"
+        	If Not FileExists (ReportOptions.Template) Then
+            	MsgBox "Error: Missing file [" & ReportOptions.Template & "]"
+            	Exit Sub
+        	End If
+		End If
+    End If
+    
+	'
+	' Crack open MS Word then
+	'
+    Dim WordApplication As Object
+    Dim WordApp As Object
+    WordUtilInit
+    
+    Set WordApplication = CreateObject("Word.Application")
+    
+	'
+	' This is a very lazy thing to do, and difficult to obtain 
+	' documentation on now that Micro$oft have deprecated the interface
+	'
+    Set WordApp = WordApplication.WordBasic
+    ' 
+	' But it makes some parts of life so easy
+	'
+    WordApp.AppMaximize
+   	'
+	' Create a new document based on our template
+	'
+    WordApp.FileNew ReportOptions.Template
+    '
+	' Rush to the end of the new document
+	'
+    WordApp.EndOfDocument
+    '
+	' Generate the filling
+	'
+    GenerateReport(WordApp)
+    '
+	' Finalise the Table of Contents
+	'
+    WordApp.EditSelectAll
+    WordApp.UpdateFields
+	'
+	' Save it all away
+	'
+    WordApp.FileSaveAs ReportOptions.FileName
+    '
+	' Night night
+	'   
+    WordApp.FileExit
+    
+End Sub

@@ -1,0 +1,51 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run SsmStateTransitionEngineStep tests
+
+LOAD_SUITE tssm_server
+
+START_TESTCASE 			DEVSRVS-SSMA-SSM-0005
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SSM-0005
+//! @SYMPREQ 			PREQ1871
+//! @SYMREQ			REQ9109 REQ9117 REQ9118 REQ9125
+//! @SYMTestCaseDesc		Check behaviour of state policy resolver class CSsmStateTransitionEngine.
+//! @SYMTestType		UT	
+//! @SYMTestPriority		Critical
+//! @SYMTestCaseDependencies	none
+//! @SYMTestActions		The test will perform calls to the different methods of the CSsmStateTransitionEngine class in different scenarios. 
+//! 				1.Call NewL(), both under normal and OOM conditions.
+//! 				2.Call SetCleSessionL(), both under normal and OOM conditions.
+//! 				3.Call SubmitL(), both under normal and OOM conditions.
+//! 				4.Call InTransition() before, during and after a transition.
+//! 				5.Submit 2 state transition requests. Call CurrentTransition() and QueuedTransition() to validate the behaviour. 
+//! 				6.Submit a 3rd request and validate the behaviour again.
+//! 				7.Submit a transition request for the last startup sub-state.
+//! 				8.Submit a transition request to go through all startup sub-states.
+//! 				9.Submit 3 startup transitions requests. When the first is completed, queue a third.
+//! 				10.Submit 3 startup transitions requests, with 3rd transition request being to ESsmFail.
+//! 				11.Submit 2 startup transitions requests. When the transition has started, queue a request to ESsmFail.
+//! @SYMTestExpectedResults 	Expected results are:
+//! 				1, 2 & 3.  When the methods are tested under OOM conditions, intermediate iterations finish with KErrNoMemory, with successful one completing with KErrNone. Memory is not leaked in any iteration.
+//! 				4.Returns ETrue or EFalse as appropriate.
+//! 				5.First request is 'current' one, while second is 'queued'.
+//! 				6.Third request is 'queued' by overwriting the previously 'queued' one.
+//! 				7.The request is handled appropriately and no errors are returned.
+//! 				8.The request is handled appropriately and no errors are returned.
+//! 				9.Initially the 3rd request is rejected. As soon as the first request completes, then the 3rd request is accepted.
+//! 				10.A request to ESsmFail is accepted, anything ongoing is cancelled.
+//! 				11.A request to ESsmFail is accepted, anything ongoing is cancelled. The expected calls are made according to when the "fail" was produced.
+RUN_TEST_STEP 100 tssm_server SsmStateTransitionEngineStep
+END_TESTCASE 			DEVSRVS-SSMA-SSM-0005

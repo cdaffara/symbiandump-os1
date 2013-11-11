@@ -1,0 +1,92 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-DATAMON
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i  z:\testdata\configs\DataMonitoring\DataMonitoring.ced.cfg c:\DataMonitoring.ced.cfg
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-0201
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-DataMonitoring-0201
+//!@SYMTestCaseDesc           	Confirm data transferred stats on a subconnection
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RCommsDataMonitoringApiExt::Open()
+//RCommsDataMonitoringApiExt::RequestDataTransferred()
+//RCommsDataMonitoringApiExt::Close()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+//Establish a connection using RConnection::Open() and RConnection::Start() explicitly specifying which interface is to be started.
+//Create and open a sub connection on the connection.
+//Open an echoed UDP socket on the sub connection and send and receive a fixed amount of data on it.
+//Open a data monitor on the sub connection with RCommsDataMonitoringApiExt::Open() and fetch stats on it with RCommsDataMonitoringApiExt::RequestDataTransferred().
+//Confirm the stats against those expected (according to data sent and received).
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	Expect at least the number of bytes sent to be returned by the call to ::RequestDataTransferred()
+
+// Create and connect the socket server required
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\DataMonitoring\765405.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\DataMonitoring\765405.ini ConnectSockSvr1
+
+// Establish connection and start it explicitly with IAP ID
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\DataMonitoring\765405.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openRConnectionStep z:\testdata\configs\DataMonitoring\765405.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite StartRConnectionStep z:\testdata\configs\DataMonitoring\765405.ini StartConn1
+
+// Create and open the default RSubConnection for our RConnection
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconnectionStep z:\testdata\configs\DataMonitoring\765405.ini CreateSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsubconnectionStep z:\testdata\configs\DataMonitoring\765405.ini OpenSubConn1
+
+// Create DataMonitoring extension API for our RSubConnection
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765405.ini OpenDataMonitor1
+
+// Open a UDP socket on the RConnection
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765405.ini CreateSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765405.ini OpenSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765405.ini ConnectSocket1
+
+// Send and receive data on a socket (we expect it to be looped back for us)
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765405.ini SendReceiveSocket1
+
+// Request the number of bytes transferred in each direction and confirm against that expected
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataTransferredStep z:\testdata\configs\DataMonitoring\765405.ini ReqDataTransferredConn1
+
+// Close the networking entities we used
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765405.ini CloseDataMonitor1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765405.ini CloseSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersubconnectionStep z:\testdata\configs\DataMonitoring\765405.ini CloseSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\DataMonitoring\765405.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\DataMonitoring\765405.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-0201
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+PRINT Completed NET-DATAMON-0405
+
+
+

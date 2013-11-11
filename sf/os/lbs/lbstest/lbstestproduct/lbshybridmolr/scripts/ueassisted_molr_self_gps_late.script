@@ -1,0 +1,78 @@
+//! @File
+//! @SYMTestSuiteName         ueassisted_molr_self_gps_late.script
+//! @SYMScriptTestEnvironment
+
+
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+PRINT Run LbsHybridMOLRTestServer
+
+
+// Before we start LBS, select the test Hybrid A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module.
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+
+// Ensure Self Locate API is on for roaming
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupRoamSelfLocate
+
+// Start up LBS.
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-HybridMOLR-UEAssistedMOLR-SelfGpsLate-0001
+//! @SYMTestCaseID              LBS-HybridMOLR-UEAssistedMOLR-SelfGpsLate-0001
+//! @SYMTestCaseDesc            Client generates MOLR request GPS Module generates measurements in UE Based and UE Assisted State 
+//!				Protocol Module simulates receiving an MC Release from Network 
+//!				GPS Module generates an accurate position after reception of MC Release 
+//!				See: lbshybridmolr/documentation/MOLR.htm#Hybrid_LBS_UE-Assisted_MO-LR_Late
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             See test step Sequence inline comments
+//! @SYMTestExpectedResults     Sequence as per specified by FSM and UML Seq diagram is Followed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini LateGps
+RUN_TEST_STEP 480 LbsHybridMOLRTestServer LbsUEAssistedMOLRSelfGPSLate
+END_TESTCASE                  LBS-HybridMOLR-UEAssistedMOLR-SelfGpsLate-0001
+
+
+// Shutdown LBS.
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+

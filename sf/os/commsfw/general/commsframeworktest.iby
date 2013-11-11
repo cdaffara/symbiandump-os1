@@ -1,0 +1,410 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#ifndef __NETWORKING_TEST_IBY__
+#define __NETWORKING_TEST_IBY__
+
+// *****************************************************************************
+// From 9.5 onwards ROM space is becoming a little tight
+// Rom builds from 9.5 onwards should specify the subset of tests to be
+// included with the -D flag. E.g. -DNW_TEST_ROM1 
+// 
+// If a subset of tests is not specified all will be included - maintaining 
+// compatibility for unaware rom builds
+// *****************************************************************************
+
+#if !(defined(NW_TEST_ROM_1) || defined(NW_TEST_ROM_2) || defined(NW_TEST_ROM_3) \
+	|| defined(CI_TEST_ROM_1) || defined(CI_TEST_ROM_2) || defined(CI_TEST_ROM_3) || defined(CI_TEST_ROM_4) \
+	|| defined(WAPSTACK_TEST_ROM) \
+	|| defined(SERCOMMS_TEST_ROM) \
+	|| defined(__NETWORKING_TEST_OBY__) \
+	)
+
+// Rom build hasn't explicitly defined a subset of tests to include so to avoid
+// disappointment we'll include the whole shebang
+#define NW_TEST_ROM_1
+#define NW_TEST_ROM_2
+#define NW_TEST_ROM_3
+
+#define CI_TEST_ROM_1
+#define CI_TEST_ROM_2
+#define CI_TEST_ROM_3
+#define CI_TEST_ROM_4
+
+#define WAPSTACK_TEST_ROM
+#define SERCOMMS_TEST_ROM
+//#define NETWORKING_UPS_TESTS
+//#define SYMBIAN_FLEXMM_ZERO_COPY_NETWORKING
+#define __NETWORKING_TEST_OBY__
+
+#endif
+
+#ifdef NW_TEST_ROM_1
+REM "NW_TEST_ROM_1": Generated ROM will include test components for running nw1 test group
+#endif
+#ifdef NW_TEST_ROM_2
+REM "NW_TEST_ROM_2": Generated ROM will include test components for running nw2 test group
+#endif
+#ifdef NW_TEST_ROM_3
+REM "NW_TEST_ROM_3": Generated ROM will include test components for running nw3 test group
+#endif
+
+#ifdef CI_TEST_ROM_1
+REM "CI_TEST_ROM_1": Generated ROM will include test components for running ci1 test group
+#endif
+#ifdef CI_TEST_ROM_2
+REM "CI_TEST_ROM_2": Generated ROM will include test components for running ci2 test group
+#endif
+#ifdef CI_TEST_ROM_3
+REM "CI_TEST_ROM_3": Generated ROM will include test components for running ci3 test group
+#endif
+#ifdef CI_TEST_ROM_4
+REM "CI_TEST_ROM_4": Generated ROM will include test components for running ci4 test group
+#endif
+
+#ifdef WAPSTACK_TEST_ROM
+REM "WAPSTACK_TEST_ROM": Generated ROM will include test components for running ws1 test group
+#endif
+
+#ifdef SERCOMMS_TEST_ROM
+REM "SERCOMMS_TEST_ROM": Generated ROM will include test components for running sc1 test group
+#endif
+
+
+
+// This iby file contains all Networking Test Harnesses.
+
+REM ---------- General ---------------
+
+// Scheduletest Test
+file=ABI_DIR\DEBUG_DIR\ts_selftest.dll		System\Libs\ts_selftest.dll
+
+// Initialisation before any tests are run
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard.script		TestData\scripts\te_initialiseboard.script
+
+#ifdef CI_TEST_ROM_1
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard1.script		TestData\scripts\te_initialiseboard1.script
+#endif
+#ifdef CI_TEST_ROM_2
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard2.script		TestData\scripts\te_initialiseboard2.script
+#endif
+#ifdef CI_TEST_ROM_3
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard3.script		TestData\scripts\te_initialiseboard3.script
+#endif
+#ifdef CI_TEST_ROM_4
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard4.script		TestData\scripts\te_initialiseboard4.script
+#endif
+#ifdef NW_TEST_ROM_1
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard5.script		TestData\scripts\te_initialiseboard5.script
+#endif
+#ifdef NW_TEST_ROM_3
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard6.script		TestData\scripts\te_initialiseboard6.script
+#endif
+#ifdef SERCOMMS_TEST_ROM
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard7.script		TestData\scripts\te_initialiseboard7.script
+#endif
+#ifdef WAPSTACK_TEST_ROM
+data=EPOCROOT##epoc32\data\z\testdata\scripts\te_initialiseboard8.script		TestData\scripts\te_initialiseboard8.script
+#endif
+
+
+REM ---------- Comms-Infras ----------
+
+// ced is not included in release builds by default (in commdb.iby)
+// so we include it explicitly here if _DEBUG is NOT defined
+#ifndef _DEBUG
+#include <XmlFramework.iby>
+#include <ced.iby>
+#include <ceddump.iby>
+#endif
+
+// CommDB Tests
+#if defined(CI_TEST_ROM_1) || defined(CI_TEST_ROM_4)
+#include <te_tcommdb.iby>
+#endif
+
+#ifdef CI_TEST_ROM_1
+#include <te_commsdat.iby>
+#endif
+
+#ifdef CI_TEST_ROM_1
+// CommsFramework Tests
+#include <tcommsfw.iby>
+#include <te_commsfw_transport.iby>
+#endif
+
+// ESOCK Tests - All test roms
+// (CI_TEST_ROM_1-te_ini,te_ipc,te_socket,etc)
+// (CI_TEST_ROM_2-te_eintsock,te_esock)
+// (NW_TEST_ROM_3-te_rconnectionsuite,te_rsubconnectionsuite)
+// (Anything using esock test steps)
+#include <esock_test.iby>
+
+// Flogger Tests
+// No Exports
+
+
+// MBufMgr Tests
+#if defined(CI_TEST_ROM_1) || defined(CI_TEST_ROM_2) || defined(CI_TEST_ROM_4)
+REM #include <testmbuf.iby>
+#include <te_testmbuf.iby>
+#endif
+
+#ifdef CI_TEST_ROM_2
+#include <te_netmetaunittest.iby>
+#endif
+
+// zerocopy tests
+#ifdef SYMBIAN_FLEXMM_ZERO_COPY_NETWORKING
+#include <zerocopy_loopback_driver.iby>
+#include <legacy_loopback_driver.iby>
+#include <commsbufskern.iby>
+#include <zerocopy_loopback_driver_test.iby>
+#include <legacy_loopback_driver_test.iby>
+#include <zerocopy_loopback_link_protocol.iby>
+#include <legacy_loopback_link_protocol.iby>
+#endif
+
+#include <te_loopback.iby>
+#include <Te_Cap_RConnDHCP.IBY>
+#include <Te_Cap_RES.IBY>
+#include <Te_Cap_Esock.IBY>
+#include <Te_Cap_RConnServ.IBY>
+#include <te_cap_esock_transfer.iby>
+#include <te_cap_rootserver.iby>
+#include <Te_Cap_Configurator.IBY>
+#include <te_esockteststepssuite.iby>
+#include <te_UmtsGprsScpr.iby>
+#include <SerComms.IBY>
+
+// RootServer Tests
+#ifdef CI_TEST_ROM_3
+//#include <ts_rootserver.iby>
+#include <te_rootserver.iby>
+#endif
+
+//COMMSELEMENTSTESTS
+#ifdef CI_TEST_ROM_2
+#include <te_elementserver.iby>
+#endif
+
+REM ---------- Networking ----------
+
+//Ethernet nif - Any roms with ethernet tests (this is ensuring ethernet support, these aren't tests)
+#include <ether802.iby>
+
+
+// TE_DIALOG Tests
+#if defined(CI_TEST_ROM_1) || defined(NW_TEST_ROM_1)
+#include <te_dialogserver.iby>
+#endif
+
+// TE_DHCP Tests
+#if defined(NW_TEST_ROM_1) || defined(WAPSTACK_TEST_ROM)
+#include <te_dhcpTestServer.iby>
+#endif
+
+#if defined(CI_TEST_ROM_1) || defined(NW_TEST_ROM_1)
+//Unit test code to launch DHCP server
+#include <te_dhcpservtest.iby>
+#endif
+
+// IP Event Notifier Tests
+// Can't see this running in 9.5netmnt, not sure what rom its suppossed to be in so put it in all to be safe
+#include <te_ipeventnotifiersuite.iby>
+
+//Napt tests
+// Can't see this running in 9.5netmnt, not sure what rom its suppossed to be in so put it in all to be safe
+// #include <te_napt.iby>
+
+//Unit test code
+// #include <te_napttest.iby>
+
+// FTP Tests
+REM #include <tftp_e.iby>
+
+// IntegrationTest framework
+#ifdef NW_TEST_ROM_1
+#include <integrationtest.iby>
+#endif
+
+
+// NULL AGT Tests
+#ifdef NW_TEST_ROM_1
+#include <nullagttests.iby>
+#endif
+
+// Useful  Internet Utilities for all test roms
+#include <ipconfig.iby>
+#include <route.iby>
+#include <Tftp.iby>
+#include <Tracert.iby>
+#include <ping.iby>
+#if !defined(TEXT_ONLY_ROM)
+#include <pingapp.iby>
+#endif // TEXT_ONLY_ROM
+
+//Some handy tools for all test roms
+#include <ftp_e.iby>
+#include <telnet_e.iby>
+
+
+// PPP Tests
+#if defined(CI_TEST_ROM_1) || defined(NW_TEST_ROM_1)
+#include <te_pppsize.iby>
+#include <ts_dummyppp.iby>
+#include <zerocopy_loopback_driver.iby>
+#include <te_loopback.iby>
+#include <te_pppcomp.iby>
+#include <te_configutil.iby>
+#include <te_Configuratorsuite.iby>
+#include <te_http.iby>
+#include <integrationtest.iby>
+#include <te_sblpsuite.iby>
+#include <te_DedicatedSignalling1ryCtx.iby>
+#include <TE_SpudUnit.iby>
+#include <integrationtest.iby>
+#include <te_cedsuite.iby>
+#include <wapmessage.iby>
+#include <te_vjcomp.iby>
+#include <te_incoming_ppp.iby>
+#endif
+
+
+// SPUD Tests
+#if defined(CI_TEST_ROM_1) || defined(NW_TEST_ROM_1)
+#include <TE_spudNetworkSide.iby>
+#include <TE_spudrsubconn.iby>
+#endif
+
+
+// UmtsGprsSCPR Tests
+#ifdef NW_TEST_ROM_3
+#include <te_UmtsGprsScpr.iby>
+#endif
+
+
+// QoS Tests
+//////#include <qostesting.iby>
+
+// Sockbench Tests
+//#if defined(CI_TEST_ROM_1) || defined(NW_TEST_ROM_2)
+//#include <sockbench.iby>
+//#endif
+
+// TLS (SSL) Tests
+#ifdef NW_TEST_ROM_1
+#include <ts_tls.iby>
+#endif
+
+//-- DND LLMNR test
+#include <TE_LlmnrServer.iby>
+
+
+
+// agent dummy notifier
+#include <agentdummynotifier.iby>
+
+//Ipsec tests
+#if defined(CI_TEST_ROM_1) || defined(NW_TEST_ROM_1)
+#include <ts_ipsec.iby>
+#endif
+
+//-- additional optional protocols
+#include <probe.iby>
+#include <6to4.iby>
+
+
+// Not test components - maybe shouldn't be in here?? On all roms
+#include <netStSrv.iby>	
+#include <DHCPServ.iby>
+#include <elements.iby>
+#include <ipeventnotifier.iby>
+
+
+#if defined(NW_TEST_ROM_1) || defined(NW_TEST_ROM_3) || defined(CI_TEST_ROM_3) || defined(CI_TEST_ROM_1)
+#include <te_qossuite.iby>
+#endif
+
+#if defined(CI_TEST_ROM_1) || defined(NW_TEST_ROM_1)
+#include <TE_C32Bca.iby>
+#endif
+
+#include <TE_PacketLoopback.iby>
+#include <packetloopback.iby>
+
+// Needed by several tests
+#include <simtsy.iby>
+
+#include <te_AnvlClient.iby>
+
+REM ---------- WAP-Stack ----------
+
+// SWS test
+#if defined(CI_TEST_ROM_1) || defined(WAPSTACK_TEST_ROM)
+// this iby file is removed from the tb92sf code
+// #include <wapstacksuite.iby>
+#endif
+
+REM ---------- SER-COMMS ----------
+#if defined(CI_TEST_ROM_1) || defined(SERCOMMS_TEST_ROM)
+#include <te_c32.iby>
+#endif
+
+#if defined(SERCOMMS_TEST_ROM)
+#include <loopback.iby>
+#endif
+
+REM --- NEEDED FOR THE SECURITY TESTS ---
+#include <swi.iby>
+
+REM --- NETSTEB PERFORMANCE TEST FRAMEWORK ---
+REM #include <te_STEBTestSuite.iby>
+
+REM --- EAP Tests ---
+REM #include <te_eap.iby>
+
+REM --- MBMS Broadcast Tests ---
+#include <TE_MbmsUnit.iby>
+
+REM --- UPS ---
+#include <upstestnotifier.iby>
+#include <netups_test.iby>
+
+#if defined(CI_TEST_ROM_1) || defined(CI_TEST_ROM_2)
+#include <netups.iby>
+REM #include <te_ipups.iby>
+#endif
+
+#ifdef NW_TEST_ROM_2
+#ifdef SYMBIAN_ADAPTIVE_TCP_RECEIVE_WINDOW
+#include <te_tcpip6suite.iby>
+#endif
+#endif
+
+#ifdef NW_TEST_ROM_1
+#ifdef SYMBIAN_INCLUDE_PUNYCODE
+#include <te_punycodeconverter.iby>
+#include <te_unittestidna.iby>
+#endif //SYMBIAN_INCLUDE_PUNYCODE
+#endif //NW_TEST_ROM_1
+
+REM --- DNS Proxy test
+#ifndef SYMBIAN_EXCLUDE_DNS_Proxy 
+#include <t_dnsproxy.iby>
+#endif 
+
+#endif

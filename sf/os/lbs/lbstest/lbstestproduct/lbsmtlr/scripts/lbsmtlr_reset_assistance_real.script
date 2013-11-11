@@ -1,0 +1,69 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         LBS-MTLR-REAL-RESET-ASSISTANCE
+//! @SYMScriptTestEnvironment TestExecute
+
+LOAD_SUITE LbsMTLRTestServer -SharedData
+
+PRINT Run LbsMTLRTestServer
+PRINT
+
+// Before we start LBS, select the lbsprofile.ini  to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+CopyFile c:\testdata\configs\lbstestprofile.ini c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+//Before we start LBS, select the network reg status txt file to use.
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbsmtlr_real.ini LBS-MTLR-Priv-Cntr
+
+RUN_TEST_STEP 030 LbsMTLRTestServer LbsStep_StartLbs
+
+
+
+START_TESTCASE                LBS-REAL-MTLR-RESETASSIST-0001
+//! @SYMTestCaseID              LBS-REAL-MTLR-RESETASSIST-0001
+//! @SYMTestCaseDesc            MT-LR requests for testing the reset assistance data being received, the requests running in TB.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. 10 MT-LR requests are made to be run in TB, from warm, with ResetAssistanceData being sent between each request.
+//!                             2. The total time to fulfill all these requests will be recorded
+//!                             3. 10 MT-LR requests are made  to be run from cold in TB
+//!                             4. The total time to fulfill all these requests will be recorded
+//!                             5. 10 MT-LR requests are made to be run from warm in TB
+//!                             6. The total time to fulfill all these requests will be recorded
+//!                             9. The three times will be compared and ensure they are as expected
+//! @SYMTestExpectedResults     Requests take longest when starting from cold, then with the reset assistance data and the fastest is from warm.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/5/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 900 LbsMTLRTestServer LbsMTLRResetAssistance
+END_TESTCASE                  LBS-REAL-MTLR-RESETASSIST-0001
+
+// Re-select the lbsprofile.ini .
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_StopLbs
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+

@@ -1,0 +1,328 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// 3GP library parser OOM Unit Testing script
+// testexecute.exe [path]\[this script name]. 3GP library and necessary test files should be present. 
+// It requires no exceptional network support.  
+// 
+//
+
+//! @file
+//! @SYMTestSuiteName          tsu_3gp_parse_oom
+//! @SYMScriptTestEnvironment  This test runs using Symbian test execution with the following test list entry:
+//! @SYMScriptInfo All tests contained in this suite are duplicates of OOM-applicable test cases from test suite tsu_3gp_parse_api (tsu_3gp_parse_api_te.script).  This allows the test suite tsu_3gp_parse_api to focus solely on functional testing.
+
+
+PRINT Run all the 3GP library parser api Unit
+PRINT 
+
+LOAD_SUITE tsu_3gplibrary
+
+// Negative testing
+
+START_TESTCASE MM-3GP-PARSE-U-0301-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0301-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Create 3GP Parser to read zero size file content and call all APIs. 
+//! Pre-Condition	    A zero size file must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Create 3GP Parser to read zero size file content, read file again
+ when it is in used and call all APIs.
+//! @SYMTestExpectedResults All calls to retrieve video clip properties, video and/or audio 
+source & properties should fail with KErrCorrupt. Calling parser open when it is in used, should fail with KErrInUse.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0101-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-EMPTY
+END_TESTCASE MM-3GP-PARSE-U-0301-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0302-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0302-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Initialise a 3GP file parse with an empty filename and file path pointing at non-existent files. 
+//! @SYMTestPriority        High
+//! @SYMTestActions         Initialise a 3GP file parse with an empty filename and file path pointing at non-existent files.
+//! @SYMTestExpectedResults Setup fails with error KErrUnderflow with an empty file name, KErrAccessDenied when
+file path pointing at non-existent files.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0102-CP
+END_TESTCASE MM-3GP-PARSE-U-0302-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0304-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0304-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Create parser by passing in a file path of a file already opened in EFileShareExclusive mode. 
+//! Pre-Condition	    Any file.
+//! @SYMTestPriority        High
+//! @SYMTestActions         Create parser by passing in a file path of a file already opened in EFileShareExclusive mode.
+//! @SYMTestExpectedResults Setup fails with KErrAccessDenied.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0104-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-H264-MP4
+END_TESTCASE MM-3GP-PARSE-U-0304-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0306-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0306-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Use 3GP Parser to parse file before it has been setup. 
+//! Pre-Condition	    Any file.
+//! @SYMTestPriority        High
+//! @SYMTestActions         Instantiate a 3GP Parser and call all the Parser API except Close & Open
+//! @SYMTestExpectedResults Test fails with KErrNotReady.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0106-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-H264-MP4
+END_TESTCASE MM-3GP-PARSE-U-0306-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0307-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0307-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Use invalid frame type for all frame type API. 
+//! Pre-Condition	    A valid mp4/3gp file with supported audio and video stream must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Instantiate a 3GP Parser and Call all Parser API that get frame type.
+//! @SYMTestExpectedResults Test with no error.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0107-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-VIDEO-MORE
+END_TESTCASE MM-3GP-PARSE-U-0307-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0308-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0308-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Use invalid frame index for video frame APIs and Get video frame properties for more 
+than the total number of video frames in the video clip 
+//! Pre-Condition	    A valid mp4/3gp file with supported video/audio stream must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Use invalid frame index for video frame APIs and Get video frame properties for more 
+than the total number of video frames in the video clip 
+//! @SYMTestExpectedResults All APIs returns with KErrGeneral.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0108-CP  c:\mm\tsu_3gp_parse_api_te.ini MP4-VIDEO-ONLY-KEYFRAME
+END_TESTCASE MM-3GP-PARSE-U-0308-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0311-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0311-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Retrieve video related information in an audio-only mp4/3gp file.
+//! Pre-Condition	    A valid mp4/3gp file with only supported audio stream must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Retrieve video related information in an audio-only mp4/3gp file. 
+//! @SYMTestExpectedResults Test Step 1 should fail with KErrNotSupported.  Test Step 2 completes with no error.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0111-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-AUDIO-ONLY
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary 3GPSingleDataSourceTest c:\mm\tsu_3gp_parse_api_te.ini MM-3GP-PARSE-U-0111-CP-2
+END_TESTCASE MM-3GP-PARSE-U-0311-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0312-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0312-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Retrieve audio related information in a video-only mp4/3gp file.
+//! Pre-Condition	    A valid mp4/3gp file with only supported video stream must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Retrieve audio related information in a video-only mp4/3gp file. 
+//! @SYMTestExpectedResults Test Step 1 should fail with KErrNotSupported.  Test Step 2 completes with no error.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0111-CP c:\mm\tsu_3gp_parse_api_te.ini MP4-VIDEO-ONLY
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary 3GPSingleDataSourceTest c:\mm\tsu_3gp_parse_api_te.ini MM-3GP-PARSE-U-0112-CP-2
+END_TESTCASE MM-3GP-PARSE-U-0312-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0313-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0313-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Call all parser API in a mp4/3gp file with no audio nor video.
+//! Pre-Condition	    A valid mp4/3gp file with no audio nor video must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Call all parser API in a mp4/3gp file with no audio nor video.
+//! @SYMTestExpectedResults Test fails with KErrNotSupported for all audio and video related API, KErrGeneral for others.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0111-CP c:\mm\tsu_3gp_parse_api_te.ini MP4-NO-A-V
+END_TESTCASE MM-3GP-PARSE-U-0313-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0315-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0315-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Parse file of unsupported file format (WMA) and attempt to retrieve audio/video information.
+//! Pre-Condition	    A valid WMA must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Retrieve audio and video attributes. 
+//! @SYMTestExpectedResults test fails with KErrCorrupt.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0111-CP  c:\mm\tsu_3gp_parse_api_te.ini WMA
+END_TESTCASE MM-3GP-PARSE-U-0315-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0316-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0316-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Parse file of supported file format and unsupported video stream.
+//! Pre-Condition	    A file of supported file format and unsupported video stream must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Retrieve video attributes.
+//! @SYMTestExpectedResults Test fails with KErrNotSupported.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0111-CP  c:\mm\tsu_3gp_parse_api_te.ini UNSUPPORTED-VIDEO
+END_TESTCASE MM-3GP-PARSE-U-0316-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0317-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0317-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Parse file of supported file format and unsupported audio stream
+//! Pre-Condition	    	A file of supported file format and unsupported audio stream must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Retrieve audio attributes.
+//! @SYMTestExpectedResults Test fails with KErrNotSupported.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0111-CP  c:\mm\tsu_3gp_parse_api_te.ini UNSUPORTED-AUDIO-STREAM
+END_TESTCASE MM-3GP-PARSE-U-0317-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0318-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0318-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Parse file.
+//! Pre-Condition	    A file of supported file format and audio/video streams but with mis-matching file extension must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Parse file.
+//! @SYMTestExpectedResults Test with no error.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0111-CP  c:\mm\tsu_3gp_parse_api_te.ini MISMATCHED
+END_TESTCASE MM-3GP-PARSE-U-0318-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0319-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0319-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Seek position of a file with no audio nor video.
+//! Pre-Condition	    A file with no audio nor video must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Seek position of a file with no audio nor video.
+//! @SYMTestExpectedResults Test fails with KErrGeneral.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0119-CP  c:\mm\tsu_3gp_parse_api_te.ini MP4-NO-A-V
+END_TESTCASE MM-3GP-PARSE-U-0319-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0320-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0320-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Read Video Decoder Info.
+//! Pre-Condition	    A valid mp4/3gp/3g2 file containing H263 video must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Read Video Decoder Info.
+//! @SYMTestExpectedResults Expect Read Video Decoder Info fails with KErrNotSupported.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0120-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-H263-ARMNB
+END_TESTCASE MM-3GP-PARSE-U-0320-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0322-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0322-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Retrieve user atoms 
+//! Pre-Condition	    A valid mp4/3gp file containing user atoms only in location movie must be present/ no user atom
+//! @SYMTestPriority        High
+//! @SYMTestActions         Retrieve user atoms
+//! @SYMTestExpectedResults Test fails with KErrNotFound.
+RUN_TEST_STEP !OOM !Error=-1 -1 tsu_3gplibrary MM-3GP-PARSE-U-0036-CP c:\mm\tsu_3gp_parse_api_te.ini MP4-USER-ATOM
+RUN_TEST_STEP !OOM !Error=-1 -1 tsu_3gplibrary MM-3GP-PARSE-U-0036-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-MP4-MP4
+END_TESTCASE MM-3GP-PARSE-U-0322-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0324-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0324-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Seek to an invalid position of the file.
+//! Pre-Condition	    A valid mp4/3gp/3g2 file with both audio and video must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Seek to an invalid position of the file.
+//! @SYMTestExpectedResults Test with no error.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0119-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-H263-ARMNB
+END_TESTCASE MM-3GP-PARSE-U-0324-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0325-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0325-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Seek to an invalid position of the file.
+//! Pre-Condition	    A valid mp4/3gp/3g2 file with audio or video only must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Seek to an invalid position of the file.
+//! @SYMTestExpectedResults Test with no error.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0119-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-AUDIO-ONLY
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0119-CP  c:\mm\tsu_3gp_parse_api_te.ini MP4-VIDEO-ONLY
+END_TESTCASE MM-3GP-PARSE-U-0325-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0327-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0327-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Retrieve video and audio info using empty buffer for all buffer related API.
+//! Pre-Condition	    A valid mp4/3gp/3g2 file with audio or video must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Retrieve video and audio info using empty buffer for all buffer related API.
+//! @SYMTestExpectedResults Test fails with KErrOverflow except InsertData fails with KErrUnderflow.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0127-CP  c:\mm\tsu_3gp_parse_api_te.ini USER-ATOM-ALL
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0127-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-AUDIO-MORE
+END_TESTCASE MM-3GP-PARSE-U-0327-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0329-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0329-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Get H263 video leve
+//! Pre-Condition	    A valid mp4/3gp file without H263 video source/an invalid file must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Get H263 video leve in file path and buffer mode.
+//! @SYMTestExpectedResults test failed with KErrNotSupported.
+RUN_TEST_STEP !OOM !Error=-5 -1 tsu_3gplibrary MM-3GP-PARSE-U-0021-CP c:\mm\tsu_3gp_parse_api_te.ini UNSUPPORTED-VIDEO
+RUN_TEST_STEP !OOM !Error=-5 -1 tsu_3gplibrary MM-3GP-PARSE-U-0021-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-H264-MP4
+END_TESTCASE MM-3GP-PARSE-U-0329-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0330-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0330-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Async read before the parser has been setup.
+//! Pre-Condition	    A valid mp4/3gp/3g2 file must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Without open parser, do Async read for both audio and video. Should fail with KErrNotReady.
+//! @SYMTestExpectedResults Test fails with expected results.
+RUN_TEST_STEP !OOM -1 tsu_3gplibrary MM-3GP-PARSE-U-0130-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-EMPTY
+END_TESTCASE MM-3GP-PARSE-U-0330-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0331-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0331-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Async read negative test after the parser has been setup.
+//! Pre-Condition	    N/A
+//! @SYMTestPriority        High
+//! @SYMTestActions         Open parser with an empty file and do Async read for both audio and video, both of them 
+should fail with KErrCorrupt; Open parser with an valid 3gp file without audio nor video, do Async read for both 
+audio and video, both of them should fail with KErrNotSupported; open parser with an audio only file, and do Async video 
+read or Open parser with a video only file, and do Async audio read , Should fail with KErrNotSupported.
+//! @SYMTestExpectedResults Test fails with expected results.
+RUN_TEST_STEP !OOM !Error=-20 -1 tsu_3gplibrary MM-3GP-PARSE-U-0131-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-EMPTY
+RUN_TEST_STEP !OOM !Error=-5 -1 tsu_3gplibrary MM-3GP-PARSE-U-0131-CP c:\mm\tsu_3gp_parse_api_te.ini MP4-NO-A-V
+RUN_TEST_STEP !OOM !Error=-5 -1 tsu_3gplibrary MM-3GP-PARSE-U-0131-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-AUDIO-ONLY
+RUN_TEST_STEP !OOM !Error=-5 -1 tsu_3gplibrary MM-3GP-PARSE-U-0131-CP c:\mm\tsu_3gp_parse_api_te.ini MP4-VIDEO-ONLY
+END_TESTCASE MM-3GP-PARSE-U-0331-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0332-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0332-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Get the QCELP storage mode when the file is not of QCELP info
+//! Pre-Condition	    A valid mp4/3gp file without containing QCELP encoded audio stored must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Get the QCELP storage mode in file and buffer mode.
+//! @SYMTestExpectedResults The QCELP storage mode retrieved returns KErrNotSupported
+RUN_TEST_STEP !OOM !Error=-5 -1 tsu_3gplibrary MM-3GP-PARSE-U-0017-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-H263-ARMNB
+END_TESTCASE MM-3GP-PARSE-U-0332-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0335-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0335-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Get frame type
+//! Pre-Condition	    Different files which contain audio or video or both must be present
+//! @SYMTestPriority        High
+//! @SYMTestActions         Get frame type when the frames have been read in file path.
+//! @SYMTestExpectedResults Test fails with KErrNotFound.
+RUN_TEST_STEP !OOM !Error=-1 -1 tsu_3gplibrary MM-3GP-PARSE-U-0135-CP  c:\mm\tsu_3gp_parse_api_te.ini 3GP-AUDIO-ONLY
+RUN_TEST_STEP !OOM !Error=-1 -1 tsu_3gplibrary MM-3GP-PARSE-U-0135-CP  c:\mm\tsu_3gp_parse_api_te.ini MP4-VIDEO-ONLY
+RUN_TEST_STEP !OOM !Error=-1 -1 tsu_3gplibrary MM-3GP-PARSE-U-0135-CP c:\mm\tsu_3gp_parse_api_te.ini 3GP-MP4-MP4
+END_TESTCASE MM-3GP-PARSE-U-0335-CP
+
+START_TESTCASE MM-3GP-PARSE-U-0336-CP
+//! @SYMTestCaseID          MM-3GP-PARSE-U-0336-CP
+//! @SYMREQ                 REQ9021
+//! @SYMTestCaseDesc        Async read of video / audio frame when the parser is in buffer mode.
+//! Pre-Condition	    	File with audio & video.
+//! @SYMTestPriority        High
+//! @SYMTestActions         1. Setup a 3GP Parser object in buffer mode supplied with a 3GP/MP4/3G2 file with both audio & video.
+//!							2. Attempt to read a video frame asynchronously.
+//!							3. Attempt to read a audio frame asynchronously.
+//! @SYMTestExpectedResults Both async read attempt should fail with KErrNotSupported.
+RUN_TEST_STEP !OOM !Error=-21 -1 tsu_3gplibrary MM-3GP-PARSE-U-0136-CP  c:\mm\tsu_3gp_parse_api_te.ini MM-3GP-PARSE-U-0136-CP
+END_TESTCASE MM-3GP-PARSE-U-0336-CP
+
+// End of negative tests

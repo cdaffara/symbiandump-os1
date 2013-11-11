@@ -1,0 +1,198 @@
+# Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the License "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+#
+# Bluetooth HCI Commands to be generated
+# Syntax is documented below. ("[]" brackets are used for grouping with regexp wildcards, and wildcard operators will only directly follow a ']')
+#
+# COMMAND_NAME(COMMAND_CREDITS,EXPECTS_COMMAND_STATUS,EXPECTS_COMMAND_COMPLETE[,Match,MATCHING_EVENT_NAME,CONCLUDES_COMMAND,CONTINUE_MATCHING[,MATCH_OPERANDS]*]*): COMMAND_PARAMETERS
+#
+# Variables:
+# COMMAND_NAME = The name of the command for which a class will be generated.
+# COMMAND_CREDITS = The number of "command credits" this command consumes when sent to a controller.
+# EXPECTS_COMMAND_STATUS = Boolean specifying whether the command expects a command status event from the controller in response.
+# EXPECTS_COMMAND_COMPLETE = Boolean specifying whether the command expects a command complete event from the controller.
+# MATCHING_EVENT_NAME = The name of an event that will be "matched" with this command
+# CONCLUDES_COMMAND = Boolean specifying whether the matched event represents the conclusion of the request made by the command.
+# CONTINUE_MATCHING = Boolean specifying whether the command queue should continue trying to match the event with other sent commands.
+# MATCH_OPERANDS = Used to perform the match on more than just the event opcode.
+#
+# COMMAND_PARAMETERS = [COMMAND_PARAMETER]? [,COMMAND_BLOCK_PARAM]*
+# COMMAND_PARAMETER = PARAMETER_NAME (PARAMETER_SIZE)
+# COMMAND_BLOCK_PARAM = COMMAND_PARAMETER [* PARAMETER_NAME]
+# The parameters to the command are typically just a name and a size.  If the parameters feature an array (e.g. WriteStoredLinkKey)
+# then the '*' can be used to make the construct with the appropriate multiplicity.
+#
+#
+##### 7.1 Link Control Commands
+#
+Inquiry(1,True,False,Match,InquiryResultEvent,False,False,Match,InquiryResultwithRSSIEvent,False,False,Match,ExtendedInquiryResultEvent,False,False,Match,InquiryCompleteEvent,True,False,Match,CommandCompleteEvent,True,True,CommandOpcode_KInquiryCancelOpcode): LAP (3) InquiryLength(1) NumResponses(1)
+InquiryCancel(1,False,True,Match,CommandCompleteEvent,True,True,CommandOpcode_KInquiryCancelOpcode):
+PeriodicInquiryMode(1,False,True): MaxPeriodLength (2), MinPeriodLength (2), LAP (3), InquiryLength (1), NumResponses (1)
+ExitPeriodicInquiryMode(1,False,True):
+CreateACLConnection(1,True,False,Match,ConnectionCompleteEvent,True,False,BDADDR): BDADDR (6), PacketType (2), PageScanRepetitionMode (1), Reserved (1), ClockOffset (2), AllowRoleSwitch (1)
+Disconnect(1,True,False,Match,DisconnectionCompleteEvent,True,False,ConnectionHandle): ConnectionHandle (2), Reason (1)
+CreateConnectionCancel(1,False,True): BDADDR (6)
+AcceptConnectionRequest(1,True,False,Match,ConnectionCompleteEvent,True,False,BDADDR): BDADDR (6), Role (1)
+RejectConnectionRequest(1,True,False,Match,ConnectionCompleteEvent,True,False,BDADDR): BDADDR (6), Reason (1)
+LinkKeyRequestReply(1,False,True): BDADDR (6), LinkKey (16)
+LinkKeyRequestReplyNegative(1,False,True): BDADDR (6)
+PINCodeRequestReply(1,False,True): BDADDR (6), PINCodeLength (1), PINCode (16)
+PINCodeRequestReplyNegative(1,False,True): BDADDR (6)
+ChangeConnectionPacketType(1,True,False,Match,ConnectionPacketTypeChangedEvent,True,False): ConnectionHandle (2), PacketType (2)
+AuthenticationRequested(1,True,False,Match,AuthenticationCompleteEvent,True,False): ConnectionHandle (2)
+SetConnectionEncryption(1,True,False,Match,EncryptionChangeEvent,True,False): ConnectionHandle (2), EncryptionEnable (1)
+ChangeLinkKey(1,True,False,Match,LinkKeyNotificationEvent,False,False,Match,ChangeLinkKeyEvent,True,False): ConnectionHandle (2)
+MasterLinkKey(1,True,False,Match,MasterLinkKeyEvent,True,False): KeyFlag (1)
+RemoteNameRequest(1,True,False,Match,RemoteNameReqCompleteEvent,True,False,Match,RemoteHostSupportedFeaturesNotificationEvent,False,False): BDADDR (6), PageScanRepetitionMode (1), Reserved (1), ClockOffset (2)
+RemoteNameRequestCancel(1,False,True): BDADDR (6)
+ReadRemoteSupportedFeatures(1,True,False,Match,ReadRemSuppFeatCompleteEvent,True,False): ConnectionHandle (2)
+ReadRemoteExtendedFeatures(1,True,False,Match,ReadRemoteExtendedFeaturesCompleteEvent,True,False): ConnectionHandle (2), PageNumber (1)
+ReadRemoteVersionInfo(1,True,False,Match,ReadRemVerInfoCompleteEvent,True,False): ConnectionHandle (2)
+ReadClockOffset(1,True,False,Match,ReadClockOffsetEvent,True,False): ConnectionHandle (2)
+ReadLMPHandle(1,False,True): ConnectionHandle (2)
+SetupSynchronousConnection(1,True,False,Match,SynchronousConnectionCompleteEvent,True,False,BDADDR,Match,SynchronousConnectionChangedEvent,True,False): ConnectionHandle (2), TransmitBandwidth (4), ReceiveBandwidth (4), MaxLatency (2), VoiceSetting (2), RetransmissionEffort (1), PacketType (2), @BDADDR (6)
+AcceptSynchronousConnectionRequest(1,True,False,Match,SynchronousConnectionCompleteEvent,True,False,BDADDR): BDADDR (6), TransmitBandwidth (4), ReceiveBandwidth (4), MaxLatency (2),  ContentFormat (2), RetransmissionEffort (1), PacketType (2)
+RejectSynchronousConnectionRequest(1,True,False,Match,SynchronousConnectionCompleteEvent,True,False,BDADDR): BDADDR (6), Reason (1)
+IOCapabilityRequestReply(1,False,True,Match,IOCapabilityResponseEvent,False,False,Match,RemoteOOBDataRequestEvent,False,False): BDADDR (6), IOCapability (1), OOBDataPresent (1), AuthenticationRequirements (1)
+UserConfirmationRequestReply(1,False,True): BDADDR (6)
+UserConfirmationRequestNegativeReply(1,False,True): BDADDR (6)
+UserPasskeyRequestReply(1,False,True): BDADDR (6), NumericValue (4)
+UserPasskeyRequestNegativeReply(1,False,True): BDADDR (6)
+RemoteOOBDataRequestReply(1,False,True): BDADDR (6), OOBDataC (16), OOBDataR (16)
+RemoteOOBDataRequestNegativeReply(1,False,True): BDADDR (6)
+IOCapabilityRequestNegativeReply(1,False,True): BDADDR (6), Reason (1)
+#
+##### 7.2 Link Policy Commands
+#
+HoldMode(1,True,False,Match,ModeChangeEvent,True,False,ConnectionHandle): ConnectionHandle (2), HoldModeMaxInterval (2), HoldModeMinInterval (2)
+SniffMode(1,True,False,Match,ModeChangeEvent,True,False,ConnectionHandle): ConnectionHandle (2), SniffMaxInterval (2), SniffMinInterval (2), SniffAttempt (2), SniffTimeout (2)
+ExitSniffMode(1,True,False,Match,ModeChangeEvent,True,False,ConnectionHandle): ConnectionHandle (2)
+ParkMode(1,True,False,Match,ModeChangeEvent,True,False,ConnectionHandle): ConnectionHandle (2), BeaconMaxInterval (2), BeaconMinInterval (2)
+ExitParkMode(1,True,False,Match,ModeChangeEvent,True,False,ConnectionHandle): ConnectionHandle (2)
+QOSSetup(1,True,False,Match,QOSSetupCompleteEvent,True,False): ConnectionHandle (2), Flags (1), ServiceType (1), TokenRate (4), PeakBandwidth (4), Latency (4), DelayVariation (4)
+RoleDiscovery(1,False,True): ConnectionHandle (2)
+SwitchRole(1,True,False,Match,RoleChangeEvent,True,False,BDADDR): BDADDR (6), Role (1)
+ReadLinkPolicySettings(1,False,True): ConnectionHandle (2)
+WriteLinkPolicySettings(1,False,True): ConnectionHandle (2), LinkPolicySettings (2)
+ReadDefaultLinkPolicySettings(1,False,True):
+WriteDefaultLinkPolicySettings(1,False,True): DefaultLinkPolicySettings (2)
+FlowSpecification(1,True,False,Match,FlowSpecificationCompleteEvent,True,False): ConnectionHandle (2), Flags (1), FlowDirection (1), ServiceType (1), TokenRate (4), TokenBucketSize (4), PeakBandwidth (4), AccessLatency (4)
+### SniffSubrating command would match with a sniff subrating event, however if not in sniff mode then the
+### sniff subrating event will not be generated until sniff mode is entered, so we cannot match as we need to
+### conclude the sniff subrating command upon the receipt of the command complete event. As it appears that 
+### we would expect the sniff subrating event after the complete matching to the sniff subrating event 
+### is pointless. 
+SniffSubrating(1,False,True): ConnectionHandle (2), MaximumLatency (2), MinimumRemoteTimeout (2), MinimumLocalTimeout (2)
+#
+##### 7.3 Controller & Baseband Commands
+#
+SetEventMask(1,False,True): EventMask (8)
+Reset(1,False,True):
+SetEventFilter(1,False,True): FilterType (1), FilterConditionType (1), Condition (7)
+Flush(1,False,True,Match,FlushOccurredEvent,False,False): ConnectionHandle (2)
+ReadPINType(1,False,True):
+WritePINType(1,False,True): PINType (1)
+CreateNewUnitKey(1,False,True):
+ReadStoredLinkKey(1,False,True,Match,ReturnLinkKeysEvent,False,False): BDADDR (6), ReadAllFlag (1)
+WriteStoredLinkKey(1,False,True): NumKeysToWrite (1), BDADDR (6) * NumKeysToWrite, LinkKey (16) * NumKeysToWrite
+DeleteStoredLinkKey(1,False,True): BDADDR (6), DeleteAllFlag (1)
+WriteLocalName(1,False,True): LocalName (248)
+ReadLocalName(1,False,True):
+ReadConnectionAcceptTimeout(1,False,True):
+WriteConnectionAcceptTimeout(1,False,True): ConnAcceptTimeout (2)
+ReadPageTimeout(1,False,True):
+WritePageTimeout(1,False,True): PageTimeout (2)
+ReadScanEnable(1,False,True):
+WriteScanEnable(1,False,True): ScanEnable (1)
+ReadPageScanActivity(1,False,True):
+WritePageScanActivity(1,False,True): PageScanInterval (2), PageScanWindow (2)
+ReadInquiryScanActivity(1,False,True):
+WriteInquiryScanActivity(1,False,True): InquiryScanInterval (2), InquiryScanWindow (2)
+ReadAuthenticationEnable(1,False,True):
+WriteAuthenticationEnable(1,False,True): AuthenticationEnable (1)
+ReadClassOfDevice(1,False,True):
+WriteClassOfDevice(1,False,True): ClassOfDevice (3)
+ReadVoiceSetting(1,False,True):
+WriteVoiceSetting(1,False,True): VoiceSetting (2)
+ReadAutomaticFlushTimeout(1,False,True): ConnectionHandle (2)
+WriteAutomaticFlushTimeout(1,False,True): ConnectionHandle (2), FlushTimeout (2)
+ReadNumBroadcastRetransmissions(1,False,True):
+WriteNumBroadcastRetransmissions(1,False,True): NumBroadcastRetransmissions (1)
+ReadHoldModeActivity(1,False,True):
+WriteHoldModeActivity(1,False,True): HoldModeActivity (1)
+ReadTransmitPowerLevel(1,False,True): ConnectionHandle (2), Type (1)
+ReadSynchronousFlowControlEnable(1,False,True):
+WriteSynchronousFlowControlEnable(1,False,True): SynchronousFlowControlEnable (1)
+SetControllerToHostFlowControl(1,False,True): FlowControlEnable (1)
+HostBufferSize(1,False,True): HostACLDataPacketLength (2), HostSynchronousDataPacketLength (1), HostTotalNumACLDataPackets (2), HostTotalNumSynchronousDataPackets (2)
+HostNumberOfCompletedPackets(0,False,False): NumberOfHandles (1), ConnectionHandle (2) * NumberOfHandles, HostNumOfCompletedPackets (2) * NumberOfHandles
+ReadLinkSupervisionTimeout(1,False,True): ConnectionHandle (2)
+WriteLinkSupervisionTimeout(1,False,True): ConnectionHandle (2), LinkSupervisionTimeout (2)
+ReadNumberOfSupportedIAC(1,False,True):
+ReadCurrentIACLAP(1,False,True):
+WriteCurrentIACLAP(1,False,True): NumCurrentIAC (1), IACLAP (3) * NumCurrentIAC
+SetAFHHostChannelClassification(1,False,True): AFHHostChannelClassification (10)
+ReadInquiryScanType(1,False,True):
+WriteInquiryScanType(1,False,True): ScanType (1)
+ReadInquiryMode(1,False,True):
+WriteInquiryMode(1,False,True): InquiryMode (1)
+ReadPageScanType(1,False,True):
+WritePageScanType(1,False,True): PageScanType (1)
+ReadAFHChannelAssessmentMode(1,False,True):
+WriteAFHChannelAssessmentMode(1,False,True): AFHChannelAssessmentMode (1)
+ReadExtendedInquiryResponse(1,False,True):
+WriteExtendedInquiryResponse(1,False,True): FECRequired (1), ExtendedInquiryResponse (240) 
+RefreshEncryptionKey(1,True,False,Match,EncryptionKeyRefreshCompleteEvent,True,False,ConnectionHandle): ConnectionHandle (2)
+ReadSimplePairingMode(1,False,True):
+WriteSimplePairingMode(1,False,True): SimplePairingMode (1)
+ReadLocalOOBData(1,False,True):
+ReadInquiryResponseTransmitPowerLevel(1,False,True):
+WriteInquiryResponseTransmitPowerLevel(1,False,True): TxPowerLevel (1)
+SendKeypressNotification(1,False,True): BDADDR (6), NotificationType (1)
+ReadDefaultErroneousDataReporting(1,False,True):
+WriteDefaultErroneousDataReporting(1,False,True): ErroneousDataReporting (1)
+EnhancedFlush(1,True,False,Match,EnhancedFlushCompleteEvent,True,False,ConnectionHandle): ConnectionHandle (2), PacketType (1)
+#
+##### 7.4 Informational Parameters
+#
+ReadLocalVersionInfo(1,False,True):
+ReadLocalSupportedCommands(1,False,True):
+ReadLocalSupportedFeatures(1,False,True):
+ReadLocalExtendedFeatures(1,False,True): PageNumber (1)
+ReadBufferSize(1,False,True):
+ReadBdaddr(1,False,True):
+#
+##### 7.5 Status Parameters
+#
+ReadFailedContactCounter(1,False,True): ConnectionHandle (2)
+ResetFailedContactCounter(1,False,True): ConnectionHandle (2)
+ReadLinkQuality(1,False,True): ConnectionHandle (2)
+ReadRSSI(1,False,True): ConnectionHandle (2)
+ReadAFHChannelMap(1,False,True): ConnectionHandle (2)
+ReadClock(1,False,True): ConnectionHandle (2), WhichClock (1)
+#
+##### 7.6 Testing Commands
+#
+ReadLoopbackMode(1,False,True):
+WriteLoopbackMode(1,False,True): LoopbackMode (1)
+EnableDeviceUnderTestMode(1,False,True):
+WriteSimplePairingDebugMode(1,False,True): SimplePairingDebugMode (1)
+#
+#### Appendix A: Deprecated Commands, Events and Configuration Parameters
+#
+ReadPageScanPeriod(1,False,True):
+WritePageScanPeriod(1,False,True): PageScanPeriodMode (1)
+AddSCOConnection(1,True,False,Match,ConnectionCompleteEvent,True,False,BDADDR): ConnectionHandle (2), PacketType (2), @BDADDR (6)
+ReadEncryptionMode(1,False,True):
+WriteEncryptionMode(1,False,True): EncryptionMode (1)

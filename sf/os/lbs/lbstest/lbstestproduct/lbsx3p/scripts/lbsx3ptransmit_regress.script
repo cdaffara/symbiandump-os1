@@ -1,0 +1,188 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsX3PTestServer -SharedData
+
+PRINT Run LbsX3PTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\lbstestprofile.ini c:\private\10282253\lbs\lbsprofile.ini  
+        CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 030 LbsX3PTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-X3P-TransmitRegress-0001
+
+//!@SYMTestCaseID			LBS-X3P-TransmitRegress-0001
+//!@SYMTestCaseDesc			Transmit current position with default options (no SetTransmitOptions() call 
+//!					and quality profile left as default) to a valid destination.
+//!					
+//!@SYMTestActions			1. Open a session with the transmit position server
+//!					2. Create a sub-session
+//!					3. Request current position be sent to a third party � RlbsTransnitPosition::TransmitPosition() 
+//!					   giving a valid destination Id (email/phone number).
+//!					4. Wait for request to complete.
+//!					5. Verify that the request completed successfully and that the transmitted info (TPositionInfo& supplied 
+//!					   with request complete) contains the position info we expected it to 
+//!					   (whatever test-gps-module was configured to send).
+//!					6. Verify that the position info received by the network also matches above (need NetSim to allow this)
+//!					7. Verify that the request was logged. Details logged should include requesting application, remote recipient, //!					   outcome of request and position info
+//!					
+//!@SYMTestExpectedResults		Request completes successfully (KErrNone)
+//!					Transmitted info matches (we can use the test-gps-module and verify that location transmitted is the same)
+//!					Can we check that the position info is actually received at the supplied email address � only manually, when we have full system available (ETEL)?
+//!					
+//!@SYMPREQ				PREQ 163
+//!					REQ 163.01
+//!					REQ 163.03
+//!					REQ 163.08
+//!					PREQ 89
+//!					REQ 89.05
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+//!ISSUE: Does network simulator allow us to see what position was sent to the network?
+//!       Lrm: look into: how does the initiating app receive notification that the location was sent and detail of that location?
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0001
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Transmit c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0001
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyLogInfo
+PRINT Reset Default Admin
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_ResetDefaultAdmin
+END_TESTCASE LBS-X3P-TransmitRegress-0001
+
+
+
+START_TESTCASE LBS-X3P-TransmitRegress-0002
+
+//!@SYMTestCaseID			LBS-X3P-TransmitRegress-0002
+//!@SYMTestCaseDesc			Request transmit current position from multiple sessions.
+//!					
+//!@SYMTestActions			1. Create single client (RlbsTransnitPositionServer object)
+//!					2. Open multiple sub-sessions (RlbsTransnitPosition objects)
+//!					3. Request X3P on each sub-session (can have same priorities)
+//!					4. Wait for requests to complete
+//!					
+//!@SYMTestExpectedResults		-All requests complete successfully (KErrNone).
+//!					-Locations reported and received match what gps-test-module sent.
+//!					-Details logged
+//!					
+//!@SYMPREQ				PREQ 163
+//!					REQ163.01
+//!					PREQ 89
+//!					REQ 89.05
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0003
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Transmit c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0003
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyLogInfo
+PRINT Reset Default Admin
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_ResetDefaultAdmin
+END_TESTCASE LBS-X3P-TransmitRegress-0002
+
+
+START_TESTCASE LBS-X3P-TransmitRegress-0003
+
+//!@SYMTestCaseID			LBS-X3P-TransmitRegress-0003
+//!@SYMTestCaseDesc			Transmit to 3rd party with 'autonomous-only' mode set 
+//!
+//!@SYMTestActions			1. Set 'autonomous-only' (EGpsAutonomous) mode via admin api
+//!							2. Connect to transmit server
+//!							3. Open sub-session
+//!							4. Request to transmit position to 3rd party
+//!							5. Wait for request to complete
+//!
+//!@SYMTestExpectedResults	Request completes successfully 
+//!
+//!@SYMPREQ				PREQ 163 
+//!@SYMPREQ				PREQ 162
+//!@SYMREQ 					
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			3
+//!@SYMTestStatus			Implemented. 
+
+PRINT Set Autonomous Mode
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_SetAutonomousMode
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0007
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Transmit c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0007
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyLogInfo
+PRINT Reset Default Admin
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_ResetDefaultAdmin
+END_TESTCASE LBS-X3P-TransmitRegress-0003
+
+
+START_TESTCASE LBS-X3P-TransmitRegress-0004
+
+//!@SYMTestCaseID			LBS-X3P-TransmitRegress-0004
+//!@SYMTestCaseDesc			Request X3P when X3P turned off in admin settings
+//!
+//!@SYMTestActions			1. ETransmitLocateOff for KSettingHomeTransmitLocate
+//!							2. Request transmit to 3rd party
+//!							3. Monitor NetSim notifications to make sure that MOLR is not sent to network
+//!							4. Wait for request to complete
+//!
+//!@SYMTestExpectedResults	Request should fail KErrAccessDenied. No location sent.
+//!
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ 					163.08
+//!@SYMPREQ				PREQ 162
+//!@SYMREQ 					162.07
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented. Incomplete.
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0008
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Transmit c:\testdata\configs\lbsx3ptransmit.ini LBS-X3P-Transmit-0008
+// X3P off, no location to verify
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyLogInfo
+PRINT Reset Default Admin
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_ResetDefaultAdmin
+END_TESTCASE LBS-X3P-TransmitRegress-0004
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_StopLbs
+
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

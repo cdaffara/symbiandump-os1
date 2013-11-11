@@ -1,0 +1,71 @@
+// Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include "kernel/kern_ext.mmh"
+
+//#define MMC_SD		// Include for MMC+SD build 
+//#define MMC_SD_CPRM		// Include for MMC+SD+CPRM build
+//#define MMC_SD_SDIO		// Include for MMC+SDIO build
+
+USERINCLUDE		inc
+SYMBIAN_BASE_SYSTEMINCLUDE(drivers)
+
+target				epbusv.dll
+targettype			kext
+
+#if defined(MMC_SD)
+USERINCLUDE ../../../kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/sdcard3c
+sourcepath			specific/sdcard/sdcard3c
+source				pp_sdc.cpp
+source				pp_sdcv.cpp
+library				epbussd.lib
+#elif defined(MMC_SD_CPRM)
+USERINCLUDE ../../../kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/sdcard3c
+USERINCLUDE ../../../kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/sdcard4c
+sourcepath			specific/sdcard/sdcard4c
+source				pp_cprm.cpp
+source				pp_cprmv.cpp
+library				epbussdp.lib
+#elif defined(MMC_SD_SDIO)
+USERINCLUDE ../../../kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/sdcard3c
+USERINCLUDE ../../../kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/sdcard4c
+USERINCLUDE ../../../kernelhwsrv/kernel/eka/drivers/pbus/mmc/sdcard/sdcard3c/sdio
+sourcepath			specific/sdcard/sdcard3c/sdio
+source				pp_sdio.cpp
+source				pp_sdiov.cpp
+library				epbussdio.lib
+#else
+sourcepath			specific
+source				mmc.cpp
+source				mmcv.cpp
+library				epbusmmc.lib
+#endif
+
+library				ecust.lib
+library				emulator.lib
+
+epocallowdlldata
+
+start wins
+win32_library			kernel32.lib
+#if defined(VC32)
+win32_library			msvcrt.lib
+#endif
+end
+
+uid 				0x1000008d 0x10004187
+VENDORID 0x70000001
+
+capability			all

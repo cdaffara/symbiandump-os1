@@ -1,0 +1,335 @@
+﻿// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsX3PTestServer -SharedData
+LOAD_SUITE CTSuplMolrRealTestServer
+
+
+PRINT Run LbsX3PTestServer
+PRINT
+
+RUN_UTILS CopyFile c:\testdata\configs\lbssupltestconfig.txt c:\config.txt
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 010 CTSuplMolrRealTestServer SetHostToServerBTlsSecurity
+
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_StartLbs
+
+PRINT Set Autonomous Mode
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_SetAutonomousMode
+
+START_TESTCASE LBS-X3P-CancelReal-0001
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0001
+//!@SYMTestCaseDesc		Call RlbsTransmitPosition::CancelTransmitPosition() when no transmit is outstanding.
+//!					
+//!@SYMTestActions		1. Open sub-session
+//!					2. Do not request X3P
+//!					3. Attempt to cancel X3P
+//!					
+//!@SYMTestExpectedResults	CancelTransmitPosition() fails with KErrNotFound
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2
+//!@SYMTestStatus			Not Implemented
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0001
+
+END_TESTCASE LBS-X3P-CancelReal-0001
+
+
+
+START_TESTCASE LBS-X3P-CancelReal-0002
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0002
+//!@SYMTestCaseDesc		Request X3P, then cancel request before MO-LR started ()
+//!					
+//!@SYMTestActions		1. Open a session with the transmit position server
+//!					2. Create a sub-session
+//!					3. Request current position be sent to a third party � RlbsTransmitPosition::TransmitPosition() 
+//!					   giving a valid destination Id (email/phone number).
+//!					4. RLbsTransmitPosition::CancelTransmitPosition()
+//!					5. Wait for request to complete
+//!					
+//!@SYMTestExpectedResults	No panic. X3P request completes with KErrCancel 
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2
+//!@SYMTestStatus			Not Implemented
+
+//	May not be possible to implement. Need to get the cancel in after the NRH sends the request to the NG, 
+//	but before the protocol module sends the MOLR to the network.
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0002
+
+END_TESTCASE LBS-X3P-CancelReal-0002
+
+
+START_TESTCASE LBS-X3P-CancelReal-0003
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0003
+//!@SYMTestCaseDesc		Request X3P, then cancel request before MO-LR started ()
+//!					
+//!@SYMTestActions		1. Tell NetSim that next request should have a time delay (needed)
+//!					2. Request current position be sent to a third party � RlbsTransmitPosition::TransmitPosition()
+//!					3. Wait for notification from NetSim that MOLR has been sent
+//!					4. RLbsTransmitPosition::CancelTransmitPosition()
+//!					
+//!@SYMTestExpectedResults	No panic. X3P request completes with KErrNone or KErrCancel in CActive::Cancel() 
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+//	ISSUE: Jarek mentioned using the timelag feature in NetSim for the MOLR, but not sure why that would be needed?
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0003
+
+END_TESTCASE LBS-X3P-CancelReal-0003
+
+
+START_TESTCASE LBS-X3P-CancelReal-0004
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0004
+//!@SYMTestCaseDesc		Request X3P, then cancel request after location request received
+//!					
+//!@SYMTestActions		1. Request current position be sent to a third party � RlbsTransmitPosition::TransmitPosition()
+//!					2. Wait for notification of Location Request from network (sent in response to MOLR)
+//!					3. RLbsTransmitPosition::CancelTransmitPosition()
+//!					
+//!@SYMTestExpectedResults	No panic. X3P request completes with KErrNone or KErrCancel in CActive::Cancel()
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+//	ISSUE: Jarek mentioned using the timelag feature in NetSim for the MOLR, but not sure why that would be needed?
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0004
+
+END_TESTCASE LBS-X3P-CancelReal-0004
+
+
+START_TESTCASE LBS-X3P-CancelReal-0005
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0005
+//!@SYMTestCaseDesc		Request X3P, then cancel request after responding to location request
+//!					
+//!@SYMTestActions		1. Request current position be sent to a third party � RlbsTransmitPosition::TransmitPosition()
+//!					2. Wait for notification of response to Location Request from network 
+//!					3. RLbsTransmitPosition::CancelTransmitPosition()
+//!					
+//!@SYMTestExpectedResults	No panic. X3P request completes with KErrNone or KErrCancel in CActive::Cancel()
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0005
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyRoughPosInfos
+
+END_TESTCASE LBS-X3P-CancelReal-0005
+
+
+START_TESTCASE LBS-X3P-CancelReal-0006
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0006
+//!@SYMTestCaseDesc		Request X3P, then cancel request after protocol module closed MOLR but before it sent X3P complete to NRH
+//!					
+//!@SYMTestActions		1. Request current position be sent to a third party � RlbsTransmitPosition::TransmitPosition()
+//!					
+//!@SYMTestExpectedResults	No panic. X3P request completes with KErrNone or KErrCancel in CActive::Cancel()
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+//	ISSUES: Currently not possible to implement. Think it would require new functionality (to insert a time lag) in NetSim
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0006
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyRoughPosInfos
+
+END_TESTCASE LBS-X3P-CancelReal-0006
+
+
+START_TESTCASE LBS-X3P-CancelReal-0007
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0007
+//!@SYMTestCaseDesc		
+//!					
+//!@SYMTestActions		1. Request current position be sent to a third party - RlbsTransmitPosition::TransmitPosition()
+//!					2. Try to cancel Active object using Cancel function and in the cancel function call CancelTransmitPostion()
+//!					
+//!@SYMTestExpectedResults	TransmitPosition should be canceled without any problem
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+//	ISSUES: Currently not possible to implement. Think it would require new functionality (to insert a time lag) in NetSim
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0007
+
+END_TESTCASE LBS-X3P-CancelReal-0007
+
+
+START_TESTCASE LBS-X3P-CancelReal-0008
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0008
+//!@SYMTestCaseDesc		
+//!					
+//!@SYMTestActions		1. Create two transmit Positional objects
+//!					2. Call TransmitPosition from the first one
+//!					3. Try canceling on the second TransmitPosition object
+//!					
+//!@SYMTestExpectedResults	Transmit Postion should complete properly on first one. Cancel on second one should not have any effect
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+//	ISSUES: Currently not possible to implement. Think it would require new functionality (to insert a time lag) in NetSim
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0008
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyRoughPosInfos
+
+END_TESTCASE LBS-X3P-CancelReal-0008
+
+
+START_TESTCASE LBS-X3P-CancelReal-0009
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0009
+//!@SYMTestCaseDesc		
+//!					
+//!@SYMTestActions		1. Create two transmit Positional objects
+//!					2. Call TransmitPosition from the first one
+//!					3. Try canceling on the second TransmitPosition object using Active Object->Cancel() function
+//!					
+//!@SYMTestExpectedResults	Transmit Postion should complete properly on first one. Cancel on second one should not have any effect
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+//	ISSUES: Currently not possible to implement. Think it would require new functionality (to insert a time lag) in NetSim
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0009
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyRoughPosInfos
+
+END_TESTCASE LBS-X3P-CancelReal-0009
+
+
+//START_TESTCASE LBS-X3P-CancelReal-0010
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0010
+//!@SYMTestCaseDesc		Setting X3P to look for more assistance data to get position	
+//!					
+//!@SYMTestActions		1. Set modDataIn.iAssDataTestMode = TModuleDataIn::EModuleTestModeAssDataOn_SomeDataNotAvailable so that
+//!					   Lbs system will ask for more assistance data to get position
+//!					2. Call TransmitPostion
+//!					3. Wait for the requests to complete
+//!
+//!@SYMTestExpectedResults	The TransmitPostion request should complete fine and we should get callback about requesting more assistance data
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+
+//RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+//RUN_TEST_STEP 300 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0010
+//RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_VerifyRoughPosInfos
+
+//END_TESTCASE LBS-X3P-CancelReal-0010
+
+
+START_TESTCASE LBS-X3P-CancelReal-0010
+
+//!@SYMTestCaseID			LBS-X3P-CancelReal-0010
+//!@SYMTestCaseDesc		Request X3P, then cancel after network has provided MoLrResult
+//!					
+//!@SYMTestActions		1. Request current position be sent to a third party - RlbsTransmitPosition::TransmitPosition()
+//!				2. Wait for NetSim's notification that MOLR result has been sent to LBS
+//!				3. RLbsTransmitPosition::CancelTransmitPosition()
+//!					
+//!@SYMTestExpectedResults	No panic. X3P request completes with KErrNone or KErrCancel in CActive::Cancel()
+//!					
+//!@SYMPREQ				PREQ 163
+//!@SYMREQ				REQ 163.05
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-Common
+RUN_TEST_STEP 060 LbsX3PTestServer LbsX3PStep_Cancel c:\testdata\configs\lbsx3pcancel_real.ini LBS-X3P-Cancel-0011
+
+END_TESTCASE LBS-X3P-CancelReal-0010
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_StopLbs
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

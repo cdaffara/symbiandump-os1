@@ -1,0 +1,1062 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName telephony-etelmm-voicecall-validation-incomingcall
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the RMmCustomAPI; RMobileLine; RMobilePhone; RTelServer; RMobileConferenceCall and RMobileCall
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: RMmCustomAPI; RMobileLine; RMobilePhone; RTelServer; RMobileConferenceCall and RMobileCall
+// Voice Call tests are intended for semi-automatic testing because dialing/ answering calls require user interaction.
+//
+
+
+
+LOAD_SUITE t_etelmm
+
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0001
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0001
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref}; const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref}; const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with SIM in GSM mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to GSM (ChangeMode = GSM)
+//!                6. Get the current mode
+//!                7. Check the mode is GSM (CheckMode = GSM)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0001-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0001
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0002
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0002
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref}; const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref};const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with Sim in GSM mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to GSM (ChangeMode = GSM)
+//!                6. Get the current mode
+//!                7. Check the mode is GSM (CheckMode = GSM)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0002-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0002
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0003
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0003
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref};const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref};const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with Sim in GSM Mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to GSM (ChangeMode = GSM)
+//!                6. Get the current mode
+//!                7. Check the mode is GSM (CheckMode = GSM)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0003-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0003
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0004
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0004
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref};const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref};const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with Sim in GSM mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to GSM (ChangeMode = GSM)
+//!                6. Get the current mode
+//!                7. Check the mode is GSM (CheckMode = GSM)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0004-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0004
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0005
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0005
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref};const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref};const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with Sim in WCDMA mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3.Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to WCDMA (ChangeMode = WCDMA)
+//!                6. Get the current mode
+//!                7. Check the mode is WCDMA (CheckMode = WCDMA)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0005-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0005
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0006
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0006
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref};const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref};const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with sim in WCDMA mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3.Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to WCDMA (ChangeMode = WCDMA)
+//!                6. Get the current mode
+//!                7. Check the mode is WCDMA (CheckMode = WCDMA)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0006-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0006
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0007
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0007
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref};const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref};const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with sim in WCDMA mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3.Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to WCDMA (ChangeMode = WCDMA)
+//!                6. Get the current mode
+//!                7. Check the mode is WCDMA (CheckMode = WCDMA)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0007-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0007
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0008
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0008
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref};const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref};const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer an incoming call and hang it up with sim in WCDMA mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3.Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to WCDMA (ChangeMode = WCDMA)
+//!                6. Get the current mode
+//!                7. Check the mode is WCDMA (CheckMode = WCDMA)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received, answered and hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0008-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0008
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0009
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0009
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref},const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}, RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref},const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer a call in Dual mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to Dual (ChangeMode = Dual)
+//!                6. Get the current mode
+//!                7. Check the mode is Dual (CheckMode = Dual)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. A simple Dual call is received
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0009-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0009
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0010
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0010
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref},const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}, RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref},const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer a call in GSM mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to GSM (ChangeMode = GSM)
+//!                6. Get the current mode
+//!                7. Check the mode is GSM (CheckMode = GSM)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. A simple WCDMA call is received
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0010-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0010
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0011
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0011
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref},const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}, RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref},const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Answer a call in WCDMA mode
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initizalize custom API (RMobilePhone=mobilePhone)
+//!                5. Change mode to WCDMA (ChangeMode = WCDMA)
+//!                6. Get the current mode
+//!                7. Check the mode is WCDMA (CheckMode = WCDMA)
+//!                8. Open line (Line = Voice1;RMobilePhone=mobilePhone)
+//!                9. Notify incoming call (Call = 1)
+//!                10. Open the existing call (RMobileLine=mobileLine;Call=1)
+//!                11.Get VoiceCall capabilities for the call (Call = 1)
+//!                12.Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                13.Answer the incoming call (Call = 1)
+//!                14.Answer the incoming call result (Call = 1)
+//!                15.Get call duration (Call = 1)
+//!                16.Hang up (Call = 1)
+//!                17.Close call (Call = 1)
+//!                18.Close line
+//!                19.Close custom API
+//!                20.Close mobile phone
+//!                21.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. A simple GSM call is received
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-Open_command04
+		COMMAND		customApi		SetSystemNetworkMode			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-SetSystemNetworkMode_command05
+		OUTSTANDING
+		COMMAND		customApi		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		customApi		UtilityModeCheck			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-UtilityModeCheck_command07
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-Open_command08
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-NotifyIncomingCall_command09
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-OpenExistingCall_command10
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-GetCaps_command11
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-CheckCaps_command12
+		COMMAND		mobileCall		AnswerIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-AnswerIncomingCall_command13
+		OUTSTANDING
+		COMMAND		mobileCall		AnswerIncomingCallPost			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-AnswerIncomingCallPost_command14
+		OUTSTANDING
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-GetCallDuration_command15
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-HangUp_command16
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0011-0001-Close_command17
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0011
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0012
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0012
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref},const TDesC{ref});
+//!                RLine::NotifyIncomingCall (TRequestStatus{ref}, TName{ref});
+//!                RLine::OpenNewCall(RLine{ref},TDes{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                RCall::Dial(TRequestStatus{ref} aStatus,const TTelNumberC{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Receive a call and don't answer it
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone 
+//!                4. Initialize custom API (RMobilePhone=mobilePhone)
+//!                5. Open line (RMobilePhone=mobilePhone;Line = Voice1)
+//!                6. Notify incoming call (Call = 1)
+//!                7. Open existing call (RMobileLine=mobileLine;Call = 1)
+//!                8. Get VoiceCall capabilities for the call (Call = 1)
+//!                9. Check VoiceCall capabilities (Capabilities = VoiceCall)
+//!                10. Close call (Call = 1)
+//!                11. Close line
+//!                12.Close custom API
+//!                13.Close mobile phone
+//!                14.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. A call is received and not answered.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-Open_command04
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-Open_command05
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-NotifyIncomingCall_command06
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-OpenExistingCall_command07
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-GetCaps_command08
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-CheckCaps_command09
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0012-0001-Close_command10
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0012
+
+
+
+
+START_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0013
+
+//!@SYMTestCaseID		TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0013
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref},const TDesC{ref});
+//!                RLine::NotifyIncomingCall(TRequestStatus{ref}, TName{ref});
+//!                Rcall::OpenExistingCall(RLine{ref,const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		19/5/2008
+//!@SYMTestCaseDesc		Receive a call and hang it up without answering
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer; Phone=0)
+//!                3. Initialise mobile phone
+//!                4. Initialize custom API (RMobilePhone=mobilePhone)
+//!                5. Open line (RMobilePhone=mobilePhone;Line = Voice1)
+//!                6. Notify incoming call (Call = 1)
+//!                7. Open existing call (RMobileLine=mobileLine;Call = 1)
+//!                8. Get VoiceCall capabilities for the call (Call = 1)
+//!                9. Check VoiceCall capabilites (Capabilities = VoiceCall)
+//!                10. Get call duration (Call = 1)
+//!                11. Hang up (Call = 1)
+//!                12.Close call (Call = 1)
+//!                13.Close line
+//!                14.Close custom API
+//!                15.Close mobile phone
+//!                16.Close telephony server
+//!@SYMTestStatus		Implemented
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. A call is received and hanged without answered.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	600	t_etelmm	\telephony\etelmm\telephony-etelmm-voicecall-validation-incomingcall.ini
+		CREATE_OBJECT	RTelServer		telServer
+		CREATE_OBJECT	RMobilePhone		mobilePhone
+		CREATE_OBJECT	RMobileLine		mobileLine
+		CREATE_OBJECT	RMobileCall		mobileCall
+		CREATE_OBJECT	RMmCustomAPI		customApi
+		COMMAND		telServer		Connect
+		COMMAND		mobilePhone		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-Open_command02
+		COMMAND		mobilePhone		Initialise
+		COMMAND		customApi		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-Open_command04
+		COMMAND		mobileLine		Open			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-Open_command05
+		COMMAND		mobileLine		NotifyIncomingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-NotifyIncomingCall_command06
+		OUTSTANDING
+		COMMAND		mobileCall		OpenExistingCall			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-OpenExistingCall_command07
+		COMMAND		mobileCall		GetCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-GetCaps_command08
+		COMMAND		mobileCall		CheckCaps			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-CheckCaps_command09
+		COMMAND		mobileCall		GetCallDuration			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-GetCallDuration_command10
+		COMMAND		mobileCall		HangUp			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-HangUp_command11
+		OUTSTANDING
+		COMMAND		mobileCall		Close			TELEPHONY-ETELMM-VoiceCall-IncomingCall-0013-0001-Close_command12
+		COMMAND		mobileLine		Close
+		COMMAND		customApi		Close
+		COMMAND		mobilePhone		Close
+		COMMAND		telServer		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-ETELMM-VOICECALL-VALIDATION-INCOMINGCALL-0013

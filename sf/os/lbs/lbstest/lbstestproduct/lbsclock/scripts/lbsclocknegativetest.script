@@ -1,0 +1,81 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClockTestServer -SharedData
+
+PRINT Run LbsClockTestServer
+PRINT
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	// Re-select the profile ini
+ 	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+REMOVE_PREFIX
+
+// Selecting the default admin values will ensure the AGPS module requests assistance data.
+// which will result in a initial reference network position being returned.
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_ResetDefaultAdmin
+
+RUN_TEST_STEP 030 LbsClockTestServer LbsStep_StartLbs
+
+// Selecting the default admin values will ensure the AGPS module requests assistance data.
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_ResetDefaultAdmin
+
+START_TESTCASE LBS-Clock-0026
+
+//!@SYMTestCaseID			LBS-Clock-0026
+//!@SYMTestCaseDesc			Manual set time with no server connection test.
+//!
+//!@SYMTestActions			1. Switch on the Clock API from the admin KSettingClockAdjust and
+//!								KLbsSettingAllowManualClockAdjust settings.
+//!							2. Call the AdjustClock function. Note no call to server Connect.
+//!
+//!							Note: This test must be executed last in the script. Due to the expected
+//!								panic, an active object within the client side clock code will be
+//!								left on the current active scheduler and cause a stray event.
+//!								This is the expected and correct behaviour.
+//!
+//!@SYMTestExpectedResults	Ensure the call in step 1 panics.
+//!
+//!@SYMPREQ					PREQ 1616
+//!@SYMREQ					REQ 1616.01
+//!@SYMREQ					REQ 1616.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsClockTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP !PanicCode=6 020 LbsClockTestServer LbsClockStep_Main c:\testdata\configs\lbsclocknegativetest.ini LBS-Clock-0010
+// Verify Log Info cannot run after a negative test.
+// RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Clock-0026
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClockTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

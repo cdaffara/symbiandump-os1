@@ -1,0 +1,39 @@
+#!fshell
+# fshell-unicode-test.script
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Note this file is UTF-8!
+
+# Assume fshell-basic-test is working and this Error definition doesn't need testing
+var KEEP_GOING not-defined && export Error 'fshell -e "echo ^"Test failed, env is:^" && env && error"'
+var KEEP_GOING defined && export Error 'error -39 "Test failure in $SCRIPT_NAME at line $SCRIPT_LINE"'
+
+export TEST_STRING "EAcute:^u00E9 Beta:^u03b2 Smiley:^u263a"
+echo -n EAcute:é Beta:β Smiley:☺ | export -s RESULT
+
+# Check symmetric properties - I don't imagine these will ever fail unless variable expansion is really broken
+var TEST_STRING == "$TEST_STRING" || $Error
+var RESULT == "$RESULT" || $Error
+
+var RESULT == "$TEST_STRING" || $Error
+# And vice-versa
+var TEST_STRING == "$RESULT" || $Error
+
+echo "$TEST_STRING" > unicodetest.txt # This will output in UTF-8
+
+cat --encoding ltk-utf-8 unicodetest.txt | export -s CATRESULT
+var CATRESULT == "$TEST_STRING^r^n" || $Error
+
+export -s REDIRRESULT < unicodetest.txt
+var REDIRRESULT == "$TEST_STRING^r^n" || $Error
+
+rm unicodetest.txt

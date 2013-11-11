@@ -1,0 +1,78 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// This command list is used to 'execute the CMD list under OOM conditions'.
+//
+
+#include <ssm/ssmcmd.rh>
+#include <ssm/conditionresourcetypes.rh>
+#include "tssm_statepolicy_generic.hrh"
+
+UID2 KUidSsmCommandListResourceFile
+
+// SSM_COMMAND_LIST_ROOT must be the first resource in a command list resource file.
+// The SSM relies on this having a resource ID of 1.
+RESOURCE SSM_COMMAND_LIST_ROOT
+	{
+	command_list_mapping = r_command_list_mapping;
+	}
+
+RESOURCE SSM_COMMAND_LIST_MAPPING r_command_list_mapping
+	{
+	mappings =
+		{
+		SSM_COMMANDLISTID_TO_RESOURCEID
+			{
+			command_list_id = 0xFFFF;
+			resource_id = r_ssm_command_list;
+			}
+		};
+	}
+
+
+RESOURCE SSM_COMMAND_LIST r_ssm_command_list
+   	{
+	commands =
+		{
+		r_publish_system_state,
+		r_command_evaluate_cond
+		};
+	}
+
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_publish_system_state
+	{
+	severity = ECmdCriticalSeverity;
+	}
+
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_command_evaluate_cond
+	{
+	conditional_information = r_cnd_not_psf;
+	severity = ECmdCriticalSeverity;
+	category = 0x2000D75B;
+	key = 1;
+	value = 1;
+	}
+
+//Condition = !psf
+RESOURCE SSM_CND_LOGICAL_NOT r_cnd_not_psf	
+	{
+	sub_condition  = r_cnd_pub_sub_flag;	//NOT expression. 
+	}
+
+
+RESOURCE SSM_CND_PUB_SUB_VALUE  r_cnd_pub_sub_flag
+	{
+	category = 0x2000D75B;   // An UID identifying the property category.
+	key = 0x1028359B;        // Identifies the specific property within the category.
+	value = 0x1010;		 // The value read from the P&S key will be compared to this value.
+	}

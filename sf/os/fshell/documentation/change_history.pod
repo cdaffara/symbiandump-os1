@@ -1,0 +1,99 @@
+# change_history.pod
+#
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+__END__
+
+=head1 FShell Change History
+
+=head2 FCL features not yet in MCL (move this section before committing to MCL)
+
+=over 5
+
+=item *
+
+Fshell now reuses threads for built-in commands that execute in quick succession. The thread pool takes into account the requirements of the command when assigning a thread (eg whether it needs to share a heap with its parent command) and creates a new one if necessary. Excess threads are cleaned up after a short idle period (currently 1 second).
+
+=item *
+
+Commands can now define a C<==smoke-test> section in their CIF files, which defines a snippet of fshell script that will be run as part of C<fshell smoketest> or by invoking L<ciftest|commands::ciftest> directly. See the ciftest documentation for more details.
+
+=back
+
+=head2 Release 002 [Not yet released]
+
+=over 5
+
+=item *
+
+Added support for automatically starting a USB personality to vt100usbcons via a new C<personality=x> key-value pair. See the L<vt100usbcons|vt100cons/usb variant> documentation for more information.
+
+=back
+
+=head2 Release 001
+
+=over 5
+
+=item *
+
+First release of fshell through the Symbian Foundation.
+
+=item *
+
+Added L<terminal keyboard|terminalkeyboardcons> console, for platforms that support Terminal Keyboard and Trace Core. On such platforms comm.script (and thus -DFSHELL_AUTOSTART) will use it if there is no better match for the hardware platform.
+
+=item *
+
+Fixed a defect in iosrv.exe that caused a panic if a foreground read object was attached to a different end point. This was due to the read object being notified of a change in foreground before its iEndPoint member was updated. This member is now updated before attempting the attach, and is set to NULL in the event of a leave (resulting in the read object being left in an unattached state). Fixed race condition and hang in C<pcons start>.
+
+=item *
+
+More build fixes. Changed the documentation builder to automatically prepend C<%EPOCROOT%> (converted to a path relative form) to pre-processor include path options that start with F<epoc32>. Prevously C<$(EPOCROOT)> was prepended in the makefile, which broke the documentation build because the pre-processor will only accept relative path include options.
+
+=item *
+
+Added C<--codesegs> option to L<ps|commands::ps> and C<--no-write> option to L<gobble|commands::gobble>.
+
+=item *
+
+Added C<ENotifyKeypresses> and C<ECaptureCtrlC> flags to CCommandBase, so commands can get keypresses and handle ctrl-C via callbacks instead of having to implement custom active objects. As part of this extended the CCommandBase extension interface to MCommandExtensionsV2 for the new virtual functions KeyPressed(TUint aKeyCode, TUint aModifiers) and CtrlCPressed(). sudo now cleans up correctly by using ECaptureCtrlC.
+
+=item *
+
+fshell's current working directory is now normalised (via new TFileName2::Normalize function) so that the case matches what's on the filesystem).
+
+=item *
+
+Fixed crash in L<start's|commands::start> C<--timeout> option and in L<chunkinfo|commands::chunkinfo> when specifying a chunk address.
+
+=item *
+
+The L<dialog|commands::dialog> command no longer misreports the button that was pressed when running under the text windowserver.
+
+=item *
+
+Changed built-in commands maximum heap size from 256KB to 1MB. This is because on a current S60 device 256KB is just too small for commands like chunkinfo to display all the chunks on the system. Also have seen problems listing large directories and deleting large numbers of files, that this change should help with too.
+
+=back
+
+=head2 Release 000.2-000.5
+
+Test releases with build fixes.
+
+=head2 Release 000.1
+
+Prerelease to the SF staging server.
+
+=head1 Copyright
+
+Copyright (c) 2010 Accenture. All rights reserved.
+
+=cut

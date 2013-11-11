@@ -1,0 +1,88 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file CM_GT0429_3_4.script
+//! @SYMTestSuiteName COMINF-ESOCK-RConnection-ContentionManagement
+//! @SYMScriptTestEnvironment  networking
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			COMINF-ESOCK-RConnection-ContentionProgressNotification
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-ContentionProgressNotification
+//!@SYMPREQ PREQ1927
+//!@SYMTestCaseDesc Ensure the pre-empted connection will be notified about pre-emption reason. The test environment should support only one active primary PDP context at the particular moment.
+//!@SYMTestPriority Critical
+//!@SYMTestActions 1.Start first connection C1 for the SNAP #4 (to point to particular SNAP use TConnSnapPref parameter) - 2.Subscribe the C1 to ProgressNotification - 3.Start second connection C2 for the SNAP #3
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        28-11-2008
+//!@SYMTestStatus 3. Released
+
+// Make sure that pre-empted connection will be nofied about the reason of pre-emption.
+// The CommsDat should be configured agreed the table below
+// SNAP #	PDP Link Layer Priority (final value, after inheritance)
+// 1		0 highest priority value, will be changed to 1 after EC120
+// 2		1
+// 3		1
+// 4		7
+// 5		KMaxTUInt lowest / default priority value
+//
+// Actions:	
+//	1.	Start first connection C1 for the SNAP #4 (to point to particular SNAP use TConnSnapPref parameter)
+//	2.	Subscribe the C1 to ProgressNotification 
+//	3.	Start second connection C2 for the SNAP #3
+//
+//Expected Result:
+//	The connection C1 should be stopped and should receive the notification 
+//	KLinkLayerClosed(KErrConnectionContention). The connection C2 should be started with no errors.
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CreateConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CreateUdpSock1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini ConnectSockSvr1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini StartConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini OpenUdpSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini ConnectUdpSock1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterProgressNotificationStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini ProgressNotificationEvent1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini OpenConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini StartConn2
+
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckProgressNotificationStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CheckProgressNotificationEvent1 
+
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CloseUdpSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CloseConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_4.ini CloseSockSvr1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+END_TESTCASE			COMINF-ESOCK-RConnection-ContentionProgressNotification
+
+PRINT Completed COMINF-ESOCK-RConnection-ContentionProgressNotification
+
+
+

@@ -1,0 +1,72 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file 
+//! @brief Mobile IP to Simple IP Fallback Mechanism tests.
+//!
+//! This script file runs the Mobile IP to Simple IP Fallback Mechanism tests.
+//! This test runs using the TestExecute framework using the following test list entry:
+//!  TESTEXECUTE,logs\\testexecute\\te_mobileiptosimpleipfallback.htm
+
+
+PRINT Running Mobile IP to Simple IP Fallback Mechanism tests.
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+LOAD_SUITE te_mobileiptosimpleipfallback
+
+PRINT Copying SIM.TSY configuration file:
+RUN_UTILS MakeReadWrite c:\config.txt
+RUN_UTILS CopyFile  z:\testdata\configs\te_mobileiptosimpleipfallback_config.txt  c:\config.txt
+
+
+
+PRINT Configuring CommDB for successful fallback...
+CED -i z:\testdata\configs\te_mobileiptosimpleipfallback_succeed.cfg
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-netcon-MobileIpToSimpleIpFallback-0101
+//! @SYMTestCaseID      NET-netcon-MobileIpToSimpleIpFallback-0101
+//! @SymTestCaseDesc 			Fallback to Simple IP succeeds
+//! @SymFssId					CDMA/Networking/ConnScheduling/MIPSIPFALLBACK
+//! @SymTestStatus 			Implemented
+//! @SymTestPriority			Critical
+//! @SymTestActions 			See SGL.GT0161.305 Mobile IP to Simple IP Fallback Mechanism Test Specification document.
+//! @SymTestExpectedResults 	See SGL.GT0161.305 Mobile IP to Simple IP Fallback Mechanism Test Specification document.
+RUN_TEST_STEP 1000 te_mobileiptosimpleipfallback CFallbackSucceedsStep z:\testdata\configs\te_mobileiptosimpleipfallback.ini FallbackSucceeds
+END_TESTCASE            NET-netcon-MobileIpToSimpleIpFallback-0101
+
+
+PRINT Configuring CommDB for unsuccessful fallback
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_mobileiptosimpleipfallback_fail.cfg
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-netcon-MobileIpToSimpleIpFallback-0102
+//! @SYMTestCaseID      NET-netcon-MobileIpToSimpleIpFallback-0102
+//! @SymTestCaseDesc 			Fallback to Simple IP fails gracefully. 
+//! @SymFssId					CDMA/Networking/ConnScheduling/MIPSIPFALLBACK
+//! @SymTestStatus 			Implemented
+//! @SymTestPriority			Critical
+//! @SymTestActions 			See SGL.GT0161.305 Mobile IP to Simple IP Fallback Mechanism Test Specification document.
+//! @SymTestExpectedResults 	See SGL.GT0161.305 Mobile IP to Simple IP Fallback Mechanism Test Specification document.
+RUN_TEST_STEP 1000 te_mobileiptosimpleipfallback CFallbackFailsStep  z:\testdata\configs\te_mobileiptosimpleipfallback.ini FallbackFails
+END_TESTCASE            NET-netcon-MobileIpToSimpleIpFallback-0102
+
+
+PRINT Deleting SIM.TSY configuration file:
+RUN_UTILS DeleteFile  c:\config.txt
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_unloadesockForced.script

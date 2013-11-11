@@ -1,0 +1,46 @@
+# Copyright (c) 2000-2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+#
+
+CXX	 = g++296
+CXXFLAGS = -D__SUPPORT_ELF_FILES__ -D__LINUX__ -D__GCC32__ -D__TOOLS__ -D EKA2 \
+		-I $(EPOCROOT)epoc32/include -I ../inc -I ../elftools/inc
+SOURCE	 = elf_file.cpp elf_dlld.cpp elf_imp.cpp elf_reloc.cpp elf_tran.cpp \
+	   e32uid.cpp \
+	   h_file.cpp h_mem.cpp h_utl.cpp \
+	   e32image.cpp tr_main.cpp imgdump.cpp \
+	   decode.cpp encode.cpp deflate.cpp inflate.cpp panic.cpp compress.cpp
+BLDDIR	 = ../build-elftran
+OBJECT   = $(addprefix $(BLDDIR)/, $(notdir $(SOURCE:.cpp=.o)))
+TARGET	 = $(BLDDIR)/elftran
+
+VPATH	 = ../host ../e32uid ../e32image ../e32image/deflate ../elftools/elftran
+
+_dummy := $(shell mkdir -p $(BLDDIR))
+
+all: $(TARGET)
+
+$(TARGET): $(OBJECT)
+	$(CXX) $^ -o $@
+	strip $@
+	
+$(OBJECT): $(BLDDIR)/%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJECT) $(TARGET)
+	-rmdir $(BLDDIR)
+
+.PHONY: all clean
+

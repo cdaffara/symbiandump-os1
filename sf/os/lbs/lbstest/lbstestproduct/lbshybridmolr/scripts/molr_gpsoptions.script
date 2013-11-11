@@ -1,0 +1,1436 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         Lbs_molr_GpsOptions
+//! @SYMScriptTestEnvironment TestExecute
+
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+PRINT Run LbsHybridMOLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_tb.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// NOTE: When the network asks for TA it doesn't typically provide a reference position - need to update scripts + test framework to deal with that!
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------- Admin = PTB -----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+// Turn on self-locate API when Roaming	- lrm: why is this step needed!?
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupRoamSelfLocate
+
+//--------------------------------------------------------------- Module Caps = TB || TA -----------------------------------------------------------------------
+
+// Change module caps to TA || TB:
+//RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_exclusive.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBORTACAP-TANETWORK-IMMEDIATE-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBORTACAP-TANETWORK-IMMEDIATE-001
+//! @SYMTestCaseDesc            Tests that when measurements are marked as "PositionCalculationPossible"
+//!                             that they are are delivered immediately.
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB || TA
+//!                             network wants TA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB || TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete with KErrNone(ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(alpha2)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(t)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response with measurements (LBS-->PM)    >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode then PTA mode. Module will return measurements and network provides position; returned to client with techtype 'terminal assisted'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TANET-IMMEDIATE
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TANET-IMMEDIATE
+END_TESTCASE LBS-MOLR-TBADMIN-TBORTACAP-TANETWORK-IMMEDIATE-001
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------- Admin = PTB -----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+// Turn on self-locate API when Roaming	- lrm: why is this step needed!?
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupRoamSelfLocate
+
+//--------------------------------------------------------------- Module Caps = TB -----------------------------------------------------------------------
+
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_tb.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBCAP-TBNETWORK-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBCAP-TBNETWORK-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB
+//!                             network wants TB
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     <--NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData() - as a result of the NRH request.
+//!                             Verify Location Response originating from gps (LBS-->PM)   >> RespondLocationRequest(gpspos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify the gps pos received by App (LBS-->App)     <--NPUD complete (gps pos)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBCAP-TBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBCAP-TBNET
+END_TESTCASE LBS-MOLR-TBADMIN-TBCAP-TBNETWORK-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBCAP-TBTANET-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBCAP-TBTANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB
+//!                             network wants TB+TA
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB
+//!                             Read network request mode from test config - TB+TA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     <--NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData() - as a result of the NRH request.
+//!                             Verify Location Response originating from gps (LBS-->PM)   >> RespondLocationRequest(gpspos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify the gps pos received by App (LBS-->App)     <--NPUD complete (gps pos)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBCAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBCAP-TBTANET
+END_TESTCASE LBS-MOLR-TBADMIN-TBCAP-TBTANET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBCAP-TATBNET-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBCAP-TATBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB
+//!                             network wants TA+TB
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB
+//!                             Read network request mode from test config - TA+TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     <--NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData() - as a result of the NRH request.
+//!                             Verify Location Response originating from gps (LBS-->PM)   >> RespondLocationRequest(gpspos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify the gps pos received by App (LBS-->App)     <--NPUD complete (gps pos)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBCAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBCAP-TATBNET
+END_TESTCASE LBS-MOLR-TBADMIN-TBCAP-TATBNET-001
+
+
+//--------------------------------------------------------------- Module Caps = TA -----------------------------------------------------------------------
+
+// Change module caps to TA only:
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_ta.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TACAP-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TACAP-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TA
+//!                             network wants TB
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TB (not used)
+//!                             Read 'position originator' (network/module) from test config - module (not used)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify the NPUD completes with KErrNotSupported (LBS-->App)   >> NPUD complete with -5
+//! @SYMTestExpectedResults     NotifyPositionUpdate is completed with KErrNotSupported
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TACAP
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TACAP
+END_TESTCASE LBS-MOLR-TBADMIN-TACAP-001
+
+
+//--------------------------------------------------------------- Module Caps = TB || TA -----------------------------------------------------------------------
+
+// Change module caps to TA || TB:
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_exclusive.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBORTACAP-TBNET-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBORTACAP-TBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB||TA
+//!                             network wants TB
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     <--NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData() - as a result of the NRH request.
+//!                             Verify Location Response originating from gps (LBS-->PM)   >> RespondLocationRequest(gpspos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify the gps pos received by App (LBS-->App)     <--NPUD complete (gps pos)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TBNET
+END_TESTCASE LBS-MOLR-TBADMIN-TBORTACAP-TBNET-001
+
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBORTACAP-TBTANET-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBORTACAP-TBTANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB||TA
+//!                             network wants TB+TA
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TB+TA (hybrid)
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     <--NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData() - as a result of the NRH request.
+//!                             Verify Location Response originating from gps (LBS-->PM)   >> RespondLocationRequest(gpspos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify the gps pos received by App (LBS-->App)     <--NPUD complete (gps pos)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TBTANET
+END_TESTCASE LBS-MOLR-TBADMIN-TBORTACAP-TBTANET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBORTACAP-TANETWORK-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBORTACAP-TANETWORK-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB || TA
+//!                             network wants TA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB || TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete with KErrNone(ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(alpha2)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(t)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response with measurements (LBS-->PM)    >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode then PTA mode. Module will return measurements and network provides position; returned to client with techtype 'terminal assisted'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TANET
+END_TESTCASE LBS-MOLR-TBADMIN-TBORTACAP-TANETWORK-001
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBORTACAP-TATBNET-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBORTACAP-TATBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB||TA
+//!                             network wants TA+TB
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TA+TB (hybrid)
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     <--NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData() - as a result of the NRH request.
+//!                             Verify Location Response originating from gps (LBS-->PM)   >> RespondLocationRequest(gpspos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify the gps pos received by App (LBS-->App)     <--NPUD complete (gps pos)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBORTACAP-TATBNET
+END_TESTCASE LBS-MOLR-TBADMIN-TBORTACAP-TATBNET-001
+
+//--------------------------------------------------------------- Module Caps = TB && TA -----------------------------------------------------------------------
+
+// Change module caps to Hybrid (TA && TB):
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBANDTACAP-TBNETWORK-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBANDTACAP-TBNETWORK-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB && TA
+//!                             network wants TB
+//!                             module supplies one (complete) position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response with measurements (LBS-->PM)    >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be use PTB mode and not set again. Position returned to network. Position returned to client with techtype 'terminal based'.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TBNET
+END_TESTCASE LBS-MOLR-TBADMIN-TBANDTACAP-TBNETWORK-001
+
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBANDTACAP-TBTANETWORK-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBANDTACAP-TBTANETWORK-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB && TA
+//!                             network wants TB+TA
+//!                             module supplies 2 sets of measurements then a position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TB+TA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response with measurements (LBS-->PM)    >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be use PTB mode and then hybrid mode. Position returned to network. Position returned to client with techtype 'terminal based'.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TBTANET
+END_TESTCASE LBS-MOLR-TBADMIN-TBANDTACAP-TBTANETWORK-001
+
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBANDTACAP-TANETWORK-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBANDTACAP-TANETWORK-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB && TA
+//!                             network wants TA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete with KErrNone(ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response with measurements (LBS-->PM)    >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone  note client completes before network sends FNP
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to PTB mode then hybrid. Position supplied by module will not be sent to network. Client completed by position from module techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TANET
+END_TESTCASE LBS-MOLR-TBADMIN-TBANDTACAP-TANETWORK-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBANDTACAP-TATBNETWORK-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBANDTACAP-TATBNETWORK-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB && TA
+//!                             network wants TA+TB
+//!                             module supplies one (complete) position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TA+TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TB) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to PTB mode and then hybrid mode. Position returned to network. Position returned to client with techtype 'terminal based'.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-TATBNET
+END_TESTCASE LBS-MOLR-TBADMIN-TBANDTACAP-TATBNETWORK-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-TBADMIN-TBANDTACAP-UNSPECIFIEDNET-001
+//! @SYMTestCaseID              LBS-MOLR-TBADMIN-TBANDTACAP-UNSPECIFIEDNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB && TA
+//!                             network does not specify mode
+//!                             module supplies one (complete) position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (na) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response with measurements (LBS-->PM)    >> RespondLocationRequest(meas)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be use PTB mode and not set again. Position returned to network. Position returned to client with techtype 'terminal based'.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-UNSPECIFIEDNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-TBADMIN-TBANDTACAP-UNSPECIFIEDNET
+END_TESTCASE LBS-MOLR-TBADMIN-TBANDTACAP-UNSPECIFIEDNET-001
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------- Admin = ATA -----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+// Turn on self-locate API when Roaming  - lrm: why is this step needed!?
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupRoamSelfLocate
+// Set GPS mode to ATA in admin:
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetATAMode
+
+//--------------------------------------------------------------- Module Caps = TB -----------------------------------------------------------------------
+
+// Change module caps to TB only:
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_tb.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+//PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBCAP-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBCAP-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB
+//!                             Read network request mode from test config - TB (not used)
+//!                             Read 'position originator' (network/module) from test config - module (not used)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify the NPUD completes with KErrNotSupported (LBS-->App)   >> NPUD complete with -5
+//! @SYMTestExpectedResults     NotifyPositionUpdate is completed with KErrNotSupported
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBCAP
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBCAP
+END_TESTCASE LBS-MOLR-ATAADMIN-TBCAP-001
+
+
+//--------------------------------------------------------------- Module Caps = TA -----------------------------------------------------------------------
+
+// Change module caps to TA only:
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_ta.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TACAP-TBNET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TACAP-TBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module (not used)
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(KErrNotSupported)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNotSupported
+//! @SYMTestExpectedResults     Network Location request is rejected with KErrNotSupported. NotifyPositionUpdate is completed with KErrNotSupported.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TBNET
+END_TESTCASE LBS-MOLR-ATAADMIN-TACAP-TBNET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TACAP-TBTANET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TACAP-TBTANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TBTA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TBTA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition) - lrm: to be removed
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then not again
+//!                             Position returned by network. Position returned to client with techtype 'terminal assisted'.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TBTANET
+END_TESTCASE LBS-MOLR-ATAADMIN-TACAP-TBTANET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TACAP-TANET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TACAP-TANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition) - lrm: to be removed
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then not again
+//!                             Position returned by network. Position returned to client with techtype 'terminal assisted'.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TANET
+END_TESTCASE LBS-MOLR-ATAADMIN-TACAP-TANET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TACAP-TATBNET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TACAP-TATBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TATB
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TATB
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition) - lrm: to be removed
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then not again
+//!                             Position returned by network. Position returned to client with techtype 'terminal assisted'.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TACAP-TATBNET
+END_TESTCASE LBS-MOLR-ATAADMIN-TACAP-TATBNET-001
+
+
+
+//--------------------------------------------------------------- Module Caps = TB || TA -----------------------------------------------------------------------
+
+// Change module caps to TA || TB:
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_exclusive.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBORTACAP-TBNET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBORTACAP-TBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB||TA
+//!                             network wants TB
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition) - lrm: to be removed
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with position(LBS-->PM)     >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode then PTB mode and then not again
+//!                             Position returned by module.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TBNET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBORTACAP-TBNET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBORTACAP-TBTANET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBORTACAP-TBTANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB||TA
+//!                             network wants TB/TA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TBTA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then not again
+//!                             Position returned by network.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TBTANET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBORTACAP-TBTANET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+// NOTE: see defect DEF115871
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBORTACAP-TANET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBORTACAP-TANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB||TA
+//!                             network wants TA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then not again
+//!                             Position returned by network.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TANET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBORTACAP-TANET-001
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBORTACAP-TATBNET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBORTACAP-TATBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB||TA
+//!                             network wants TA/TB
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TA/TB
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then not again
+//!                             Position returned by network.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBORTACAP-TATBNET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBORTACAP-TATBNET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+//--------------------------------------------------------------- Module Caps = TB && TA -----------------------------------------------------------------------
+
+// Change module caps to Hybrid (TA && TB):
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBANDTACAP-TBNET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBANDTACAP-TBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB&&TA (hybrid)
+//!                             network wants TB
+//!                             module supplies position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB&&TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with position(LBS-->PM)     >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then Hybrid
+//!                             Position returned by module.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TBNET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBANDTACAP-TBNET-001
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBANDTACAP-TBTANET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBANDTACAP-TBTANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB&&TA (hybrid)
+//!                             network wants TB/TA
+//!                             module supplies position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB&&TA
+//!                             Read network request mode from test config - TBTA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements (LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with position (LBS-->PM)     >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then Hybrid
+//!                             Position returned by module.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TBTANET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBANDTACAP-TBTANET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBANDTACAP-TANET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBANDTACAP-TANET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB&&TA
+//!                             network wants TA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB&&TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then not again
+//!                             Position returned by network.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TANET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TANET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBANDTACAP-TANET-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-ATAADMIN-TBANDTACAP-TATBNET-001
+//! @SYMTestCaseID              LBS-MOLR-ATAADMIN-TBANDTACAP-TATBNET-001
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB&&TA (hybrid)
+//!                             network wants TA/TB
+//!                             module supplies position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB&&TA
+//!                             Read network request mode from test config - TATB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify RequestSelfLocate (LBS-->PM) with appropriate techtype (TA) + quality  >> RequestSelfLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceSelfLocation)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Verify the ref pos received by App (LBS-->App)     >> NPUD complete (ref pos)
+//!                             Issue a NPUD (App-->LBS)       << NPUD()
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements (LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with measurements(LBS-->PM)     >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0) - as a result of the NRH request.
+//!                             Verify Location Response  with position (LBS-->PM)     >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Verify NPUD completes with KErrNone      >> NPUD() complete with KErrNone
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//! @SYMTestExpectedResults     The module should be set to ATA mode and then Hybrid
+//!                             Position returned by module.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrGpsOptions c:\testdata\configs\lbs_molr.ini MOLR-ATAADMIN-TBANDTACAP-TATBNET
+END_TESTCASE LBS-MOLR-ATAADMIN-TBANDTACAP-TATBNET-001
+
+
+//--------------------------------------------------------------------- END TESTS - Tidyup ---------------------------------------------------------------------
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini

@@ -1,0 +1,46 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// ssmatest_sus_adptpluginloader.script
+// 
+//
+
+PRINT Run SusLoadAdaptionServerStep tests
+PRINT Changing capability of tsus_ssmutilsrv.exe as adaptation plugin dlls do not have enough capability to be loaded by tsus_ssmutilsrv.exe
+PRINT Set Capability of tsus_ssmutilsrv.exe to
+PRINT PowerMgmt ReadDeviceData WriteDeviceData ProtServ SwEvent ReadUserData WriteUserData
+RUN_PROGRAM -1 setcap tsus_ssmutilsrv.exe 19134 tsus_ssmutilsrvnewcap
+
+
+LOAD_SUITE tsus_ssmutilsrvnewcap
+
+START_TESTCASE 			DEVSRVS-SSMA-SUS-0012
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SUS-0012
+//! @SYMTestType		IT
+//! @SYMTestPriority		Low
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc		Test loading adaptation plug-ins behaviour of CSsmAdaptationServer class in low memory situation.
+//! @SYMTestActions		The test will create a new instance of the server calling NewL on CSsmAdaptationServer for the following cases:
+//!				1.LoadStateAdaptation
+//!        				2.LoadStateAdaptationObservers
+//!        				3.LoadSimAdaptationL
+//!        				4.LoadSimAdaptationObserversL
+//!        				5.LoadRtcAdaptationL
+//!        				6.LoadMiscAdaptationL
+//!        				7.LoadEmergencyCallRfAdaptationL
+//!				2.Under OOM conditions. 
+//! @SYMTestExpectedResults	The test ends with the following results:
+//!					1.No Memory leak is reported as a new object is created in OOM condition.
+//!					2.Intermediate iterations finish with KErrNoMemory with successful one completing with KErrNone. Memory is not leaked in any iteration.
+RUN_TEST_STEP 100 tsus_ssmutilsrvnewcap SusLoadAdaptationServerStep
+END_TESTCASE			DEVSRVS-SSMA-SUS-0012

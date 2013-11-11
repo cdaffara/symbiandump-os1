@@ -1,0 +1,205 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// LBS Core OS (PREQ1811) Tests 
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-CALCULATION
+//! @SYMScriptTestEnvironment TestExecute with LBS-CALCULATION
+
+PRINT Run all calculation tests
+
+LOAD_SUITE lbscalculationtestserver -SharedData
+ 
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+START_TESTCASE                 LBS-CALCULATION-0001
+//!@SYMTestCaseID              LBS-CALCULATION-0001
+//!@SYMTestCaseDesc            Calculate Distance
+//!
+//! TP233
+//! TC270
+//! UCREQ208, UCREQ209
+//!
+//!@SYMTestActions
+//!1.     The client request the distance of two TCoordinate to be calculated. The 
+//!request is renewed for several different positions on the earth.
+//!2.     The client request the distance and error of two TLocality to be calculated 
+//!including error estimates on both positions. The request is renewed for several 
+//!different positions on the earth.
+//!3.     The client request the distance of two TLocality to be calculated but also 
+//!the Altitude and Vertical error are set.
+//!4.     The client request the distance of two TCorrdinate to be calculated which does 
+//!not have the correct values set.
+//!5.     The client request the distance of two TLocality to be calculated which does 
+//!not have the correct values set.          
+//!
+//!
+//!@SYMTestExpectedResults
+//! Note - Each result corresponds to a matching item in SYMTestActions
+//!1.     The calculated distance should follow the Grand Arc method, see UCREQ208 for 
+//!reference.
+//!2.     The calculated distance should follow the Grand Arc method, see UCREQ209 for 
+//!reference.
+//!3.     The Alitude and Vertial error should not affect the calculated distance.
+//!4.     An error code is returned to the client.
+//!5.     An error code is  returned to the client.
+//!
+//!@SYMPREQ                    PREQ 1811
+//!@SYMREQ                    REQ 9550
+//!
+//!@SYMTestPriority	       Medium
+//!@SYMTestType		       cit
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 030 lbscalculationtestserver LbsCalculationCalculateDistance
+
+END_TESTCASE                   LBS-CALCULATION-0001 
+
+
+START_TESTCASE                 LBS-CALCULATION-0002
+//!@SYMTestCaseID              LBS-CALCULATION-0002
+//!@SYMTestCaseDesc            Calculate Bearing
+//!
+//! TP234
+//! TC271
+//! UCREQ210, UCREQ211, UCREQ212, UCREQ213, UCREQ214, UCREQ215
+//!
+//!@SYMTestActions
+//!1.     The client request the bearing of two positions to be calculated. The request 
+//!is renewed for several different positions on the earth.
+//!2.     The client request the bearing and bearing error of two positions to be 
+//!calculated. The request is renewed for several different positions on the earth.
+//!3.     The client request the bearing and the bearing error to be calculated and 
+//!also specifies an altitude and altitude error in the submitted positions.
+//!4.     The client request the bearing of two positions to be calculated which does 
+//!not have the correct values set.
+//!5.     The client request the bearing and bearing error of two position to be 
+//!calculated which does not have the correct values set.
+//!
+//!
+//!@SYMTestExpectedResults
+//! Note - Each result corresponds to a matching item in SYMTestActions
+//!1.     The bearing is calculated according to the Grand Arc method, see UCREQ210 for 
+//!reference. If the two positions are the same or antipodal the bearing can not be 
+//!calculated and an error code is returned. If the source position is on one of the 
+//!pole the bearing can not be calculated and an error code is returned. 
+//!2.     The bearing is calculated according to the Grand Arc method, see UCREQ210 and 
+//!UCREQ213 for reference. The same error cases regarding the bearing as specified in 1 
+//!is also applicable when the bearing error is also requested. If the error circles 
+//!overlaps the bearing error can not be calculated and an error code is returned 
+//!(the bearing is also undefined). If the error circles leads to the two positions 
+//!are antipodal somewhere within the error circles the bearing error can not be 
+//!calculated and an error code is returned (the bearing is also undefined). If the 
+//!source error circles includes one of the poles the bearing error can not be 
+//!calculated and an error code is retuned (the bearing is also undefined).
+//!3.     The altitude should not have any affect on the calculated value for the 
+//!bearing or the bearing error.
+//!4.     An error code is returned to the client.
+//!5.     An error code is returned to the client.
+//!
+//!@SYMPREQ                    PREQ 1811
+//!@SYMREQ                    REQ 9550
+//!
+//!@SYMTestPriority	       Medium
+//!@SYMTestType		       cit
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 030 lbscalculationtestserver LbsCalculationCalculateBearing
+
+END_TESTCASE                   LBS-CALCULATION-0002
+
+
+START_TESTCASE                 LBS-CALCULATION-0003
+//!@SYMTestCaseID              LBS-CALCULATION-0003
+//!@SYMTestCaseDesc            Calculate Speed
+//!
+//! TP235
+//! TC272
+//! UCREQ216, UCREQ244, UCREQ232
+//!
+//!@SYMTestActions		
+//!1.	The client request the speed of two positions to be calculated. The request is 
+//!renewed for several different positions on the earth.
+//!2.	The client request the speed and speed error of two positions to be calculated. 
+//!The request is renewed for several different positions on the earth.
+//!3.	The client request the speed and the speed error to be calculated and also 
+//!specifies an altitude and altitude error in the submitted positions
+//!4.	The client request the speed of two positions to be calculated which does not 
+//!have the correct values set.
+//!5.	The client request the speed and the speed error of two position to be 
+//!calculated which does not have the correct values set.
+//!
+//!
+//!@SYMTestExpectedResults
+//! Note - Each result corresponds to a matching item in SYMTestActions
+//!1.	The speed is calculated according to the distance divided with the absolute time 
+//!difference of the two positions.
+//!2.	The speed is calculated according to the distance divided with the absolute time 
+//!difference of the two positions. The speed error is calculated by dividing the 
+//!maximum error with the time difference.
+//!3.	The following cases will generate an error code to the client. If the submitted 
+//!longitude and latitude are incorrect. If the source and the target timestamps are 
+//!equal. If Either or both time stamps are zero.
+//!4.	see 3
+//!
+//!@SYMPREQ                    PREQ 1811
+//!@SYMREQ                    REQ 9550
+//!
+//!@SYMTestPriority	       Medium
+//!@SYMTestType		       cit
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 030 lbscalculationtestserver LbsCalculationCalculateSpeed
+
+END_TESTCASE                   LBS-CALCULATION-0003
+
+
+START_TESTCASE                 LBS-CALCULATION-0004
+//!@SYMTestCaseID              LBS-CALCULATION-0004
+//!@SYMTestCaseDesc            Calculate coordinate move
+//!
+//! TP236
+//! TC273
+//! UCREQ233
+//!
+//!@SYMTestActions		
+//!1.	The client request a move request by specifying the current position, bearing 
+//!and distance. The request is renewed for several different positions, bearing and 
+//!distance on the earth.
+//!2.	The client request a move request by specifying the current position including 
+//!altitude, bearing and distance. 
+//!3.	The client request a move request, but has a faulty starting position.
+//!
+//!
+//!@SYMTestExpectedResults
+//! Note - Each result corresponds to a matching item in SYMTestActions
+//!1.	The target position is calculated based on the Grand Arc method, see UCREQ223 
+//!for reference.
+//!2.	The target position is calculated based on the Grand Arc method, see UCREQ223 
+//!for reference. The altitude should not have any effect on the calculated value.
+//!3.	The following case will generate an error code to the client; If the starting 
+//!point is on a pole. If the value for longitude or latitude is not set.
+//!
+//!@SYMPREQ                    PREQ 1811
+//!@SYMREQ                    REQ 9550
+//!
+//!@SYMTestPriority	       Medium
+//!@SYMTestType		       cit
+//!@SYMTestStatus              Implemented
+
+RUN_TEST_STEP 030 lbscalculationtestserver LbsCalculationCoordinateMove
+
+END_TESTCASE                   LBS-CALCULATION-0004

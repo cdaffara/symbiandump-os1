@@ -1,0 +1,144 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command list for the Emergency Calls Only startup state.
+*
+*/
+
+#include <ssm/conditionresourcetypes.rh>
+#include <ssm/ssmcmd.rh>
+
+#include "ssmsubstateext.hrh"
+#include "ssmdlldatadefs.rh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateEmergencyCallsOnly;
+            resource_id = r_cmds;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmds
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds
+    {
+    commands =
+        {
+        r_cmd_sastate,          // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishstate,     // prio 0xFFF1
+        r_cmd_psstate,          // prio 0xFFF0
+        r_cmd_killsplash        // Last command, prio 0x0000
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmd_killsplash
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_killsplash
+    {
+    priority = 0x0000;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000301; // KPSSplashShutdown
+    value    = 101;        // ESplashShutdown
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 105;        // ESwStateEmergencyCallsOnly
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_publishstate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_cmd_publishstate
+    {
+    priority = 0xFFF1;
+    severity = ECmdCriticalSeverity;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate;
+    }
+
+// ===========================================================================
+// DLL data items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate
+    {
+    mainstate = 0; // ESsmStartup
+    substate = ESsmStateEmergencyCallsOnly;
+    }

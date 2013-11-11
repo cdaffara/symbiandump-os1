@@ -1,0 +1,83 @@
+/*
+* Copyright (c) 2009 Symbian Foundation Ltd
+* This component and the accompanying materials are made available
+* under the terms of the License "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Symbian Foundation Ltd - initial contribution.
+* 
+* Contributors:
+*
+* Description:
+* sfopenvg mmp file
+*/
+#include <vg\openvguids.hrh> // For uids
+
+target          sflibopenvgrefimpl.dll		// Destination filename
+
+targettype      dll				// Binary build type
+uid             KUidSharedDllUidValue 0x10281CA6		// File uids
+CAPABILITY      ALL -tcb
+vendorid        0x70000001
+
+
+MACRO       __OPENVGHEADERS_USE_VG_1_1
+
+MACRO 			USE_NEW_ELEAVE //swictch on to use new(ELeave) rather new in alloc's
+					 		   //useful to trap OOM failures
+MACRO  		BUILD_WITH_PRIVATE_EGL //enable this to compile this dll exporting the private form of the EGL functions.
+								   //These are the ones starting do_XX (e.g. do_eglInitialize).
+								   //This should be enabled when you wish to have a separate EGL library (e.g. libegl.dll)
+								   //which will export the ELG APIs.
+								   //If this macro is supressed then this dll will export the true EGL APIs
+								   //see riMiniEgl.cpp
+MACRO 		BUILD_WITH_PRIVATE_VGU //same meaning as macro BUILD_WITH_PRIVATE_EGL except applies to the VGU API.
+								   //see riVGU.cpp
+
+MACRO 		BUILD_WITH_PRIVATE_OPENVG //same meaning as macro BUILD_WITH_PRIVATE_EGL except applies to the OpenVG API.
+								   //see riAPI.cpp
+								   
+userinclude     ..\sfopenvg			// Local include files
+userinclude     ..\sfopenvg\include			// Local include files
+
+OS_LAYER_SYSTEMINCLUDE
+OS_LAYER_LIBC_SYSTEMINCLUDE
+OS_LAYER_STDCPP_SYSTEMINCLUDE
+
+SYSTEMINCLUDE  OS_LAYER_PUBLIC_EXPORT_PATH(vg) // OpenGL ES include files
+SYSTEMINCLUDE  OS_LAYER_PUBLIC_EXPORT_PATH(egl) // EGL include files
+
+
+
+sourcepath      ..\sfopenvg		// Relative path to source files
+
+source riApi.cpp
+source riContext.cpp
+source riFont.cpp
+source riImage.cpp
+source riMath.cpp
+source riMiniEGL.cpp
+source riPath.cpp
+source riPixelPipe.cpp
+source riRasterizer.cpp
+source riVGU.cpp
+
+//for EGL
+SOURCEPATH ..\sfopenvg\symbian
+SOURCE riEGLOS.cpp
+
+library			    libopenvg_sw.lib
+library         euser.lib     		// Mandatory
+library         fbscli.lib    		// For CFbsBitmap, etc
+library         bitgdi.lib    		// For CFbsBitmapDevice, CFbsBitGc, etc
+library         ws32.lib      		// For RWindow, Direct Screen Access, etc
+library         libstdcpp.lib      		// standard lib
+library         libc.lib      		// standard lib
+library         libm.lib      		// standard lib
+
+
+
+
+

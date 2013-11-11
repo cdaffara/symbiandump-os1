@@ -1,0 +1,1009 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run all te_activitymanagertestsuite Suite Tests
+
+LOAD_SUITE te_activitymanagertestsuite
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3693
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3693
+//!@SYMTestCaseDesc		To ensure a new activity manager can be created and started
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Create an activity manager using its NewL method. Call the Start
+//!@SYMTestActions		method for an activity manager, passing a timeout period of 1 and
+//!@SYMTestActions      defined inactive and active callback methods. After 3 seconds call
+//!@SYMTestActions      a user activity method.
+//!@SYMTestExpectedResults 	The activity manager is created without error. The activity manager
+//!@SYMTestExpectedResults  starts without error. Ensure the inactive callback is called after 1 second.
+//!@SYMTestExpectedResults  Ensure the active callback is called after 3 seconds.
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 1
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		OUTSTANDING
+		ASYNC_DELAY	3000000 
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 4
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	500000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active1
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3693
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3694
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3694
+//!@SYMTestCaseDesc		To ensure a new activity manager can be started and run using null callbacks.
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and call the Start method for an activity manager, passing a timeout
+//!@SYMTestActions      period of 1 and NULL for the definition of the inactive and active callback methods.
+//!@SYMTestActions      After 2 seconds call a user activity method.
+//!@SYMTestExpectedResults 	The activity manager starts without error, the inactive callback and active callback
+//!@SYMTestExpectedResults  method will not return. Ensure no errors occur even with no callbacks.
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 CallBacksOff
+		COMMAND		activitymanager1 Start 1
+		ASYNC_DELAY	2000000
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 CheckExpectedEvents inactive0active0
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3694
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3695
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3695
+//!@SYMTestCaseDesc		To ensure an activity manager handles an invalid timeout period correctly.
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and call the Start method for an activity manager, passing a
+//!@SYMTestActions      timeout period of 0 and defined inactive and active callback methods. Repeat
+//!@SYMTestActions      the same test for a release build but pass a timeout period of -1. Do
+//!@SYMTestActions      the same for SetInactivityTimeout
+//!@SYMTestExpectedResults 	    For the debug build the component panics because the timeout period is less than 1. 
+//!@SYMTestExpectedResults      For a release build the timeout period is reset to 1 and so the inactive callback
+//!@SYMTestExpectedResults      method returns a value after 1 second has elapsed
+//!@SYMREQ                  REQ8169
+	//For debug builds, check that negative Set causes panic
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 UDEBOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 SetInactivityTimeout -1
+		ASYNC_DELAY	0500000
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager1 ExpectedPanic negativeInterval
+	END_TEST_BLOCK !PanicCode=-5 !PanicString=CUserActivityMan
+	
+	//For release builds, check that negative Set is changed to 1.
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 URELOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 SetInactivityTimeout -1
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		ASYNC_DELAY	1500000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0		
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+
+	//For debug builds, check that negative Start causes panic
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 UDEBOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start -1
+		ASYNC_DELAY	0500000
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager1 ExpectedPanic negativeInterval
+	END_TEST_BLOCK !PanicCode=-5 !PanicString=CUserActivityMan
+	
+	//For release builds, check that negative Start is changed to 1.
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 URELOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start -1
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		ASYNC_DELAY	1500000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0		
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+	
+	//For debug builds, check that negative Set causes panic
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 UDEBOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 SetInactivityTimeout 0
+		ASYNC_DELAY	0500000
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager1 ExpectedPanic negativeInterval
+	END_TEST_BLOCK !PanicCode=-5 !PanicString=CUserActivityMan
+	
+	//For release builds, check that negative Set is changed to 1.
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 URELOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 SetInactivityTimeout 0
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		ASYNC_DELAY	1500000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0		
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+
+	//For debug builds, check that negative Start causes panic
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 UDEBOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 0
+		ASYNC_DELAY	0500000
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager1 ExpectedPanic negativeInterval
+	END_TEST_BLOCK !PanicCode=-5 !PanicString=CUserActivityMan
+
+	//For release builds, check that negative Start is changed to 1.
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 URELOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 0
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		ASYNC_DELAY	1500000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0		
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3695
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3696
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3696
+//!@SYMTestCaseDesc		To ensure a new activity manager can be started
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and create and start an activity manager with a timeout period
+//!@SYMTestActions      of 1 second. As soon as the activity manager starts call the SetInactivityTimeout
+//!@SYMTestActions      method with a timeout period of 2 seconds. Repeat the test but call the SetInactivityTimeout
+//!@SYMTestActions      method with a timeout period of 3 seconds.
+//!@SYMTestExpectedResults 	    The inactive callback method does not return a value until first 2 seconds and then 3 seconds
+//!@SYMTestExpectedResults      have elapsed from the time the original timer was started
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager2 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 1
+		COMMAND		activitymanager2 Start 1
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 3
+		COMMAND		activitymanager1 SetInactivityTimeout 2
+		COMMAND		activitymanager2 SetInactivityTimeout 3
+		OUTSTANDING
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager2 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3696
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3697
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3697
+//!@SYMTestCaseDesc		To ensure the timeout period can be set shorter than the existing timeout period
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and create and start an activity manager with a timeout period of 3
+//!@SYMTestActions		seconds. When the activity manager has started call the SetInactivityTimeout method
+//!@SYMTestActions      with a timeout period of 2 second. Repeat the test but call the SetInactivityTimeout
+//!@SYMTestActions      method with a timeout period of 1 second.
+//!@SYMTestExpectedResults 	The inactive callback method returns a value first when 2 seconds and then when 1
+//!@SYMTestExpectedResults  second has elapsed from the time the original timer was started
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager2 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 3
+		COMMAND		activitymanager2 Start 3
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 1
+		COMMAND		activitymanager1 SetInactivityTimeout 2
+		COMMAND		activitymanager2 SetInactivityTimeout 1
+		OUTSTANDING
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager2 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3697
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3698
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3698
+//!@SYMTestCaseDesc		To ensure that setting the timeout period to a time shorter than the current user
+//!@SYMTestCaseDesc     inactive period causes an inactive callback immediately
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and create and start an activity manager with a timeout period of 3
+//!@SYMTestActions      seconds. When the activity manager has started wait for 2 seconds then call the
+//!@SYMTestActions      SetInactivityTimeout method with a timeout period of 1 second. Repeat the test
+//!@SYMTestActions      but after waiting for two seconds set a timeout period of two seconds.
+//!@SYMTestExpectedResults 	The inactive callback method returns a value immediately
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager2 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 3
+		COMMAND		activitymanager2 Start 3
+		ASYNC_DELAY	2000000
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager1 SetInactivityTimeout 1
+		COMMAND		activitymanager2 SetInactivityTimeout 2
+		OUTSTANDING
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager2 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3698
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3699
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3699
+//!@SYMTestCaseDesc		To ensure that the timeout period can be set when the activity manager is monitoring
+//!@SYMTestCaseDesc     for user activity 
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and create and start an activity manager with a timeout period of 1 second.
+//!@SYMTestActions      When the activity manager has started wait for 2 seconds then call the SetInactivityTimeout
+//!@SYMTestActions       method with a timeout period of 3 seconds. Call a user activity method.
+//!@SYMTestExpectedResults 	After the user activity method is called an active callback should be returned, followed
+//!@SYMTestExpectedResults  by an inactive callback about 3 seconds later
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 1
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		OUTSTANDING
+		ASYNC_DELAY	1000000
+//! Set the inactivity timeout when monitoring for user activity
+		COMMAND		activitymanager1 SetInactivityTimeout 3
+//! Cause a user activity when monitoring for user activity
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 2
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 5
+		ASYNC_DELAY	3000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive2active1
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3699
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3700
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3700
+//!@SYMTestCaseDesc		To ensure the activity manager monitors for user activity correctly
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and create and start an activity manager with a timeout period of 1 second.
+//!@SYMTestActions      When the activity manager has started wait for 2 seconds then call a user activity method.
+//!@SYMTestExpectedResults 	After the user activity method is called an active callback should be returned, followed
+//!@SYMTestExpectedResults  by an inactive callback about a second later
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 1
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		OUTSTANDING
+		ASYNC_DELAY	1000000
+//! Cause a user activity when monitoring for user activity
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 2
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	500000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 3
+		ASYNC_DELAY	1000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive2active1
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3700
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3701
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3701
+//!@SYMTestCaseDesc		To ensure the activity manager monitors for user inactivity from the start of the timeout
+//!@SYMTestCaseDesc     period if user activity is detected while monitoring for user inactivity
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and create and start an activity manager with a timeout period of 3 seconds.
+//!@SYMTestActions      When the activity manager has started wait 2 seconds then call a user activity method.
+//!@SYMTestExpectedResults 	After the user activity method is called no active callback is returned. An inactive
+//!@SYMTestExpectedResults  callback is returned 3 seconds after the user activity method was called.
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 3
+		ASYNC_DELAY	2000000
+//! Cause a user activity when monitoring for user inactivity
+		COMMAND		activitymanager1 UserActivity //! Timers will be reset, no expected event needs to be set
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 5
+		ASYNC_DELAY	3000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3701
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3702
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3702
+//!@SYMTestCaseDesc		To ensure the activity manager monitors correctly for user inactivity and user activity
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Start a timer and create and start an activity manager with a timeout period
+//!@SYMTestActions      of 2 seconds. Cause the activity manager to switch several times between monitoring
+//!@SYMTestActions      for user activity and user inactivity by calling a user activity method. 
+//!@SYMTestActions      Call a user activity method during several periods when the activity manager is
+//!@SYMTestActions      monitoring for user inactivity. Also modify the timeout period for the activity
+//!@SYMTestActions      manager as it runs so that the period is longer, shorter and causes the activity
+//!@SYMTestActions       manager to timeout immediately.
+//!@SYMTestExpectedResults 	All active and inactive callbacks are returned at the correct times while the
+//!@SYMTestExpectedResults  activity manager is running. 
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		OUTSTANDING
+		ASYNC_DELAY	1000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 3
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 5
+		ASYNC_DELAY	2000000
+//! Cause a user activity when monitoring for user activity
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 6
+		COMMAND		activitymanager1 UserActivity
+//! Cause a user activity when monitoring for user inactivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 UserActivity  //! Timers will be reset, no expected event needs to be set
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 9
+		ASYNC_DELAY	3000000
+//! Test a longer inactivity period
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 10
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 13
+		COMMAND		activitymanager1 SetInactivityTimeout 3
+		ASYNC_DELAY	3000000
+//! Test a shorter inactivity period
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 14
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 16
+		COMMAND		activitymanager1 SetInactivityTimeout 2
+		ASYNC_DELAY	3000000
+//! Test an inactivity period that time immediately
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 18
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 19
+		COMMAND		activitymanager1 SetInactivityTimeout 1
+		ASYNC_DELAY	3000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive6active5
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3702
+
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3703
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3703
+//!@SYMTestCaseDesc		To ensure that several activity managers monitor correctly for user inactivity and
+//!@SYMTestCaseDesc     user activity while running in the same thread.
+//!@SYMTestPriority 	Low
+//!@SYMTestActions  	Start a timer and create and start 3 activity managers with a timeout period of 2,
+//!@SYMTestActions      3 and 4 seconds. Cause the activity managers to switch several times between monitoring
+//!@SYMTestActions      for user activity and user inactivity by calling a user activity method. Call a user
+//!@SYMTestActions      activity method during several periods when the activity managers are monitoring for
+//!@SYMTestActions      user inactivity. Also modify the timeout period for the activity managers as they run
+//!@SYMTestActions      so that the period is longer, shorter and causes the activity managers to timeout
+//!@SYMTestActions      immediately.
+//!@SYMTestExpectedResults 	All active and inactive callbacks are returned at the correct times while the
+//!@SYMTestExpectedResults  activity manager is running. 
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		CREATE_OBJECT	CUserActivityManager activitymanager3
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager2 NewL EPriorityStandard
+		COMMAND		activitymanager3 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager2 Start 3
+		COMMAND		activitymanager3 Start 4
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 3
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 4
+		OUTSTANDING
+		ASYNC_DELAY	1000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 5
+//! Cause a user activity when monitoring for user activity
+		COMMAND		activitymanager1 UserActivity
+//! Now monitoring for user inactivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 7
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 8
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 9
+		ASYNC_DELAY	5000000
+//! Now monitoring for user activity
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager1 UserActivity
+//! Cause a user activity when monitoring for user inactivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 UserActivity //! Timers will be reset, no expected event needs to be set
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 14
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 15
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 16
+		ASYNC_DELAY	5000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager3 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 18
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 19
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 22
+//! Cause an immediate timeout, shorter, and longer timeout
+		COMMAND		activitymanager1 SetInactivityTimeout 1
+		COMMAND		activitymanager2 SetInactivityTimeout 2
+		COMMAND		activitymanager3 SetInactivityTimeout 5
+		ASYNC_DELAY	7000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager2 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager3 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+		COMMAND		activitymanager3  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3703
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3704
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3704
+//!@SYMTestCaseDesc		To ensure that several activity managers with different priorities monitor correctly
+//!@SYMTestCaseDesc     for user inactivity and user activity while running in the same thread
+//!@SYMTestPriority 	Low
+//!@SYMTestActions  	Start a timer and create and start 3 activity managers with the following timeout
+//!@SYMTestActions		periods and priorities:
+//!@SYMTestActions		•	2 second period and EPriorityLow
+//!@SYMTestActions		•	3 second period and EPriorityUserInput
+//!@SYMTestActions		•	4 second period and EPriorityHigh
+//!@SYMTestActions      Cause the activity managers to switch several times between monitoring for user activity
+//!@SYMTestActions 		and user inactivity by calling a user activity method. Call a user activity method during
+//!@SYMTestActions      several periods when the activity managers are monitoring for user inactivity. Also modify
+//!@SYMTestActions      the timeout period for the activity managers as they run so that the period is longer,
+//!@SYMTestActions      shorter and causes the activity managers to timeout immediately.
+//!@SYMTestExpectedResults 	All active and inactive callbacks are returned at the correct times while the
+//!@SYMTestExpectedResults  activity manager is running. 
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		CREATE_OBJECT	CUserActivityManager activitymanager3
+		COMMAND		activitymanager1 NewL EPriorityHigh
+		COMMAND		activitymanager2 NewL EPriorityUserInput
+		COMMAND		activitymanager3 NewL EPriorityLow
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager2 Start 3
+		COMMAND		activitymanager3 Start 4
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 3
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 4
+		OUTSTANDING
+		ASYNC_DELAY	1000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 5
+//! Cause a user activity when monitoring for user activity
+		COMMAND		activitymanager1 UserActivity
+//! Now monitoring for user inactivity 
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 7
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 8
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 9
+		ASYNC_DELAY	5000000
+//! Now monitoring for user activity
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager1 UserActivity
+//! Cause a user activity when monitoring for user inactivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 UserActivity //! Timers will be reset, no expected event needs to be set
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 14
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 15
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 16
+		ASYNC_DELAY	5000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager3 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 18
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 19
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 22
+//! Cause an immediate timeout, shorter, and longer timeout
+		COMMAND		activitymanager1 SetInactivityTimeout 1
+		COMMAND		activitymanager2 SetInactivityTimeout 2
+		COMMAND		activitymanager3 SetInactivityTimeout 5
+		ASYNC_DELAY	7000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager2 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager3 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+		COMMAND		activitymanager3  ~
+	END_TEST_BLOCK
+//! Start all at once with same timeout period
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		CREATE_OBJECT	CUserActivityManager activitymanager3
+		COMMAND		activitymanager1 NewL EPriorityHigh
+		COMMAND		activitymanager2 NewL EPriorityUserInput
+		COMMAND		activitymanager3 NewL EPriorityLow
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager2 Start 2
+		COMMAND		activitymanager3 Start 2
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 2
+		OUTSTANDING
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager2 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager3 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+		COMMAND		activitymanager3  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3704
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3705
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3705
+//!@SYMTestCaseDesc		To ensure the activity manager methods handles out of memory conditions correctly
+//!@SYMTestCaseDesc     in adequate time.
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	For the activity manager methods first set up out of memory conditions, then call the methods
+//!@SYMTestExpectedResults 	Out of memory conditions are handled correctly by the methods
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 OOMTest
+		COMMAND		activitymanager1 ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3705
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3706
+//!@SYMTestCaseID      	SYSLIB-BAFL-CT-3706
+//!@SYMTestCaseDesc		To ensure that one and multiple activity managers carry out their processing
+//!@SYMTestCaseDesc     in adequate time.
+//!@SYMTestPriority 	Low
+//!@SYMTestActions  	Add trace to measure the time it takes an activity manager to carry out its processing.
+//!@SYMTestActions      Create and start an activity manager with a timeout period of 2 seconds. 
+//!@SYMTestActions      Cause the activity manager to switch several times between monitoring for user activity
+//!@SYMTestActions      and user inactivity by calling a user activity method.
+//!@SYMTestActions      Create and start 5 more activity managers with timeout periods of 2 and 3 seconds. 
+//!@SYMTestActions      Cause the activity managers to switch several times between monitoring for user activity
+//!@SYMTestActions      and user inactivity by calling a user activity method.
+//!@SYMTestActions      Examine the processing time trace for each activity manager.
+//!@SYMTestExpectedResults 	Each activity manager carries out its processing in adequate time. Starting more
+//!@SYMTestExpectedResults  activity managers does not cause the processing times of each manager to degrade significantly.
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		OUTSTANDING
+		ASYNC_DELAY	1000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 3
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 5
+		ASYNC_DELAY	2000000
+//! Cause a user activity when monitoring for user activity
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 6
+		COMMAND		activitymanager1 UserActivity
+//! Cause a user activity when monitoring for user inactivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 UserActivity  //! Timers will be reset, no expected event needs to be set
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 9
+		ASYNC_DELAY	3000000
+//! Test a longer inactivity period
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 10
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 13
+		COMMAND		activitymanager1 SetInactivityTimeout 3
+		ASYNC_DELAY	3000000
+//! Test a shorter inactivity period
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 14
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 16
+		COMMAND		activitymanager1 SetInactivityTimeout 2
+		ASYNC_DELAY	3000000
+//! Test an inactivity period that time immediately
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 18
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 19
+		COMMAND		activitymanager1 SetInactivityTimeout 1
+		ASYNC_DELAY	3000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive6active5
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		CREATE_OBJECT	CUserActivityManager activitymanager3
+		CREATE_OBJECT	CUserActivityManager activitymanager4
+		CREATE_OBJECT	CUserActivityManager activitymanager5
+		CREATE_OBJECT	CUserActivityManager activitymanager6
+		COMMAND		activitymanager1 NewL EPriorityHigh
+		COMMAND		activitymanager2 NewL EPriorityUserInput
+		COMMAND		activitymanager3 NewL EPriorityLow
+		COMMAND		activitymanager4 NewL EPriorityHigh
+		COMMAND		activitymanager5 NewL EPriorityUserInput
+		COMMAND		activitymanager6 NewL EPriorityLow
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager2 Start 3
+		COMMAND		activitymanager3 Start 4
+		COMMAND		activitymanager4 Start 2
+		COMMAND		activitymanager5 Start 3
+		COMMAND		activitymanager6 Start 4
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 3
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 4
+		COMMAND		activitymanager4 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager5 SetExpectedEventUserInActivity 3
+		COMMAND		activitymanager6 SetExpectedEventUserInActivity 4
+		OUTSTANDING
+		ASYNC_DELAY	1000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager4 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager5 SetExpectedEventUserActivity 5
+		COMMAND		activitymanager6 SetExpectedEventUserActivity 5
+//! Cause a user activity when monitoring for user activity
+		COMMAND		activitymanager1 UserActivity
+//! Now monitoring for user inactivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 7
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 8
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 9
+		COMMAND		activitymanager4 SetExpectedEventUserInActivity 7
+		COMMAND		activitymanager5 SetExpectedEventUserInActivity 8
+		COMMAND		activitymanager6 SetExpectedEventUserInActivity 9
+		ASYNC_DELAY	5000000
+//! Now monitoring for user activity
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager4 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager5 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager6 SetExpectedEventUserActivity 11
+		COMMAND		activitymanager1 UserActivity
+//! Cause a user activity when monitoring for user inactivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 UserActivity //! Timers will be reset, no expected event needs to be set
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 14
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 15
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 16
+		COMMAND		activitymanager4 SetExpectedEventUserInActivity 14
+		COMMAND		activitymanager5 SetExpectedEventUserInActivity 15
+		COMMAND		activitymanager6 SetExpectedEventUserInActivity 16
+		ASYNC_DELAY	5000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager2 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager3 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager4 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager5 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager6 SetExpectedEventUserActivity 17
+		COMMAND		activitymanager3 UserActivity
+		ASYNC_DELAY	1000000 //! Required for the UserActivity to complete properly
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 18
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 19
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 22
+		COMMAND		activitymanager4 SetExpectedEventUserInActivity 18
+		COMMAND		activitymanager5 SetExpectedEventUserInActivity 19
+		COMMAND		activitymanager6 SetExpectedEventUserInActivity 22
+//! Cause an immediate timeout, shorter, and longer timeout
+		COMMAND		activitymanager1 SetInactivityTimeout 1
+		COMMAND		activitymanager2 SetInactivityTimeout 2
+		COMMAND		activitymanager3 SetInactivityTimeout 5
+		COMMAND		activitymanager4 SetInactivityTimeout 1
+		COMMAND		activitymanager5 SetInactivityTimeout 2
+		COMMAND		activitymanager6 SetInactivityTimeout 5
+		ASYNC_DELAY	7000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager2 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager3 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager4 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager5 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager6 CheckExpectedEvents inactive4active3
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+		COMMAND		activitymanager3  ~
+		COMMAND		activitymanager4  ~
+		COMMAND		activitymanager5  ~
+		COMMAND		activitymanager6  ~
+	END_TEST_BLOCK
+//! Start all at once with same timeout period
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		CREATE_OBJECT	CUserActivityManager activitymanager2
+		CREATE_OBJECT	CUserActivityManager activitymanager3
+		CREATE_OBJECT	CUserActivityManager activitymanager4
+		CREATE_OBJECT	CUserActivityManager activitymanager5
+		CREATE_OBJECT	CUserActivityManager activitymanager6
+		COMMAND		activitymanager1 NewL EPriorityHigh
+		COMMAND		activitymanager2 NewL EPriorityUserInput
+		COMMAND		activitymanager3 NewL EPriorityLow
+		COMMAND		activitymanager4 NewL EPriorityHigh
+		COMMAND		activitymanager5 NewL EPriorityUserInput
+		COMMAND		activitymanager6 NewL EPriorityLow
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager2 Start 2
+		COMMAND		activitymanager3 Start 2
+		COMMAND		activitymanager4 Start 2
+		COMMAND		activitymanager5 Start 2
+		COMMAND		activitymanager6 Start 2
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager2 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager3 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager4 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager5 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager6 SetExpectedEventUserInActivity 2
+		OUTSTANDING
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager2 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager3 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager4 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager5 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager6 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager2  ~
+		COMMAND		activitymanager3  ~
+		COMMAND		activitymanager4  ~
+		COMMAND		activitymanager5  ~
+		COMMAND		activitymanager6  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3706
+
+START_TESTCASE 			SYSLIB-BAFL-CT-3707
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-3707
+//!@SYMTestCaseDesc		Error condition testing. Tests restart, overflow, and cancellation.
+//!@SYMTestPriority 	Low
+//!@SYMTestActions  	Start an inactivity manager. Restart immediately. 
+//!@SYMTestActions		Cause an overflow condition by passing in a large timeout period.
+//!@SYMTestActions		Cancel the timer, start another timer right after.
+//!@SYMTestExpectedResults 	Can start and restart inactivity timer without a problem. 
+//!@SYMTestExpectedResults  he overflow condition is reported back in the RunL(), then within
+//!@SYMTestExpectedResults  the RunL() causes a panic in debug, ignored in release.
+//!@SYMTestExpectedResults  Can cancel and restart a new timer with no problems.
+//!@SYMREQ                  REQ8169
+	// Call Start Twice. Shouldn't panic in either UDEB or UREL.
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 Start 1
+		ASYNC_DELAY	0500000 //! Test code cannot set two asynch events to start
+		COMMAND		activitymanager1 CheckExpectedEvents inactive0active0
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+	// Overflow condition of the timer, will cause a panic in both UDEB and UREL.
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 100000000
+		OUTSTANDING
+		COMMAND		activitymanager1 ~
+	END_TEST_BLOCK !PanicCode=-9 !PanicString=CUserActivityMan
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 5
+		ASYNC_DELAY	1000000
+		COMMAND		activitymanager1  Cancel	
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 2
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		OUTSTANDING
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-3707
+
+START_TESTCASE 			SYSLIB-BAFL-CT-4009
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-4009
+//!@SYMTestCaseDesc		Tests the dummy API methods
+//!@SYMTestPriority 	Low
+//!@SYMTestActions  	Create an activity manager and call a dummy method. 
+//!@SYMTestExpectedResults 	The dummy method is sucessfully called.
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 DummyMethod
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-4009
+
+START_TESTCASE 			SYSLIB-BAFL-CT-4010
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-4010
+//!@SYMTestCaseDesc		Confirm that RTimer::Inactivity() usage is correct by the activity manager. This
+//!@SYMTestCaseDesc     verifies the fix to correct the behaviour of the activity manager which misses an
+//!@SYMTestCaseDesc     invocation of iInactiveCallback when the current inactivity time is larger than
+//!@SYMTestCaseDesc     the iInterval-current inactive time.					
+//!@SYMTestPriority 	High
+//!@SYMTestActions      Try setting inactivity interval to x, where 
+//!@SYMTestActions      current_inactive < x < 2*current_inactive. Wait for subsequent inactivity event.
+//!@SYMTestExpectedResults 	The Inactivity times out at the expected inactivity period (3 seconds in 
+//!@SYMTestExpectedResults  this test case). The old code would reset the timer to Inactivity(1) when
+//!@SYMTestExpectedResults  SetInactivityTimeout was called in the circumstances below. This would cause
+//!@SYMTestExpectedResults  the inactivity timer to never expire, due to the behavour of RTimer::Inactivity:
+//!@SYMTestExpectedResults  "If there has already been a period of user inactivity greater than the specified
+//!@SYMTestExpectedResults interval, then the timer is set after the next user activity." The new code sets the
+//!@SYMTestExpectedResults timer correctly as Inactivity(3), which results in the inactivity timer expiring after
+//!@SYMTestExpectedResults two seconds (the RTimer::Inactivity() API takes into consideration the elapsed inactivity time). 
+//!@SYMTestExpectedResults This test verifies this change.
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 Start 5
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 3
+		ASYNC_DELAY	2000000
+		COMMAND		activitymanager1 SetInactivityTimeout 3
+		ASYNC_DELAY	4000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-4010
+
+START_TESTCASE 			SYSLIB-BAFL-CT-4011
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-4011
+//!@SYMTestCaseDesc		Call SetInactivityTimeout() before Start()
+//!@SYMTestPriority 	Low
+//!@SYMTestActions  	Call SetInactivityTimeout before Start 
+//!@SYMTestExpectedResults 	Should panic in debug mode, do nothing (no callbacks) in release mode 
+//!@SYMPREQ                 PREQ1802
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 UDEBOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 SetInactivityTimeout 2
+		ASYNC_DELAY	3000000
+		COMMAND		activitymanager1  ~
+		COMMAND		activitymanager1 ExpectedPanic setBeforeStart
+	END_TEST_BLOCK !PanicCode=-18 !PanicString=CUserActivityMan
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 URELOnly
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 SetInactivityTimeout 1
+		ASYNC_DELAY	3000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive0active0 //no callbacks
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK	
+END_TESTCASE 			SYSLIB-BAFL-CT-4011
+
+START_TESTCASE 			SYSLIB-BAFL-CT-4012 
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-4012
+//!@SYMTestCaseDesc		Test that inactivity is detected during activity callbacks. Test that activity
+//!@SYMTestCaseDesc     is detected during the inactivity callback.
+//!@SYMTestPriority 	Low
+//!@SYMTestActions  	Setup up callbacks for activity and inactivity that take four seconds to
+//!@SYMTestActions      process (use a delay in the callbacks). Start an inactivity manager. During
+//!@SYMTestActions      the inactivity callback insert a user activity event. Setup a long
+//!@SYMTestActions      activity callback and ensure that inactivity can be detected during the
+//!@SYMTestActions      long callback.
+//!@SYMTestExpectedResults 	Ensure activity is still detected during inactivity callback. 
+//!@SYMTestExpectedResults  Ensure inactivity is detected during the activity callback.
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 SetSlowCallbacks
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 2
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 6 //2 + 4 for callback delay
+		// Why 6 and not 2? Slow Inactivity callback starts at 2, and takes 4. 
+		// Thus control doesn't return from callback until 6, even though activity should fire at 4
+		COMMAND		activitymanager1 InjectActivity 4 // activity will be injected at this time
+		COMMAND		activitymanager1 Start 2
+		OUTSTANDING
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 10
+		ASYNC_DELAY	5000000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive2active1
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 1
+		COMMAND		activitymanager1 Start 1
+		ASYNC_DELAY	2000000
+		COMMAND		activitymanager1 SetExpectedEventUserActivity 2
+		COMMAND		activitymanager1 SetInactivityTimeout 3
+		COMMAND		activitymanager1 SetSlowCallbacks
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 6
+		// Why 6 and not 5? Slow activity callback starts at 2, and takes 4. 
+		// Thus control doesn't return from callback until 6, even though inactivity should fire at 5
+		COMMAND 	activitymanager1 UserActivity
+		ASYNC_DELAY	100
+		COMMAND		activitymanager1 CheckExpectedEvents inactive2active1
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-4012
+
+START_TESTCASE 			SYSLIB-BAFL-CT-4013
+//!@SYMTestCaseID       SYSLIB-BAFL-CT-4013
+//!@SYMTestCaseDesc		Verify that initial periods of inactivity longer than the specified interval
+//!@SYMTestCaseDesc     does not cause the activity manager to get out of sync with the timer's state.
+//!@SYMTestPriority 	High
+//!@SYMTestActions  	Delay script execution for two seconds. Start the inactivity timer with
+//!@SYMTestActions      a three second timer. This is the normal case, which should lead to inactivity
+//!@SYMTestActions      monitoring. 
+//!@SYMTestActions      Now for the second test delay script execution for three seconds.  Start the
+//!@SYMTestActions      inactivity timer with a 2 second timer. This will result in the inactivity timer
+//!@SYMTestActions      expiring immediately, which should lead to activity monitoring.
+//!@SYMTestExpectedResults 	The correct callbacks are returned at the appropriate times. Start() now
+//!@SYMTestExpectedResults  leads the manager to arrive in either the inactive or active monitoring
+//!@SYMTestExpectedResults  states depending on the conditions described in the actions above. 
+//!@SYMREQ                  REQ8169
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		ASYNC_DELAY	2000000
+		COMMAND		activitymanager1 Start 3
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 3
+		ASYNC_DELAY	1500000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	100	te_activitymanagertestsuite    z:\testdata\inifiles\te_activitymanagertestsuite.ini
+		CREATE_OBJECT	CUserActivityManager activitymanager1
+		COMMAND		activitymanager1 NewL EPriorityStandard
+		COMMAND		activitymanager1 UserActivity
+		ASYNC_DELAY	3000000
+		COMMAND		activitymanager1 SetExpectedEventUserInActivity 3 //i.e. straight away...
+		COMMAND		activitymanager1 Start 2
+		ASYNC_DELAY	0500000
+		COMMAND		activitymanager1 CheckExpectedEvents inactive1active0
+		COMMAND		activitymanager1  ~
+	END_TEST_BLOCK
+END_TESTCASE 			SYSLIB-BAFL-CT-4013

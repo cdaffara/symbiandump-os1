@@ -1,0 +1,385 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE tsu_mmf_videorenderer.dll
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0001
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a TVideoFrameBuffer and test if its methods work as expected.
+//! @SYMTestActions         1) Create a RChunk in local memory
+//!		2) Create a TVideoFrameBuffer with some format, stride, buffer ID, the RChunk, and some offset into the chunk.
+//!		3) Get the format, stride, bufferID, Chunk, and buffer pointer and check if they have the expected values.
+//! @SYMTestExpectedResults Expect the returned format, stride, buffer ID, chunk to be the same as the values passed into the TVideoFrameBuffer constructor.  The buffer pointer should be offset bytes into the base of the chunk.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0001
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0002
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Render surface buffers in non-timed mode.
+//! @SYMTestActions         1) Create a non-timed CVideoRenderer.
+//! 	2) Get a list of supported output formats.
+//! 	3) Create a surface with one buffer
+//! 	4) Map the surface to a display with RWindow::SetBackgroundSurface()
+//! 	5) Verify that one buffer becomes available
+//! 	6) Call NextBuffer()
+//! 	7) Fill the buffer with some predetermined content.
+//! 	8) Update the buffer to the screen.
+//! 	9) Verify the buffer is displayed and becomes available again.
+//! 	10) Call NextBuffer() again
+//! 	11) Release the new buffer
+//! 	12) Verify the buffer becomes available again.
+//! 	13) Destroy the surface
+//! @SYMTestExpectedResults There is at least one supported output format.
+//!		Surface created without any errors.
+//!		MvroBufferAvailable called once for each buffer after the surface is created. 
+//!		MvroBufferDisplayed and MvroBufferAvailable called after UpdateBuffer is called.
+//!		MvroBufferAvailable called after ReleaseBuffer is called.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0002
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0003
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Render surfaces in timed mode.
+//! @SYMTestActions         1) Create a timed CVideoRenderer.
+//!		2) Get a list of supported output formats.
+//!		3) Create a surface with one buffer
+//!		4) Map the surface to a display with RWindow::SetBackgroundSurface()
+//!		5) Verify that one buffer becomes available
+//!		6) Call NextBuffer()
+//!		7) Fill the buffer with some predetermined content.
+//!		8) Update the buffer to the screen with a presentation time in the near future.
+//!		9) Verify the buffer is displayed near the presentation time and becomes available again.
+//!		10) Call NextBuffer() again
+//!		11) Release the new buffer
+//!		12) Verify the buffer becomes available again.
+//!		13) Destroy the surface
+//! @SYMTestExpectedResults There is at least one supported output format.
+//!		Surface created without any errors.
+//!		MvroBufferAvailable called once for each buffer after the surface is created. 
+//!		MvroBufferDisplayed is called with a time that is ""close"" to the requested presentation time, and MvroBufferAvailable called after UpdateBuffer is called.
+//!		MvroBufferAvailable called after ReleaseBuffer is called.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0003
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0004
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update buffers out of presentation order in timed mode.
+//! @SYMTestActions         With a CVideoRenderer in timed mode,  create at least two surface buffers.  Call UpdateBuffer() on a buffer with presentation time in the future.  
+//!		Update another buffer with a presentation time in the future, but sooner than the previously updated buffer.
+//! @SYMTestExpectedResults Video renderer should restart the delay timer with tne new presentation order. Buffers should be displayed in presentation order, as reported by MvroBufferDisplayed().
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0004
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0005
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update buffers out of presentation order in non-timed mode.
+//! @SYMTestActions         With a CVideoRenderer in non-timed mode,  create at least three surface buffers.  The first buffer should be updated with a presentation time of 0.  
+//!		Call UpdateBuffer() on another buffer with presentation time in the future.  Update another buffer with a presentation time in the future, but sooner than the previously updated buffer.
+//! @SYMTestExpectedResults The first buffer should be displayed. The second and third buffers updated should be displayed in reverse order so the presentation times are chronological.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0005
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0006
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update buffers with presentation times too close together in timed mode.
+//! @SYMTestActions         In a timed CVideoRenderer, create at least 3 buffers.  Call UpdateBuffer() three times with very small increments in presentation times.
+//! @SYMTestExpectedResults Second buffer should be reported as skipped in a callback to MvroBufferSkipped().  First and last buffers should be displayed.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0006
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0007
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update buffers with presentation times too close together in non-timed mode.
+//! @SYMTestActions         In a non-timed CVideoRenderer, create at least 3 buffers.  Call UpdateBuffer() three times with very small increments in presentation times.
+//! @SYMTestExpectedResults Second buffer should be reported as skipped in a callback to MvroBufferSkipped().  First and last buffers should be displayed.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0007
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0008
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update buffers with an out of date buffer in timed mode.  Out of date buffer is not last or first.
+//! @SYMTestActions         In a timed CVideoRenderer, create at least 3 buffers.  The first buffer should be updated with a future presentation time.  
+//!		Call UpdateBuffer() twice more with two buffers: the first buffer has a presentation time in the past, the second in the near future.
+//! @SYMTestExpectedResults The first buffer should be displayed. The second buffer should be skipped.  The third should be displayed.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0008
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0009
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update buffers with an out of date buffer in non-timed mode.  Out of date buffer is not last or first.
+//! @SYMTestActions         In a non-timed CVideoRenderer, create at least 3 buffers.  The first buffer should be updated with a future presentation time. 
+//!		Call UpdateBuffer() twice more with two buffers: the first buffer has a presentation time in the past, the second in the future.
+//! @SYMTestExpectedResults The first buffer should be displayed. The second buffer should be skipped.  The third should be displayed.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0009
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0010
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Replace a surface in timed mode.
+//! @SYMTestActions         In a timed CVideoRenderer, create a surface with one buffer.  Use NextBuffer() and UpdateBuffer() to retrieve and update the buffer.  
+//!		Destroy the surface.  Create a new surface with at least 2 buffers.  Retrieve, fill and update the buffers.
+//! @SYMTestExpectedResults Video renderer should work before and after replacing the surface.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0010
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0011
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Replace a surface in non-timed mode.
+//! @SYMTestActions         In a non-timed CVideoRenderer, create a surface with one buffer.  Use NextBuffer() and UpdateBuffer() to retrieve and update the buffer.  
+//!		Destroy the surface.  Create a new surface with at least 2 buffers.  Retrieve, fill and update the buffers.
+//! @SYMTestExpectedResults Video renderer should work before and after replacing the surface.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0011
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0012
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update two buffers with the same presentation time in timed mode.
+//! @SYMTestActions         In a timed CVideoRenderer, create a surface with at least three buffers.  Submit two buffers with identical presentation times (set sometime after the current time).
+//!		Submit a third buffer with a presentation time after the other two (so that the second buffer is not the last buffer).
+//! @SYMTestExpectedResults The second buffer should be skipped.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0012
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0013
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update two buffers with the same presentation time in non-timed mode.
+//! @SYMTestActions         In a non-timed CVideoRenderer, create a surface with at least three buffers.  Submit two buffers with identical presentation times (set sometime after the current time).
+//!		Submit a third buffer with a presentation time after the other two (so that the second buffer is not the last buffer).
+//! @SYMTestExpectedResults No buffer should be skipped.  The first buffer should be submitted before the second.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0013
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0014
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update two buffers.  One with a presentation time in the future and the other with time zero.  Use timed mode.
+//! @SYMTestActions         In a timed CVideoRenderer, create a surface with at least two buffers.  Submit one buffer with a presentation time in the future.  Submit the other with presentation time set to zero.
+//! @SYMTestExpectedResults The second buffer should be displayed before the first.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0014
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0015
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update two buffers.  One with a presentation time in the future and the other with time zero.  Use non-timed mode.
+//! @SYMTestActions         In a timed CVideoRenderer, create a surface with at least three buffers.  The first buffer should be updated with a presentation time of 0.
+//!		Submit the next buffer with a presentation time in the future.  Submit the last with presentation time set to zero.
+//! @SYMTestExpectedResults The third buffer should be displayed before the second.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0015
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-0100
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a surface with unsupported output format
+//! @SYMTestActions         Pass a format into CreateSurface that is not returned by GetSupportedFormatsL()
+//! @SYMTestExpectedResults Should fail with KErrNotSupported.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0100
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00101
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a surface with a surface size too large to allocate.
+//! @SYMTestActions         Set aSize argument to a very high resolution in a call to CreateSurfaceL()
+//! @SYMTestExpectedResults Should fail with KErrNoMemory.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0101
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00102
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a surface with a surface size of zero height and width.
+//! @SYMTestActions         Set aSize argument to have zero height and width in a call to CreateSurfaceL()
+//! @SYMTestExpectedResults Should fail with KErrArgument.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0102
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00103
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a surface with a surface size of negative dimensions.
+//! @SYMTestActions         Set aSize argument to have negative height and width in a call to CreateSurfaceL()
+//! @SYMTestExpectedResults Should fail with KErrArgument.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0103
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00104
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a surface with too many buffers to allocate.
+//! @SYMTestActions         Set the aNumBuffers parameter to a value large enough to cause a memory allocation error in a call to  CreateSurfaceL().
+//! @SYMTestExpectedResults Should fail with KErrNoMemory.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0104
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00105
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a surface with a negative number of buffers.
+//! @SYMTestActions         Set the aNumBuffers parameter to a negative number and call CreateSurfaceL().
+//! @SYMTestExpectedResults Should fail with KErrNotSupported.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0105
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00106
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create a surface with zero buffers.
+//! @SYMTestActions         Set the aNumBuffers parameter to zero in a call to CreateSurfaceL().
+//! @SYMTestExpectedResults Should fail with KErrNotSupported.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0106
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00110
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Release a buffer twice
+//! @SYMTestActions         Call ReleaseBuffer() on the same buffer twice.
+//! @SYMTestExpectedResults ReleaseBuffer() should ignore the second request.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0110
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00111
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Try to use a surface after it has been destroyed.
+//! @SYMTestActions         Create and initialize a video renderer and surface.  Get a surface buffer and store the pointer.  Destroy the surface.  
+//!		Try to update and release the stored buffer pointer.  Call NextBuffer() and try to get a new buffer from the destroyed surface.
+//! @SYMTestExpectedResults UpdateBuffer() and ReleaseBuffer() should ignore the erroneous requests.  NextBuffer() should return NULL.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0111
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00112
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        In timed mode, update a buffer and immediately destroy the surface. 
+//! @SYMTestActions         Using a timed CVideoRenderer, call UpdateBuffer() and then immediately destroy the surface.
+//! @SYMTestExpectedResults Should result in proper cleanup of allocated resources.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0112
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00113
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        In non-timed mode, update a buffer and immediately destroy the surface. 
+//! @SYMTestActions         Using a non-timed CVideoRenderer, call UpdateBuffer() and then immediately destroy the surface.
+//! @SYMTestExpectedResults Should result in proper cleanup of allocated resources.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0113
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00114
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update a buffer and delete the owning timed CVideoRenderer.
+//! @SYMTestActions         Using a timed CVideoRenderer, call UpdateBuffer() and then immediately delete the CVideoRenderer object.
+//! @SYMTestExpectedResults Should result in proper cleanup of allocated resources.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0114
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00115
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update a buffer and delete the owning non-timed CVideoRenderer.
+//! @SYMTestActions         Using a non-timed CVideoRenderer, call UpdateBuffer() and then immediately delete the CVideoRenderer object.
+//! @SYMTestExpectedResults Should result in proper cleanup of allocated resources.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0115
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00118
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Create two surfaces.
+//! @SYMTestActions         Call CreateSurfacL() twice.
+//! @SYMTestExpectedResults CreateSurfaceL should leave with KErrInUse when called a second time.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0118
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00119
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Try to destroy a surfaces that don't exist.
+//! @SYMTestActions         Create a surface and destroy it.  Try to destroy it again.  Try to destroy a surface with an invalid surface ID.
+//! @SYMTestExpectedResults The erroneous DestroySurface commands should be ignored.  
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0119
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00120
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Test incorrect resource files.
+//! @SYMTestActions         Read the format info and the timer info from resource files with the following problems:
+//!		a) Format not supported by CVideoRenderer is included in the formats list.
+//!		b) Format list is an empty array
+//!		c) Time info contains strings that can be converted to number
+//!		d) Time info is empty
+//! @SYMTestExpectedResults a) ReadSupportedFormatL should leave with KErrNotSupported.
+//!		b) ReadSupportedFormatL should leave with KErrNotSupported
+//!		c) ReadSupportedFormatL and ReadTimerInfoL do not leave. Timer info contain the number value of the string
+//!		d) c) ReadSupportedFormatL and ReadTimerInfoL do not leave. Timer info contain default value of zero.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0120a
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0120b
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0120c
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0120d
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00108
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update a buffer twice in timed mode.
+//! @SYMTestActions         Using a timed CVideoRenderer, call UpdateBuffer() on the same buffer twice.
+//! @SYMTestExpectedResults UpdateBuffer() should panic in debug builds, ignore the request in release builds.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0108
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00109
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Update a buffer twice in non-timed mode.
+//! @SYMTestActions         Using a non-timed CVideoRenderer, call UpdateBuffer() on the same buffer twice.
+//! @SYMTestExpectedResults UpdateBuffer() should panic in debug builds, ignore the request in release builds.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0109
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00116
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Pass in a buffer not owned by a timed CVideoRenderer into UpdateBuffer().
+//! @SYMTestActions         Create a TVideoBuffer object and pass it into a call to UpdateDisplay() using a CVideoRenderer in timed mode.
+//! @SYMTestExpectedResults UpdateBuffer() should panic in debug builds, ignore the request in release builds.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0116
+TEST_COMPLETE
+
+//! @SYMTestCaseID          MM-MMF-VIDREND-U-00117
+//! @SYMREQ                 REQ7422
+//! @SYMTestCaseDesc        Pass in a buffer not owned by a non-timed CVideoRenderer into UpdateBuffer().
+//! @SYMTestActions         Create a TVideoBuffer object and pass it into a call to UpdateDisplay() using a CVideoRenderer in non-timed mode.
+//! @SYMTestExpectedResults UpdateBuffer() should panic in debug builds, ignore the request in release builds.
+//! @SYMTestPriority        High
+RUN_TEST_STEP 30000, tsu_mmf_videorenderer, MM-MMF-VIDREND-U-0117
+TEST_COMPLETE

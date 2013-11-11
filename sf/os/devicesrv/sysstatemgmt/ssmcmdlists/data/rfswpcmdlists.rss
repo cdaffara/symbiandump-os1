@@ -1,0 +1,247 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command lists for the RF SWP:
+*   - Normal RF On.
+*   - Normal RF Off.
+*   - Normal BT SAP.
+*
+*/
+
+#include <ssm/ssmcmd.rh>
+#include <ssm/clayerswp.hrh>
+
+#include "ssmswp.hrh"
+#include "ssmdlldatadefs.rh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmRfOn;
+            resource_id = r_online_commands;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmRfOff;
+            resource_id = r_offline_commands;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmBtSap;
+            resource_id = r_btsap_commands;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_btsap_commands
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_btsap_commands
+    {
+    commands =
+        {
+        r_cmd_sastate_btsap,    // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishswp,       // prio 0xFFF1
+        r_cmd_psstate_btsap     // prio 0xFFF0
+        };
+    }
+
+// ---------------------------------------------------------------------------
+// r_offline_commands
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_offline_commands
+    {
+    commands =
+        {
+        r_cmd_sastate_offline,  // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishswp,       // prio 0xFFF1
+        r_cmd_psstate_offline   // prio 0xFFF0
+        };
+    }
+
+// ---------------------------------------------------------------------------
+// r_online_commands
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_online_commands
+    {
+    commands =
+        {
+        r_cmd_sastate_online,   // This needs to be the first command in state, prio 0xFFF2
+        r_cmd_publishswp,       // prio 0xFFF1
+        r_cmd_psstate_online    // prio 0xFFF0
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_btsap
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_btsap
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 111;        // ESwStateNormalBTSap
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_offline
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_offline
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 110;        // ESwStateNormalRfOff
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_psstate_online
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_cmd_psstate_online
+    {
+    priority = 0xFFF0;
+    severity = ECmdCriticalSeverity;
+    category = 0x101F8766; // KPSUidStartup
+    key      = 0x00000041; // KPSGlobalSystemState
+    value    = 109;        // ESwStateNormalRfOn
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_publishswp
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_PUBLISH_SYSTEM_WIDE_PROPERTY r_cmd_publishswp
+    {
+    priority = 0xFFF1;
+    severity = ECmdCriticalSeverity;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_btsap
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_btsap
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_btsap;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_offline
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_offline
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_offline;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sastate_online
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_sastate_online
+    {
+    priority = 0xFFF2;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 8;
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    dll_data = r_dlldata_sastate_online;
+    }
+
+// ===========================================================================
+// DLL data items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_btsap
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_btsap
+    {
+    mainstate = 1; // ESsmNormal
+    substate = 0x1B;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_offline
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_offline
+    {
+    mainstate = 1; // ESsmNormal
+    substate = 0x1A;
+    }
+
+// ---------------------------------------------------------------------------
+// r_dlldata_sastate_online
+// ---------------------------------------------------------------------------
+//
+RESOURCE CMD_PARAM_STATE_CHANGE r_dlldata_sastate_online
+    {
+    mainstate = 1; // ESsmNormal
+    substate = 0x19;
+    }

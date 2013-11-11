@@ -1,0 +1,466 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef __SSMCMD_HRH__
+#define __SSMCMD_HRH__
+
+/** UID2 for SSM command list resource files.
+
+@publishedPartner
+@released
+*/
+#define KUidSsmCommandListResourceFile 0x2000D764
+
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+/** The value of default priority of a command if it is not supplied
+This value is a TUint16 value and will deafult to 10000
+
+@publishedPartner
+@released
+*/
+#define KDefaultCommandPriority 10000
+#endif
+
+/** Supported verions of command list resource files.
+
+@publishedPartner
+@released
+*/
+enum TSsmResourceVersion
+	{
+	ESsmInitialVersion = 1
+	};
+
+/** Identifiers for different command types.
+
+Note: To add a new command type, extend this enum and add a
+new struct to ssmcmd.rh.
+All command structs must start with the following header:
+1. LLINK conditional_information - set to zero for a command that must always
+be included in the command list or the id of a resource (in the same resource file)
+containing information used by the policy to determine whether the command
+will be included in the command list.
+2. WORD type - Command type declared by TSsmCommandType.
+3. WORD version - Supported version for the new command type.
+
+@publishedPartner
+@released
+*/
+enum TSsmCommandType
+	{
+	/**
+	Command not defined.
+	*/
+	ESsmCmdUndefined = 0,
+	/**
+	This command is used for starting processes.
+	*/
+	ESsmCmdStartProcess,
+	/**
+	This command is used for starting apps.
+	*/
+	ESsmCmdStartApp,
+	/**
+	This command is used to wait for apparc to initialise its list of applications.
+	*/
+	ESsmCmdWaitForApparcInit,
+	/**
+	This command is used to wait until all previous commands with
+	start_method ESsmDeferredWaitForSignal have completed.
+	*/
+	ESsmCmdMultipleWait,
+	/**
+	This command is used for starting AMAStarter with a particular DSC.
+	*/
+	ESsmCmdAMAStarter,
+
+	/**
+	This command is used for publishing a system state change.
+	*/
+	ESsmCmdPublishSystemState,
+	/**
+	This command is used for publishing a system-wide property change.
+	*/
+	ESsmCmdPublishSwp,
+	/**
+	This command is used for creating a system-wide property.
+	*/
+	ESsmCmdCreateSwp,
+	/**
+	This command is used for requesting a change to a system-wide property.
+	*/
+	ESsmCmdReqSwProperty,	
+	/**
+	This command is used for loading a State Utility Plugin.
+	*/
+	ESsmCmdLoadSup,
+	/**
+	This command is used for initiating a device restart or shutdown.
+	*/
+	ESsmCmdPowerOff,
+	/**
+	This command is used for finalising drives.
+	*/
+	ESsmCmdFinaliseDrives,
+	/**
+	This command is used for persisting HAL attributes.
+	*/
+	ESsmCmdPersistHalAttributes,
+	/**
+	This command is used for starting an old-style custom command.
+	*/
+	ESsmCmdLoadDLL,
+	/**
+	This command is used for starting a custom command.
+	*/
+	ESsmCmdCustomCommand,
+	/**
+	This command is used to set the publish and subscribe key.
+	*/	
+	ESsmCmdSetPAndSKey,
+	/**
+	It is used to store the monitor information for a process/app.
+	*/
+	ESsmMonitorInfo
+	};
+
+enum TSsmSoftwareReasons
+	{
+	ESoftwareNormal,
+	ERestoreFactorySettings,
+	EFirstBoot,
+	EUnconditionalSoftwareReason = 0xFFFFFFFF
+	};
+
+enum TSsmHardwareReasons
+	{
+	EHardwareNormal,
+	ETest,
+	EUnconditionalHardwareReason = 0xFFFFFFFF
+	};
+
+/** Identifiers for each start-up method.
+
+@publishedPartner
+@released
+*/
+enum TSsmExecutionBehaviour
+	{
+	/**
+	By using this type the starter can continue immediately
+	with executing its next command.
+	*/
+	ESsmFireAndForget = 1,
+	/**
+	By using this type the starter cannot continue with the
+	next command until a command is completed.
+	It means rendezvous for StartApp and StartProcess and completion of Execute() for other commands.
+	*/
+	ESsmWaitForSignal,
+	/**
+	By using this type the starter will continue with the next command
+	before commands completion. However the completion will be checked later when a 
+	MULTIPLE_WAIT command is encountered.
+	*/
+	ESsmDeferredWaitForSignal
+	};
+
+/**  Identifier for the level of severity to be associated with a command failure.
+
+@publishedPartner
+@released
+*/
+enum TCmdErrorSeverity
+	{
+	/**
+ 	Ignore the command failure.
+	*/
+	ECmdIgnoreFailure = 0,
+
+	/**
+	*/
+	ECmdLowSeverity = 25,
+
+	/**
+	*/
+	ECmdMediumSeverity = 50,
+
+	/**
+	*/
+	ECmdHighSeverity = 75,
+
+	/**
+	*/
+	ECmdCriticalSeverity = 100
+	};
+
+/**
+Identifier for the versions of individual Built-In Commands
+*/
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdPublishSystemStateVersion
+	{
+	ECmdPublishSystemStateInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdPublishSystemStateVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdPublishSystemStateVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdPublishSwpVersion
+	{
+	ECmdPublishSwpInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdPublishSwpVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdPublishSwpVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdCreateSwpVersion
+	{
+	ECmdCreateSwpInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdCreateSwpVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdCreateSwpVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdReqSwPropertyVersion
+	{
+	ECmdReqSwPropertyInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdReqSwPropertyVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdReqSwPropertyVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdLoadSupVersion
+	{
+	ECmdLoadSupInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdLoadSupVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdLoadSupVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdPowerOffVersion
+	{
+	ECmdPowerOffInitialVersion = 1
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdFinaliseDrivesVersion
+	{
+	ECmdFinaliseDrivesInitialVersion = 1
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdPersistHalAttributesVersion
+	{
+	ECmdPersistHalAttributesInitialVersion = 1
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdCustomCommandVersion
+	{
+	ECmdCustomCommandInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdCustomCommandVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdCustomCommandVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdAmaStarterVersion
+	{
+	ECmdAmaStarterInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdAmaStarterVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdAmaStarterVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdMultipleWaitVersion
+	{
+	ECmdMultipleWaitInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdMultipleWaitVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdMultipleWaitVersionWithPriority
+#endif	//SYMBIAN_SSM_FLEXIBLE_MERGE
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdSetPAndSKeyVersion
+	{
+	ECmdSetPAndSKeyInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdSetPAndSKeyVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdSetPAndSKeyVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdStartAppVersion
+	{
+	ECmdStartAppInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdStartAppVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdStartAppVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdStartProcessVersion
+	{
+	ECmdStartProcessInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdStartProcessVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdStartProcessVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TCmdWaitForApparcInitVersion
+	{
+	ECmdWaitForApparcInitInitialVersion = 1
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	/*
+	The ECmdWaitForApparcInitVersionWithPriority will support the priority field in the command
+	*/
+	, ECmdWaitForApparcInitVersionWithPriority
+#endif
+	};
+
+/**
+@publishedPartner
+@released
+*/
+enum TSsmMonitorInfoVersion
+	{
+	ESsmMonitorInfoInitialVersion = 1
+	};
+
+/** Defines the possible unloading options for the custom command dll
+@publishedPartner
+@released
+*/
+enum TCmdCustomCommandLibUnloading
+	{
+	EUnloadOnCommandCompletion = 0,		// once Custom Command has completed, the dll is unloaded
+	ENeverUnload						// no attempt is made to unload the dll
+	};
+
+/**  Defines the action to be taken on component failure.  
+This should be used to set the restart_policy member of SSM_MONITOR_INFO structure to determine what to do
+when all retry attempts of the component have failed.
+
+@publishedPartner
+@released
+*/
+enum TSsmRecoveryMethod
+	{
+	/**
+	Ignore the command failure
+	*/
+	ESsmIgnoreOnFailure,
+	/**
+	Reboot the OS
+	*/
+	ESsmRestartOS,
+	/**
+	Reboot the OS in a particular mode
+	*/
+	ESsmRestartOSWithMode,
+	/**
+	Reboot the OS (with no attempts to restart the component being attempted)
+	*/
+	ESsmCriticalNoRetries
+	};
+
+#endif	// __SSMCMD_HRH__

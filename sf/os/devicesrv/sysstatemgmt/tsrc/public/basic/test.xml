@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<test>
+    <name>systemstartup Automated Tests</name>
+    <target>
+        <device rank="none" alias="DEFAULT">
+            <property name="HARNESS" value="EUNIT" />
+            <property name="TYPE" value="Ariane" />
+        </device>
+    </target>
+    <plan name="systemstartup Automated Test Plan" harness="EUNIT" enabled="true" passrate="100">
+        <session name="session" harness="EUNIT" enabled="true" passrate="100">
+            <set name="set" harness="EUNIT" enabled="true" passrate="100">
+                <target>
+                    <device rank="master" alias="DEFAULT"/>
+                </target>
+                <case name="Test Case 1" harness="EUNIT" enabled="true" passrate="100">
+                    <flash target-alias="DEFAULT" images="ATS3Drop/images/sydo_systemstartup_ats3_image.fpsx" />
+                    <flash target-alias="DEFAULT" images="ATS3Drop/images/sydo_systemstartup_ats3_image_udaerase.fpsx" />
+                    
+                    <!-- Create CTC coverage result folder -->
+                    <step name="Create CTC log dir" harness="EUNIT" enabled="true" passrate="100" significant="false">
+                        <command>makedir</command>
+                        <params>
+                            <param dir="c:\data\ctc\"/>
+                        </params>
+                    </step>
+                    
+                    <!-- Install testmodule mt_systemstartup -->
+                    <step name="Install testmodule MT_RStarterSession DLL" harness="EUNIT" enabled="true" passrate="100" significant="false">
+                        <command>install</command>
+                        <params>
+                            <param component-path="ATS3Drop"/>
+                            <param type="binary"/>
+                            <param src="MT_RStarterSession.dll"/>
+                            <param dst="c:\sys\bin\MT_RStarterSession.dll"/>
+                        </params> 
+                    </step>
+
+                    <!-- Start CTC manager -->
+                    <step name="CTC start" harness="EUNIT" enabled="true" passrate="100" significant="false">
+                        <command>execute</command>
+                        <params>
+                            <param file="z:\sys\bin\ctcman.exe"/>
+                        </params>
+                    </step>
+
+                    <!-- Create EUnit log dir -->
+                    <step name="Create EUnit log dir" harness="EUNIT" enabled="true" passrate="100" significant="false">
+                        <command>makedir</command>
+                        <params>
+                            <param dir="c:\shared\eunit\logs\"/>
+                        </params>
+                    </step>
+
+                    <!-- Execute tests -->
+                    <step name="Execute tests" harness="EUNIT" enabled="true" passrate="100" significant="true">
+                        <command>execute</command>
+                        <params>
+                            <param parameters="/l xml /w 10 /r Warning MT_RStarterSession"/>
+                            <param timeout="360"/>
+                            <param result-file="c:\shared\eunit\logs\EUnit_log.xml"/>
+                            <param file="z:\sys\bin\EUNITEXERUNNER.EXE"/>
+                        </params>
+                    </step>
+                    
+                    <!-- Save CTC coverage data -->
+                    <step name="Save CTC data" harness="EUNIT" enabled="true" passrate="100" significant="false">
+                        <command>execute</command>
+                        <params>
+                            <param parameters="writefile"/>
+                            <param file="z:\sys\bin\ctcman.exe"/>
+                        </params>
+                    </step>
+                    
+                    <!-- Fetch and clean CTC data -->
+                    <step name="Fetch and clean CTC data" harness="EUNIT" enabled="true" passrate="100" significant="false">
+                        <command>fetch-log</command>
+                        <params>
+                            <param delete="true"/>
+                            <param path="c:\data\ctc\ctcdata.txt"/>
+                        </params>
+                    </step>
+                </case>
+            </set>
+        </session>
+    </plan>
+    <files>
+        <file>ATS3Drop/images/sydo_systemstartup_ats3_image.fpsx</file>
+        <file>ATS3Drop/images/sydo_systemstartup_ats3_image_udaerase.fpsx</file>
+        <file>ATS3Drop/armv5_urel/MT_RStarterSession.dll</file>
+    </files>
+    
+    <!-- Send ATS3 test reports -->
+    <postAction>
+        <type>SendEmailAction</type>
+        <params>
+            <param name="type" value="ATS3_REPORT"/>
+            <param name="to" value="annikka.aalto@nokia.com;mika.kalkainen@nokia.com"/>
+            <param name="subject" value="ATS3 report for §RUN_NAME§ §RUN_START_DATE§ §RUN_START_TIME§"/>
+            <param name="send-files" value="true"/>
+        </params>
+    </postAction>
+    
+    <!-- File store action sends the ATS3 report to \\ousrv058. -->
+    <postAction>
+        <type>FileStoreAction</type>
+        <params>
+            <param name="to-folder" value="\\ousrv058\data$\ATS3Reports\S60_5_0\SyDo_OSExt\systemswextensions\systemstartup\"/>
+        </params>
+    </postAction>
+</test>

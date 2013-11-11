@@ -1,0 +1,122 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run Capability Suite Tests
+
+// Load server with an SID which does not match that of sysutilsetup.exe and has no capabilities
+RUN_PROGRAM -1 setcap te_sysutilcapabilitysuite.exe 00000000 -SID E0285B3B C:\sys\bin\te_sysutilcapabilitysuite_none.exe
+LOAD_SUITE te_sysutilcapabilitysuite_none
+
+// Load server with an SID which does not match that of sysutilsetup.exe and has WriteDeviceData capability
+RUN_PROGRAM -1 setcap te_sysutilcapabilitysuite.exe 00000020 -SID E0285B3B C:\sys\bin\te_sysutilcapabilitysuite_wdd.exe
+LOAD_SUITE te_sysutilcapabilitysuite_wdd
+
+// Load server with an SID which does match that of sysutilsetup.exe and has no capabilities
+RUN_PROGRAM -1 setcap te_sysutilcapabilitysuite.exe 00000000 -SID 10285B3B C:\sys\bin\te_sysutilcapabilitysuite_sid.exe
+LOAD_SUITE te_sysutilcapabilitysuite_sid
+
+// Load server with an SID which does match that of sysutilsetup.exe and has WriteDeviceData capability
+RUN_PROGRAM -1 setcap te_sysutilcapabilitysuite.exe 00000020 -SID 10285B3B C:\sys\bin\te_sysutilcapabilitysuite_wddsid.exe
+LOAD_SUITE te_sysutilcapabilitysuite_wddsid
+
+
+RUN_UTILS MkDir c:\versions
+
+START_TESTCASE				SYSLIB-BAFL-CT-4060
+//!@SYMTestCaseID			SYSLIB-BAFL-CT-4060
+//!@SYMTestCaseDesc			To ensure the Publish and Subscribe properties have the 
+//!@SYMTestCaseDesc			correct read policy.
+//!@SYMTestCaseDesc			
+//!@SYMTestCaseDesc			Note: The test executable should have no capabilities and a 
+//!@SYMTestCaseDesc			UID which differs from that of SysUtilSetup.exe. In addition, 
+//!@SYMTestCaseDesc			the P&S properties should be deleted so new ones can be created.
+//!@SYMTestExpectedResults	The return codes should be KErrNone.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			1.	Create an instance of CDeviceTypeInformation by calling 
+//!@SYMTestActions				SysUtil::GetDeviceTypeInfo (this makes sure the device 
+//!@SYMTestActions				attributes P&S property gets set).
+//!@SYMTestActions			2.	Use RProperty::Get to read each P&S property.
+//!@SYMTestActions			3.	Check the return codes.
+//!@SYMREQ					CR1328
+//!@SYMDEF 					DEF141094
+RUN_UTILS CopyFile z:\resource\versions\deviceattributes_valid.ini c:\versions\deviceattributes.ini
+RUN_UTILS CopyFile z:\resource\versions\sw_valid.txt c:\versions\sw.txt
+RUN_UTILS CopyFile z:\resource\versions\lang_valid.txt c:\versions\lang.txt
+RUN_UTILS CopyFile z:\resource\versions\langsw_valid.txt c:\versions\langsw.txt
+RUN_UTILS CopyFile z:\resource\versions\purpose_valid.txt c:\versions\purpose.txt
+
+RUN_TEST_STEP 100 te_sysutilcapabilitysuite_none SysUtilTestPSReadPolicyStep
+
+RUN_UTILS MakeReadWrite c:\versions\deviceattributes.ini
+RUN_UTILS MakeReadWrite c:\versions\sw.txt
+RUN_UTILS MakeReadWrite c:\versions\lang.txt
+RUN_UTILS MakeReadWrite c:\versions\langsw.txt
+RUN_UTILS MakeReadWrite c:\versions\purpose.txt
+RUN_UTILS DeleteFile c:\versions\deviceattributes.ini
+RUN_UTILS DeleteFile c:\versions\sw.txt
+RUN_UTILS DeleteFile c:\versions\lang.txt
+RUN_UTILS DeleteFile c:\versions\langsw.txt
+RUN_UTILS DeleteFile c:\versions\purpose.txt
+END_TESTCASE				SYSLIB-BAFL-CT-4060
+
+
+START_TESTCASE				SYSLIB-BAFL-CT-4061
+//!@SYMTestCaseID			SYSLIB-BAFL-CT-4061
+//!@SYMTestCaseDesc			To ensure the Publish and Subscribe properties have the 
+//!@SYMTestCaseDesc			correct write policy.
+//!@SYMTestCaseDesc			
+//!@SYMTestCaseDesc			Note: This test should be repeated with the following 
+//!@SYMTestCaseDesc			combinations of SID and capabilities:
+//!@SYMTestCaseDesc			-	No capabilities and different SID to SysUtilSetup.exe.
+//!@SYMTestCaseDesc			-	WriteDeviceData capability and different SID to SysUtilSetup.exe.
+//!@SYMTestCaseDesc			-	No capabilities and the same SID as SysUtilSetup.exe.
+//!@SYMTestCaseDesc			-	WriteDeviceData capability and the same SID as SysUtilSetup.exe.
+//!@SYMTestCaseDesc			In addition, the P&S properties should be deleted so new ones 
+//!@SYMTestCaseDesc			can be created.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			1.	Create an instance of CDeviceTypeInformation by calling 
+//!@SYMTestActions				SysUtil::GetDeviceTypeInfo (this makes sure the device 
+//!@SYMTestActions				attributes P&S property gets set).
+//!@SYMTestActions			2.	Use RProperty::Set to change the data in each P&S property.
+//!@SYMTestActions			3.	Check the return codes.
+//!@SYMTestExpectedResults	In all cases, except the last one, the return codes should be 
+//!@SYMTestExpectedResults	KErrPermissionDenied. In the final case the return codes 
+//!@SYMTestExpectedResults	should be KErrNone.
+//!@SYMREQ					CR1328
+//!@SYMDEF 					DEF141094
+RUN_UTILS CopyFile z:\resource\versions\deviceattributes_valid.ini c:\versions\deviceattributes.ini
+RUN_UTILS CopyFile z:\resource\versions\sw_valid.txt c:\versions\sw.txt
+RUN_UTILS CopyFile z:\resource\versions\lang_valid.txt c:\versions\lang.txt
+RUN_UTILS CopyFile z:\resource\versions\langsw_valid.txt c:\versions\langsw.txt
+RUN_UTILS CopyFile z:\resource\versions\purpose_valid.txt c:\versions\purpose.txt
+
+RUN_TEST_STEP 100 te_sysutilcapabilitysuite_none SysUtilTestPSWritePolicyStep z:\testdata\inifiles\te_sysutildata.ini PSWritePolicyFail
+RUN_TEST_STEP 100 te_sysutilcapabilitysuite_wdd SysUtilTestPSWritePolicyStep z:\testdata\inifiles\te_sysutildata.ini PSWritePolicyFail
+RUN_TEST_STEP 100 te_sysutilcapabilitysuite_sid SysUtilTestPSWritePolicyStep z:\testdata\inifiles\te_sysutildata.ini PSWritePolicyFail
+RUN_TEST_STEP 100 te_sysutilcapabilitysuite_wddsid SysUtilTestPSWritePolicyStep z:\testdata\inifiles\te_sysutildata.ini PSWritePolicyPass
+
+RUN_UTILS MakeReadWrite c:\versions\deviceattributes.ini
+RUN_UTILS MakeReadWrite c:\versions\sw.txt
+RUN_UTILS MakeReadWrite c:\versions\lang.txt
+RUN_UTILS MakeReadWrite c:\versions\langsw.txt
+RUN_UTILS MakeReadWrite c:\versions\purpose.txt
+RUN_UTILS DeleteFile c:\versions\deviceattributes.ini
+RUN_UTILS DeleteFile c:\versions\sw.txt
+RUN_UTILS DeleteFile c:\versions\lang.txt
+RUN_UTILS DeleteFile c:\versions\langsw.txt
+RUN_UTILS DeleteFile c:\versions\purpose.txt
+END_TESTCASE SYSLIB-BAFL-CT-4061
+
+RUN_UTILS DeleteDirectory c:\versions

@@ -1,0 +1,106 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName        LBS-BTGPSPSY-te_lbsbtgpspsy_lastdevice.script
+//! @SYMScriptTestEnvironment TestExecute with LBS-BTGPSPSY
+
+
+LOAD_SUITE te_lbsbtgpspsysuite
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+ 
+START_TESTCASE                LBS-BTGPSPSY-LASTSUCCESSFULDEVICE-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-LASTSUCCESSFULDEVICE-0001
+//! @SYMTestCaseDesc            This test first removes any last connected device information from the central repository, then unpairs the
+//!								previously connected pnok bluetooth device. Then the test notifier has an address of an NMEA device set as its 
+//!								address to attempt connection with. Following this a position request is made, after which the device type is 
+//!								examined. The test expects to see the value for KBluetoothGpsPsyDeviceAddressValidity to be 1 meaning the
+//!								last connected device type was an NMEA device.
+//!                             . 
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Remove any last known device information from the central repository.
+//!                             2. Unpair the last used PNOK device and remove it's information from the test notifier.
+//!                             3. Set the hardware address for the test notifier to an address of an NMEA device.
+//!                             4. Make a position request of the NMEA device.
+//!								5. Ensure a position is received.
+//!								6. Check that the value for KBluetoothGpsPsyDeviceAddressValidity is 1 (NMEA device).
+//! @SYMTestExpectedResults     Verify Actions 1 to 6.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews 
+//! @SYMPREQ                    PREQ1657
+//! @SYMREQ                     REQ8867
+//!                             REQ8865
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite DeleteLastConnectedDevice
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite RemoveHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Holux-M-1000
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Holux-M-1000
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTLastDeviceStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-LASTDEVICENMEA-0001 
+END_TESTCASE                  LBS-BTGPSPSY-LASTSUCCESSFULDEVICE-0001
+
+START_TESTCASE              LBS-BTGPSPSY-SILENTTOLASTDEVICE-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-SILENTTOLASTDEVICE-0001
+//! @SYMTestCaseDesc            This test must be ran after the previous test. The test initially calls SetHwAddrStep with a valid bt
+//!								device address however the main reason for doing this is to reset the value for KDevNotifCenrepHwAttempts
+//!								in the test notifier to 0. A position request is then made which should use the last connected device
+//!								information instead of making a request from the test notifier. Once a position has been received
+//!								and validated, the test ensures that the number of requests made on the test notifier is 0.
+//!                             .
+//! @SYMTestPriority            High 
+//! @SYMTestActions             1. Reset count of requests made on the test notifier. 
+//!                             2. Perform a new position request.
+//!                             3. Ensure position received correctly.
+//!                             4. Ensure number of requests made of the test notifier is 0.
+//! @SYMTestExpectedResults     Verify Actions 1 to 4.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMPREQ                    PREQ1657
+//! @SYMREQ                     REQ8868
+//!                             
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Holux-M-1000
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTLastDeviceStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-SILENTTOLASTDEVICE-0001 
+END_TESTCASE                LBS-BTGPSPSY-SILENTTOLASTDEVICE-0001 
+
+
+START_TESTCASE              LBS-BTGPSPSY-LASTDEVICEPNOK-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-LASTDEVICEPNOK-0001
+//! @SYMTestCaseDesc            This test first removes any previous device information from the central repository and then unpairs
+//!								the previously paired NMEA device. Then the test notifier is given the address of a PNOK device.
+//!								A position request is then made of the bluetooth gps psy. After successfully retrieving a position,
+//!								the value of KBluetoothGpsPsyDeviceAddressValidity is checked and should be 2 (PNOK device).
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Reset count of requests made on the test notifier. 
+//!                             2. Perform a new position request.
+//!                             3. Ensure position received correctly.
+//!                             4. Ensure number of requests made of the test notifier is 0.
+//! @SYMTestExpectedResults     Verify Actions 1 to 4.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMPREQ                    PREQ1657
+//! @SYMREQ                     REQ8867
+//!                              
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite DeleteLastConnectedDevice
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite RemoveHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-3W 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-3W
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTLastDeviceStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-LASTDEVICEPNOK-0001 
+END_TESTCASE                LBS-BTGPSPSY-LASTDEVICEPNOK-0001 
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+PRINT Completed te_lbsbtgpspsy_lastdevice Tests

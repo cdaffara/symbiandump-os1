@@ -1,0 +1,666 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: 
+//
+//
+//! @file
+//! @SYMTestSuiteName		MM-MMF-ACLNT-INPT-PublicAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM.
+/////////////////////////////////////////////////////////////////////
+// MM-MMF-ACLNT-INPT-PublicAPI.script
+//
+// Tests all public elements of the CMdaAudioInputStream class
+// as a means of confidence that the APIs work as expected.
+//
+// The purpose is to provide a regression test suite of PublishedAll APIs for CMdaAudioInputStream.
+// Negative testing is performed to confirm that correct errors are returned when incorrect parameters are given.
+// The tests are fully automated.
+/////////////////////////////////////////////////////////////////////
+
+
+LOAD_SUITE	T_MdaAudioInputStream
+
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0001
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0001
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Read streaming audio data until complete then stop it before completion.
+//!				Uses API elements: NewL(), Open(), GetBytes(), ReadL(), Stop()
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 
+//!				3. Get number of bytes rendered. 4. Record streaming audio data to file. 5. Start timer.
+//!				6. Get number of bytes rendered. 7. Stop recording process 8. Destroy CMdaAudioInputStream object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	Streaming audio data is read then stopped with KErrAbort
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	        CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL
+		COMMAND			mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND			mdaaudioinputstream1	GetBytes
+		COMMAND	!AsyncError=-39	mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0001-001-ReadL_command05
+                ASYNC_DELAY		500000
+                COMMAND			mdaaudioinputstream1	GetBytes
+                COMMAND			mdaaudioinputstream1	Stop
+		OUTSTANDING
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0001
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0002
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0002
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Read streaming audio data then stop it before completion
+//!				Uses API elements: NewL(), Open(), ReadL(), BitRateL(), Stop().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Start timer.
+//!				4. Record streaming audio data to file. 5. Get bit rate. 6. Start timer. 7. Stop recording process.
+//!				8. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	Streaming audio data is read then stopped with KErrAbort
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL
+		COMMAND			mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND	!AsyncError=-39	mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0002-001-ReadL_command04
+		ASYNC_DELAY		500000
+		COMMAND			mdaaudioinputstream1	BitRateL
+		COMMAND			mdaaudioinputstream1	Stop
+		OUTSTANDING
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0002
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0003
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0003
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Read streaming audio data and call Position/CustomInterface functions
+//!				Uses API elements: NewL(), Open(), ReadL(), Position(), CustomInterface() Stop()
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Record streaming audio data to file.
+//!				4. Start timer. 5. Get stream position. 6. Get stream position.
+//!				7. Get stream position. 8. Retrieve custom interface to underlying device. 
+//!                             9. Stop streaming audio data to file.. 10. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	Streaming audio data is read then stopped with KErrAbort also all get/set functions work correctly
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	        CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		        mdaaudioinputstream1	NewL		MM-MMF-ACLNT-INPT-PublicAPI-0003-001-NewL_command01
+		COMMAND		        mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND	!AsyncError=-39	mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0003-001-ReadL_command04
+		ASYNC_DELAY	        50000
+		COMMAND		        mdaaudioinputstream1	Position
+		COMMAND		        mdaaudioinputstream1	Position
+		COMMAND		        mdaaudioinputstream1	Position
+		COMMAND		        mdaaudioinputstream1	CustomInterface
+                COMMAND		        mdaaudioinputstream1	Stop
+		OUTSTANDING
+		COMMAND		        mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0003
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0004
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0004
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Test setting various combinations of audio properties
+//!				Uses API elements: NewL(), SetAudioPropertiesL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2-27. Set different sample rates for mono and stereo.
+//!				28. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	All setting of audio properties works correctly with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL	
+		COMMAND		mdaaudioinputstream1	Open	
+		OUTSTANDING
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command03
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command04
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command05
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command06
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command07
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command08
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command09
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command10
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command11
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command12
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command13
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command14
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command15
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command16
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command17
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command18
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command19
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command20
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command21
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command22
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command23
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command24
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command25
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command26
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command27
+		COMMAND		mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0004-001-SetAudioPropertiesL_command28
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0004
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0005
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0005
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Test setting various balance levels
+//!				Uses API elements: NewL(), SetBalanceL(), GetBalanceL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Set positive balance. 3. Get balance.
+//!				4. Set negative balance. 5. Get balance. 6. Set maximum balance. 7. Get balance.
+//!				8. Set minimum balance. 9. Get balance. 10. Set zero balance. 11. Get balance.
+//!				12. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Balance levels set and get work correctly with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL
+		COMMAND		mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-SetBalanceL_command02
+		COMMAND		mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-GetBalanceL_command03
+		COMMAND		mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-SetBalanceL_command04
+		COMMAND		mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-GetBalanceL_command05
+		COMMAND		mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-SetBalanceL_command06
+		COMMAND		mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-GetBalanceL_command07
+		COMMAND		mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-SetBalanceL_command08
+		COMMAND		mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-GetBalanceL_command09
+		COMMAND		mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-SetBalanceL_command10
+		COMMAND		mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0005-001-GetBalanceL_command11
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0005
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0006
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0006
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Test setting various gain levels
+//!				Uses API elements: NewL(), Gain(), SetGain().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Get gain. 3. Set small gain. 4. Get gain.
+//!				5. Set large gain. 6. Get gain. 7. Set zero gain. 8. Get gain. 9. Get max gain.
+//!				10. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Gain levels set and get work correctly with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL
+		COMMAND		mdaaudioinputstream1	Gain
+		COMMAND		mdaaudioinputstream1	SetGain		MM-MMF-ACLNT-INPT-PublicAPI-0006-001-SetGain_command03
+		COMMAND		mdaaudioinputstream1	Gain		MM-MMF-ACLNT-INPT-PublicAPI-0006-001-Gain_command04
+		COMMAND		mdaaudioinputstream1	SetGain		MM-MMF-ACLNT-INPT-PublicAPI-0006-001-SetGain_command05
+		COMMAND		mdaaudioinputstream1	Gain		MM-MMF-ACLNT-INPT-PublicAPI-0006-001-Gain_command06
+		COMMAND		mdaaudioinputstream1	SetGain		MM-MMF-ACLNT-INPT-PublicAPI-0006-001-SetGain_command07
+		COMMAND		mdaaudioinputstream1	Gain		MM-MMF-ACLNT-INPT-PublicAPI-0006-001-Gain_command08
+		COMMAND		mdaaudioinputstream1	MaxGain
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0006
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0007
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0007
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Test setting various priority levels
+//!				Uses API elements: NewL(), SetPriority().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2-5. Set different priority levels.
+//!				6. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Priority levels set and get work correctly with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL
+		COMMAND		mdaaudioinputstream1	SetPriority	MM-MMF-ACLNT-INPT-PublicAPI-0007-001-SetPriority_command02
+		COMMAND		mdaaudioinputstream1	SetPriority	MM-MMF-ACLNT-INPT-PublicAPI-0007-001-SetPriority_command03
+		COMMAND		mdaaudioinputstream1	SetPriority	MM-MMF-ACLNT-INPT-PublicAPI-0007-001-SetPriority_command04
+		COMMAND		mdaaudioinputstream1	SetPriority	MM-MMF-ACLNT-INPT-PublicAPI-0007-001-SetPriority_command05
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0007
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0008
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0008
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Test setting every data types
+//!				Uses API elements: NewL(), DataType(), SetDataTypeL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2-42. Get and set every data type. 43. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Every data type set and get works correctly with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL		MM-MMF-ACLNT-INPT-PublicAPI-0008-001-NewL_command01
+		COMMAND		mdaaudioinputstream1	DataType
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command03
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command04
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command05
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command06
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command07
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command08
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command09
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command10
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command11
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command12
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command13
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command14
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command15
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command16
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command17
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command18
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command19
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command20
+		COMMAND		mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-SetDataTypeL_command21
+		COMMAND		mdaaudioinputstream1	DataType	MM-MMF-ACLNT-INPT-PublicAPI-0008-001-DataType_command22
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL		MM-MMF-ACLNT-INPT-PublicAPI-0008-002-NewL_command01
+		COMMAND			mdaaudioinputstream1	DataType
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command03
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command04
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command05
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command06
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command07
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command08
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command09
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command10
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command11
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0008-002-SetDataTypeL_command12
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0008
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0009
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0009
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/12/2005
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Read streaming audio data and call Bit Rate functions
+//!				Uses API elements: NewL(), Open(), ReadL(), BitRateL(), SetBitRateL(), GetSupportedBitRatesL(), Stop()
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Start timer.
+//!				4. Record streaming audio data to file. 5. Get bit rate. 6. Set average bit rate.
+//!				7. Get bit rate. 8. Set low bit rate. 9. Get bit rate. 10. Set high bit rate. 11. Get bit rate.
+//!				12. Get supported bit rates. 13. Stop streaming data to file. 14. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Bit Rate functions work correctly with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	        CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		        mdaaudioinputstream1	NewL	
+		COMMAND		        mdaaudioinputstream1	Open	
+		OUTSTANDING
+		COMMAND	!AsyncError=-39	mdaaudioinputstream1	ReadL			MM-MMF-ACLNT-INPT-PublicAPI-0009-001-ReadL_command04
+		ASYNC_DELAY	        50000
+		COMMAND		        mdaaudioinputstream1	BitRateL
+		COMMAND		        mdaaudioinputstream1	SetBitRateL		MM-MMF-ACLNT-INPT-PublicAPI-0009-001-SetBitRateL_command06
+		COMMAND		        mdaaudioinputstream1	BitRateL		MM-MMF-ACLNT-INPT-PublicAPI-0009-001-BitRateL_command07
+		COMMAND		        mdaaudioinputstream1	SetBitRateL		MM-MMF-ACLNT-INPT-PublicAPI-0009-001-SetBitRateL_command08
+		COMMAND		        mdaaudioinputstream1	BitRateL		MM-MMF-ACLNT-INPT-PublicAPI-0009-001-BitRateL_command09
+		COMMAND		        mdaaudioinputstream1	SetBitRateL		MM-MMF-ACLNT-INPT-PublicAPI-0009-001-SetBitRateL_command10
+		COMMAND		        mdaaudioinputstream1	BitRateL		MM-MMF-ACLNT-INPT-PublicAPI-0009-001-BitRateL_command11
+		COMMAND		        mdaaudioinputstream1	GetSupportedBitRatesL
+		COMMAND			mdaaudioinputstream1	Stop
+		OUTSTANDING
+                COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0009
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0010
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0010
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting audio properties once streaming has started
+//!				Uses API elements: NewL(), Open(), ReadL(), SetAudioPropertiesL(), Stop()
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Start timer.
+//!				4. Record streaming audio data to file. 5. Set audio properties. 6.Stop streaming data to file.  7.Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Audio properties set return KErrNotReady
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	        CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		        mdaaudioinputstream1	NewL	
+		COMMAND		        mdaaudioinputstream1	Open	
+		OUTSTANDING
+		COMMAND	!AsyncError=-39	mdaaudioinputstream1	ReadL			MM-MMF-ACLNT-INPT-PublicAPI-0010-001-ReadL_command04
+		ASYNC_DELAY	        50000
+		COMMAND	!Error=-18      mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0010-001-SetAudioPropertiesL_command05
+		COMMAND			mdaaudioinputstream1	Stop
+		OUTSTANDING
+                COMMAND		        mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0010
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0011
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0011
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting gain level once streaming has started
+//!				Uses API elements: NewL(), Open(), ReadL(), Gain(), SetGain(), Stop()
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Start timer.
+//!				4. Record streaming audio data to file. 5. Set gain. 6. Get gain. 
+//!                             7. Stop streaming data to file 8. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Gain level set with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	        CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		        mdaaudioinputstream1	NewL
+		COMMAND		        mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND	!AsyncError=-39	mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0011-001-ReadL_command04
+		ASYNC_DELAY	        50000
+		COMMAND		        mdaaudioinputstream1	SetGain		MM-MMF-ACLNT-INPT-PublicAPI-0011-001-SetGain_command05
+		COMMAND		        mdaaudioinputstream1	Gain		MM-MMF-ACLNT-INPT-PublicAPI-0011-001-Gain_command06
+		COMMAND			mdaaudioinputstream1	Stop
+		OUTSTANDING
+                COMMAND		        mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0011
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0012
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0012
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting balance once streaming has started
+//!				Uses API elements: NewL(), Open(), ReadL(), SetBalanceL(), GetBalanceL(), Stop ()
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Start timer.
+//!				4. Record streaming audio data to file. 5. Set balance. 6. Get balance. 
+//!                             7. Stop streaming data to file, 8. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Balance set with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	        CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		        mdaaudioinputstream1	NewL
+		COMMAND		        mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND	!AsyncError=-39  mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0012-001-ReadL_command04
+		ASYNC_DELAY	        50000
+		COMMAND		        mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0012-001-SetBalanceL_command05
+		COMMAND		        mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0012-001-GetBalanceL_command06
+		COMMAND			mdaaudioinputstream1	Stop
+		OUTSTANDING
+                COMMAND		        mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0012
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0013
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0013
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Read streaming audio data then delete the object before completion
+//!				Uses API elements: NewL(), Open(), ReadL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Start timer.
+//!				4. Record streaming audio data to file. 5. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Streaming audio data is read then stopped KErrAbort is expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	        CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		        mdaaudioinputstream1	NewL
+		COMMAND		        mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND	            mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0013-001-ReadL_command04
+		COMMAND		        mdaaudioinputstream1	~
+                ASYNC_DELAY		50000
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0013
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0014
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0014
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting bad sample rate
+//!				Uses API elements: NewL(), SetAudioPropertiesL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package.
+//!				3. Set bad sample rate. 4. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	KErrNotSupported is returned
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL	
+		COMMAND			mdaaudioinputstream1	Open	
+		OUTSTANDING
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0014-001-SetAudioPropertiesL_command03
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0014
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0015
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0015
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting bad number of channels
+//!				Uses API elements: NewL(), SetAudioPropertiesL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package.
+//!				3. Set bad number of channels. 4. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	KErrNotSupported is returned
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL	
+		COMMAND			mdaaudioinputstream1	Open	
+		OUTSTANDING
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0015-001-SetAudioPropertiesL_command03
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0015
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0016
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0016
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting bad audio properties
+//!				Uses API elements: NewL(), SetAudioPropertiesL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package.
+//!				3. Set bad sample rate and number of channels. 4. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	KErrNotSupported is returned
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL	
+		COMMAND			mdaaudioinputstream1	Open	
+		OUTSTANDING
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetAudioPropertiesL	MM-MMF-ACLNT-INPT-PublicAPI-0016-001-SetAudioPropertiesL_command03
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0016
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0017
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0017
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting balance value above maximum
+//!				Uses API elements: NewL(), SetBalanceL(), GetBalanceL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Set balance value above maximum.
+//!				3. Get balance value. 4. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Balance is set to maximum value
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL
+		COMMAND		mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0017-001-SetBalanceL_command02
+		COMMAND		mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0017-001-GetBalanceL_command03
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0017
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0018
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0018
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting balance value below minimum
+//!				Uses API elements: NewL(), SetBalanceL(), GetBalanceL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Set balance value below minimum.
+//!				3. Get balance value. 4. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Balance is set to minimum value
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL
+		COMMAND		mdaaudioinputstream1	SetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0018-001-SetBalanceL_command02
+		COMMAND		mdaaudioinputstream1	GetBalanceL	MM-MMF-ACLNT-INPT-PublicAPI-0018-001-GetBalanceL_command03
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0018
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0019
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0019
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting priority level while the stream object is open
+//!				Uses API elements: NewL(), Open(), SetPriority().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package.
+//!				3. Set new priority level. 4. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	No errors are returned
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND		mdaaudioinputstream1	NewL
+		COMMAND		mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND		mdaaudioinputstream1	SetPriority	MM-MMF-ACLNT-INPT-PublicAPI-0019-001-SetPriority_command03
+		COMMAND		mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0019
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0020
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0020
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting bad data type value
+//!				Uses API elements: NewL(), SetDataTypeL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Set bad data type value. 3. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	KErrNotSupported is returned
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL
+		COMMAND			mdaaudioinputstream1	DataType
+		COMMAND	!Error=-5	mdaaudioinputstream1	SetDataTypeL	MM-MMF-ACLNT-INPT-PublicAPI-0020-001-SetDataTypeL_command03
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0020
+
+START_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0021
+//! @SYMTestCaseID		MM-MMF-ACLNT-INPT-PublicAPI-0021
+//! @SYMAPI			CMdaAudioInputStream
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/01/2006
+//! @SYMTestCaseDependencies	setup-MM-MMF-ACLNT-INPT-PublicAPI.script
+//! @SYMTestCaseDesc		Try setting bad bit rate value
+//!				Uses API elements: NewL(), Open(), ReadL(), SetBitRateL().
+//! @SYMTestActions    		1. Create CMdaAudioInputStream object. 2. Open input audio stream package. 3. Start timer.
+//!				4. Record streaming audio data to file. 5. Set bad bit rate. 6. Destroy object.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults  	Bad bit rate is not set
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	10	T_MdaAudioInputStream	\multimedia\MM-MMF-ACLNT-INPT-PublicAPI.ini
+		CREATE_OBJECT	CMdaAudioInputStream	mdaaudioinputstream1
+		COMMAND			mdaaudioinputstream1	NewL
+		COMMAND			mdaaudioinputstream1	Open
+		OUTSTANDING
+		COMMAND	!AsyncError=-39	mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0021-001-ReadL_command04
+		ASYNC_DELAY		50000
+		COMMAND			mdaaudioinputstream1	SetBitRateL	MM-MMF-ACLNT-INPT-PublicAPI-0021-001-SetBitRateL_command05
+		COMMAND			mdaaudioinputstream1	SetBitRateL	MM-MMF-ACLNT-INPT-PublicAPI-0021-001-SetBitRateL_command06
+		COMMAND			mdaaudioinputstream1	Stop
+		OUTSTANDING
+		COMMAND	!Error=-11	mdaaudioinputstream1	ReadL		MM-MMF-ACLNT-INPT-PublicAPI-0021-001-ReadL_command09
+		ASYNC_DELAY		50000
+		COMMAND	!Error=-2000	mdaaudioinputstream1	BitRateL	MM-MMF-ACLNT-INPT-PublicAPI-0021-001-BitRateL_command10
+		COMMAND			mdaaudioinputstream1	~
+	END_TEST_BLOCK
+END_TESTCASE 			MM-MMF-ACLNT-INPT-PublicAPI-0021
+

@@ -1,0 +1,181 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#ifndef __HEADER_IBY__
+#define __HEADER_IBY__
+
+unicode
+
+romsize=0x##ROMMEGS##00000
+time=ROMDATE 12:00:00
+
+#ifdef CDMA
+define CDMA_SUFFIX _cdma
+#else
+define CDMA_SUFFIX ## 		// nothing
+#endif
+
+#ifdef _NAND
+define NAND_SUFFIX .nand
+#else
+define NAND_SUFFIX ##		// nothing
+#endif
+
+#if (defined _NAND2 || defined _ONENAND)
+define NAND_SUFFIX .nand
+#endif
+
+#ifdef SYMBIAN_FEATURE_MANAGER
+defaultfeaturedb = epoc32\rom\include\featuredatabase.xml 
+#endif
+
+romname=##VARIANT##_##BUILDNO##LANGID##.##OBEYFILE##CDMA_SUFFIX##NAND_SUFFIX.IMG
+
+#ifdef _NAND
+ECHO Preparing NAND core image with associated ROFS image
+
+#ifndef _ROFS_SIZE
+#define _ROFS_SIZE	32000000	// 32 Meg default
+#endif
+define ROFS_SIZE	_ROFS_SIZE
+
+compress
+rom_image 1 rofs size=ROFS_SIZE non-xip compress
+
+#endif
+
+
+#if (defined _NAND2 || defined _ONENAND)
+ECHO Preparing NAND core image with associated ROFS image
+
+#ifndef _ROFS_SIZE
+#define _ROFS_SIZE	32000000	// 32 Meg default
+#endif
+define ROFS_SIZE	_ROFS_SIZE
+
+compress
+rom_image 1 rofs size=ROFS_SIZE non-xip compress
+
+#endif
+
+REM ROM version number
+
+version=##VERSION##(##BUILDNO##)
+
+#ifdef _FULL_DEBUG
+#ifndef _DEBUG
+#define _DEBUG // _FULL_DEBUG implies _DEBUG
+#endif
+define BUILD_DIR udeb
+#else
+define BUILD_DIR urel
+#endif
+
+#ifdef _DEBUG
+define DEBUG_DIR udeb
+#else
+define DEBUG_DIR urel
+#endif
+
+#ifndef _EABI
+#  ifdef _ARM4
+#    define _EABI ARM4
+	 ECHO Defaulting to ARM4
+#  elif defined(_ARMV5)
+#    define _EABI ARMV5
+	 ECHO Defaulting to ARMV5
+#  elif defined _X86GCC
+#    define _EABI x86gcc
+#  endif
+#endif
+
+#  ifdef _PLAT
+#    undef _EABI
+#    define _EABI _PLAT
+	 ECHO Defaulting to _EABI
+#  endif
+
+#  ifdef _GCCE
+#    undef _EABI
+#    define _EABI GCCE
+#  elif defined(ABIV2) || defined(ABIv2)
+#    undef _EABI
+#    define _EABI ARMV5_ABIV2
+#  endif
+
+// This is to include ABIV2 specific runtime libraries. This inclusion
+// in other obey files depends on the definition of RVCT
+#ifdef _GCCE
+# define RVCT
+#endif
+
+define ABI_DIR    EPOCROOT##epoc32\release\##_EABI
+
+#ifndef _KABI
+#define _KABI _EABI
+#endif
+
+define KERNEL_DIR   EPOCROOT##epoc32\release\##_KABI
+
+define DATAZ_     EPOCROOT##epoc32\data\Z     
+define ZSYSTEM    DATAZ_\System
+define ZPRIVATE   DATAZ_\Private
+define ZRESOURCE  DATAZ_\Resource
+
+define DATAC_     EPOCROOT##epoc32\data\C    
+define CSYSTEM    DATAC_\System    
+
+// default location of executables
+define SYSTEM_BINDIR  System\Libs		// will be Sys\Bin for Secure platform
+
+
+// Support for ECOM_PLUGIN
+// Format is ECOM_PLUGIN(<DLL Name>,<Resource File Name>)
+// e.g. ECOM_PLUGIN(foo.dll,12345abc.rsc)
+
+define ECOM_RSC_DIR Resource\Plugins
+define ECOM_BIN_DIR Sys\Bin
+
+
+// __ECOM_PLUGIN(emulator directory, file rom dir, dataz_, resource rom dir, filename, resource filename)
+#define ECOM_PLUGIN(file,resource) __ECOM_PLUGIN(ABI_DIR\BUILD_DIR,ECOM_BIN_DIR,DATAZ_,ECOM_RSC_DIR,file,file)
+#define ECOM_PLUGIN_UDEB(file,resource) __ECOM_PLUGIN(ABI_DIR\UDEB,ECOM_BIN_DIR,DATAZ_,ECOM_RSC_DIR,file,file)
+
+// Support for HIDE_ECOM_PLUGIN
+// Format is HIDE_ECOM_PLUGIN(<DLL Name>,<Resource File Name>)
+// e.g. HIDE_ECOM_PLUGIN(foo.dll,12345abc.rsc)
+
+// _HIDE__ECOM_PLUGIN(emulator directory, file rom dir, dataz_, resource rom dir, filename, resource filename)
+#define HIDE_ECOM_PLUGIN(file,resource) _HIDE__ECOM_PLUGIN(ABI_DIR\BUILD_DIR,ECOM_BIN_DIR,DATAZ_,ECOM_RSC_DIR,file,file)
+#define HIDE_ECOM_PLUGIN_UDEB(file,resource) _HIDE__ECOM_PLUGIN(ABI_DIR\UDEB,ECOM_BIN_DIR,DATAZ_,ECOM_RSC_DIR,file,file)
+
+#ifdef SYMBIAN_ROM_STATIC_PLUGIN_INFORMATION
+	enable_spi
+#else
+	disable_spi
+#endif
+
+// Secure platform setting - use PlatSec.oby to turn diagnostics on
+PlatSecDiagnostics OFF
+PlatSecEnforcement ON
+PlatSecEnforceSysBin ON
+PlatSecProcessIsolation ON 
+
+#include <symbian_os_romdefs.hby>
+
+#include "feature.iby"
+
+#endif

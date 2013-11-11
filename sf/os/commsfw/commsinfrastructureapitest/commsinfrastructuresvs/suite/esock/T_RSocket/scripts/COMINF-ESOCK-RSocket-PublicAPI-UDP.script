@@ -1,0 +1,2906 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		COMINF-ESOCK-RSocket-PublicAPI-UDP
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with an echo server running.
+//!				A Java echo server is provided which runs on ports 10007 (TCP) and 10008 (UDP).
+//!				The server receives data on one port and echoes it to another, allowing
+//!				one socket to send data to another socket on the same device.
+//! @SYMScriptDescription	Tests all public elements of the RSocket class
+//!				as a means of confidence that the APIs work as expected.
+//! @SYMScriptPurpose		The purpose is to provide a regression test suite of Published All APIs for
+//!				the RSocket class.
+//! @SYMScriptInfo		Negative testing is performed to confirm that correct errors are returned
+//!				when incorrect parameters are given.
+//! @SYMScriptAutomation	The tests are fully automated using Test Execute Framework and Test Driver.
+//! @SYMScriptDependencies 	A PC based IP Echo Server
+//! @SYMScriptAuthor		James Mechen, Victor Shamarin
+//! @SYMScriptCreationDate	08/12/2006
+///////////////////////////////////////////////////////////////////////////////
+
+LOAD_SUITE	T_RSocket
+DELAY		2000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0011
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0011
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		27/09/2006
+//! @SYMTestCaseDesc		Apply I/O control operation on TCP socket.
+//!				Uses API elements: Open(RSocketServ&, const TDesC&),
+//!				                   Ioctl(),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server (giving a principal usage of the connection).
+//!				2. Open TCP socket (giving protocol name).
+//!				3. Apply I/O control operation (KIOctlSelect, KSOLSocket).
+//!				4. Shutdown socket.
+//!				5. Close socket.
+//! @SYMTestStatus		Defined
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	TCP I/O control operation is successfully applied with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0011-0001-Open_command05
+		COMMAND		RSocketActive	Ioctl		COMINF-ESOCK-RSocket-PublicAPI-0011-0001-Ioctl_command06
+		OUTSTANDING	
+		COMMAND		RSocketActive	Shutdown
+		OUTSTANDING	
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0011
+
+DELAY		1000
+
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0025
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0025
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Open and close a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket is opened and closed with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0025-0001-Open_command05
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0025
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0026
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0026
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		27/09/2006
+//! @SYMTestCaseDesc		Send data from one socket (active) and receive on another (passive), using UDP.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Close()
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				4. Open passive UDP socket.
+//!				5. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&)) on passive socket.
+//!				6. Close sockets.
+//! @SYMTestStatus		Defined
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Data is successfully sent/received using UDP with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketServPassive	Constructor
+		COMMAND		RSocketServPassive	Connect
+		COMMAND		RSocketPassive	Constructor
+		COMMAND		RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-Open_command08
+		COMMAND		RSocketPassive	SetLocalPort
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-Open_command12
+		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-SendTo_command13
+		OUTSTANDING	
+		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-SendTo_command17
+		OUTSTANDING	
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-RecvFrom_command22
+		OUTSTANDING	
+		COMMAND		RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-RecvFrom_command24
+		OUTSTANDING	
+		COMMAND		RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0026-0001-RecvFrom_command26
+		OUTSTANDING	
+		COMMAND		RSocketPassive	Close
+		COMMAND		RSocketPassive	~
+		COMMAND		RSocketServPassive	Close
+		COMMAND		RSocketServPassive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0026
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0027
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0027
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		27/09/2006
+//! @SYMTestCaseDesc		Send data from one socket (active) and receive on another (passive), using UDP.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&, TSockXfrLength&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&, TSockXfrLength&),
+//!				                   Close()
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open active UDP socket.
+//!				3. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&, TSockXfrLength&), getting amount of data sent) on active socket.
+//!				4. Open passive UDP socket.
+//!				5. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&, TSockXfrLength&), getting amount of data read) on passive socket.
+//!				6. Close sockets.
+//! @SYMTestStatus		Defined
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Data is successfully sent/received using UDP with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketServPassive	Constructor
+		COMMAND		RSocketServPassive	Connect
+		COMMAND		RSocketPassive	Constructor
+		COMMAND		RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-Open_command08
+		COMMAND		RSocketPassive	SetLocalPort
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-Open_command12
+		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-SendTo_command13
+		OUTSTANDING	
+		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-SendTo_command17
+		OUTSTANDING	
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-RecvFrom_command22
+		OUTSTANDING	
+		COMMAND		RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-RecvFrom_command24
+		OUTSTANDING	
+		COMMAND		RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0027-0001-RecvFrom_command26
+		OUTSTANDING	
+		COMMAND		RSocketPassive	Close
+		COMMAND		RSocketPassive	~
+		COMMAND		RSocketServPassive	Close
+		COMMAND		RSocketServPassive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0027
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0037
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0037
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Set and get integer socket option on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetOpt(TUint, TUint, TInt),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Set socket option to (KSOSendBuf, KSOLSocket, 512).
+//!				4. Get the socket option and verify result is (KSOSendBuf, KSOLSocket, 512).
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is set and verified correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0037-0001-Open_command05
+		COMMAND		RSocketActive	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0037-0001-SetOpt_command06
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0037-0001-GetOpt_command07
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0037
+
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0038
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0038
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Set and get descriptor socket option on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetOpt(TUint, TUint, const TDesC8&),
+//!				                   GetOpt(TUint, TUint, TDes8&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Set socket option to (KSOSendBuf, KSOLSocket, "TEXT").
+//!				4. Get the socket option and verify result is (KSOSendBuf, KSOLSocket, "TEXT").
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is set and verified correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0038-0001-Open_command05
+		COMMAND		RSocketActive	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0038-0001-SetOpt_command06
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0038-0001-GetOpt_command07
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0038
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0039
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0039
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Set and get integer socket option with boolean result on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetOpt(TUint, TUint, TInt),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Set socket option to (KSOSendBuf, KSODebug, 1).
+//!				4. Get the socket option and verify result is (KSOSendBuf, KSODebug, ETrue).
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is set and verified correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0039-0001-Open_command05
+		COMMAND		RSocketActive	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0039-0001-SetOpt_command06
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0039-0001-GetOpt_command07
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0039
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0040
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0040
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Set and get integer socket option with boolean result on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetOpt(TUint, TUint, TInt),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Set socket option to (KSOSendBuf, KSODebug, 0).
+//!				4. Get the socket option and verify result is (KSOSendBuf, KSODebug, EFalse).
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is set and verified correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0040-0001-Open_command05
+		COMMAND		RSocketActive	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0040-0001-SetOpt_command06
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0040-0001-GetOpt_command07
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0040
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0041
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0041
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that sends data (using Send()) after calling Shutdown(Shutdown:EImmediate) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Shutdown active socket with TShutdown:EImmediate.
+//!				7. Send data to the remote host (using using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				8. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Send() method call is with expected error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0041-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0041-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0041-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0041-0001-Shutdown_command15
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0041-0001-Send_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0041-0001-Shutdown_command22
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0041
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0042
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0042
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that sends data (using Write) after calling Shutdown(Shutdown:EImmediate) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Write(const TDesC8 &, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Shutdown active socket with TShutdown:EImmediate.
+//!				7. Send data to the remote host (using using Write(const TDesC8 &, TRequestStatus &)) on active socket.
+//!				8. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Write() method call is with expected error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0042-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0042-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0042-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0042-0001-Shutdown_command15
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketActive	Write		COMINF-ESOCK-RSocket-PublicAPI-0042-0001-Write_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0042-0001-Shutdown_command22
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0042
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0043
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0043
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that sends data (using SendTo) after calling Shutdown(Shutdown:EImmediate) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Shutdown active socket with TShutdown:EImmediate.
+//!				7. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				8. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SendTo() method call is with expected error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0043-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0043-0001-Open_command12
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0043-0001-Shutdown_command13
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0043-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0043-0001-Shutdown_command20
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0043
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0044
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0044
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that receives data (using RecvFrom) after calling Shutdown(Shutdown:EImmediate) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown passive socket with TShutdown:EImmediate.
+//!				8. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&)) on passive socket.
+//!				9. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The RecvFrom() method call is with expected error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0044-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0044-0001-Open_command12
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0044-0001-SendTo_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0044-0001-Shutdown_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0044-0001-Shutdown_command20
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0044
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0045
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0045
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that receives data (using Read) after calling Shutdown(Shutdown:EImmediate) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Read(TDes8 &, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown passive socket with TShutdown:EImmediate.
+//!				8. Receive data from the remote host (using Read(TDes8 &, TRequestStatus &)) on passive socket.
+//!				9. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Read() method call is with expected error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0045-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0045-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0045-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0045-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0045-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0045-0001-Shutdown_command22
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketPassive	Read		COMINF-ESOCK-RSocket-PublicAPI-0045-0001-Read_command24
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0045
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0046
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0046
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that receives data (using Recv) after calling Shutdown(Shutdown:EImmediate) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown passive socket with TShutdown:EImmediate.
+//!				8. Receive data from the remote host (using Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &)) on passive socket.
+//!				9. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Recv() method call is with expected error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0046-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0046-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0046-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0046-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0046-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0046-0001-Shutdown_command22
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0046-0001-Recv_command24
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0046
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0048
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0048
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that receives data (using RecvOnOrMore) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   RecvOneOrMore(),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				7. Receive data from the remote host (using RecvOneOrMore()) on passive socket.
+//!				8. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The RecvOnOrMore() method call is with error code KErrNotSupported (-5) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0048-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0048-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0048-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0048-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0048-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND	!AsyncError=-5	RSocketPassive	RecvOneOrMore
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0048-0001-Shutdown_command24
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0048
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0052
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0052
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that receives data (using Recv) after calling Shutdown(Shutdown:EStopInput) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Shutdown passive socket with TShutdown:EStopInput.
+//!				5. Open active UDP socket.
+//!				6. Connect active socket to remote host.
+//!				7. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				8. Receive data from the remote host (using Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &)) on passive socket.
+//!				9. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Recv() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-Shutdown_command10
+		OUTSTANDING	
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-Open_command14
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-Connect_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-SendTo_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-Shutdown_command19
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND	!AsyncError=-25	RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-Recv_command24
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0052-0001-Shutdown_command26
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0052
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0053
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0053
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that receives data (using Read) after calling Shutdown(Shutdown:EStopInput) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Read(TDes8 &, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Shutdown passive socket with TShutdown:EStopInput.
+//!				5. Open active UDP socket.
+//!				6. Connect active socket to remote host.
+//!				7. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				8. Receive data from the remote host (using Read(TDes8 &, TRequestStatus &)) on passive socket.
+//!				9. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Read() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-Shutdown_command10
+		OUTSTANDING	
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-Open_command14
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-Connect_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-SendTo_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-Shutdown_command19
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND	!AsyncError=-25	RSocketPassive	Read		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-Read_command24
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0053-0001-Shutdown_command26
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0053
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0056
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0056
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that sends data (using Write) synchronously with Shutdown(Shutdown:EStopOutput) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   Write(const TDesC8 &, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Write(const TDesC8 &, TRequestStatus &)) on active socket.
+//!				7. Shutdown active socket with TShutdown:EStopOutput.
+//!				8. Call outstanding.
+//!				9. Close active socket.
+//!				10. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Write() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0056-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0056-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0056-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0056-0001-Shutdown_command15
+		COMMAND	!AsyncError=-25	RSocketActive	Write		COMINF-ESOCK-RSocket-PublicAPI-0056-0001-Write_command16
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0056-0001-Shutdown_command21
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0056
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0057
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0057
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that sends data (using Send) synchronously with Shutdown(Shutdown:EStopOutput) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown active socket with TShutdown:EStopOutput.
+//!				8. Call outstanding.
+//!				9. Close active socket.
+//!				10. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Send() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0057-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0057-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0057-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0057-0001-Shutdown_command15
+		COMMAND	!AsyncError=-25	RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0057-0001-Send_command16
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0057-0001-Shutdown_command21
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0057
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0058
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0058
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that sends data (using SendTo) synchronously with Shutdown(Shutdown:EStopOutput) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				5. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				6. Shutdown active socket with TShutdown:EStopOutput.
+//!				7. Call outstanding.
+//!				8. Shutdown sockets.
+//!				9. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SendTo() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0058-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0058-0001-Open_command12
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0058-0001-Shutdown_command13
+		COMMAND	!AsyncError=-25	RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0058-0001-SendTo_command14
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0058-0001-Shutdown_command19
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0058
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0059
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0059
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that cancels (using CancelAll method) receiving data (using Read method) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!				                   Read(TDes8 &, TRequestStatus &),
+//!				                   CancelAll(),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown active socket.
+//!				8. Close active socket.
+//!				9. Receive data from the remote host (using Read(TDes8 &, TRequestStatus &)) on passive socket.
+//!				10. Cancel receive (CancelAll) on passive socket.
+//!				11. Call outstanding.
+//!				12. Shutdown passive socket.
+//!				13. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The Read() method call is with error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0059-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0059-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0059-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0059-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0059-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	Read		COMINF-ESOCK-RSocket-PublicAPI-0059-0001-Read_command24
+		COMMAND			RSocketPassive	CancelAll
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0059-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0059
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0060
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0060
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that cancels (using CancelRead() method) receiving data (using Read method) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!				                   Read(TDes8 &, TRequestStatus &),
+//!				                   CancelRead(),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown active socket.
+//!				8. Close active socket.
+//!				9. Receive data from the remote host (using Read(TDes8 &, TRequestStatus &)) on passive socket.
+//!				10. Cancel receive (CancelRead) on passive socket.
+//!				11. Call outstanding.
+//!				12. Shutdown passive socket.
+//!				13. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The Read() method call is with error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0060-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0060-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0060-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0060-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0060-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	Read		COMINF-ESOCK-RSocket-PublicAPI-0060-0001-Read_command24
+		COMMAND			RSocketPassive	CancelRead
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0060-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0060
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0061
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0061
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that cancels (using CancelAll method) receiving data (using Recv method) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!				                   Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &),
+//!				                   CancelAll(),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown active socket.
+//!				8. Close active socket.
+//!				9. Receive data from the remote host (using Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &)) on passive socket.
+//!				10. Cancel receive (CancelAll) on passive socket.
+//!				11. Call outstanding.
+//!				12. Shutdown passive socket.
+//!				13. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The Recv() method call is with error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0061-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0061-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0061-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0061-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0061-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0061-0001-Recv_command24
+		COMMAND			RSocketPassive	CancelAll
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0061-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0061
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0062
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0062
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that cancels (using CancelRecv method) receiving data (using Recv method) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!				                   Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &),
+//!				                   CancelRecv(),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown active socket.
+//!				8. Close active socket.
+//!				9. Receive data from the remote host (using Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &)) on passive socket.
+//!				10. Cancel receive (CancelRecv) on passive socket.
+//!				11. Call outstanding.
+//!				12. Shutdown passive socket.
+//!				13. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The Recv() method call is with error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0062-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0062-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0062-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0062-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0062-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0062-0001-Recv_command24
+		COMMAND			RSocketPassive	CancelRecv
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0062-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0062
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0063
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0063
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that cancels (using CancelAll method) receiving data (using RecvFrom method) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   CancelAll(),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown active socket.
+//!				8. Close active socket.
+//!				9. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&)) on passive socket.
+//!				10. Cancel receive (CancelAll) on passive socket.
+//!				11. Call outstanding.
+//!				12. Shutdown passive socket.
+//!				13. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The RecvFrom() method call is with expected error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0063-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0063-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0063-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0063-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0063-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	RecvFrom
+		COMMAND			RSocketPassive	CancelAll
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0063-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0063
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0064
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0064
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that cancels (using CancelRecv method) receiving data (using RecvFrom method) with UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   CancelRecv(),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Shutdown active socket.
+//!				8. Close active socket.
+//!				9. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&)) on passive socket.
+//!				10. Cancel receive (CancelRecv) on passive socket.
+//!				11. Call outstanding.
+//!				12. Shutdown passive socket.
+//!				13. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The RecvFrom() method call is with expected error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0064-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0064-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0064-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0064-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0064-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	RecvFrom
+		COMMAND			RSocketPassive	CancelRecv
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0064-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0064
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0067
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0067
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Set and get integer socket option with boolean result on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetOpt(TUint, TUint, TInt),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Set socket option to (KSOSendBuf, KSONonBlockingIO).
+//!				4. Get the socket option and verify result is (KSOSendBuf, KSONonBlockingIO, ETrue).
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is set and verified correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0067-0001-Open_command05
+		COMMAND		RSocketActive	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0067-0001-SetOpt_command06
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0067-0001-GetOpt_command07
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0067
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0068
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0068
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		Send data from one UDP socket (active) and receive on another UDP socket (passive).
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!						   Connect(TSockAddr &, TRequestStatus &),
+//!						   Send(const TDesC8 &, TUint, TRequestStatus &),
+//!						   Write(const TDesC8 &, TRequestStatus &),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Read(TDes8 &, TRequestStatus &),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8 &, TUint, TRequestStatus &)) on active socket.
+//!				7. Send data to the remote host (using Write(const TDesC8 &, TRequestStatus &)) on active socket.
+//!				8. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				9. Call outstanding.
+//!				10. Shutdown active socket.
+//!				11. Close active socket.
+//!				12. Receive data from the remote host (using Read(TDes8 &, TRequestStatus &)) on passive socket.
+//!				13. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&)) on passive socket.
+//!				14. Receive data from the remote host (using Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &)) on passive socket.
+//!				15. Call outstanding.
+//!				16. Shutdown passive socket.
+//!				17. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Data is successfully sent/received using UDP with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketServPassive	Constructor
+		COMMAND		RSocketServPassive	Connect
+		COMMAND		RSocketPassive	Constructor
+		COMMAND		RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Open_command08
+		COMMAND		RSocketPassive	SetLocalPort
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Open_command12
+		COMMAND		RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND		RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Send_command15
+		OUTSTANDING	
+		COMMAND		RSocketActive	Write		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Write_command17
+		OUTSTANDING	
+		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-SendTo_command19
+		OUTSTANDING	
+		COMMAND		RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Shutdown_command21
+		OUTSTANDING	
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketPassive	Read		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Read_command26
+		OUTSTANDING	
+		COMMAND		RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-RecvFrom_command28
+		OUTSTANDING	
+		COMMAND		RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Recv_command30
+		OUTSTANDING	
+		COMMAND		RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0068-0001-Shutdown_command32
+		OUTSTANDING	
+		COMMAND		RSocketPassive	Close
+		COMMAND		RSocketPassive	~
+		COMMAND		RSocketServPassive	Close
+		COMMAND		RSocketServPassive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0068
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0069
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0069
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that transfers socket from one UDP socket server session to another UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Name(),
+//!				                   Transfer(),
+//!				                   Info(),
+//!				                   Close().
+//! @SYMTestActions		1. Open session to socket server (giving a principal usage of the connection).
+//!				2. Open UDP socket.
+//!				3. Get the unique system name for the socket.
+//!				4. Transfer socket from one socket server session to another.
+//!				5. Get protocol information on socket and check that it returns KErrBadHandle to verify transfer success.
+//!				6. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Socket transfer is successful (Protocol information (Info() method) returns KErrBadHandle (-8)).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServ1
+		CREATE_OBJECT	RSocketServ	RSocketServ2
+		CREATE_OBJECT	RSocket	RSocketOrig
+		CREATE_OBJECT	RSocket	RSocketNew
+		COMMAND			RSocketServ1	Constructor
+		COMMAND			RSocketServ1	Connect
+		COMMAND			RSocketServ2	Constructor
+		COMMAND			RSocketServ2	Connect
+		COMMAND			RSocketOrig	Constructor
+		COMMAND			RSocketOrig	Open		COMINF-ESOCK-RSocket-PublicAPI-0069-0001-Open_command08
+		COMMAND			RSocketOrig	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0069-0001-SetOpt_command09
+		COMMAND			RSocketOrig	Name
+		COMMAND			RSocketNew	Constructor
+		COMMAND			RSocketNew	Transfer		COMINF-ESOCK-RSocket-PublicAPI-0069-0001-Transfer_command13
+		COMMAND	!Error=-8	RSocketOrig	Info
+		COMMAND			RSocketNew	Close
+		COMMAND			RSocketNew	~
+		COMMAND			RSocketOrig	Close
+		COMMAND			RSocketOrig	~
+		COMMAND			RSocketServ1	Close
+		COMMAND			RSocketServ1	~
+		COMMAND			RSocketServ2	Close
+		COMMAND			RSocketServ2	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0069
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0070
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0070
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		Set and get integer socket option on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetOpt(TUint, TUint, TInt),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Set socket option to (KSORecvBuf, KSOLSocket, 512).
+//!				4. Get the socket option and verify result is (KSORecvBuf, KSOLSocket, 512).
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is set and verified correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0070-0001-Open_command05
+		COMMAND		RSocketActive	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0070-0001-SetOpt_command06
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0070-0001-GetOpt_command07
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0070
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0071
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0071
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Transfer() method after closing a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Close(),
+//!						   Transfer(RSocketServ &, const TDesC &)
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Close socket.
+//!				4. Transfer socket from one socket server session to another.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Transfer() method call is with error code KErrNotFound (-1).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServ1
+		CREATE_OBJECT	RSocketServ	RSocketServ2
+		CREATE_OBJECT	RSocket	RSocketOrig
+		COMMAND			RSocketServ1	Constructor
+		COMMAND			RSocketServ1	Connect
+		COMMAND			RSocketServ2	Constructor
+		COMMAND			RSocketServ2	Connect
+		COMMAND			RSocketOrig	Constructor
+		COMMAND			RSocketOrig	Open		COMINF-ESOCK-RSocket-PublicAPI-0071-0001-Open_command08
+		COMMAND			RSocketOrig	Name
+		COMMAND			RSocketOrig	Close
+		COMMAND	!Error=-1	RSocketOrig	Transfer		COMINF-ESOCK-RSocket-PublicAPI-0071-0001-Transfer_command11
+		COMMAND			RSocketOrig	~
+		COMMAND			RSocketServ1	Close
+		COMMAND			RSocketServ1	~
+		COMMAND			RSocketServ2	Close
+		COMMAND			RSocketServ2	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0071
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0073
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0073
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Connect() method on active UDP socket to remote host after calling Shutdown(TShutdown:EImmediate).
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Bind(TSockAddr&),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!						   Connect(TSockAddr&, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Bind active socket address.
+//!				4. Shutdown active socket with TShutdown:EImmediate.
+//!				5. Connect active socket to remote host with wrong port address (-1).
+//!				6. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Connect() method call is with error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0073-0001-Open_command05
+		COMMAND			RSocketActive	Bind
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0073-0001-Shutdown_command07
+		COMMAND	!AsyncError=-8	RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0073-0001-Connect_command08
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0073
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0083
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0083
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Open() method with wrong combination of valid values on a TCP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active TCP socket with protocol type KProtocolInetUdp and
+//!					socket type KSockStream and protocol family KAfInet.
+//!				3. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Open() method call returns error code KErrBadName (-28).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND	!Error=-28	RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0083-0001-Open_command05
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0083
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0084
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0084
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		Get unsupported integer socket option on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Get the socket option (KSOSendBuf, KSOUrgentDataOffset).
+//!				4. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The GetOpt() method call returns error code KErrNotSupported (-5).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0084-0001-Open_command05
+		COMMAND	!Error=-5	RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0084-0001-GetOpt_command06
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0084
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0085
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0085
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		Get integer socket option on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Get the socket option (KSOSendBuf, KSOSelectLastError).
+//!				4. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is got correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0085-0001-Open_command05
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0085-0001-GetOpt_command06
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0085
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0105
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0105
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Listen() method on connectionless UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   SetLocalPort(TInt),
+//!						   Listen(TUint),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Listen on passive on connectionless a socket.
+//!				5. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Listen() method call will panic (ESock code 10).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		CREATE_OBJECT	RSocket	RSessionSocket
+		COMMAND		RSocketServPassive	Constructor
+		COMMAND		RSocketServPassive	Connect
+		COMMAND		RSessionSocket	Constructor
+		COMMAND		RSessionSocket	Open		COMINF-ESOCK-RSocket-PublicAPI-0105-0001-Open_command05
+		COMMAND		RSocketPassive	Constructor
+		COMMAND		RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0105-0001-Open_command08
+		COMMAND		RSocketPassive	SetLocalPort
+		COMMAND		RSocketPassive	Listen		COMINF-ESOCK-RSocket-PublicAPI-0105-0001-Listen_command10
+		OUTSTANDING	
+		COMMAND		RSocketPassive	Close
+		COMMAND		RSocketPassive	~
+		COMMAND		RSessionSocket	Close
+		COMMAND		RSessionSocket	~
+		COMMAND		RSocketServPassive	Close
+		COMMAND		RSocketServPassive	~		
+	END_TEST_BLOCK	!PanicCode=10  !PanicString=ESock_client
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0105
+
+//!START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0137
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0137
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Ioctl() method after closing a TCP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Close(),
+//!						   Ioctl(TUint, TRequestStatus &, TDes8, TUint).
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Close socket.
+//!				4. Apply I/O control operation (KIOctlSelect, KSOLSocket).
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Ioctl() method call will panic (KERN-ExEC code 0).
+//! @SYMTestType		CIT
+//!	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+//!		CREATE_OBJECT	RSocketServ	RSocketServActive
+//!		CREATE_OBJECT	RSocket	RSocketActive
+//!		COMMAND		RSocketServActive	Constructor
+//!		COMMAND		RSocketServActive	Connect
+//!		COMMAND		RSocketActive	Constructor
+//!		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0137-0001-Open_command05
+//!		COMMAND		RSocketActive	Close
+//!		COMMAND		RSocketActive	Ioctl		COMINF-ESOCK-RSocket-PublicAPI-0137-0001-Ioctl_command07
+//!		COMMAND		RSocketActive	~
+//!		COMMAND		RSocketServActive	Close
+//!		COMMAND		RSocketServActive	~		
+//!	END_TEST_BLOCK	!PanicCode=0
+//!END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0137
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0140
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0140
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Ioctl() method after calling Shutdown(TShutdown:ENormal) on a TCP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!						   Ioctl(TUint, TRequestStatus &, TDes8, TUint),
+//!						   CancelIoctl(),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active TCP socket.
+//!				3. Shutdown active socket with TShutdown:ENormal
+//!				3. Apply I/O control operation (KIOctlSelect, KSOLSocket).
+//!				4. Cancel I/O control operation.
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Ioctl() method call returns error code KErrBadHandle (-8).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0140-0001-Open_command05
+		COMMAND			RSocketActive	Shutdown
+		COMMAND	!AsyncError=-8	RSocketActive	Ioctl		COMINF-ESOCK-RSocket-PublicAPI-0140-0001-Ioctl_command07
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0140
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0153
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0153
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Set and get integer socket option with boolean result on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetOpt(TUint, TUint, TInt),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Set socket option to (KSOSendBuf, KSOBlockingIO).
+//!				4. Get the socket option and verify result is (KSOSendBuf, KSOBlockingIO, ETrue).
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is set and verified correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0153-0001-Open_command05
+		COMMAND		RSocketActive	SetOpt		COMINF-ESOCK-RSocket-PublicAPI-0153-0001-SetOpt_command06
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0153-0001-GetOpt_command07
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0153
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0156
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0156
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls SendTo/RecvFrom methods between UPD sockets after calling Shutdown(TShutdown:ENormal) on active TCP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   SetLocalPort(TInt),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				5. Set local port of passive socket.
+//!				3. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				4. Shutdown active socket with TShutdown:ENormal
+//!				5. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				6. Close active socket.
+//!				7. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SendTo() method call is with error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0156-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0156-0001-Open_command12
+		COMMAND			RSocketActive	Shutdown
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0156-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0156
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0157
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0157
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls SendTo/RecvFrom methods between UPD sockets after calling Shutdown(TShutdown:ENormal) on passive TCP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   SetLocalPort(TInt),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				3. Set local port of passive socket.
+//!				4. Shutdown passive socket with TShutdown:ENormal
+//!				5. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				6. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				7. Close active socket.
+//!				7. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &)) on passive socket.
+//!				8. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Return error code KErrBadHandle (-8).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0157-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketPassive	Shutdown
+		OUTSTANDING	
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0157-0001-Open_command14
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0157-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND	!AsyncError=-8	RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0157
+
+//!START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0160
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0160
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls SendTo() method after closing active UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Close(),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&).
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Close active socket.
+//!				4. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				5. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SendTo() method call will panic (KERN-ExEC code 0).
+//! @SYMTestType		CIT
+//!	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+//!		CREATE_OBJECT	RSocketServ	RSocketServActive
+//!		CREATE_OBJECT	RSocket	RSocketActive
+//!		CREATE_OBJECT	RSocketServ	RSocketServPassive
+//!		CREATE_OBJECT	RSocket	RSocketPassive
+//!		COMMAND		RSocketServActive	Constructor
+//!		COMMAND		RSocketServActive	Connect
+//!		COMMAND		RSocketActive	Constructor
+//!		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0160-0001-Open_command05
+//!		COMMAND		RSocketActive	Close
+//!		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0160-0001-SendTo_command07
+//!		COMMAND		RSocketServActive	Close
+//!		COMMAND		RSocketServActive	~		
+//!	END_TEST_BLOCK	!PanicCode=0
+//!END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0160
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0161
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0161
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls SendTo() method with wrong flag which are passed through to protocol on a TCP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Close(),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&).
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive TCP socket. Open(KSockStream, KProtocolInetTcp)
+//!				3. Open active TCP socket. Open(KSockStream, KProtocolInetTcp)
+//!				5. Send data to the remote host with flag -1 (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				4. Close active socket.
+//!				6. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SendTo() method call is with expected error code KErrAccessDenied (-21) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0161-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0161-0001-Open_command12
+		COMMAND	!AsyncError=-21	RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0161-0001-SendTo_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0161
+
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0164
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0164
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Get integer socket option on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Get the socket option (KSOSendBuf, KSOSelectPoll).
+//!				4. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is got correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0164-0001-Open_command05
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0164-0001-GetOpt_command06
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0164
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0169
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0169
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls SendTo() method from active UPD socket after calling Shutdown(TShutdown:EStopOutput).
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				5. Shutdown active socket with TShutdown:EStopOutput
+//!				6. Send data to the remote host (using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				7. Close active socket.
+//!				8. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SendTo() method call is with expected error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0169-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0169-0001-Open_command12
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0169-0001-Shutdown_command13
+		OUTSTANDING	
+		COMMAND	!AsyncError=-25	RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0169-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0169-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0169-0001-Shutdown_command22
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0169
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0170
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0170
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Listen() method on active UDP socket after calling Connect() method.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   SetLocalPort(TInt),
+//!						   Connect(TSockAddr&, TRequestStatus&),
+//!						   Listen(TUint),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Set local port of active socket.
+//!				4. Connect active socket to remote host.
+//!				4. Listen on active socket.
+//!				5. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Listen() method call returns error code KErrInUse (-14).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0170-0001-Open_command05
+		COMMAND			RSocketActive	SetLocalPort
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0170-0001-Connect_command07
+		OUTSTANDING	
+		COMMAND	!Error=-14	RSocketActive	Listen		COMINF-ESOCK-RSocket-PublicAPI-0170-0001-Listen_command09
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0170-0001-Shutdown_command10
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0170
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0171
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0171
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that call Write() method on connectionless UDP active socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Write(const TDesC8 &, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Send data to the remote host (using Write()) on a socket.
+//!				4. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Write() method call is with expected error code tcpip6_error_NoDestination (-5100) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket		RSocketActive
+		COMMAND				RSocketServActive	Constructor
+		COMMAND				RSocketServActive	Connect
+		COMMAND				RSocketActive	Constructor
+		COMMAND				RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0171-0001-Open_command05
+		COMMAND	!AsyncError=-5100	RSocketActive	Write		COMINF-ESOCK-RSocket-PublicAPI-0171-0001-Write_command06
+		OUTSTANDING	
+		COMMAND				RSocketActive	Close
+		COMMAND				RSocketActive	~
+		COMMAND				RSocketServActive	Close
+		COMMAND				RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0171
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0178
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0178
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls RecvFrom() method synchronously with calling Shutdown(Shutdown:EStopInput) for passive UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket.
+//!				5. Connect active socket to remote host.
+//!				6. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				7. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus&)) on passive socket.
+//!				8. Shutdown passive sockets with flag EStopInput.
+//!				9. Call outstanding.
+//!				10. Shutdown sockets.
+//!				11. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The RecvFrom() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0178-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0178-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0178-0001-Connect_command13
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0178-0001-Send_command14
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0178-0001-Shutdown_command16
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0178-0001-Recv_command21
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0178-0001-Shutdown_command23
+		COMMAND	!AsyncError=-25	RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0178
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0179
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0179
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls RecvFrom() method on passive UDP socket after calling Shutdown(Shutdown:EStopInput).
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open passive UDP socket.
+//!				3. Set local port of passive socket.
+//!				4. Shutdown passive socket with TShutdown:EStopInput.
+//!				5. Open active UDP socket.
+//!				6. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				7. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &)) on passive socket.
+//!				8. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The RecvFrom() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0179-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0179-0001-Shutdown_command10
+		OUTSTANDING	
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0179-0001-Open_command14
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0179-0001-SendTo_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0179-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND	!AsyncError=-25	RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0179-0001-Shutdown_command24
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0179
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0180
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0180
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls RecvFrom() method on passive UDP socket after calling Shutdown(TShutdown:EImmediate).
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Bind(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Open(RSocketServ&),
+//!				                   SetLocalPort(),
+//!				                   Listen(TUint),
+//!				                   Accept(RSocket&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open active UDP socket.
+//!				3. Bind active socket to address.
+//!				4. Connect active socket to remote host.
+//!				5. Open passive UDP socket.
+//!				6. Set local port of passive socket.
+//!				7. Listen on passive socket for incoming connections.
+//!				8. Facilitate a client/server connection on passive socket.
+//!				9. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				10. Shutdown passive socket with TShutdown:EImmediate.
+//!				11. Receive data from the remote host (using Recv(TDes8&, TUint, TRequestStatus&)) on passive socket.
+//!				12. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The RecvFrom() method call is with error code KErrBadHandle (-8) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0180-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0180-0001-Open_command12
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0180-0001-SendTo_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0180-0001-Shutdown_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0180-0001-Shutdown_command20
+		OUTSTANDING	
+		COMMAND	!AsyncError=-8	RSocketPassive	RecvFrom
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0180
+
+//!START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0181
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0181
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls RecvFrom() method on passive UDP socket after closing passive socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Bind(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Open(RSocketServ&),
+//!				                   SetLocalPort(),
+//!				                   Listen(TUint),
+//!				                   Accept(RSocket&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Close(),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &).
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open active UDP socket.
+//!				3. Bind active socket to address.
+//!				4. Connect active socket to remote host.
+//!				5. Open passive UDP socket.
+//!				6. Set local port of passive socket.
+//!				7. Listen on passive socket for incoming connections.
+//!				8. Facilitate a client/server connection on passive socket.
+//!				9. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				10. Close sockets.
+//!				11. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &)) on passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The RecvFrom() method call will panic (KERN-ExEC code 0).
+//! @SYMTestType		CIT
+//!	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+//!		CREATE_OBJECT	RSocketServ	RSocketServActive
+//!		CREATE_OBJECT	RSocket	RSocketActive
+//!		CREATE_OBJECT	RSocketServ	RSocketServPassive
+//!		CREATE_OBJECT	RSocket	RSocketPassive
+//!		COMMAND		RSocketServActive	Constructor
+//!		COMMAND		RSocketServActive	Connect
+//!		COMMAND		RSocketServPassive	Constructor
+//!		COMMAND		RSocketServPassive	Connect
+//!		COMMAND		RSocketPassive	Constructor
+//!		COMMAND		RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0181-0001-Open_command08
+//!		COMMAND		RSocketPassive	SetLocalPort
+//!		COMMAND		RSocketActive	Constructor
+//!		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0181-0001-Open_command12
+//!		COMMAND		RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0181-0001-SendTo_command13
+//!		OUTSTANDING	
+//!		COMMAND		RSocketActive	Close
+//!		COMMAND		RSocketActive	~
+//!		COMMAND		RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0181-0001-Shutdown_command18
+//!		OUTSTANDING	
+//!		COMMAND		RSocketPassive	Close
+//!		COMMAND		RSocketPassive	RecvFrom
+//!		COMMAND		RSocketPassive	~
+//!		COMMAND		RSocketServPassive	Close
+//!		COMMAND		RSocketServPassive	~
+//!		COMMAND		RSocketServActive	Close
+//!		COMMAND		RSocketServActive	~		
+//!	END_TEST_BLOCK	!PanicCode=0
+//!END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0181
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0182
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0182
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls RecvFrom() method on passive UDP socket with wrong flag.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Bind(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!				                   Open(RSocketServ&),
+//!				                   SetLocalPort(),
+//!				                   Listen(TUint),
+//!				                   Accept(RSocket&, TRequestStatus&),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!				                   RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers (giving a principal usage of the connection).
+//!				2. Open active UDP socket.
+//!				3. Bind active socket to address.
+//!				4. Connect active socket to remote host.
+//!				5. Open passive UDP socket.
+//!				6. Set local port of passive socket.
+//!				7. Listen on passive socket for incoming connections.
+//!				8. Facilitate a client/server connection on passive socket.
+//!				9. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				10. Receive data from the remote host (using RecvFrom(TDes8&, TSockAddr&, TUint, TRequestStatus &)) on passive socket with flag -1.
+//!				11. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The RecvFrom() method call is with error code KErrAccessDenied (-21) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0182-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0182-0001-Open_command12
+		COMMAND			RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0182-0001-SendTo_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0182-0001-Shutdown_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND	!AsyncError=-21	RSocketPassive	RecvFrom		COMINF-ESOCK-RSocket-PublicAPI-0182-0001-RecvFrom_command20
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0182-0001-Shutdown_command22
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0182
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0183
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0183
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls SendTo() method on nonexisting passive UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Send data to the remote host (using using SendTo(const TDesC8&, TSockAddr&, TUint, TRequestStatus&)) on active socket.
+//!				4. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The SendTo() method call is with error code KErrGeneral (-2) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0183-0001-Open_command05
+		COMMAND	!AsyncError=-2	RSocketActive	SendTo		COMINF-ESOCK-RSocket-PublicAPI-0183-0001-SendTo_command06
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0183-0001-Shutdown_command08
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0183
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0184
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0184
+//! @SYMAPI			RSocket
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		19/02/2007
+//! @SYMTestCaseDesc		Get integer socket option on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   GetOpt(TUint, TUint, TInt&),
+//!				                   Close()
+//! @SYMTestActions		1. Open session to socket server.
+//!				2. Open UDP socket.
+//!				3. Get the socket option (KSOSendBuf, KSOReadBytesPending).
+//!				4. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	Socket option is got correctly.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketServActive	Constructor
+		COMMAND		RSocketServActive	Connect
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0184-0001-Open_command05
+		COMMAND		RSocketActive	GetOpt		COMINF-ESOCK-RSocket-PublicAPI-0184-0001-GetOpt_command06
+		COMMAND		RSocketActive	Close
+		COMMAND		RSocketActive	~
+		COMMAND		RSocketServActive	Close
+		COMMAND		RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0184
+
+DELAY		1000
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0193
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0193
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Read() method synchronously with calling Shutdown(TShutdown:EStopInput) on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Connect(TSockAddr &, TRequestStatus &),
+//!						   Send(const TDesC8 &, TUint, TRequestStatus &),
+//!						   Read(TDes8 &, TRequestStatus &),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Connect active socket to remote host.
+//!				4. Send data to the remote host (using Send(const TDesC8 &, TUint, TRequestStatus &)) on active socket.
+//!				7. Open passive UDP socket.
+//!				8. Receive data from the remote host (using Read(TDes8 &, TRequestStatus &)) on passive socket.
+//!				9. Shutdown passive socket with TShutdown:EStopInput.
+//!				10. Call outstanding.
+//!				11. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Read() method call is with error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Recv_command22
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	Read		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Read_command24
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Shutdown_command25
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0193-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0193
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0195
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0195
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Recv() method synchronously with calling Shutdown(TShutdown:EStopInput) on a UDP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Connect(TSockAddr &, TRequestStatus &),
+//!						   Send(const TDesC8 &, TUint, TRequestStatus &),
+//!						   Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &),
+//!				                   Shutdown(TShutdown, TRequestStatus&),
+//!				                   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open active UDP socket.
+//!				3. Connect active socket to remote host.
+//!				4. Send data to the remote host (using Send(const TDesC8 &, TUint, TRequestStatus &)) on active socket.
+//!				7. Open passive UDP socket.
+//!				8. Receive data from the remote host (using Recv(TDes8 &, TUint, TRequestStatus &, TSockXfrLength &)) on passive socket.
+//!				9. Shutdown passive socket with TShutdown:EStopInput.
+//!				10. Call outstanding.
+//!				11. Close sockets.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Recv() method call is with error code KErrCancel (-3) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Connect_command13
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Send_command15
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Shutdown_command17
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Recv_command22
+		OUTSTANDING	
+		COMMAND	!AsyncError=-3	RSocketPassive	Recv		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Recv_command24
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Shutdown_command25
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0195-0001-Shutdown_command27
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0195
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0202
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0202
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Send() method after calling Shutdown(TShutdown:EStopOutput) on UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   Send(const TDesC8&, TUint, TRequestStatus&),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				5. Connect active socket to remote host.
+//!				6. Shutdown active socket with TShutdown:EStopOutput
+//!				7. Send data to the remote host (using Send(const TDesC8&, TUint, TRequestStatus&)) on active socket.
+//!				8. Shutdown sockets.
+//!				9. Close active socket.
+//!				10. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Send() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0202-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0202-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0202-0001-Connect_command13
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0202-0001-Shutdown_command14
+		OUTSTANDING	
+		COMMAND	!AsyncError=-25	RSocketActive	Send		COMINF-ESOCK-RSocket-PublicAPI-0202-0001-Send_command16
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0202-0001-Shutdown_command18
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0202-0001-Shutdown_command23
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0202
+
+START_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0203
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0203
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Write() method after calling Shutdown(TShutdown:EStopOutput) on UDP sockets.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   SetLocalPort(),
+//!				                   Connect(TSockAddr&, TRequestStatus&),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!				                   Write(const TDesC8 &, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions		1. Open sessions to socket servers.
+//!				2. Open passive UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				3. Set local port of passive socket.
+//!				4. Open active UDP socket. Open(KSockDatagram, KProtocolInetUdp)
+//!				5. Connect active socket to remote host.
+//!				6. Shutdown active socket with TShutdown:EStopOutput
+//!				7. Send data to the remote host (using Write(const TDesC8 &, TRequestStatus &)) on active socket.
+//!				8. Shutdown sockets.
+//!				9. Close active socket.
+//!				10. Close passive socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults	The Write() method call is with error code KErrEof (-25) with a TRequestStatus.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-UDP.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RSocket-PublicAPI-0203-0001-Open_command08
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0203-0001-Open_command12
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0203-0001-Connect_command13
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0203-0001-Shutdown_command14
+		OUTSTANDING	
+		COMMAND	!AsyncError=-25	RSocketActive	Write		COMINF-ESOCK-RSocket-PublicAPI-0203-0001-Write_command16
+		OUTSTANDING	
+		COMMAND			RSocketActive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0203-0001-Shutdown_command18
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Shutdown		COMINF-ESOCK-RSocket-PublicAPI-0203-0001-Shutdown_command23
+		OUTSTANDING	
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RSocket-PublicAPI-0203

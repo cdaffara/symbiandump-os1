@@ -1,0 +1,296 @@
+BUILDROM.PL extensions to the OBY language
+Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).  All rights reserved.
+
+
+0. General Comments
+
+BUILDROM processes OBY files written in a superset of the language supported by ROMBUILD.EXE,
+producing an OBY file which is directly acceptable to ROMBUILD. BUILDROM then invokes
+ROMBUILD.EXE on the final OBY file and performs a number of post-processing steps to produce a
+ROM symbol file and directory listing.
+
+BUILDROM keywords are not case-sensitive.
+
+The C++ preprocessor is applied to the file(s) before processing, and the C++ #define, #ifdef 
+and #include facilities should be used to control the inclusion and exclusion of source lines.
+The modifications to the content of those lines should be done using the BUILDROM textual 
+substitution facility.
+
+
+
+
+1. Textual Substitution
+
+BUILDROM.PL implements a simple textual substitution scheme: the C++ preprocessor can't be used
+conveniently because it inserts whitespace around the substituted text.
+
+    DEFINE name replacement
+
+All subsequent instances of "name" will be replaced by "replacement". 
+BUILDROM will also replace "##" with an empty string.
+
+There are three pre-defined substitutions
+
+    EPOCROOT    = the value of the EPOCROOT environment variable
+    TODAY       = today's date as dd/mm/yyyy
+    RIGHT_NOW   = the exact time as dd/mm/yyyy hh:mm:ss
+
+There is no "UNDEFINE" facility, and the substitutions are applied in an unspecified order.
+
+
+2. Additional Simple Keywords
+
+BUILDROM implements the following simple keywords
+
+    ECHO anything at all
+    WARNING anything at all
+    ERROR anything at all
+    ROMBUILD_OPTION command-line-option
+
+The ECHO keyword simply prints the rest of the line to standard output. The WARNING and ERROR 
+keywords report the source file and line number as well as printing the message, and any ERRORs
+will cause BUILDROM to abort without attempting to create the ROM.
+
+The ROMBUILD_OPTION keyword can be used multiple times if desired, and adds additional commandline
+parameters to the eventual invocation of ROMBUILD.EXE. It is primarily used to specify the 
+"-no-header" option for platforms which don't want the 256-byte REPRO header.
+
+
+3. Localisation Support
+
+BUILDROM implements the MULTILINGUIFY() macro that can expand a single source line into multiple
+lines referring to distinct language codes.
+
+    LANGUAGE_CODE nn
+    DEFAULT_LANGUAGE nn
+    data=MULTILINGUIFY( EXT sourcename destname )
+
+The LANGUAGE_CODE keyword can be used multiple times to specify the Symbian 2-digit codes for
+languages to be supported in this ROM. The DEFAULT_LANGUAGE keyword should be used only once.
+
+During the localisation pass, the MULTILINGUIFY lines are expanded into a line per language code,
+as follows
+
+    data=MULTILINGUIFY( EXT sourcename destname )
+
+becomes
+
+    data=sourcename.Enn destname.EXT	    for the default language code nn
+    data=sourcename.Enn destname.Enn	    for all other language codes nn
+
+This provides support for the BafUtils::NearestLanguageFile() function, which is performing a
+similar mapping from language codes to filenames.
+
+
+4. XIP ROM format bitmaps
+
+MAKMAKE normally generates EPOC MBM files in a compressed format, but there is an alternative 
+uncompressed format which allows an MBM to be used directly from the ROM filesystem. BUILDROM
+supports on-the-fly generation of ROM format MBM files from compressed MBM files using the
+BITMAP keyword as follows
+
+    BITMAP=source dest
+
+becomes
+
+    DATA=source_rom dest
+
+and source_rom is generated from source using BMCONV /q /r source_rom /msource
+
+
+If the files are already compressed then the COMPRESSED-BITMAP keyword has to be used in the same way
+
+   COMPRESSED-BITMAP=source dest
+
+becomes
+
+
+    DATA=source_rom dest
+
+in this case source_rom is generated from source using BMCONV /q /s source_rom /msource
+
+BUILDROM will use an existing source_rom file if if is newer than the corresponding source file.
+
+
+4.1 XIP and Non-XIP ROM format bitmaps
+
+BUILDROM provides a keyword to automatically select between XIP and non-XIP versions of bitmaps.
+This is used when it is not known by the application author if the bitmap is to be included in
+an XIP or non-XIP ROM.
+
+	AUTO-BITMAP=source dest
+
+This keyword will use "compressed-bitmap=" for XIP ROMs and "data=" for non-XIP ROMs.
+
+
+4.2 XIP and non-XIP ROM format AIF files
+
+A keyword is provided to automatically select between XIP and non-XIP versions of AIF files.
+
+	AIF=source dest
+
+This keyword will use the _xip version of the specified AIF for XIP ROMs or the originaly supplied file
+otherwise.
+
+
+5. Source reorganisation for two-section ROMs
+(see also section 8 "ROM Configuration support").
+
+ROMBUILD.EXE has the ability to create ROMs divided into two sections, such that the upper section 
+can be replaced without needing to change the lower section. This facility is most often used to
+put localised resource files into the upper section, so BUILDROM provides support for gathering
+marked OBY source lines and placing them in the upper section of the ROM.
+
+    SECTION2 anything
+
+All lines beginning with the SECTION2 keyword are removed from the OBY file, and placed into 
+a separate list with the SECTION2 keyword removed. When BUILDROM encounters the SECTION keyword, 
+the accumulated section2 list is inserted after the SECTION line, and subsequent SECTION2 keywords
+are removed as they occur. If no SECTION line is encountered, the accumulated section2 list is
+emitted after the end of the input file(s).
+
+
+6. Elaborate Example
+
+For example:
+
+    LANGUAGE_CODE 01
+    LANGUAGE_CODE 10
+    DEFAULT_LANGUAGE 10
+
+    file=sourcedir\myapp.dll destdir\myapp.dll
+    SECTION2 REM bitmaps for myapp
+    SECTION2 bitmap=MULTILINGUIFY( MBM sourcedir\myapp destdir\myapp )
+    file=sourcedir\myengine.dll destdir\myengine.dll
+
+    section 0x800000
+
+    file=sourcedir\example destdir\example
+    SECTION2 data=sourcedir\example2 destdir\example2
+
+would become
+    
+    file=sourcedir\myapp.dll destdir\myapp.dll
+    file=sourcedir\myengine.dll destdir\myengine.dll
+
+    section 0x800000
+    REM bitmaps for myapp
+    data=sourcedir\myapp.M01_rom destdir\myapp.M01
+    data=sourcedir\myapp.M10_rom destdir\myapp.MBM
+
+    file=sourcedir\example destdir\example
+    data=sourcedir\example2 destdir\example2
+
+
+
+7. Problem suppression
+
+BUILDROM does a number of things which probably aren't appropriate for producing production devices, 
+but which increase the chance of Symbian internal development builds producing a ROM in the
+presence of build problems.
+
+    ABI_DOWNGRADE   from->to
+
+The ABI_DOWNGRADE keyword allows BUILDROM to substitute a compatible executable if the specified
+source file is not available. It is usually used as
+
+    ABI_DOWNGRADE   THUMB->ARMI
+
+and will substitute \ARMI\ for \THUMB\ if a specified source file can't be found.
+
+In the localisation support, problem suppression allows BUILDROM to handle a missing source.Enn 
+file by specifying source.EXT instead.
+
+In a final pass, if any file is still not available after applying these downgrades then BUILDROM
+will simply comment out the line in the OBY file, in the hope that the missing file is not vital
+to the ROM. If this behaviour is not required the command line option -s can be used to enforce
+stricter behaviour and cause BUILDROM to terminate after the final pass. 
+
+
+8.  Rom configuration support
+
+BUILDROM has ROM configuration features to support building of multiple xip and non-xip
+ROMs for the same device.
+
+8.1 First you must specify the ROM devices
+The ROM_IMAGE keyword specifies a ROM image.  There can be up to 8 images.
+
+Syntax:
+ROM_IMAGE <id> <name> [size=<rom max size>] [xip | non-xip] [compress | no-compress] [extension]
+where:
+id = 0 .. 7
+name = a name suitable as a suffix for the ROM image, oby and logs
+xip = specifies an XIP ROM.  This is the default.
+size = max size of the ROM.  Not required for XIP roms.
+compress = Compress an XIP ROM.
+extension = Indicates this image as an extension to the previous image.
+
+8.2 Including files
+8.2.1 To mark a file for inclusion in a ROM it is prefixed with the keyword
+ROM_IMAGE[<id>]
+eg.
+ROM_IMAGE[2] data=ZSYSTEM\Apps\Calc\calc.INSTCOL_MBM 	    System\Apps\Calc\Calc.mbm
+
+8.2.2 A Block of files can be included using '{' '}' braces.
+eg.
+ROM_IMAGE[2] {
+#include "calc.iby"
+#include "word.iby"
+}
+
+8.2.3 File blocks can be nested eg.
+ROM_IMAGE[2] {
+	#include "calc.iby"
+	ROM_IMAGE[0] {
+		#include "word.iby"
+	}
+	#include "video.iby"
+}
+
+
+8.3 Automatic generation of extension header for XIP ROM
+
+If the ROM_IMAGE specifices an XIP image with an extension, than the following header
+will automatically be added to the obey file. 
+
+extensionrom=<name>
+romsize=<rom max size>
+
+The <name> and <rom max size> are as specified in the ROM_IMAGE keyword. 
+
+The addition of the header will result in rombuild tool producing multiple images
+from the obey file.
+
+9. Strict checking of missing files.
+
+BUILDROM will normally ignore any missing files specified in the obey files. To
+prevent the generation of the ROM when files are missing the -s option is used. This
+ensures that BUILDROM terminates after all the files have been checked and some are
+found missing. The error message indicates how many files are missing.
+
+10. Tests for strict checking and automatic generation of extension header for XIP ROM.
+
+The following tests are executed to check that functionality for
+strict checking of missing files (section 9) and automatic generation
+of extension header for XIP ROM (section 8.3) functions correctly.
+
+Test 1 : Buildrom normal behaviour with missing files.
+
+This test shows that if files are missing then the rom image is still
+generated if the -strict option is not used. The test involves
+renaming some files so that the standard obey file cannot find them.
+Run buildrom and then check that the appropriate files are reported as
+missing and that rom image is generated.
+
+Test 2 : Buildrom missing files behaviour with strict option
+
+This test shows that if the files are missing and the strict option is
+selected then buildrom terminates the generation of the rom image and
+reports the missing files.
+
+Test 3 : Produce a kernel rom image with extension rom
+
+This test shows that if an extension rom is specified in the obey file
+then the obey file generated by buildrom contains the correct header
+information to generate an extension rom.
+

@@ -1,0 +1,292 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-MTLR-RESET-ASSISTANCE
+//! @SYMScriptTestEnvironment TestExecute
+
+LOAD_SUITE LbsHybridMTLRTestServer -SharedData
+
+PRINT Run LbsHybridMTLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_mtlr.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_SetupProtocolStub
+
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+
+START_TESTCASE                LBS-MTLR-RESET-AUTONOMOUS-BEGINNING-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-AUTONOMOUS-BEGINNING-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in autonomous mode. As soon as the network sends the request it also send a reset assistance data message, with mask 0xFFFFFFFF, when the GPS module was warmed up.
+//! @SYMTestPriority            Low
+//! @SYMTestActions             Admin is set to Autonomous
+//!                             The network sends an MT-LR request, with techtype TB,  to warm up the GPS module
+//!                             Network sends another MT-LR request, with techtype Autonomous
+//!                             Straight after the network sends a ResetAssistanceData(0xFFFFFFFF)
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. The way in which the module run shouldn't change since it's autonomous.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-AUTO-BEG
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-AUTO-BEG
+END_TESTCASE                  LBS-MTLR-RESET-AUTONOMOUS-BEGINNING-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-HYBRID-AFTERMEAS-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-HYBRID-AFTERMEAS-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in Hybrid with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it has measurements. The request is sent once the GPS module is warmed up.
+//! @SYMTestPriority            Low
+//! @SYMTestActions             Admin is set to TB
+//!                             Network sends an MT-LR request, with techtype TB, to warm up the GPS module
+//!                             Network sends another MT-LR request, with techtype Hybrid
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it has measurements
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. The module will ask for assistance data when it receives a new request.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-HYBR-AFTMES
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-HYBR-AFTMES
+END_TESTCASE                  LBS-MTLR-RESET-HYBRID-AFTERMEAS-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-HYBRID-AFTERPOSITION-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-HYBRID-AFTERPOSITION-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in Hybrid with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it has a position.
+//! @SYMTestPriority            Low
+//! @SYMTestActions             Admin is set to TB
+//!                             Network sends an MT-LR request, with techtype Hybrid
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it has a position
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset, but it will not ask for assistance data again since it has a position.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-HYBR-AFTPOS
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-HYBR-AFTPOS
+END_TESTCASE                  LBS-MTLR-RESET-HYBRID-AFTERPOSITION-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TB-AFTERASSISTANCE-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-TB-AFTERASSISTANCE-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TB with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it sent out assistance data.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             Network sends an MT-LR request, with techtype TB
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it sent out some assistance data
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should calculate the position as if starting from cold, by asking for assistance data again
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTAST
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTAST
+END_TESTCASE                  LBS-MTLR-RESET-TB-AFTERASSISTANCE-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TB-AFTERASSISTANCE-0002
+//! @SYMTestCaseID              LBS-MTLR-RESET-TB-AFTERASSISTANCE-0002
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TB with network sending a reset assistance data message, with mask 0x00000001, after it sent out assistance data.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             Network sends an MT-LR request, with techtype TB
+//!                             The network sends a ResetAssistanceData(0x00000001) after it sent out some assistance data
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset, but that it doesn't affect itself. Then it should calculate the position using the assistance data already received.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTAST2
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTAST2
+END_TESTCASE                  LBS-MTLR-RESET-TB-AFTERASSISTANCE-0002
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TB-AFTERASSISTANCE-0003
+//! @SYMTestCaseID              LBS-MTLR-RESET-TB-AFTERASSISTANCE-0003
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TB with network sending a reset assistance data message, with mask containing only the assistance data that was sent out, after it sent out assistance data.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             Network sends an MT-LR request, with techtype TB
+//!                             The network sends a ResetAssistanceData(with mask containing only the assistance data that was already sent out) after it sent out some assistance data
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should calculate the position as if starting from cold, by asking for assistance data again
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTAST3
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTAST3
+END_TESTCASE                  LBS-MTLR-RESET-TB-AFTERASSISTANCE-0003
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TB-AFTERCLOSE-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-TB-AFTERCLOSE-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TB with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it sent out session close.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             Network sends an MT-LR request, with techtype TB
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it sent out session close
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. But since it has no work to do it will not ask again for assistance data.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTCLS
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTCLS
+END_TESTCASE                  LBS-MTLR-RESET-TB-AFTERCLOSE-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TB-AFTERPOSITION-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-TB-AFTERPOSITION-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TB with network sending a reset assistance data message, with mask containing everything but the assistance data that was sent out, after it has a position.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             Network sends an MT-LR request, with techtype TB
+//!                             The network sends a ResetAssistanceData(with mask containing everything but the assistance data that was already sent out) after it has a position
+//! @SYMTestExpectedResults     The GPS module should receive the reset, but see that its assistance data was not reset.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTPOS
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-AFTPOS
+END_TESTCASE                  LBS-MTLR-RESET-TB-AFTERPOSITION-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TB-BEFORE-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-TB-BEFORE-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TB. This request comes after the network sent a reset assistance data message, with mask 0xFFFFFFFF, when the GPS module was warmed up.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             The network sends an MT-LR request, with techtype TB,  to warm up the GPS module
+//!                             Once the first session is over the network sends a ResetAssistanceData(0xFFFFFFFF)
+//!                             Network sends another MT-LR request, with techtype TB
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should calculate the position as if starting from cold.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-BEFSES
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-BEFSES
+END_TESTCASE                  LBS-MTLR-RESET-TB-BEFORE-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TB-BEGINNING-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-TB-BEGINNING-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TB. As soon as the network sends the request it also send a reset assistance data message, with mask 0xFFFFFFFF, when the GPS module was warmed up.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             The network sends an MT-LR request, with techtype TB,  to warm up the GPS module
+//!                             Network sends another MT-LR request, with techtype TB
+//!                             Straight after the network sends a ResetAssistanceData(0xFFFFFFFF)
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should calculate the position as if starting from cold.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-BEG
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TB-BEG
+END_TESTCASE                  LBS-MTLR-RESET-TB-BEGINNING-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_SetATAMode
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TA-AFTERASSISTANCE-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-TA-AFTERASSISTANCE-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TA with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it sent out assistance data.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to ATA
+//!                             Network sends an MT-LR request, with techtype TA
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it sent out some assistance data
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should produce the measurements as if starting from cold, by asking for assistance data again
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TA-AFTAST
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TA-AFTAST
+END_TESTCASE                  LBS-MTLR-RESET-TA-AFTERASSISTANCE-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-RESET-TA-AFTERCLOSE-0001
+//! @SYMTestCaseID              LBS-MTLR-RESET-TA-AFTERCLOSE-0001
+//! @SYMTestCaseDesc            MT-LR request that will be calculated in TA with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it sent out session close.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TA
+//!                             Network sends an MT-LR request, with techtype TA
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it sent out session close
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. But since it has no work to do it will not ask again for assistance data.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/4/2008
+//! @SYMAuthor                  SorinBasca
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TA-AFTCLS
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsMTLRResetAssistance c:\testdata\configs\lbs_mtlr.ini MTLR-RESET-TA-AFTCLS
+END_TESTCASE                  LBS-MTLR-RESET-TA-AFTERCLOSE-0001
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+

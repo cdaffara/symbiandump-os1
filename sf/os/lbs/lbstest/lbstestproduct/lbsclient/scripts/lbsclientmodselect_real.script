@@ -1,0 +1,448 @@
+﻿// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClientTestServer -SharedData
+LOAD_SUITE CTSuplMolrRealTestServer
+
+PRINT Run LbsClientTestServer and CTSuplMolrRealTestServer
+PRINT
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+RUN_UTILS CopyFile c:\testdata\configs\lbssupltestconfig.txt c:\config.txt
+
+// Regenerate SUPLHostSettings from the text file in case a previous crashed test corrupts it
+RUN_UTILS DeleteFile c:\private\10202be9\persists\10285aa8.cre
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 010 CTSuplMolrRealTestServer SetHostToServerBTlsSecurity
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+PRINT Set Autonomous Mode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+START_TESTCASE LBS-Client-ModSelectReal-0001
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0001
+//!@SYMTestCaseDesc			Request location update specifying capabilities met only by GPS module
+//!
+//!@SYMTestActions                      1. Open a RPositioner with capabilities (eg ECapabilitySatellite) that should select GPS
+//!					2. Set Requestor details.
+//!					3. Request a location update
+//!					4. Verify that location info is returned as expected, from agps module.
+//!					5. Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults      	Location request will complete with KErrNone and was retrieved using GPS
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect	c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Capability-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0001
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0002
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0002
+//!@SYMTestCaseDesc			Request location update specifying capabilities not supported by any module
+//!
+//!@SYMTestActions
+//!					1. Open RPositioner with capabilities (eg ECapabilityMedia) not supported by network/gps
+//!					2. Verify that Open fails with KErrNotFound
+//!					3. Clear the capabilities
+//!					4. Open again
+//!					5. Verify that Open succeeds
+//!
+//!@SYMTestExpectedResults		First open fails with KErrNotFound, second succeeds
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Capability-0003
+
+END_TESTCASE LBS-Client-ModSelectReal-0002
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0003
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0003
+//!@SYMTestCaseDesc			Request location update specifying more than one capability
+//!
+//!@SYMTestActions                      1. Open a RPositioner with capabilities (eg ECapabilitySatellite and ECapabilityHorizontal) 
+//!                                        that should select GPS
+//!					2. Set Requestor details.
+//!					3. Request a location update
+//!					4. Verify that location info is returned as expected, from agps module.
+//!					5. Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults      	Location request will complete with KErrNone and was retrieved using GPS
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini LBS-Client-Module-Select
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_ModSelect	c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Capability-0004
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0003
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0004
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0004
+//!@SYMTestCaseDesc			Request location update with specific horizontal & vertical accuracy
+//!
+//!@SYMTestActions
+//!@SYMTestActions                      1. Open positioner with accuracy criteria that should select GPS test module.
+//!                                     2. Set Requestor details.
+//!					3. Request a location update
+//!					4. Verify that location info is returned as expected, from agps module.
+//!					5. Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults		Appropriate module is selected for update
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			 Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Quality-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0004
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0005
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0005
+//!@SYMTestCaseDesc			Request location update with specific time to first fix
+//!
+//!@SYMTestActions
+//!@SYMTestActions                      1. Open with TTFF criteria that is met by network, but not agps
+//!					2. Set Requestor details.
+//!					3. Request a location update
+//!					4. Verify that location info is returned as expected, from network module.
+//!					5. Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults		Appropriate module is selected for update
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 					 
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			 Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Quality-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0005
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0006
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0006
+//!@SYMTestCaseDesc			Request location update with specific cost criteria
+//!
+//!@SYMTestActions
+//!@SYMTestActions                      1. Open RPositioner with cost criteria (ECostPossible) that is met by agps but not the network
+//!					2. Set Requestor details.
+//!					3. Request a location update
+//!					4. Verify that location info is returned as expected, from agps module.
+//!					5. Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults		Appropriate module is selected for update
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 					 
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Quality-0004
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0006
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0007
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0007
+//!@SYMTestCaseDesc			setting a higher accuracy than all existing modules for module selection
+//!
+//!@SYMTestActions			
+//!@SYMTestActions                      1. set a required horizontal accuracy as 1 meter which is more accurate than all existing module
+//!                                     2. Open RPositioner with this criteria
+//!
+//!@SYMTestExpectedResults		RPosition::Open should return KErrNotFound
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	 LBS-Quality-0005
+
+END_TESTCASE LBS-Client-ModSelectReal-0007
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0008
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0008
+//!@SYMTestCaseDesc			Request location update with default selection criteria, where accuracy has higher priority
+//!                                     than cost
+//!
+//!@SYMTestActions	                1.Open RPositioner without criteria
+//!                  		        2.Request Location Update
+//!					3.Verify that location info is returned as expected, from agps module.
+//!					4.Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults		Module which returned location is one with highest accuracy regardless of cost.(a-gps module)
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 					 
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini	LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	LBS-SelectionOrder-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE LBS-Client-ModSelectReal-0008
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0009
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0009
+//!@SYMTestCaseDesc			Request location update with cost/time/horizontal accuracy/power consumption in order of importance
+//!
+//!@SYMTestActions			1.Set the order of importance of cost/time/accuracy/power consumption such that
+//!					  a particular test-gps-module should be selected
+//!					2.Request a location Update
+//!					3.Verify that the appropriate module retrieved the location
+//!
+//!@SYMTestExpectedResults		Module which returned location is one which satisfies the specified order.
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 					 
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			3
+//!@SYMTestStatus			 Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	LBS-SelectionOrder-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0009
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0010
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0010
+//!@SYMTestCaseDesc                     check that a position module with higher horizontal accuracy is chosen when both
+//!                                     a-gps and network modules meet the selection criteria
+//!
+//!@SYMTestActions                      1.Open a RPosition using Rposition::Open(�) requesting a module with <500m accuracy.
+//!					4.Request a location Update
+//!					5. Verify that location info is returned as expected, from agps module.
+//!					6. Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults              A-GPS module which has higher horizontal accuracy is chosen for location update
+//!					Check this in the TPositionInfo.
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 				REQ786.05	 
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			 Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini	LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	LBS-ModuleSelection-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0010
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0011
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0011
+//!@SYMTestCaseDesc			Select default module on connecting to the RPositioner
+//!
+//!@SYMTestActions			
+//!@SYMTestActions			1.Open a session using Rposition::Open(�) with no parameters (default)
+//!					2.Call NotifyPositionUpdate(�)
+//!
+//!@SYMTestExpectedResults		We should get a position update from the default module.
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 				REQ786.05	 
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	LBS-ModuleSelection-0004
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0011
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0012
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0012
+//!@SYMTestCaseDesc			Select A-GPS module by its ID, testing API RPositioner::Open(RPositionServer&, TPositionModuleId)
+//!
+//!@SYMTestActions			1.Connect to the LocationServer
+//!					2.create an module id whose iUid value is the same as a-gps module.
+//!					3.Call Rpositioner::Open(�) passing this module Id.
+//!					4.Call NotifyPositionUpdate(�)
+//!					5.Verify that location info is returned as expected, from agps module.
+//!					6.Verify that the location request is logged.
+//!					
+//!@SYMTestExpectedResults		We should get a position update from the A-GPS module.
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 				REQ786.05
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini	LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	LBS-ModuleSelection-0005
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0012
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0013
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0013
+//!@SYMTestCaseDesc			Select network module by its ID, testing API RPositioner::Open(RPositionServer&, TPositionModuleId)
+//!
+//!@SYMTestActions			1.Connect to the LocationServer
+//!					2.create an module id whose iUid value is the same as network module.
+//!					3.Call RpositionerOpen(�) passing this module Id.
+//!					4.Call NotifyPositionUpdate(�)
+//!					5.Verify that location info is returned as expected, from network module.
+//!					6.Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults		We should get a position update from the network module.
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 				REQ786.05
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini LBS-Client-Module-Select
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	LBS-ModuleSelection-0006
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0013
+
+
+START_TESTCASE LBS-Client-ModSelectReal-0014
+
+//!@SYMTestCaseID			LBS-Client-ModSelectReal-0014
+//!@SYMTestCaseDesc			Check default module is selected when both modules matches user define quality and selection order
+//!
+//!@SYMTestActions			1.Connect to the LocationServer
+//!					2.Set required power consumption as EPowerLow
+//!					3.Set power consumption's selection order as EOrderVeryHigh
+//!					4.Call RpositionerOpen(�) passing this criteria.
+//!					6.Call NotifyPositionUpdate(�)
+//!					7.Verify that location info is returned as expected, from agps module (default module).
+//!					8.Verify that the location request is logged.
+//!
+//!@SYMTestExpectedResults		We should get a position update from the agps module.
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 				REQ786.05
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmodselect_real.ini LBS-Client-Module-Select
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_ModSelect c:\testdata\configs\lbsclientmodselect_real.ini	LBS-ModuleSelection-0007
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-ModSelectReal-0014
+
+
+PRINT Reset Default Admin
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StopLbs
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

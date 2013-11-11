@@ -1,0 +1,83 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         lbsstandaloneprivacysuitevariant2.script
+//! @SYMScriptTestEnvironment
+
+PRINT Run all lbsromsuitetestserver Suite Tests
+
+LOAD_SUITE lbsromsuitetestserver -SharedData
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Selecting the default admin values will ensure the AGPS module requests assistance data.
+//RUN_TEST_STEP 010 lbsromsuitetestserver LbsStep_ResetDefaultAdmin
+
+// This step is used to configure lbs and root to be transient processes 
+// and also the processes that are startedup by root
+RUN_TEST_STEP 030 lbsromsuitetestserver LbsStep_SetupStandalonePrivacyMode
+
+// - Instead of using a privacy request which actually starts up the LBS, we directly
+// start lbs which in turn brings up the root process [configured in the above step]
+RUN_TEST_STEP 030 lbsromsuitetestserver LbsStep_StartLbs
+
+
+
+START_TESTCASE                LBS-STANDALONEPRIVACY-CHECKLOCMONITOR-0001
+//! @SYMTestCaseID              LBS-STANDALONEPRIVACY-CHECKLOCMONITOR-0001
+//! @SYMTestCaseDesc            To check if both the Epos Location Server and the Location Monitor are transient under  this configuration and are started on demand when a client application opens a session with the Epos Location Server.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1.  Start LBS - which brings up the root process.
+//!                             2.  Check if the location monitor process is running [ie. if it has been started by root].
+//!                             3.  Open a session and subsession with the EPos Location server.
+//!                             4.  Check if the location monitor process gets startup by the epos location server.
+//!                             5.  Close the session and subsession and wait until the location server dies.
+//!                             6.  Verify that the location monitor process no longer exists.
+//! @SYMTestExpectedResults     1. The test must check that the Location Monitor has NOT been started by the root.
+//!                             2. process. The the test connects a client to the Location Server and then verifies that
+//!                             the Location Monitor has been started.
+//!                             3. Finally, the test disconnects the client and verifies that the Location Monitor process is
+//!                             no longer loaded.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            31/3/2009
+//! @SYMAuthor                  arunkumarpandian
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 100 lbsromsuitetestserver PositionerTestStep c:\testdata\configs\lbsromspecificsuite.ini LBS-STANDALONEPRIVACY-CHECKLOCMONITOR-0001
+END_TESTCASE                  LBS-STANDALONEPRIVACY-CHECKLOCMONITOR-0001
+
+
+
+DELAY 2000
+//PRINT Stop LBS
+RUN_TEST_STEP 020 lbsromsuitetestserver LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+PRINT lbsromsuitetestserver Completed
+
+
+

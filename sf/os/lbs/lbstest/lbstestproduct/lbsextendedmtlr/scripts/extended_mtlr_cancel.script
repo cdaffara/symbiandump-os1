@@ -1,0 +1,299 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// The following tests validate the behaviour when a MTLR is cancelled. The test ensure that the extended protocol module us used.
+// The tests use a stubbed protocol module that implements the CLbsNetworkProtocolBase2 class.
+//
+
+//! @File
+//! @SYMTestSuiteName LBS-MTLR-EXTENDED-PROTOCOL-MODULE
+//! @SYMScriptTestEnvironment TEF
+
+LOAD_SUITE LbsExtendedMTLRTestServer -SharedData
+
+PRINT Run LbsExtendedMTLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_extended_mtlr.ini PrivHandler
+
+// Use extended protocol module
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetupProtocolStub c:\testdata\configs\lbs_extended_mtlr.ini ExtendedProtocolModule
+
+RUN_TEST_STEP 030 LbsExtendedMTLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0001
+//! @SYMTestCaseID              LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0001
+//! @SYMTestCaseDesc            Performs a privacy controller cancel after the request has been accepted and before
+//!                             a location request. Checks that a CancelExternalLocation request
+//!                             is correctly received by the protocol module.
+//!                             .
+//!                             Module = ExtendedProtocolModule (CLbsNetworkProtocolBase2)
+//!                             AGPS Mode = PTB - This test is mode independant as no location request sent 
+//!                             Emergency = Off
+//!                             Response = Accept
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a non-emergency location request PTB from the protocol module.
+//!                             2. Privacy controller accepts the request.
+//!                             3. Ref location and and Assistance data sent to LBS - but no location request
+//!                             4. Privacy Controller cancels the request
+//!                             5. Ensure a CancelExternalLocation is sent to the protocol module.
+//!                             6. Send session complete (KErrCancel) from the protocol module.
+//!                             7. Ensure Privacy Controller receives a ProcessRequestComplete.
+//!                             8. Ensure that no cancel is sent to integration module (as no request was pending!)
+//! @SYMTestExpectedResults     CancelExternalLocation received by protocol module and no cancels received by AGPS module
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/7/2008
+//! @SYMAuthor                  JohnM
+//! @SYMCR                      CR1467
+//! @SYMPREQ                    PREQ1935
+//! @SYMREQ                     REQ10711
+//!                             REQ10746
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_InstallScheduler
+
+// Note: No need to configure AGps module options - default behaviour is just what we require.
+// A position will be delivered a few seconds after the request and that gives us time to cancel before it does!
+
+
+RUN_TEST_STEP 120 LbsExtendedMTLRTestServer KLbsExtendedMtlrCancel
+
+END_TESTCASE LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0001
+
+RUN_TEST_STEP 020 LbsExtendedMTLRTestServer LbsStep_StopLbs
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_extended_mtlr.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetupProtocolStub c:\testdata\configs\lbs_extended_mtlr.ini
+RUN_TEST_STEP 030 LbsExtendedMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0002
+//! @SYMTestCaseID              LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0002
+//! @SYMTestCaseDesc            Initiates an MTLR which is accepted by the privacy controller then after the REF position, assistance data
+//!                             and location request has been sent a CancelNetworkLocationrequest is sent from the PrivacyController.
+//!                             The test checks that when original integratiom module is used a RespondLocationRequest(KErrcancel)
+//!                             is sent to the protcol module.
+//!                             .
+//!                             Emergency = Off
+//!                             ProtcolModule is ExtendedProtocolModule
+//!                             Response = Accept
+//!                             GPS Mode = PTB
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a non emergency location request from the protocol module.
+//!                             2. Privacy controller's ProcessNetworkLocationRequest returns RespondNetworkLocationRequest(ERequestAccepted)
+//!                             3. Prococol module injects REF position, assistance data and location request
+//!                             4. Ensure the controller is sent the reference postion
+//!                             5. The privacy controller posts a CancelNetworkLocationRequest() Message (before an AGPS position arrives)
+//!                             6. Ensure that LBS sends out a CancelExternalLocation followed by a RespondLocationRequest(KErrCancel) to the protocol module.
+//!                             7. Ensure that Privacy controller's callback ProcessSessionComplete() contains a KErrCancel.
+//! @SYMTestExpectedResults     Verify Actions 1 to 7.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/4/2008
+//! @SYMAuthor                  JohnM
+//! @SYMCR                      CR1467
+//! @SYMREQ                     REQ10711
+//!                             REQ10746
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_InstallScheduler
+
+// Note: No need to configure AGps module options - default behaviour is just what we require
+
+RUN_TEST_STEP 120 LbsExtendedMTLRTestServer KLbsExtPtbMtlrCancel
+
+END_TESTCASE LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0002
+
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+RUN_TEST_STEP 020 LbsExtendedMTLRTestServer LbsStep_StopLbs
+
+
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_extended_mtlr.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetupProtocolStub c:\testdata\configs\lbs_extended_mtlr.ini
+RUN_TEST_STEP 030 LbsExtendedMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0003
+//! @SYMTestCaseID              LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0003
+//! @SYMTestCaseDesc            Tests that when an Emergency that Cancels don't prevent the MTLR completing as it would normally.
+//!                             Initiates an MTLR which is accepted by the privacy controller and then before
+//!                             a location request has been sent a CancelNetworkLocationrequest is sent from the PrivacyController.
+//!                             Next a location request is sent and again another CancelNetworkLocationrequest is sent to the PrivacyController.
+//!                             The test checks that the cancels have no effect.
+//!                             .
+//!                             Emergency = On
+//!                             ProtcolModule is ExtendedProtocolModule
+//!                             Response = Accept
+//!                             GPS Mode = PTB
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a emergency location request from the protocol module.
+//!                             2. Privacy controller's ProcessNetworkLocationRequest returns RespondNetworkLocationRequest(ERequestAccepted)
+//!                             3. Prococol module injects REF position, assistance data
+//!                             4. The privacy controller posts a CancelNetworkLocationRequest() Message
+//!                             5. Ensure that no CancelExternalLocation is sent to protocol module
+//!                             6. Prococol module injects alocation request
+//!                             7. The privacy controller posts another CancelNetworkLocationRequest() Message
+//!                             8. Ensure that MTLR completes and is NOT cancelled. RespondLocationRequest(KErrNone,AGPSpos) is sent to the protocol module.
+//!                             9. Ensure that Privacy controller's callback ProcessSessionComplete() contains a KErrNone.
+//!                             10. Ensure zero  cancles are sent to AGPS modulethat Privacy controller's callback ProcessSessionComplete() contains a KErrNone.
+//!                             11. Privacy controller's callback ProcessNetworkPositionUpdate() is called twice.Once for REF pos and once forAGPS pos
+//! @SYMTestExpectedResults     Verify Actions 1 to 8.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/4/2008
+//! @SYMAuthor                  JohnM
+//! @SYMCR                      CR1467
+//! @SYMREQ                     REQ10711
+//!                             REQ10746
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_InstallScheduler
+
+// Note: No need to configure AGps module options - default behaviour is just what we require
+
+RUN_TEST_STEP 120 LbsExtendedMTLRTestServer LbsEmergencyCancel
+
+END_TESTCASE LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0003
+RUN_TEST_STEP 020 LbsExtendedMTLRTestServer LbsStep_StopLbs
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_extended_mtlr.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetupProtocolStub c:\testdata\configs\lbs_extended_mtlr.ini
+
+RUN_TEST_STEP 030 LbsExtendedMTLRTestServer LbsStep_StartLbs
+START_TESTCASE                LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0005
+//! @SYMTestCaseID              LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0005
+//! @SYMTestCaseDesc            Initiates an MTLR which is accepted by the privacy controller then after the REF position, assistance data
+//!                             and location request has been sent a CancelNetworkLocationrequest is sent from the PrivacyController.
+//!                             The test checks that when original integratiom module is used a RespondLocationRequest(KErrcancel)
+//!                             is sent to the protcol module.
+//!                             .
+//!                             Emergency = Off
+//!                             ProtcolModule is ExtendedProtocolModule
+//!                             Response = Accept
+//!                             GPS Mode = Hybrid
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a non emergency location request from the protocol module.
+//!                             2. Privacy controller's ProcessNetworkLocationRequest returns RespondNetworkLocationRequest(ERequestAccepted)
+//!                             3. Prococol module injects REF position, assistance data and location request
+//!                             4. Ensure the controller is sent the reference postion
+//!                             5. The privacy controller posts a CancelNetworkLocationRequest() Message (before an AGPS position arrives)
+//!                             6. Ensure that LBS sends out a CancelExternalLocation followed by a RespondLocationRequest(KErrCancel) to the protocol module.
+//!                             7. Ensure that Privacy controller's callback ProcessSessionComplete() contains a KErrCancel.
+//! @SYMTestExpectedResults     Verify Actions 1 to 7.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/4/2008
+//! @SYMAuthor                  JohnM
+//! @SYMCR                      CR1467
+//! @SYMREQ                     REQ10711
+//!                             REQ10746
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_InstallScheduler
+
+// Note: No need to configure AGps module options - default behaviour is just what we require
+
+RUN_TEST_STEP 120 LbsExtendedMTLRTestServer KLbsExtHybridMtlrCancel
+
+END_TESTCASE LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0005 
+
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+RUN_TEST_STEP 020 LbsExtendedMTLRTestServer LbsStep_StopLbs
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_extended_mtlr.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_SetupProtocolStub c:\testdata\configs\lbs_extended_mtlr.ini
+RUN_TEST_STEP 030 LbsExtendedMTLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0006
+//! @SYMTestCaseID              LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0006
+//! @SYMTestCaseDesc            Tests that when an Emergency that Cancels don't prevent the MTLT completing as it would normally.
+//!                             Initiates an MTLR which is accepted by the privacy controller and then before
+//!                             a location request has been sent a CancelNetworkLocationrequest is sent from the PrivacyController.
+//!                             Next a location request is sent and again another CancelNetworkLocationrequest is sent to the PrivacyController.
+//!                             The test checks that the cancels have no effect.
+//!                             .
+//!                             Emergency = On
+//!                             ProtcolModule is ExtendedProtocolModule
+//!                             Response = Accept
+//!                             GPS Mode = Hybrid
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a emergency location request from the protocol module.
+//!                             2. Privacy controller's ProcessNetworkLocationRequest returns RespondNetworkLocationRequest(ERequestAccepted)
+//!                             3. Prococol module injects REF position, assistance data
+//!                             4. The privacy controller posts a CancelNetworkLocationRequest() Message
+//!                             5. Ensure that no CancelExternalLocation is sent to protocol module
+//!                             6. Prococol module injects alocation request
+//!                             7. The privacy controller posts another CancelNetworkLocationRequest() Message
+//!                             8. Ensure that MTLR completes and is NOT cancelled. RespondLocationRequest(KErrNone,AGPSpos) is sent to the protocol module.
+//!                             9. Ensure that Privacy controller's callback ProcessSessionComplete() contains a KErrNone.
+//!                             10. Ensure zero  cancles are sent to AGPS modulethat Privacy controller's callback ProcessSessionComplete() contains a KErrNone.
+//!                             11. Privacy controller's callback ProcessNetworkPositionUpdate() is called twice.Once for REF pos and once forAGPS pos
+//! @SYMTestExpectedResults     Verify Actions 1 to 8.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/4/2008
+//! @SYMAuthor                  JohnM
+//! @SYMCR                      CR1467
+//! @SYMREQ                     REQ10711
+//!                             REQ10746
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_InstallScheduler
+
+// Note: No need to configure AGps module options - default behaviour is just what we require
+RUN_TEST_STEP 120 LbsExtendedMTLRTestServer LbsHybridEmergencyCancel
+ 
+END_TESTCASE LBS-MTLR-EXTENDED-PROTMODULE-CANCEL-0006
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsExtendedMTLRTestServer LbsStep_ResetDefaultAdmin
+
+
+RUN_TEST_STEP 020 LbsExtendedMTLRTestServer LbsStep_StopLbs
+
+

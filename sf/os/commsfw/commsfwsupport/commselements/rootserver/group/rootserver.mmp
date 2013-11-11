@@ -1,0 +1,81 @@
+// Copyright (c) 1997-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// The main server/thread running in the Comms Process.
+// c32rootsrv.dll  The Root Server binary, which is loaded by c32exe.exe.
+// 
+//
+
+/**
+ @file
+*/
+
+#include        <rsconfig.mmh>
+#include        <cflog.mmh>
+
+TARGET          procrootsrv.dll
+TARGETTYPE      DLL
+UID             0x1000008D 0x101F7485
+VENDORID 0x70000001
+
+SOURCEPATH    ../bindmgr
+SOURCE        bm_mgr.cpp
+SOURCE        bm_module.cpp
+SOURCE        bm_task.cpp
+SOURCE        bm_job.cpp
+SOURCE        bm_bindinfo.cpp
+  	  	  	
+SOURCEPATH      ../rootsrv
+SOURCE          rootsrv.cpp rootsess.cpp rootutil.cpp
+
+USERINCLUDE     ../inc
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY	     	euser.lib
+LIBRARY         commsfw.lib
+
+#if defined(WINS)
+DEFFILE			rootserver.def
+#elif defined(GCC32)
+DEFFILE			rootserver.def
+#else
+DEFFILE			rootserver.def
+#endif
+
+START WINS
+BASEADDRESS		0x41100000
+END
+
+
+// Define this to allow alternate thread names to be tried if (re)creating one fails. This is a work-around
+// for cases where a thread has leaked some system resource and so remains as a zombie. The real fix is of
+// course to stop it doing that.
+MACRO C32ROOT_ALLOW_SUBSTITUTE_THREAD_NAMES
+
+// Define this to avoid getting a breakpoint when C32ROOT_ALLOW_SUBSTITUTE_THREAD_NAMES. Usually you want a
+// breakpoint because quite likely other malfunctions will occur (eg a named resource may be jammed) so you
+// want to hear about it.
+//MACRO ESOCKV3_TEMPORARY_PAIN_RELIEF
+
+
+/**
+Define SYMBIAN_ENABLE_NETWORKING_PERFMETRICS to enable the slow, low-volume logging of performance data. 
+Need to recompile COMMSFW + individual client projects
+*/
+//MACRO SYMBIAN_ENABLE_NETWORKING_PERFMETRICS
+
+
+CAPABILITY All -Tcb
+
+SMPSAFE
+

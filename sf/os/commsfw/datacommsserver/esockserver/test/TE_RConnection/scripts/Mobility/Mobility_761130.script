@@ -1,0 +1,88 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-BEARERMOBILITY
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+START_TESTCASE			COMINF-ESOCK-RConnection-Mobility-3001
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-Mobility-3001
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ1060
+//!@SYMAPI
+// TODO_CDG
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+
+// Set up the comms database and start esock in preparation for the test
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\BearerMobility\BearerMobility_001.ced.cfg c:\BearerMobility_001.ced.cfg.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+// Create and connect socketserver and connectionserver instances
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CreateSockSvr
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\BearerMobility\Mobility_761130.ini ConnectSockSvr
+
+// Initialize availability. Make both preferred and backup available
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761130.ini MakePreferredAPAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761130.ini MakeBackupAPAvailable
+
+// Create, open and start on SNAP (connects the preferred)
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761130.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761130.ini StartConn1
+
+// Open a mobility extension and register for events
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761130.ini OpenMobilityExtension1
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761130.ini RegisterForMobilityNotifs_1
+
+// Make preferred unavailable
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761130.ini MakePreferredUnavailable
+
+// Wait for PreferredCarrierAvailable and migrate the carrier
+// Close the connection immediately following the migrate
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CheckMobilityEvents_1
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761130.ini RegisterForMobilityNotifs_2
+RUN_TEST_STEP 100 te_esockteststepsSuite stoprconnectionStep z:\testdata\configs\BearerMobility\Mobility_761130.ini StopConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite migratercommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761130.ini MigrateToPreferredCarrier
+
+// Ensure we receive no mobility notification as the connection has been stopped authoritatively
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CheckMobilityEvents_2
+RUN_TEST_STEP 150 te_esockteststepsSuite CancelMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CancelMobilityNotif
+
+// Close the resources we had open
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CloseMobilityExtension1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\BearerMobility\Mobility_761130.ini CloseSocketSvr
+
+// Clean up
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+END_TESTCASE			COMINF-ESOCK-RConnection-Mobility-3001
+
+
+PRINT Completed NET_BMOBILITY_761130
+
+
+

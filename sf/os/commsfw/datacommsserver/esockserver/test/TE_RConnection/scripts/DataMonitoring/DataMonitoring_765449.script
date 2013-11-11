@@ -1,0 +1,132 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-DATAMON
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i  z:\testdata\configs\DataMonitoring\DataMonitoring.ced.cfg c:\DataMonitoring.ced.cfg
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-3501
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-DataMonitoring-3501
+//!@SYMTestCaseDesc           	Confirm valid reception of data sent notification on one context and then another
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RCommsDataMonitoringApiExt::Open()
+//RCommsDataMonitoringApiExt::RequestDataSentNotification()
+//RCommsDataMonitoringApiExt::Close()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+//Create, open and start a connection explicitly.
+//Open and connect a TCP socket Socket1 on the connection.
+//Open a secondary subconnection SubConn1 on the connection.
+//Set QoS parameters on SubConn1 and add Socket1 to it.
+//Open a second subconnection SubConn2 on the connection (EAttachToDefault).
+//Open a second TCP socket Socket2 on the connection.
+//Open a data monitor DataMonitor1 on SubConn2 and issue a request for data sent on it with ::RequestDataSentNotification()
+//Repeatedly send and receive data on Socket2 checking that the notification doesn�t complete until the threshold it met for SubConn2.
+//Open a second data monitor DataMonitor2 on SubConn1 (the secondary) and issue a request for data sent on it with ::RequestDataSentNotification().
+//Repeatedly send and receive data on Socket1 checking that the notification doesn�t complete until the threshold it met for SubConn1.
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	In each case expect notification only after sending the number of bytes required to meet the trigger threshold.
+
+// Create and connect the socket server required
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\DataMonitoring\765449.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\DataMonitoring\765449.ini ConnectSockSvr1
+
+// Establish connection and start it explicitly with IAP ID
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\DataMonitoring\765449.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openRConnectionStep z:\testdata\configs\DataMonitoring\765449.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite StartRConnectionStep z:\testdata\configs\DataMonitoring\765449.ini StartConn1
+
+// Open a socket (socket1) associated with the connection conn1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765449.ini CreateSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765449.ini OpenSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765449.ini ConnectSock1OnConn1
+
+// Create and open a secondary subconnection on the connection (subconn1)
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconnectionStep z:\testdata\configs\DataMonitoring\765449.ini CreateSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsubconnectionStep z:\testdata\configs\DataMonitoring\765449.ini OpenSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconparameterbundleStep z:\testdata\configs\DataMonitoring\765449.ini CreateParamsForSubConn1
+
+// Set QoS parameters for subconn1 and add socket1 to it
+RUN_TEST_STEP 100 te_esockteststepsSuite initialisersubconparameterfamilyStep z:\testdata\configs\DataMonitoring\765449.ini InitParamFamilyForSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite setrsubconparametersStep z:\testdata\configs\DataMonitoring\765449.ini SetParamsOnSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite addrsockettorsubconnectionStep z:\testdata\configs\DataMonitoring\765449.ini AddSock1ToSubConn1
+
+// Create and open a subconnection subconn2 representing the primary context on conn1 (EAttachToDefault)
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconnectionStep z:\testdata\configs\DataMonitoring\765449.ini CreateSubConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsubconnectionStep z:\testdata\configs\DataMonitoring\765449.ini OpenSubConn2OnConn1
+
+// Open a 2nd socket (socket2) associated with the connection conn1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765449.ini CreateSock2
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765449.ini OpenSock2
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765449.ini ConnectSock2OnSubConn1
+
+// Create a data monitoring extension API for subconn2 (the primary) and issue request for data sent on it
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765449.ini CreateDataMonitorOnSubConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini RequestDataSentSubConn2
+
+// Repeatedly send and receive data on socket2 checking after each that the request has not been completed
+// for subconn2 until it is expected to
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765449.ini SendReceiveSock2_1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini ReceiveSentNotifSubConn2_1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765449.ini SendReceiveSock2_2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini ReceiveSentNotifSubConn2_2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765449.ini SendReceiveSock2_3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini ReceiveSentNotifSubConn2_3
+
+// Create a data monitoring extension API for subconn1 (the secondary) and issue request for data sent on it
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765449.ini CreateDataMonitorOnSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini RequestDataSentSubConn1
+
+// Repeatedly send and receive data on socket1 checking after each that the request has not been completed
+// for subconn1 until it is expected to
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765449.ini SendReceiveSock1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini ReceiveSentNotifSubConn1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765449.ini SendReceiveSock1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini ReceiveSentNotifSubConn1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765449.ini SendReceiveSock1_3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765449.ini ReceiveSentNotifSubConn1_3
+
+// Close the networking entities we used
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765449.ini CloseDataMonitorSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765449.ini CloseDataMonitorSubConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersubconnectionStep z:\testdata\configs\DataMonitoring\765449.ini CloseSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersubconnectionStep z:\testdata\configs\DataMonitoring\765449.ini CloseSubConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765449.ini CloseSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765449.ini CloseSock2
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\DataMonitoring\765449.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\DataMonitoring\765449.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-3501
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+PRINT Completed NET-DATAMON-0449
+
+

@@ -1,0 +1,194 @@
+
+INCLUDE "esockmessages.definition.txt"
+
+CONST KIPProtoRealmId = 0x10281DED
+CONST KIPTranportRealmId = 0x102822DA
+
+ENUM IPProto_MessageId : UINT16
+	EIpProtoCprOpenCloseRoute = 1
+	EConfigureNetwork         = 2
+	ENetworkConfigured        = 3
+
+END ENUM
+
+ENUM IPTranport_Signatures : UINT32
+	ESigPolicyParams	= 3
+END ENUM
+
+ENUM IPTranport_MessageId : UINT16
+	ECFConnPolicyRequest	= 1
+	ECFPolicyRequest	= 2
+	ECFPolicyParams		= 3
+END ENUM
+
+// IPProto
+
+MESSAGE OpenCloseRoute
+    SIGNATURE = TSigNumber
+    MESSAGEID = KIPProtoRealmId:EIpProtoCprOpenCloseRoute
+END MESSAGE
+
+MESSAGE ConfigureNetwork
+    SIGNATURE = TSigVoid
+    MESSAGEID = KIPProtoRealmId:EConfigureNetwork
+END MESSAGE
+
+MESSAGE NetworkConfigured
+    SIGNATURE = TSigNumber
+    MESSAGEID = KIPProtoRealmId:ENetworkConfigured
+END MESSAGE
+
+// IP
+
+SIGNATURE TSigPolicyParams : TSignatureBase
+	TYPEID = KIPTranportRealmId:ESigPolicyParams
+	TAddrUpdate iAddrUpdate
+	Context_NodeId iSrcNodeId
+	Context_NodeId iFlowId
+	UINT32 iAppSid
+END SIGNATURE
+
+MESSAGE IPPolicyParams
+    SIGNATURE = TSigPolicyParams
+    MESSAGEID = KIPTranportRealmId:ECFPolicyParams
+END MESSAGE
+
+// Cpr Link
+
+CONST KESockCprLinkExtMessages = 0x10281DFE
+
+ENUM CprLink_Signatures : UINT32
+//	ECprRetrieveProgress			= 1
+//	ECprRetrieveLastProgressError		= 2
+    ECprRequestServiceNotification		= 3
+    ECprCancelServiceNotification		= 4
+    ECprEnumerateSubConnections			= 5
+    ECprSendIoctl				= 6
+    ECprCancelIoctl				= 7
+    ECprAllSubConnectionNotificationEnable	= 8
+
+    ECprEnumerateConnections			= 9
+
+    ECprGetConnectionSetting			= 10
+
+//    ELegacyDataMonitoringTransferredRequest	= 11
+//  ELegacyDataMonitoringNotificationRequest	= 12
+    ELegacyDataMonitoringNotificationCancel	= 13
+
+//  ELegacySubConnectionActiveRequest		= 14
+    ELegacyCancelSubConnectionActive		= 15
+//	ELegacyEnumerateSubConnections		= 16
+END ENUM
+
+
+SIGNATURE TCprRequestServiceNotification : TSignalBase
+	TYPEID = KESockCprLinkExtMessages:ECprRequestServiceNotification
+	Context_NodeId iSender
+END SIGNATURE
+
+MESSAGE CprRequestServiceNotification
+    SIGNATURE = TCprRequestServiceNotification
+    MESSAGEID = KESockCprLinkExtMessages:ECprRequestServiceNotification
+END MESSAGE
+
+SIGNATURE TCprCancelServiceNotification : TSignalBase
+	TYPEID = KESockCprLinkExtMessages:ECprCancelServiceNotification
+	Context_NodeId iSender
+END SIGNATURE
+
+MESSAGE CprCancelServiceNotification
+    SIGNATURE = TCprCancelServiceNotification
+    MESSAGEID = KESockCprLinkExtMessages:ECprCancelServiceNotification
+END MESSAGE
+
+SIGNATURE TCprEnumerateSubConnections : TCFSigRMessage2Ext
+	TYPEID = KESockCprLinkExtMessages:ECprEnumerateSubConnections
+END SIGNATURE
+
+MESSAGE CprEnumerateSubConnections
+    SIGNATURE = TCprEnumerateSubConnections
+    MESSAGEID = KESockCprLinkExtMessages:ECprEnumerateSubConnections
+END MESSAGE
+
+SIGNATURE TCprSendIoctl : TCFSigRMessage2Ext
+	TYPEID = KESockCprLinkExtMessages:ECprSendIoctl
+END SIGNATURE
+
+MESSAGE CprSendIoctl
+    SIGNATURE = TCprSendIoctl
+    MESSAGEID = KESockCprLinkExtMessages:ECprSendIoctl
+END MESSAGE
+
+SIGNATURE TCprCancelIoctl : TCFSigRMessage2Ext
+	TYPEID = KESockCprLinkExtMessages:ECprCancelIoctl
+END SIGNATURE
+
+MESSAGE CprCancelIoctl
+    SIGNATURE = TCprCancelIoctl
+    MESSAGEID = KESockCprLinkExtMessages:ECprCancelIoctl
+END MESSAGE
+
+SIGNATURE TCprAllSubConnectionNotificationEnable : TSignalBase
+	TYPEID = KESockCprLinkExtMessages:ECprAllSubConnectionNotificationEnable
+END SIGNATURE
+
+MESSAGE CprAllSubConnectionNotificationEnable
+    SIGNATURE = TCprAllSubConnectionNotificationEnable
+    MESSAGEID = KESockCprLinkExtMessages:ECprAllSubConnectionNotificationEnable
+END MESSAGE
+
+SIGNATURE TCprEnumerateConnections : TSignalBase
+	TYPEID = KESockCprLinkExtMessages:ECprEnumerateConnections
+END SIGNATURE
+
+MESSAGE CprEnumerateConnections
+    SIGNATURE = TCprEnumerateConnections
+    MESSAGEID = KESockCprLinkExtMessages:ECprEnumerateConnections
+END MESSAGE
+
+MESSAGE LegacyDataMonitoringNotificationRequest
+    SIGNATURE = TLegacyDataMonitoringNotificationRequest
+    MESSAGEID = KESockCprLinkExtMessages:ELegacyDataMonitoringNotificationRequest
+END MESSAGE
+
+SIGNATURE TLegacyDataMonitoringNotificationCancel : TCFSigRMessage2Ext
+    TYPEID = KESockCprLinkExtMessages:ELegacyDataMonitoringNotificationCancel
+	TDataMonitoringDirection iDirection
+	UINT32 iClientId
+END SIGNATURE
+
+MESSAGE LegacyDataMonitoringNotificationCancel
+    SIGNATURE = TLegacyDataMonitoringNotificationCancel
+    MESSAGEID = KESockCprLinkExtMessages:ELegacyDataMonitoringNotificationCancel
+END MESSAGE
+
+MESSAGE LegacySubConnectionActiveRequest
+    SIGNATURE = TLegacySubConnectionActiveRequest
+    MESSAGEID = KESockCprLinkExtMessages:ELegacySubConnectionActiveRequest
+END MESSAGE
+
+SIGNATURE TLegacyCancelSubConnectionActive : TCFSigRMessage2Ext
+    TYPEID = KESockCprLinkExtMessages:ELegacyCancelSubConnectionActive
+END SIGNATURE
+
+MESSAGE LegacyCancelSubConnectionActive
+    SIGNATURE = TLegacyCancelSubConnectionActive
+    MESSAGEID = KESockCprLinkExtMessages:ELegacyCancelSubConnectionActive
+END MESSAGE
+
+CONST KQoSIpSCprMessagesRealmId = 0x10204307
+
+ENUM EQoSIpSCprMessagesId : UINT32
+	EOpenInternalSocket = 1
+	EInternalSocketOpened = 2
+END ENUM
+
+MESSAGE TOpenInternalSocket
+    SIGNATURE = TSigVoid
+    MESSAGEID = KQoSIpSCprMessagesRealmId:EOpenInternalSocket
+END MESSAGE
+
+MESSAGE TInternalSocketOpened
+    SIGNATURE = TSigVoid
+    MESSAGEID = KQoSIpSCprMessagesRealmId:EInternalSocketOpened
+END MESSAGE

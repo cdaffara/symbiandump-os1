@@ -1,0 +1,639 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         lbsprivfwctrl_api2.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE LbsPrivFwTestServer -SharedData
+PRINT Run LbsPrivFwTestServer
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini CTRL-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_InitializeTestChannel
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-ClOSEDOWN-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-ClOSEDOWN-0001
+//! @SYMTestCaseDesc            Verify Controller shut down message received when there is no outstanding request
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will acknowledge user notification request
+//!                             4. Issue a NotifyLocationRequestL()
+//! @SYMTestExpectedResults     Verify test step received call back(ProcessPrivNotiferCtrlCloseDown) when Controller shut down.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            1/11/2007
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ7996
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsPrivFwTestServer LbsPrivFwStep_CtlrCloseDown  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CTRL-ClOSEDOWN-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-ClOSEDOWN-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0001
+//! @SYMTestCaseDesc            External Privacy Notification Request through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will acknowledge user notification request
+//!                             4. Issue a NotifyLocationRequestL()
+//! @SYMTestExpectedResults     5. Verify that the notification associated with this request is recieved by the controller
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete() ).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8006
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Notify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOTIFY-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0002
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0002
+//! @SYMTestCaseDesc            Multiple External Privacy Notification Request through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will acknowledge user notification request
+//!                             4. Issue multiple (say 3) NotifyLocationRequestL() calls from multiple clients (say 3 so 9 calls in total)
+//! @SYMTestExpectedResults     5. Verify that the notification associated with these requests are recieved by the controller
+//!                             Verify that the sessions associated with these requests terminate ( ProcessRequestComplete() )
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8006, REQ8009, REQ8014
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Notify c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOTIFY-0002
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0002
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0003
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0003
+//! @SYMTestCaseDesc            Multiple External Privacy Notification Request through privacy controller (single client)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will acknowledge user notification request
+//!                             4. Issue multiple (say 3) NotifyLocationRequestL() calls from one client
+//! @SYMTestExpectedResults     5. Verify that the notification associated with these requests are recieved by the controller
+//!                             Verify that the sessions associated with these requests terminate ( ProcessRequestComplete() )
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8006, REQ8009, REQ8014
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Notify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOTIFY-0003
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-NOTIFY-0003
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-VERIFY-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-VERIFY-0001
+//! @SYMTestCaseDesc            Accept External Privacy Verification Request through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will accept user verification request
+//!                             4. Issue a Network Privacy API VerifyLocationRequestL()
+//! @SYMTestExpectedResults     5. Verify that the notification associated with this request is recieved by the controller
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete() ).
+//!                             Verify that 'accept' response is sent to the network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Verify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-VERIFY-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-VERIFY-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-VERIFY-0002
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-VERIFY-0002
+//! @SYMTestCaseDesc            Reject External Privacy Verification Request through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will reject user verification request
+//!                             4. Issue a Network Privacy API VerifyLocationRequestL()
+//! @SYMTestExpectedResults     5. Verify that the notification associated with this request is recieved by the controller
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete() ).
+//!                             Verify that 'reject' response is sent to the network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Verify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-VERIFY-0002
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-VERIFY-0002
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-VERIFY-0003
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-VERIFY-0003
+//! @SYMTestCaseDesc            Multiple External Privacy Verification Request through privacy controller (multiple clients)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will will accept/reject user verification requests
+//!                             4. Issue multiple (say 3) VerifyLocationRequestL() calls from multiple clients (say 3 so 9 calls in total)
+//! @SYMTestExpectedResults     5. Verify that the notifications associated with these requests are recieved by the controller
+//!                             Verify that the sessions associated with these requests terminate ( ProcessRequestComplete() ).
+//!                             Verify that The appropriate accept/reject responses should be sent to network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007, REQ8009, REQ8014
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Verify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-VERIFY-0003
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-VERIFY-0003
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-VERIFY-0004
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-VERIFY-0004
+//! @SYMTestCaseDesc            Multiple External Privacy Verification Request through privacy controller (single client)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will will accept/reject user verification requests
+//!                             4. Issue multiple (say 3) VerifyLocationRequestL() calls from a single client
+//! @SYMTestExpectedResults     5. Verify that the notifications associated with these requests are recieved by the controller
+//!                             Verify that the sessions associated with these requests terminate ( ProcessRequestComplete() ).
+//!                             Verify that The appropriate accept/reject responses should be sent to network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007, REQ8009, REQ8014
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Verify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-VERIFY-0004
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-VERIFY-0004
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-VERIFY-0006
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-VERIFY-0006
+//! @SYMTestCaseDesc            Unlimited Multiple Privacy Verification Request through privacy controller each using a separate clients
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will will accept/reject user verification requests
+//!                             4. Issue unlimited (for practical purposes, use 10) NewPrivacyRequest() calls each from a separate client
+//! @SYMTestExpectedResults     5. Verify that the notifications associated with these requests are received by the controller
+//!                             Verify that the sessions associated with these requests terminate ( ProcessRequestComplete() ).
+//!                             Verify that The appropriate accept/reject responses should be sent to network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/1/2008
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8405
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Verify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-VERIFY-0006
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-VERIFY-0006
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0001
+//! @SYMTestCaseDesc            External Privacy Verification Request with NO timeout strategy (defaults to EDecisionNotAvailable)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Issue a Network Privacy API VerifyLocationRequestL()
+//!                             4. Verify that the notification associated with this request is recieved by the controller
+//! @SYMTestExpectedResults     5. Verify that 'reject' is default response sent to the network ( HandleVerifyComplete )
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete() ).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            4/10/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007
+//RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Timeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-TIMEOUT-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0002
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0002
+//! @SYMTestCaseDesc            External Privacy Verification Request with timeout strategy as 'Accept' through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will 'Accept' for verification request timeout.
+//!                             4. Issue a Network Privacy API VerifyLocationRequestL(CPosNetworkPrivacy::EDecisionAccepted)
+//!                             5. Verify that the notification associated with this request is recieved by the controller
+//!                             6. Do not return a RespondNetworkLocationRequest() call to simulate controller timeout.
+//! @SYMTestExpectedResults     7. Verify that 'accept' response is sent to the network ( HandleVerifyComplete )
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete() ).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Timeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-TIMEOUT-0002
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0002
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0003
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0003
+//! @SYMTestCaseDesc            External Privacy Verification Request with timeout strategy as 'Reject' through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will Reject' for verification request timeout.
+//!                             4. Issue a Network Privacy API VerifyLocationRequestL(...CPosNetworkPrivacy::EDecisionRejected)
+//!                             5. Verify that the notification associated with this request is recieved by the controller
+//!                             6. Do not return a RespondNetworkLocationRequest() call to simulate controller timeout.
+//! @SYMTestExpectedResults     7. Verify that 'reject' response is sent to the network ( HandleVerifyComplete )
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete() ).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Timeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-TIMEOUT-0003
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0003
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0004
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0004
+//! @SYMTestCaseDesc            Cancel Privacy Verification Request (Timeout) after Request completes through privacy controller
+//!                             using NotifyVerificationTimeoutL()
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will accept user verification request
+//!                             4. Issue a Network Privacy API VerifyLocationRequestL(...EDecisionAccepted...) and wait for response
+//!                             5. Issue a Network Privacy API NotifyVerificationTimeoutL() with a RequestDecision set to 'Reject'
+//! @SYMTestExpectedResults     Verification 'accept' response is sent to the network, the NotifyVerificationTimeoutL() will cause
+//!                             the notifier to receive a Notification detailing the network rejection.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8008
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Timeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-TIMEOUT-0004
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0004
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0005
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0005
+//! @SYMTestCaseDesc            Cancel Privacy Verification Request (Timeout) after Request completes through privacy controller
+//!                             using NotifyVerificationTimeoutL() with same RequestDecision as original request.
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will accept user verification request
+//!                             3. Issue a Network Privacy API VerifyLocationRequestL(...EDecisionAccepted...) and wait for response
+//!                             4. Issue a Network Privacy API NotifyVerificationTimeoutL() with a RequestDecision set to 'accept'
+//! @SYMTestExpectedResults     Verification 'accept' response is sent to the network, the NotifyVerificationTimeoutL() will be ignored.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8008
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Timeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-TIMEOUT-0005
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0005
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0006
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0006
+//! @SYMTestCaseDesc            Use the NotifyVerificationTimeoutL() function using a non-existant requestId
+//!                             The requestId used is within the valid internal range so the request will be consumed and complete with KErrNone
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that controller will accept user verification request
+//!                             4. Issue a Network Privacy API NotifyVerificationTimeoutL() with non-existant requestId
+//!                             5. Verify the request is consumed and completes with KErrNone
+//! @SYMTestExpectedResults     Request completes with error code KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/9/2007
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ1660
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+DELAY 35000
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Timeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-TIMEOUT-0006
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0006
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0009
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0009
+//! @SYMTestCaseDesc            Use the NotifyVerificationTimeoutL() function using a non-existant requestId
+//!                             The requestId used is outside the valid internal range so the request will be ignored and complete with KErrNone
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that controller will accept user verification request
+//!                             4. Issue a Network Privacy API NotifyVerificationTimeoutL() with non-existant requestId
+//!                             5. Verify the request completes with KErrNone
+//! @SYMTestExpectedResults     Request completes with error code KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/9/2007
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ1660
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+DELAY 35000
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Timeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-TIMEOUT-0009
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-TIMEOUT-0009
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0001
+//! @SYMTestCaseDesc            External Privacy Verification Request with timeout strategy as 'Reject' through privacy controller
+//!                             user response delayed til after NRH timeout, but before ProcessRequestComplete.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will Reject' for verification request timeout.
+//!                             4. Issue a Network Privacy API VerifyLocationRequestL(...CPosNetworkPrivacy::EDecisionRejected)
+//!                             5. Verify that the notification associated with this request is recieved by the controller
+//!                             6. CAll RespondNetworkLocationRequest() after NRH has timed out.
+//! @SYMTestExpectedResults     7. Verify that 'reject' response is sent to the network ( HandleVerifyComplete )
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete()).
+//!                             RespondNetworkLocationRequest() will be ignored.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            4/10/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 100 LbsPrivFwTestServer KLbsPrivFwStep_Timeout c:\testdata\configs\lbsprivfwunique.ini LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0002
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0002
+//! @SYMTestCaseDesc            External Privacy Verification Request with timeout strategy as 'Reject' through privacy controller
+//!                             user response delayed til after NRH timeout, but after ProcessRequestComplete.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will Reject' for verification request timeout.
+//!                             4. Issue a Network Privacy API VerifyLocationRequestL(...CPosNetworkPrivacy::EDecisionRejected)
+//!                             5. Verify that the notification associated with this request is recieved by the controller
+//! @SYMTestExpectedResults     6. Verify that 'reject' response is sent to the network ( HandleVerifyComplete )
+//!                             Verify that the session associated with this request terminates ( ProcessRequestComplete()).
+//!                             Send RespondNetworkLocationRequest() after ProcessRequestComplete and verify its ignored.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            4/10/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8007
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 100 LbsPrivFwTestServer KLbsPrivFwStep_Timeout c:\testdata\configs\lbsprivfwunique.ini LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0002
+END_TESTCASE                     LBS-PRIVACYFWAPI2-UNIQUE-CTRL-TIMEOUT-0002
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-CANCEL-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-CANCEL-0001
+//! @SYMTestCaseDesc            Cancel Privacy Verification Request (no Timeout) through the Privacy Request API after dialog has been displayed through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will accept user verification request but delay response.
+//!                             4. Issue a Privacy Request API NewPrivacyRequest()
+//!                             5. Wait for the request to be recieved by the controller, analogous to allowing a dialog to be displayed,
+//!                             then issue a Network Privacy API CancelVerifyLocationRequest() with no cancel reason
+//! @SYMTestExpectedResults     Verify Nothing is returned to the network and the cancel request is sent to the controller
+//!                             by the protocol module ( ProcessRequestComplete() )
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8008
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Cancel  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CANCEL-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-CANCEL-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-CANCEL-0002
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-CANCEL-0002
+//! @SYMTestCaseDesc            Cancel Privacy Verification Request (Timeout) through the Privacy Request API after dialog has been displayed through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will accept user verification request
+//!                             4. Issue a Privacy Request API NewPrivacyRequestL(...EDecisionAccept), when the controller recieves it...
+//!                             5. ...simulate timeout by sending Privacy Request API CompleteRequest()
+//!                             with reason set to TimeOut
+//! @SYMTestExpectedResults     Possible race condition means we will see sesion terminated as required,
+//!                             but with either KErrCancel, KErrTimedOut or KErrNone.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8008
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Cancel  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CANCEL-0002
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-CANCEL-0002
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-CANCEL-0004
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-CANCEL-0004
+//! @SYMTestCaseDesc            Cancel Privacy Verification Request (Timeout) through the Privacy Request API after Responce sent to network through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will accept user verification request.
+//!                             4. Issue a Privacy Request API NewPrivacyRequest() and wait for response
+//!                             5. Issue a Privacy Request API CompleteRequest() with KErrTimeOut
+//! @SYMTestExpectedResults     Verification 'accept' response is sent to the network, the CompleteRequest() is ignored.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8008
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Cancel  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CANCEL-0004
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-CANCEL-0004
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-CANCEL-0005
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-CANCEL-0005
+//! @SYMTestCaseDesc            Cancel Privacy Verification Request through the Privacy Request API with Invalid request ID through privacy controller
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Make sure that Controller will accept user verification request.
+//!                             4. Issue a Privacy Request API CompleteRequest() with non-existant requestId
+//!                             5. Verify the request is rejected with appropriate error code
+//! @SYMTestExpectedResults     Request rejected with error code (KErrNotfound?)
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/9/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8008
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Cancel  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CANCEL-0005
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-CANCEL-0005
+
+
+//START_TESTCASE                 LBS-PRIVACYFWAPI2-CTRL-CANCEL-0007
+//! @SYMTestCaseID               LBS-PRIVACYFWAPI2-CTRL-CANCEL-0007
+//! @SYMTestCaseDesc             Cancel Privacy Verification Request (no Timeout) after user response through privacy controller
+//!                              AlanNote: I cannot see a good way of ensuring we hit this race condition - could be relying on trial and error
+//!                              Any help or suggestions please!!!
+//! @SYMREQ                      REQ8008
+//! @SYMPREQ                     PREQ1660
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              1. Set EExternalLocationON in admin settings
+//!                              2. Set Admin settings to use privacy controller
+//!                              3. Make sure that Controller will accept user verification request
+//!                              4. Issue a Network Privacy API VerifyLocationRequestL(...EDecisionAccepted...)
+//!                              5. Issue a Network Privacy API CancelVerifyLocationRequest()  with no cancel reason
+//!                              after user response ( SetResponseType(...) ) but before the response is returned to the network.
+//! @SYMTestExpectedResults      Nothing is returned to the network
+//!                              but a ProcessRequestComplete with cancel reason should be sent to the controller
+//! @SYMTestType                 CIT
+//! @SYMCreationDate             17/9/2007
+//! @SYMAuthor                   peterturner
+//RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Cancel  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CANCEL-0006
+//END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-CANCEL-0007
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-CANCEL-0008
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-CANCEL-0008
+//! @SYMTestCaseDesc            Cancel Privacy Verification Request through the Privacy Request API with no prior privacy requests
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Call the CompleteRequest() function without prior privacy verification requests with a range
+//!                             of invalid request ids.
+//! @SYMTestExpectedResults     Each cancel request is ignored by the LBS privacy network API
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/11/2007
+//! @SYMAuthor                  grahaml
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8008
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Cancel  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CANCEL-0008
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-CANCEL-0008
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-CANCEL-0009
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-CANCEL-0009
+//! @SYMTestCaseDesc            Cancellation of multiple (2) requests with each request coming from a separate client and each client using a different API. Cancellation occurs after dialog has been displayed
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. Ensure that cancel request will trigger after the dialog has been displayed
+//!                             4. Create Network Privacy AND Privacy Request client objects and issue a verification request call from each.
+//!                             5. Issue a cancel request once the dialog has been displayed (for both requests)
+//!                             6. Verify the cancel requests are sent to the notifier
+//! @SYMTestExpectedResults     Nothing is returned to the client but both cancel requests are sent to the notifier
+//! @SYMTestType                CIT
+//! @SYMCreationDate            18/01/2008
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ1660
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsPrivFwTestServer KLbsPrivFwStep_Cancel  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CANCEL-0009
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-CANCEL-0009
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-VERIFYNOTIFY-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-VERIFYNOTIFY-0001
+//! @SYMTestCaseDesc            Multiple External Privacy Verification and Notification Request through Controller
+//!                             (single client)
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use Notifier
+//!                             3. Make sure that Notifier will accept/reject user requests
+//!                             4. Issue multiple (say 3) VerifyLocationRequestL() and multiple (say 3)
+//!                             NotifyLocationRequestL() calls from a single client
+//!                             5. Verify that all the responses are sent to network
+//! @SYMTestExpectedResults     The appropriate accept/reject responses should be sent to network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            4/10/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8006, REQ8007, REQ8014
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_VerifyNotify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-VERIFYNOTIFY-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-VERIFYNOTIFY-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-VERIFYNOTIFY-0002
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-VERIFYNOTIFY-0002
+//! @SYMTestCaseDesc            external Privacy Verification and Notification Request through Controller (SUPL network)
+//!                             (single client)
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use Notifier
+//!                             3. Set Network type to SUPL
+//!                             3. Set controller to return Accept for Verify request.
+//!                             4. Issue VerifyLocationRequestL() and then NotifyLocationRequestL() request.
+//!                             5. Verify response sent to network
+//! @SYMTestExpectedResults     The accept response should be sent to network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            4/10/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8006, REQ8007, REQ8014
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_VerifyNotify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-VERIFYNOTIFY-0002
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-VERIFYNOTIFY-0002
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-CTRL-PRIV-TIMEOUT-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-CTRL-PRIV-TIMEOUT-0001
+//! @SYMTestCaseDesc            Transient Start-up and Close-down, Network Privacy client connection and inactivity timeout
+//!                             Privacy related processes are:
+//!                             Network Request Handler
+//!                             Network Gateway
+//!                             Privacy Controller
+//!                             All other LBS processes should not be running at any time during the test inspection points.
+//!                             Note that LBSRoot is run to start the other processes but should be closed when we do the checks
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use privacy controller
+//!                             3. See which LBS processes are running
+//!                             4. Intialise the Network Privacy client interface and check/set the inactivity timeout value.
+//!                             5. See which LBS processes are running
+//!                             6. Set up and issue a Network Privacy API VerifyLocationRequestL()
+//!                             7. See which LBS processes are running
+//!                             8. Wait for completion of the verification request
+//!                             9. Wait until just before the interface inactivity timeout + the transient closedown period and see which LBS processes are running
+//!                             10. Allow the interface inactivity timeout + transient closedown period to expire and see which LBS processes are running
+//! @SYMTestExpectedResults     1. There should be no LBS processes until the verification request is sent.
+//!                             2. The appropriate privacy processes should be running until the interface inactivity timeout + the transient
+//!                             closedown period has expired.
+//!                             3. At the end of the closedown period, all LBS processes should be stopped
+//! @SYMTestType                CIT
+//! @SYMCreationDate            3/9/2007
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ7994, REQ7995, REQ7996, REQ7997, REQ7998
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsPrivFwTestServer KLbsPrivFwStep_PrivTimeout  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-CTRL-PRIV-TIMEOUT-0001
+END_TESTCASE                     LBS-PRIVACYFWAPI2-CTRL-PRIV-TIMEOUT-0001
+
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_CloseTestChannel

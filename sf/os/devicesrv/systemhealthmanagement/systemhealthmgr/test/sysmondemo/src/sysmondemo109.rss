@@ -1,0 +1,88 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Modified default resource file to test system starter
+// WARNING: Any changes made to this resource file must be
+// checked against the system starter test cases. 
+// Specifically:
+// - AppFailRetry0Ignore
+// 
+//
+
+#include <startup.rh>
+
+
+//
+// ENTRY POINT
+//
+
+// THIS MUST BE THE FIRST RESOURCE. The system relies on
+// this having a resource ID of 1
+
+RESOURCE STARTUP_ENTRY_POINT r_entry_point
+	{
+	entry_point = r_startup_state_non_critical;
+	}
+
+
+//
+// NON-CRITICAL startup state
+//
+RESOURCE STATE_INFO r_startup_state_non_critical
+	{
+	id = EStartupStateNonCritical;
+	name = "Non-critical";
+	command_list = r_non_critical_commands;
+	next = 0;	// No more state transitions
+	}
+
+RESOURCE COMMAND_ARRAY r_non_critical_commands
+	{
+	commands =
+		{
+		START_AMA_STARTER
+			{
+
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\SystemAMS.exe";
+			args = "-boot";
+			fail_on_error = EIgnoreCommandFailure;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\swidaemon.exe";
+			start_method = EWaitForStart;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\cntsrv.exe";
+			args = "-nontransient";
+			fail_on_error = 0;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\agsvexe.exe";
+			args = "-nontransient";
+			fail_on_error = 0;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\fotaagent.exe";
+			fail_on_error = EIgnoreCommandFailure;
+			}
+		};
+	}
+
+

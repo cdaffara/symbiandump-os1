@@ -1,0 +1,338 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Secondary PDP-context UMTS Driver integration tests using NIFMAN
+//
+
+//! @file TE_SpudNetworkSide_nifman.script
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_nifman_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_nifman_config.txt c:\config.txt
+
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSideLoopbackCSY.ini c:\loopback.ini
+
+
+LOAD_SUITE TE_SpudNetworkSide
+
+// TestSection suffix numbers correspond to SIM TSY's test section numbers. i.e. PrimaryActivationFails201 uses SIM TSYs test201 
+
+//
+// Configure CommDB for the tests using RawIP as lower NIF.
+//
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\TestData\Configs\TE_SpudNetworkSide_nifman.xml
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+//
+// Nifman stops SPUD when there is just the primary PDP context.
+//
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1001
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1001
+//! @SYMTestCaseDesc Stop the interface when SPUD is deleting the primary context as a result of lower NIF LinkLayerDown.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. Write to the primary, such that the lower NIF errors our on the read and report LinkLayerDown. Spud issues deletion request on the primary. When the request is outstanding, RConnection::Stop(EStopNormal) is called on Spud.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app on Spud.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryDeletionInterfaceStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopPrimaryDeleting1
+DELAY 3000
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+END_TESTCASE            NET-Spud-NetworkSide-1001
+
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1002
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1002
+//! @SYMTestCaseDesc Stop the interface using Idle timeout, when SPUD is deleting the primary context as a result of lower NIF LinkLayerDown.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. Write to the primary, such that the lower NIF errors our on the read and report LinkLayerDown. Spud issues deletion request on the primary. When the request is outstanding, Nifman idle timeout stops the Spud with KErrTimedOut.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrTimedOut is received by the test app on Spud.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 300 TE_SpudNetworkSide CSpudPrimaryDeletionInterfaceStop z:\testdata\configs\te_spudNetworkSide_nifman.ini TimeoutStopPrimaryDeleting1
+DELAY 3000
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+END_TESTCASE            NET-Spud-NetworkSide-1002
+
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1003
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1003
+//! @SYMTestCaseDesc Stop (EStopNormal) the interface when the primary context is suspended.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. SIM TSY suspends the primary. RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopOnPrimarySuspended1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1003
+
+START_TESTCASE          NET-Spud-NetworkSide-1004
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1004
+//! @SYMTestCaseDesc Stop (EStopNormal) the interface when the primary context is being deactivated.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. SIM TSY changes the state of the primary to Deactivating. RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopOnPrimaryDeactivating1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1004
+
+START_TESTCASE          NET-Spud-NetworkSide-1005
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1005
+//! @SYMTestCaseDesc Stop (EStopNormal) the interface when the primary context is inactive.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. SIM TSY changes the state of the primary to Inactive. RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app on Spud.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopOnPrimaryInactive1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1005
+
+START_TESTCASE          NET-Spud-NetworkSide-1006
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1006
+//! @SYMTestCaseDesc Stop (EStopAuthoritative) the interface when the primary context is suspended.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. SIM TSY changes the state of the primary to Suspended. RConnection::Stop(EStopAuhoritative) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrConnectionTerminated is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini AuthStopOnPrimarySuspended1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1006
+
+START_TESTCASE          NET-Spud-NetworkSide-1007
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1007
+//! @SYMTestCaseDesc Stop (EStopAuthoritative) the interface when the primary context is being deactivated.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. SIM TSY changes the state of the primary to Deactivating. RConnection::Stop(EStopAuthoritative) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrConnectionTerminated is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini AuthStopOnPrimaryDeactivating1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1007
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1008
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1008
+//! @SYMTestCaseDesc Stop (EStopAuthoritative) the interface when the primary context is inactive.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. SIM TSY changes the state of the primary to Inactive. RConnection::Stop(EStopAuthoritative) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrConnectionTerminated is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini AuthStopOnPrimaryInactive1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1008
+
+START_TESTCASE          NET-Spud-NetworkSide-1009
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1009
+//! @SYMTestCaseDesc Stop (EStopAuthoritative) the interface when the primary context is the only context, and is active.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. RConnection::Stop(EStopAuthoritative) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrConnectionTerminated is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceStop z:\testdata\configs\te_spudNetworkSide_nifman.ini PrimaryOnlyAuthoritativeStop1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1009
+
+START_TESTCASE          NET-Spud-NetworkSide-1010
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1010
+//! @SYMTestCaseDesc Stop (EStopNormal) the interface when the primary context is the only context, and is active.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Start Spud & successfully activate the primary context. SIM TSY changes the state of the primary to Inactive. RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudPrimaryInterfaceStop z:\testdata\configs\te_spudNetworkSide_nifman.ini PrimaryOnlyNormalStop1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1010
+
+
+
+//
+// Nifman stops SPUD where there is a primary and a secondary context.
+//
+
+
+// ****** GUQoS crashes ESock.
+START_TESTCASE          NET-Spud-NetworkSide-1011
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1011
+//! @SYMTestCaseDesc Stop the interface when SPUD is activating the secondary context.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Open a socket, set QoS and trigger 2ndary context activation. When activation request on SIM TSY is outstanding, RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT 
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudSecondaryStartingStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopSecondaryActivating1
+DELAY 3000
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+END_TESTCASE            NET-Spud-NetworkSide-1011
+
+
+// ****** GUQoS crashes ESock.
+START_TESTCASE          NET-Spud-NetworkSide-1012
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1012
+//! @SYMTestCaseDesc Stop the interface when SPUD is setting TFT on the secondary context.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Open a socket, set QoS and trigger 2ndary context creation. When setting TFT request on SIM TSY is outstanding, RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT 
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudSecondaryStartingStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopSecondarySettingTFT25
+DELAY 3000
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+END_TESTCASE            NET-Spud-NetworkSide-1012
+
+
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1013
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1013
+//! @SYMTestCaseDesc Trigger GUQoS deletion request due to timeout, after stop was called by Nifman.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Open a socket, set QoS and sucessfully activate the 2ndary context. Close the socket and wait. RConnection::Stop(EStopNormal) is called. Spud deletes the 2ndary.  When the deletion request on SIM TSY is outstading, GUQoS deletes the secondary due to its timeout. 
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudSecondaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini GUQoSDeleteOnNormalStop1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1013
+
+
+// ****** GUQoS crashes ESock.
+START_TESTCASE          NET-Spud-NetworkSide-1014
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1014
+//! @SYMTestCaseDesc Stop the interface when SPUD is deleting the 2ndary context as a result of lower NIF LinkLayerDown.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Open a socket, set QoS and sucessfully activate the 2ndary context. Trigger 2ndary's lower NIF to signal LinkLayerDown. Spud deletes the 2ndary. When the deletion request on SIM TSY is outstading,  RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudSecondaryLowerNifDownStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopSecondaryLowerNifDown1
+DELAY 3000
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+END_TESTCASE            NET-Spud-NetworkSide-1014
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1015
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1015
+//! @SYMTestCaseDesc Stop the interface when SPUD is deleting the 2ndary context following a GUQoS deletion request due to timeout.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Open a socket, set QoS and sucessfully activate the 2ndary context. Close the socket. GUQoS deletes the secondary after a timeout. When the deletion request on SIM TSY is outstading,  RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudSecondaryInterfaceEventStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopGUQoSDeletingSecondary1
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1015
+
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1016
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1016
+//! @SYMTestCaseDesc Stop (EStopAuthoritative) the interface when the primary & 2ndary contexts are active.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Successfully activate the primary and the secondary contexts. RConnection::Stop(EStopAuthoritative) is called.
+//! @SYMTestExpectedResults EQoSEventConfirm is received. Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrConnectionTerminated is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT 
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudSecondaryInterfaceStop z:\testdata\configs\te_spudNetworkSide_nifman.ini AuthStopSecondaryActive1
+DELAY 3000
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+END_TESTCASE            NET-Spud-NetworkSide-1016
+
+START_TESTCASE          NET-Spud-NetworkSide-1017
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1017
+//! @SYMTestCaseDesc Stop (EStopNormal) the interface when the primary & 2ndary contexts are active.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Successfully activate the primary and the secondary contexts. RConnection::Stop(EStopNormal) is called.
+//! @SYMTestExpectedResults EQoSEventConfirm is received. Spud shuts down gracefully, does not crash/hang, etc. KLinkLayerClosed with KErrCancel is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT 
+RUN_TEST_STEP 180 TE_SpudNetworkSide CSpudSecondaryInterfaceStop z:\testdata\configs\te_spudNetworkSide_nifman.ini NormalStopSecondaryActive1
+DELAY 3000
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+END_TESTCASE            NET-Spud-NetworkSide-1017
+
+
+
+
+
+// We must make sure SIM TSY fails when opening RPhone. We get rid of the config file.
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+
+
+START_TESTCASE          NET-Spud-NetworkSide-1018
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1018
+//! @SYMTestCaseDesc Leave when trying to construct SPUD.  
+//! @SYMFssID NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions  Cause RPhone::Open to fail, resulting CSpudMan construction to Leave with KErrNone.
+//! @SYMTestExpectedResults Spud start fails gracefully. No crash in ESock. KLinkLayerClosed with KErrNotFound is received by the test app. 
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_nifman.ini LeaveInSpudCreation
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1018
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+RUN_UTILS  DeleteFile c:\loopback.ini
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+

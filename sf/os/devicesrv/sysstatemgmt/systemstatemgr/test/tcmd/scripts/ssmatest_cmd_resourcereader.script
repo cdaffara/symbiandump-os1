@@ -1,0 +1,127 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run ResourceReader tests
+
+LOAD_SUITE tcmd_server
+
+START_TESTCASE 			DEVSRVS-SSMA-CMD-0016
+//! @SYMTestCaseID 		DEVSRVS-SSMA-CMD-0016
+//! @SYMPREQ 			PREQ1871
+//! @SYMREQ			REQ9141 REQ9154 REQ9139
+//! @SYMTestCaseDesc		Check behaviour of class CSsmCommandListResourceReader
+//! @SYMTestType		UT	
+//! @SYMTestPriority		Critical
+//! @SYMTestActions		TestConstructCases() The test will perform calls to the construct methods of the CSsmCommandListResourceReader class in different scenarios. 
+//! 					1.Call NewL passing KNullDesC.
+//! 					2.Simple valid construct followed by delete.
+//! 					3.Attempt to construct reader under low memory conditions
+//! 					4.Check out of memory conditions during command list reader init/prepare.
+//!				TestInitialiseCases() The test will perform calls to the initialise methods of the CSsmCommandListResourceReader class in different scenarios. 
+//!					1.Initialise after passing a bad path to NewL, and a directory with no command list resource files
+//!					2.Call Init twice using the same TRequestStatus object without waiting for the first init to complete.
+//!					3.Successful init followed by another call to Init should not give error.
+//!					4.Init using a resource file with invalid version number.
+//!					5.Prepare state list on uninitialised reader.
+//!					6.Prepare swp list on uninitialised reader.
+//!					7.Get command list on uninitialised reader.
+//!					8.Prepare state list on uninitialised reader (after init fail).
+//!					9.Delete after 1 Init RunL, delete after 2 Init RunLs.
+//!					10.Cancel init before it can RunL, after 1 RunL, and after 2 RunLs.
+//!					11.Cancel init before it can RunL. Then init again without cancel.
+//!					12.Init using 1 resource file that contains an empty mapping array.
+//!					13.Init using 1 resource file whose mapping LLINK is zero.
+//!				TestPrepareCases() The test will perform calls to the prepare methods of the CSsmCommandListResourceReader class in different scenarios. 
+//!					1.Delete immediately after prepare, after 1 prepare RunL, and after 2 prepare RunLs.
+//!					2.Delete after 3 RunLs
+//!					3.Check command list after a prepare and after IsCommandListReady.
+//!					4.Cancel prepare before it can RunL, after only 1 RunL and after 2 RunL
+//!					5.Cancel once fully prepared.
+//!					6.Cancel during prepare followed by another prepare.
+//!					7.Prepare empty command list resource.
+//!					8.Prepare 2 command lists one after the other.
+//!					9.Prepare for ID not found, then prepare for an ID found.
+//!					10.Prepare, cancel, then IsCommandListReady.
+//!					11.Use factory callback to leave during list prepare, then prepare again.
+//!					12.Init, cancel before init starts processing.
+//!					13.Check ConditionalCommandAllowedL can influence which cmds get constructed.
+//!				TestCancelCases() The test will perform calls to the InitialiseCancel methods of the CSsmCommandListResourceReader class in different scenarios. 
+//!					1.2 cancels one after the other on uninitialised reader
+//!					2.2 cancels one after the other on initialised reader
+//!				TestDelayCases() The test will perform calls to check for the inter-command delay value of the CSsmCommandListResourceReader class in different scenarios. 
+//!					1.Check default delay value is read from resource ok.
+//!					2.Check specific delay value is read from resource ok. Use a "real" reader and command list to check the command list contains the correct value.
+//!				TestGetCases() The test will perform calls to the get methods of the CSsmCommandListResourceReader class in different scenarios. 
+//!					1.GetCommandList before init.
+//!					2.Get cmd list after prepare, then get again.
+//!					3.Prepare ok, then start prepare again, but before complete, try to get.
+//!					4.Get cmd list after prepare.
+//!					5.Check 2 resource files are loaded by requesting a list from each.
+//!					6.Check the expected command type is readable by the RResourceReader provided to ConstructCommandFromResourceLC via the TSsmCommandParameters parameter.
+//!					7.Get command list ids before init.
+//!					8.Check calling GetCommandListIdsL passing a non-empty array.
+//!					9.Check GetCommandListIdsL returns the correct command list ids
+//! @SYMTestExpectedResults 	Expected results are:
+//! 					1.NewL leaves with KErrArgument
+//! 					2.Should not leave or leak memory
+//! 					3.Should not leave or leak memory
+//! 					4.Should not leave or leak memory
+//!				Expected results are:
+//!					1.KErrNotFound 
+//!					2.2nd init should panic with EInUse1. The only option for the resource reader when this happens is to panic, as it cannot return the error from the second init using the first init's request status. 
+//!					3.KErrNone
+//!					4.KErrCorrupt
+//!					5.Panic with ENotInitialized
+//!					6.Panic with ENotInitialized2
+//!					7.Panic with ENoPreparedCommandList
+//!					8.Panic with ENotInitialized
+//!					9.Both complete with KErrCancel
+//!					10.Completes with KErrCancel and no error/mem leak on delete.
+//!					11.First completes with KErrCancel. Second completes with KErrNone.
+//!					12.KErrNotFound.
+//!					13.KErrNotFound.					
+//!				Expected results are:
+//!					1.All three cases complete with KErrCancel.
+//!					2.Prepare should be completed with KErrNone, and deleting shouldn't complete again with KErrCancel.
+//!					3.Command list is "ready" after a prepare and no longer ready after calling IsCommandListReady.
+//!					4.All three cases complete with KErrCancel.
+//!					5.KErrNone, as request has already completed.
+//!					6.First prepare completes with KErrCancel. Second one with KErrNone.
+//!					7.Returns an empty command list.
+//!					8.Both are returned by GetCommandList without error.
+//!					9.The notFound doesn't stop further prepares being attempted.
+//!					10.Returns false.
+//!					11.First time returns KErrGeneral, then KErrNone.
+//!					12.Prepare should panic with ENotInitialised.
+//!					13.All calls are made as expected.	
+//!				Expected results are:
+//!					1.Calls complete with no error reported or panic. No action taken.
+//!					2.KErrNone. No action is taken as no operation in progress.
+//!				In both cases, the expected delay value matches with the value set.					
+//!				Expected results are:
+//!					1.Panics with ENoPreparedCommandList.
+//!					2.Panics with ENoPreparedCommandList.
+//!					3.Panics with ENoPreparedCommandList.
+//!					4.KErrNone
+//!					5.State and swp are passed to factory method correctly.
+//!					6.All calls completed with KErrNone.
+//!					7.Panics with ENotInitialized3.
+//!					8.Leaves with KErrArgument.
+//!					9.Leave or not with KErrNotFound depending on whether id exists.
+RUN_TEST_STEP 100 tcmd_server ResourceReader
+END_TESTCASE 			DEVSRVS-SSMA-CMD-0016
+
+
+

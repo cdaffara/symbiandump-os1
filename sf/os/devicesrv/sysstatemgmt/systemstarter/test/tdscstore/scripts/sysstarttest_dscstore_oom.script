@@ -1,0 +1,88 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// write access available in z:. These tests have to disable the log in order to 
+// avoid an infinite loop.
+// Check if OOM conditions are handled correctly.
+// (Test case keeps the backup of old database and restore it at the end of the test case.)
+// 
+//
+
+//! @file
+//! @test
+//! @internalComponent - Internal Symbian test code 
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0004
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			CIT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	testexecute.ini file must be present in the c:\system\data otherwise there is no
+//! @SYMTestCaseDesc		Tests the out of memory conditions (OOM).
+//! @SYMTestActions			Add few Dsc Items into the database, and fail the memory allocation.
+//! @SYMTestExpectedResults 	All the basic DSC APIs should handle out of memory conditions correctly.
+
+PRINT Run DEVSRVS-APPFWK-DSCSTORE-0004 test 
+
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_backup.script
+
+RUN_UTILS MkDir c:\system\
+RUN_UTILS MkDir c:\system\data\
+RUN_UTILS CopyFile z:\system\data\testexecute.ini c:\system\data\testexecute.ini
+RUN_UTILS MakeReadWrite c:\system\data\testexecute.ini
+
+LOAD_SUITE tdscstore_server
+
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0004
+ 
+//! This test is commented out because it hangs on h4 due to limitations in TEF... 
+//! RUN_UTILS MkDir 			c:\tdscstore_avoid_connection_in_preamble_token\
+//! RUN_TEST_STEP !OOM		100 tdscstore_server OpenDscDatabase
+//! RUN_UTILS DeleteDirectory 	c:\tdscstore_avoid_connection_in_preamble_token\
+RUN_TEST_STEP 			100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !OOM 		100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+RUN_TEST_STEP 			100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_2
+RUN_TEST_STEP 			100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_3
+RUN_TEST_STEP 			100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_5
+
+RUN_TEST_STEP !OOM		100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_4
+RUN_TEST_STEP !OOM		100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_6
+RUN_TEST_STEP !OOM		100 tdscstore_server EnumDscItems	z:\sysstarttest\ini\tdscstore_api.ini Dsc_1_NoWait
+
+RUN_TEST_STEP !OOM		100 tdscstore_server ReadDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+RUN_TEST_STEP !OOM		100 tdscstore_server UpdateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+RUN_TEST_STEP !OOM		100 tdscstore_server ReadDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+
+RUN_TEST_STEP !OOM		100 tdscstore_server DscItemExist 	z:\sysstarttest\ini\tdscstore_api.ini AMC_4
+RUN_TEST_STEP 			100 tdscstore_server DscItemExist 	z:\sysstarttest\ini\tdscstore_api.ini AMC_6
+
+RUN_TEST_STEP !OOM		100 tdscstore_server DeleteDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+RUN_TEST_STEP 			100 tdscstore_server DeleteDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_2
+RUN_TEST_STEP 			100 tdscstore_server DeleteDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_3
+RUN_TEST_STEP 			100 tdscstore_server DeleteDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_4
+RUN_TEST_STEP 			100 tdscstore_server DeleteDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_5
+RUN_TEST_STEP !OOM		100 tdscstore_server DeleteDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_6
+
+RUN_TEST_STEP !OOM		100 tdscstore_server DscItemCount	z:\sysstarttest\ini\tdscstore_api.ini Dsc_11
+RUN_TEST_STEP 			100 tdscstore_server DscItemCount	z:\sysstarttest\ini\tdscstore_api.ini Dsc_21
+
+RUN_TEST_STEP !OOM		100 tdscstore_server DeleteDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server DeleteDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+
+RUN_TEST_STEP !error=-1 100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-1 100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0004
+
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_restore.script

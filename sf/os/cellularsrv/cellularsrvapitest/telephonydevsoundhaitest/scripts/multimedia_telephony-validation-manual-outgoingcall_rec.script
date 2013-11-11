@@ -1,0 +1,333 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName multimedia_telephony-validation-manual-outgoingcall_rec
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+// 
+// Tests all public elements of the RMobileCall, CMMFDevSound, Crepository, CAudioInput
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: RMobileCall, CMMFDevSound, Crepository, CAudioInput
+// Voice Call tests are intended for semi-automatic testing because dialing/ answering calls require user interaction.
+//
+
+
+
+LOAD_SUITE t_etelmm_devsound
+
+
+
+
+
+START_TESTCASE MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-OUTGOINGCALL_REC-0001
+
+//!@SYMTestCaseID		MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-OUTGOINGCALL_REC-0001
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref}; const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref}; const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                RCall::Dial(TRequestStatus{ref} aStatus,const TTelNumberC{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities )
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::Stop()
+//!@SYMAuthor			jpacho
+//!@SYMCreationDate		22/9/08
+//!@SYMTestCaseDesc		AA_Audio routing - MO CS call with different output preferences
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer = telserver1; Phone = 0)
+//!                3. Create first DevSound instance
+//!                4. Create second DevSound instance
+//!                5. Create AudioInput instance(DevSoundInstanceName=devsound1)
+//!                6. Create Telephony routing instance
+//!                7. Get available outputs
+//!                8. Set audio input  (AudioInput=Input_DefaultMic)
+//!                9. Get current output
+//!                10. Set telephony output (Output=EEarPiece)
+//!                11. Open line (Line = Voice1;RMobilePhone=mobilephone1)
+//!                12. Open new call (RMobileLine=mobileline1; Call = 1)
+//!                13. Get VoiceCall capabilities for the call (RMobileLine=mobileline1; Capabilities = VoiceCall; Call = 1)
+//!                14. Dial (RMobileLine=mobileline1; Call = 1; PhoneNumber = {PHONENUMBERS, PhoneNumber1}; CallTimeout = 10)
+//!                15. Initialize DevSound instance 2 (InitializeMode =EInitializeHwDeviceMode; Mode = EMMFStatePlaying; FourCC=MP3)
+//!                16. Initialize DevSound instance 1 (InitializeMode =EInitializeHwDeviceMode; Mode = EMMFStateRecording; FourCC=AMR)
+//!                17. Set priority settings DS instance 2 (Priority = {Priority, PriorityAudioPlayback}; Preference = {PriorityPreference, PriorityPreferenceAudioPlayback}; PriorityState=EMMFStatePlaying)
+//!                18. Set priority settings DS instance 1 (Priority = {Priority, PriorityVoipCallUp}; Preference = {PriorityPreference, PriorityPreferenceVoipCallUp}; PriorityState=EMMFStateRecording)
+//!                19. Get DS instance 2 capabilities
+//!                20. Get DS instance 1 capabilities
+//!                21. Set Configuration DS instance 2 (Channels = EMMFStereo; Rate = EMMFSampleRate44100Hz)
+//!                22. Set Configuration DS instance 1 (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                23. Open file  for playing (Filename = {drive,mmc}\multimedia\mmf\devsound\mp3\MP3_44.1k_128kbps_st_Test3.mp3)
+//!                24. ReplaceFile for recording (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\RecVioceCall1.amr)
+//!                25. Start record in DevSound instance 1
+//!                26. Start playing in DevSound instance 2
+//!                27. Get current output
+//!                28. Set telephony output 10s  (Output=ELoudSpeaker)
+//!                29. Get current output
+//!                30. Set telephony output 10s  (Output=EEarPiece)
+//!                31. Stop record
+//!                32. Stop play
+//!                33. Close file recorded
+//!                34. Close file played
+//!                35. Get call duration (RMobileLine=mobileline1; Call = 1)
+//!                36. Hang up (RMobileLine=mobileline1; Call = 1)
+//!                37. Close call (RMobileLine=mobileline1; Call = 1)
+//!                38. Close line
+//!                39. Close mobile phone
+//!                40. Close telephomy server
+//!                41.  Get currrent output
+//!                42. Set telephony output (Output=ENotActive)
+//!                43. Destroy telephony routing instance
+//!                44. Destroy DevSound instance 1
+//!                45. Destroy DevSound instance 2
+//!@SYMTestStatus		On Work
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is dialed, after answered starts the play and the record to the end, later stops the play and record and finally the call is hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	300	t_etelmm_devsound	\mixed_technology\telephony_devsound\multimedia_telephony-validation-manual-outgoingcall_rec.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CMMFDevSound		devsound2
+		CREATE_OBJECT	RTelServer		telserver1
+		CREATE_OBJECT	RMobilePhone		mobilephone1
+		CREATE_OBJECT	RMobileLine		mobileline1
+		CREATE_OBJECT	RMobileCall		mobilecall1
+		CREATE_OBJECT	CAudioInput		audioinput1
+		CREATE_OBJECT	CTelephonyAudioRouting		telephonyaudiorouting1
+		COMMAND		telserver1		Connect
+		COMMAND		mobilephone1		Open			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-Open_command02
+		COMMAND		devsound1		NewL
+		COMMAND		devsound2		NewL
+		COMMAND		audioinput1		NewL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-NewL_command05
+		COMMAND		telephonyaudiorouting1		NewL
+		COMMAND		telephonyaudiorouting1		AvailableOutputs
+		COMMAND		audioinput1		SetAudioInput			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetAudioInput_command08
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetOutputL_command10
+		OUTSTANDING
+		COMMAND		mobileline1		Open			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-Open_command11
+		COMMAND		mobilecall1		OpenNewCall			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-OpenNewCall_command12
+		COMMAND		mobilecall1		GetCaps			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-GetCaps_command13
+		COMMAND		mobilecall1		Dial			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-Dial_command14
+		OUTSTANDING
+		COMMAND		devsound2		InitializeL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-InitializeL_command15
+		OUTSTANDING
+		COMMAND		devsound1		InitializeL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-InitializeL_command16
+		OUTSTANDING
+		COMMAND		devsound2		SetPrioritySettings			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetPrioritySettings_command17
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetPrioritySettings_command18
+		COMMAND		devsound2		Capabilities
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound2		SetConfigL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetConfigL_command21
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetConfigL_command22
+		COMMAND		devsound2		OpenFile			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-OpenFile_command23
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-ReplaceFile_command24
+		COMMAND		devsound1		RecordInitL
+		COMMAND		devsound2		PlayInitL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-PlayInitL_command26
+		OUTSTANDING
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetOutputL_command28
+		OUTSTANDING
+		DELAY  10000000 
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetOutputL_command30
+		OUTSTANDING
+		DELAY  10000000 
+		COMMAND		devsound1		Stop
+		COMMAND		devsound2		Stop
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound2		CloseFile
+		COMMAND		mobilecall1		GetCallDuration			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-GetCallDuration_command35
+		COMMAND		mobilecall1		HangUp			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-HangUp_command36
+		OUTSTANDING
+		COMMAND		mobilecall1		Close			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-Close_command37
+		COMMAND		mobileline1		Close
+		COMMAND		mobilephone1		Close
+		COMMAND		telserver1		Close
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0001-0001-SetOutputL_command42
+		OUTSTANDING
+		COMMAND		telephonyaudiorouting1		~
+		COMMAND		devsound1		~
+		COMMAND		devsound2		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-OUTGOINGCALL_REC-0001
+
+
+
+
+START_TESTCASE MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-OUTGOINGCALL_REC-0002
+
+//!@SYMTestCaseID		MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-OUTGOINGCALL_REC-0002
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref}; const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref}; const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                RCall::Dial(TRequestStatus{ref} aStatus,const TTelNumberC{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities )
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::Stop()
+//!@SYMAuthor			jpacho
+//!@SYMCreationDate		22/9/08
+//!@SYMTestCaseDesc		AA_Audio routing - MO CS call with different output preferences when accessory is used
+//!@SYMTestActions
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer = telserver1; Phone = 0)
+//!                3. Create first DevSound instance
+//!                4. Create second DevSound instance
+//!                5. Create AudioInput instance(DevSoundInstanceName=devsound1)
+//!                6. Create Telephony routing instance
+//!                7. Get available outputs
+//!                8. Set audio input  (AudioInput=Input_DefaultMic)
+//!                9. Get current output
+//!                10. Set telephony output (Output=EHeadSet)
+//!                11. Open line (Line = Voice1;RMobilePhone=mobilephone1)
+//!                12. Open new call (RMobileLine=mobileline1; Call = 1)
+//!                13. Get VoiceCall capabilities for the call (RMobileLine=mobileline1; Capabilities = VoiceCall; Call = 1)
+//!                14. Dial (RMobileLine=mobileline1; Call = 1; PhoneNumber = {PHONENUMBERS, PhoneNumber1}; CallTimeout = 10)
+//!                15. Initialize DevSound instance 2 (InitializeMode =EInitializeHwDeviceMode; Mode = EMMFStatePlaying; FourCC=MP3)
+//!                16. Initialize DevSound instance 1 (InitializeMode =EInitializeHwDeviceMode; Mode = EMMFStateRecording; FourCC=AMR)
+//!                17. Set priority settings DS instance 2 (Priority = {Priority, PriorityAudioPlayback}; Preference = {PriorityPreference, PriorityPreferenceAudioPlayback}; PriorityState=EMMFStatePlaying)
+//!                18. Set priority settings DS instance 1 (Priority = {Priority, PriorityVoipCallUp}; Preference = {PriorityPreference, PriorityPreferenceVoipCallUp}; PriorityState=EMMFStateRecording)
+//!                19. Get DS instance 2 capabilities
+//!                20. Get DS instance 1 capabilities
+//!                21. Set Configuration DS instance 2 (Channels = EMMFStereo; Rate = EMMFSampleRate44100Hz)
+//!                22. Set Configuration DS instance 1 (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                23. Open file  for playing (Filename = {drive,mmc}\multimedia\mmf\devsound\mp3\MP3_44.1k_128kbps_st_Test3.mp3)
+//!                24. ReplaceFile for recording (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\RecVioceCall2.amr)
+//!                25. Start record in DevSound instance 1
+//!                26. Start playing in DevSound instance 2
+//!                27. Get current output
+//!                28. Set telephony output 10s  (Output=ELoudSpeaker)
+//!                29. Get current output
+//!                30. Se telephony output  10s (Output=EHeadSet)
+//!                31. Get current output
+//!                32. Set telephony output 10s  (Output=EEarPiece)
+//!                33. Get current output
+//!                34. Set telephony output  10s (Output=EHeadSet)
+//!                35. Stop record
+//!                36. Stop play
+//!                37. Close file recorded
+//!                38. Close file played
+//!                39. Get call duration (RMobileLine=mobileline1; Call = 1)
+//!                40. Hang up (RMobileLine=mobileline1; Call = 1)
+//!                41. Close call (RMobileLine=mobileline1; Call = 1)
+//!                42. Close line
+//!                43. Close mobile phone
+//!                44. Close telephomy server
+//!                45. Get current output
+//!                46. Set telephony output (Output=ENotActive)
+//!                47. Destroy telephony routing instance
+//!                48. Destroy Audio Input instacnce
+//!                49. Destroy DevSound instance 1
+//!                50. Destroy DevSound instance 2
+//!@SYMTestStatus		On Work
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is dialed, after answered starts the play and the record to the end, later stops the play and record and finally the call is hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	300	t_etelmm_devsound	\mixed_technology\telephony_devsound\multimedia_telephony-validation-manual-outgoingcall_rec.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CMMFDevSound		devsound2
+		CREATE_OBJECT	RTelServer		telserver1
+		CREATE_OBJECT	RMobilePhone		mobilephone1
+		CREATE_OBJECT	RMobileLine		mobileline1
+		CREATE_OBJECT	RMobileCall		mobilecall1
+		CREATE_OBJECT	CAudioInput		audioinput1
+		CREATE_OBJECT	CTelephonyAudioRouting		telephonyaudiorouting1
+		COMMAND		telserver1		Connect
+		COMMAND		mobilephone1		Open			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-Open_command02
+		COMMAND		devsound1		NewL
+		COMMAND		devsound2		NewL
+		COMMAND		audioinput1		NewL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-NewL_command05
+		COMMAND		telephonyaudiorouting1		NewL
+		COMMAND		telephonyaudiorouting1		AvailableOutputs
+		COMMAND		audioinput1		SetAudioInput			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetAudioInput_command08
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetOutputL_command10
+		OUTSTANDING
+		COMMAND		mobileline1		Open			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-Open_command11
+		COMMAND		mobilecall1		OpenNewCall			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-OpenNewCall_command12
+		COMMAND		mobilecall1		GetCaps			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-GetCaps_command13
+		COMMAND		mobilecall1		Dial			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-Dial_command14
+		OUTSTANDING
+		COMMAND		devsound2		InitializeL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-InitializeL_command15
+		OUTSTANDING
+		COMMAND		devsound1		InitializeL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-InitializeL_command16
+		OUTSTANDING
+		COMMAND		devsound2		SetPrioritySettings			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetPrioritySettings_command17
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetPrioritySettings_command18
+		COMMAND		devsound2		Capabilities
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound2		SetConfigL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetConfigL_command21
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetConfigL_command22
+		COMMAND		devsound2		OpenFile			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-OpenFile_command23
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-ReplaceFile_command24
+		COMMAND		devsound1		RecordInitL
+		COMMAND		devsound2		PlayInitL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-PlayInitL_command26
+		OUTSTANDING
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetOutputL_command28
+		OUTSTANDING
+		DELAY  10000000 
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetOutputL_command30
+		OUTSTANDING
+		DELAY  10000000 
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetOutputL_command32
+		OUTSTANDING
+		DELAY  10000000 
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetOutputL_command34
+		OUTSTANDING
+		DELAY  10000000 
+		COMMAND		devsound1		Stop
+		COMMAND		devsound2		Stop
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound2		CloseFile
+		COMMAND		mobilecall1		GetCallDuration			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-GetCallDuration_command39
+		COMMAND		mobilecall1		HangUp			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-HangUp_command40
+		OUTSTANDING
+		COMMAND		mobilecall1		Close			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-Close_command41
+		COMMAND		mobileline1		Close
+		COMMAND		mobilephone1		Close
+		COMMAND		telserver1		Close
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-OutgoingCall_Rec-0002-0001-SetOutputL_command46
+		OUTSTANDING
+		COMMAND		telephonyaudiorouting1		~
+		COMMAND		audioinput1		~
+		COMMAND		devsound1		~
+		COMMAND		devsound2		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-OUTGOINGCALL_REC-0002

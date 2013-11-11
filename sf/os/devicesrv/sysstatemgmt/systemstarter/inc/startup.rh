@@ -1,0 +1,233 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// This file has been deprecated and use ssmcmd.rh instead 
+// This file contains the basic definitions required for the system starter. It should be
+// included by all resources files used to drive the starter. This file can be replaced, but
+// any replacement must implement anything marked "REQUIRED".
+// DO NOT PUT RESOURCE STATEMENTS IN THIS FILE!
+// 
+//
+
+#include "startup.hrh"
+
+#ifdef SYMBIAN_PROCESS_MONITORING_AND_STARTUP
+#include "e32modes.h"
+#endif
+
+/**
+@publishedPartner
+@deprecated Instead of this use SSM_COMMAND_LIST_ROOT
+
+REQUIRED:
+Entry point used by the starter to find the first STAGE_INFO structure.
+The starter looks for a resource of this type with a resource id of 1 and uses
+the link to find the first state info resource
+**/
+STRUCT STARTUP_ENTRY_POINT
+	{
+    	LLINK entry_point = 0;
+	}
+
+/**
+@publishedPartner
+@deprecated Instead of this use SSM_PUBLISH_SYSTEM_STATE
+
+REQUIRED:
+This structure defines the information needed by a startup state. The
+STARTUP_ENTRY_POINT member "entry_point" MUST point to a STATE_INFO resource
+**/
+STRUCT STATE_INFO
+	{
+    BYTE id = 0;		// VALUE REQUIRED: must be defined and unique
+    LTEXT name = "";
+    LLINK command_list = 0;	// VALUE REQUIRED: must point to a COMMAND_ARRAY resource
+    LLINK next = 0;		// VALUE REQUIRED: must point to a STATE_INFO resource (or be 0)
+
+    // specify how many times to re-attempt state change after a state transition failure.
+    // (Can be ERetry0 or ERetry1)
+    WORD no_of_retries_on_failure = ERetry0;
+
+    // Specify action when state transition fails after the specified number of retries.
+    // (Can be EIgnoreFailure or EPanicOnFailure).
+    WORD action_on_failure = EIgnoreFailure;
+	}
+
+/**
+@publishedPartner
+@deprecated Instead of this use  SSM_START_PROCESS_INFO
+
+Structures that can go in the COMMAND_ARRAY.
+REQUIRED: any structure added here must start with a WORD item,
+which is initialised with a unique value for that structure (see enumeration
+TStartupCommandType declared in startup.hrh)
+Must also have a valid path to a process to start.
+**/
+STRUCT START_PROCESS_INFO					// For starting processes
+	{
+	WORD type = EStartupProcess;			// do not change
+	LTEXT path = "";						// VALUE REQUIRED
+	LTEXT args = "";						// Passed to the command line of the started process
+	WORD start_method = EFireAndForget;		// can also be EWaitForStart or EDeferredWaitForStart
+	LONG timeout = 0;						// In milliseconds only used for EWaitForStart
+	WORD fail_on_error = EPanicOnCommandFailure; // can be EIgnoreCommandFailure
+	WORD no_of_retries_on_failure = 0; 		// only used for EWaitForStart
+	}
+
+#ifdef SYMBIAN_PROCESS_MONITORING_AND_STARTUP
+/** This should be used instead of START_PROCESS_INFO if monitoring or advanced recovery options are desired.
+@publishedPartner
+@deprecated Instead of this use SSM_START_PROCESS_INFO
+**/
+STRUCT START_PROCESS_INFO2                                       // For starting processes
+	{
+	WORD type = EStartupProcess2;			// do not change
+	LTEXT path = "";						// VALUE REQUIRED
+	LTEXT args = "";						// Passed to the command line of the started process
+	WORD start_method = EFireAndForget;		// can also be EWaitForStart or EDeferredWaitForStart
+	LONG timeout = 0;						// In milliseconds only used for EWaitForStart
+	WORD retry_failure_recovery_method = ERestartOS; 	// can also be EIgnoreOnFailure or ERestartOSWithMode
+	WORD no_of_retries_on_failure = 0; 		// only used for EWaitForStart
+	WORD monitor = 0;  						// can be 1 if monitoring required
+	WORD retry_failure_recovery_startup_mode = EStartupModeUndefined;
+	}
+#endif
+
+
+/**
+@publishedPartner
+@deprecated Instead of this use SSM_START_APP_INFO
+**/
+STRUCT START_APP_INFO						// For starting apps
+	{
+	WORD type = EStartupApp;				// do not change
+	LTEXT path = "";						// VALUE REQUIRED
+	LTEXT args = "";						// Ignored for backward compatibility
+	WORD start_method = EFireAndForget; 	// can also be EWaitForStart or EDeferredWaitForStart
+	WORD viewless = 0;   					// can be 1
+	WORD start_in_background = 0; 			// can be 1
+	LONG timeout = 0;						// In milliseconds only used for EWaitForStart
+	WORD fail_on_error = EPanicOnCommandFailure; // can be EIgnoreCommandFailure
+	WORD no_of_retries_on_failure = 0;  	// only used for EWaitForStart
+	}
+
+#ifdef SYMBIAN_PROCESS_MONITORING_AND_STARTUP
+/** This should be used instead of START_APP_INFO if monitoring or advanced recovery options are desired.
+@publishedPartner
+@deprecated Instead of this use SSM_START_APP_INFO
+**/
+STRUCT START_APP_INFO2						// For starting apps
+	{
+	WORD type = EStartupApp2;				// do not change
+	LTEXT path = "";						// VALUE REQUIRED
+	LTEXT args = "";						// Passed to the "Tail End" of the application command line
+	WORD start_method = EFireAndForget; 	// can also be EWaitForStart or EDeferredWaitForStart
+	WORD viewless = 0;   					// can be 1
+	WORD start_in_background = 0; 			// can be 1
+	LONG timeout = 0;						// In milliseconds only used for EWaitForStart
+	WORD retry_failure_recovery_method = ERestartOS; 	// can also be EIgnoreOnFailure or ERestartOSWithMode
+	WORD no_of_retries_on_failure = 0;  	// only used for EWaitForStart
+
+	WORD monitor = 0;  						// can be 1 if monitoring required
+	WORD retry_failure_recovery_startup_mode = EStartupModeUndefined;
+	}
+#endif
+
+
+/**
+@publishedPartner
+@deprecated Instead of this use SSM_SET_PUBLISH_AND_SUBSCRIBE 
+**/
+STRUCT SPLASH_SCREEN			// For starting or killing the splash screen
+	{
+	WORD type = EStartupSplashScreen;	// Must not be changed
+	// EITHER specify kill = 1 OR give the path to the splash exe
+	WORD kill = 0;
+	LTEXT path = "";
+	}
+
+/**
+This command is used to force apparc server to initialise its list with information 
+about installed applications. This command is added anywhere after apparc server 
+is started to get past the stage where all app info is not yet available.
+
+Apparc must be initialised to support rule-based launching and launching of 
+non-native applications.
+
+@publishedPartner
+@deprecated Instead of this use SSM_START_APP_INFO
+**/
+STRUCT INIT_APPARC
+	{
+	WORD type = EInitAppArcServer;
+	}
+
+/**
+This command is used for starting a function within a custom DLL using the
+ordinal specified.
+
+@publishedPartner
+@deprecated Instead of this use SSM_START_CUSTOM_COMMAND 
+**/
+STRUCT START_DLL_INFO
+	{
+	WORD type = EStartupDLL;		// Must not be changed
+	LTEXT DLLName = ""; 	// VALUE REQUIRED.
+							// DLL name (without the .dll extension).
+	BYTE ordinal = 1; // VALUE REQUIRED
+ 	WORD fail_on_error = EPanicOnCommandFailure; // can be EIgnoreCommandFailure
+	BYTE no_of_retries_on_failure = 0; // Re-attempts to make if DLL fails to
+	                                   // load or the DLL function returns an
+	                                   // error code
+	LLINK custom_dll_data_link = 0; // VALUE REQUIRED. link to the licensee specific dll data
+	}
+
+/**
+This command checks that processes/apps previously started with start_method
+EDeferredWaitForStart have now made a rendezvous. A timer can be started and if
+all deferred commands have not started the action specified in the fail_on_error
+field is taken.
+If the timeout value is zero the system will wait indefinitely until all deferred
+commands have completed.
+
+@publishedPartner
+@deprecated Instead of this use SSM_MULTIPLE_WAIT
+**/
+STRUCT MULTIPLE_WAIT
+	{
+	WORD type = EMultipleWait; // Must not be changed
+	LONG timeout = 0; // In milliseconds.
+ 	WORD fail_on_error = EPanicOnCommandFailure ; // can be EIgnoreCommandFailure
+	}
+
+#ifdef SYMBIAN_PROCESS_MONITORING_AND_STARTUP
+/**
+@publishedPartner
+@deprecated Instead of this use SSM_START_AMA_STARTER
+**/
+STRUCT START_AMA_STARTER			// For starting AMAStarter with a particular DSC
+	{
+	WORD type = EStartupAMAStarter;		// Must not be changed
+	LONG dsc_id = 0x2000836D;		// DSC id for AMAStarter
+	}
+#endif
+/**
+@publishedPartner
+@deprecated Instead of this use SSM_COMMAND_LIST
+
+REQUIRED: Lists the commands to be executed in a given startup state.
+**/
+STRUCT COMMAND_ARRAY
+    {
+    STRUCT commands[];
+    }

@@ -1,0 +1,515 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClientTestServer -SharedData
+LOAD_SUITE CTSuplMolrRealTestServer
+
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+PRINT Run LbsClientTestServer and CTSuplMolrRealTestServer
+PRINT
+
+//Before we start LBS, select the network reg status txt file to use.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_UTILS CopyFile c:\testdata\configs\lbssupltestconfig.txt c:\config.txt
+
+// Regenerate SUPLHostSettings from the text file in case a previous crashed test corrupts it
+RUN_UTILS DeleteFile c:\private\10202be9\persists\10285aa8.cre
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 010 CTSuplMolrRealTestServer SetHostToServerBTlsSecurity
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+PRINT Set Autonomous Mode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0001
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0001
+//!@SYMTestCaseDesc			Get Last Known Position when it is in cache
+//!
+//!@SYMTestActions			1. Request a location update (passing in a TPositionInfo) and
+//!						wait for it to complete. Read the timestamp on this location.
+//!					2. Request last known Location (should now be in cache).
+//!					3. Wait for location request to complete.
+//!					4. Verify the return status of the request is KErrNone.
+//!					5. Verify that position data is received and that it contains
+//!						a timestamp that matches the one from the last request. 
+//!					6. Use GetPosition() to get the lat/long/altitude and verify that
+//!						they are within the appropriate range.
+//!					7. Verify that the location request has been logged.
+//!
+//!@SYMTestExpectedResults	Location Information is received and is correct. Log contains summary info.
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!@SYMREQ 					REQ786.19
+//!@SYMPREQ					PREQ89
+//!@SYMREQ 					REQ89.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0001
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0001
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0002
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0002
+//!@SYMTestCaseDesc			Get Last Known Position when it is NOT in cache
+//!
+//!@SYMTestActions			
+//!					1.Immediately after boot up (ie before any locations have been requested):
+//!					2.Request Last Known Location.
+//!					3.Verify that request status received is KErrUnknown (no cached position info)
+//!
+//!@SYMTestExpectedResults	Request fails with KErrUnknown
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 300 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0002
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0003
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0003
+//!@SYMTestCaseDesc			Request Last Known Position with unsupported aPosInfo type passed in.
+//!
+//!@SYMTestActions			1.Open a sub-session with the network module (specify moduleid)
+//!							2.Request Last Known Location, passing in unsupported aPosInfo (TPositionSatelliteInfo, say)
+//!							4.Verify that request status received is KErrArgument
+//!
+//!@SYMTestExpectedResults	Request fails with KErrArgument
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			3
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0004
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0003
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0004
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0004
+//!@SYMTestCaseDesc			Request Last Known Position while the system-wide location on/off parameter is turned off
+//!
+//!@SYMTestActions			1.Open a sub-session with the network module (specify moduleid)
+//!							2.Turn location on/off parameter off, via Admin API
+//!							3.Request Last Known Location.
+//!							4.Verify that request status received is KErrAccessDenied
+//!
+//!@SYMTestExpectedResults	Request fails with KErrAccessDenied.
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!@SYMPREQ					PREQ162
+//!@SYMREQ 					REQ162.04
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Used - Current admin settings not supported by location server.
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0006
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0006
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0004
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0005
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0005
+//!@SYMTestCaseDesc			Cancel Last Known Position request before receiving response
+//!
+//!@SYMTestActions			1.Request Last Known Location.
+//!					2.Cancel Last Known Location request
+//!					3.Wait for location request to complete.
+//!
+//!@SYMTestExpectedResults	Sync Cancel() call returns either KErrNone or KErrNotFound. 
+//!				If it returns KErrNone, then the original request may complete with KErrCancel. Either way, it is logged.
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!@SYMREQ 					REQ786.13
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Not Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0007
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0007
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0005
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0006
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0006
+//!@SYMTestCaseDesc			Cancel a non-existent request
+//!
+//!@SYMTestActions			1.Note: do not request Last Known Location.
+//!					2.Cancel Last Known Location request.
+//!
+//!@SYMTestExpectedResults		Cancel fails with KErrNotFound
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!@SYMREQ 					REQ786.13
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Not Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0008
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0006
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0007
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0007
+//!@SYMTestCaseDesc			Request Last Known Position when not connected to server
+//!
+//!@SYMTestActions			1.request Last Known Location.
+//!					
+//!@SYMTestExpectedResults		App will Panic with EPositionServerBadHandle
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP !PanicCode=6 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0009
+// Verify Log Info cannot run after a negative test.
+// RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0007
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0008
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0008
+//!@SYMTestCaseDesc			Request multiples LKPs from different sub-sessions 
+//!
+//!@SYMTestActions			1.Open multiple sub-sessions and request LKPs on each
+//!					2.Wait for requests to complete
+//!
+//!@SYMTestExpectedResults		All requests are completed successfully, positions are published and summaries logged.
+//!
+//!@SYMPREQ					PREQ 786 
+//!@SYMREQ 					REQ 786.08 
+//!@SYMREQ 					REQ 786.02 
+//!@SYMREQ 					REQ 786.19
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ 					REQ 89.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0015
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0015
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0008
+
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0009
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0009
+//!@SYMTestCaseDesc			Request multiples LKPs from same sub-session sequentially
+//!
+//!@SYMTestActions			1.Open a sub-session and request LKP
+//!					2.Wait for request to complete
+//!					3.Request another LKP
+//!					4.Wait for request to complete
+//!
+//!@SYMTestExpectedResults		All requests are completed successfully, positions are published and summaries logged.
+//!
+//!@SYMPREQ					PREQ 786 
+//!@SYMREQ 					REQ 786.02 
+//!@SYMREQ 					REQ 786.08 
+//!@SYMREQ 					REQ 786.19
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ 					REQ 89.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0016
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0016
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0009
+
+
+//If the test run in default admin we need to stop and start LBS before starting a test
+//This will make sure AGPS module request assistance data,which will result in a initial reference network position being returned.  
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0010
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0010
+//!@SYMTestCaseDesc			Get Last Known Position when it is in cache
+//!
+//!@SYMTestActions			1. Request a location update (passing in a TPositionInfo) and
+//!								wait for it to complete. Read the timestamp on this location.
+//!							2. Request last known Location (should now be in cache).
+//!							3. Wait for location request to complete.
+//!							4. Verify the return status of the request is KErrNone.
+//!							5. Verify that position data is received and that it contains
+//!								a timestamp that matches the one from the last request. 
+//!							6. Use GetPosition() to get the lat/long/altitude and verify that
+//!								they are within the appropriate range.
+//!							7. Verify that the location request has been logged.
+//!
+//!@SYMTestExpectedResults	Location Information is received and is correct. Log contains summary info.
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!@SYMREQ 					REQ786.19
+//!@SYMPREQ					PREQ89
+//!@SYMREQ 					REQ89.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0101
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0101
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0010
+
+
+//If the test run in default admin we need to stop and start LBS before starting a test
+//This will make sure AGPS module request assistance data,which will result in a initial reference network position being returned.  
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0011
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0011
+//!@SYMTestCaseDesc			Cancel Last Known Position request before receiving response
+//!
+//!@SYMTestActions			1.Request Last Known Location.
+//!					2.Cancel Last Known Location request
+//!					3.Wait for location request to complete.
+//!
+//!@SYMTestExpectedResults	Sync Cancel() call returns either KErrNone or KErrNotFound. 
+//!							If it returns KErrNone, then the original request may complete with KErrCancel. Either way, it is logged.
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!@SYMREQ 					REQ786.13
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0102
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0102
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0011
+
+
+//If the test run in default admin we need to stop and start LBS before starting a test
+//This will make sure AGPS module request assistance data,which will result in a initial reference network position being returned.  
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0012
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0012
+//!@SYMTestCaseDesc			Request multiples LKPs from different sub-sessions 
+//!
+//!@SYMTestActions			1.Open multiple sub-sessions and request LKPs on each
+//!					2.Wait for requests to complete
+//!
+//!@SYMTestExpectedResults		All requests are completed successfully, positions are published and summaries logged.
+//!
+//!@SYMPREQ					PREQ 786 
+//!@SYMREQ 					REQ 786.08 
+//!@SYMREQ 					REQ 786.02 
+//!@SYMREQ 					REQ 786.19
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ 					REQ 89.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0103
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0103
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0012
+
+
+//If the test run in default admin we need to stop and start LBS before starting a test
+//This will make sure AGPS module request assistance data,which will result in a initial reference network position being returned.  
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0013
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0013
+//!@SYMTestCaseDesc			Request multiples LKPs from same sub-session sequentially
+//!
+//!@SYMTestActions			1.Open a sub-session and request LKP
+//!					2.Wait for request to complete
+//!					3.Request another LKP
+//!					4.Wait for request to complete
+//!
+//!@SYMTestExpectedResults		All requests are completed successfully, positions are published and summaries logged.
+//!
+//!@SYMPREQ					PREQ 786 
+//!@SYMREQ 					REQ 786.02 
+//!@SYMREQ 					REQ 786.08 
+//!@SYMREQ 					REQ 786.19
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ 					REQ 89.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0104
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0104
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0013
+
+
+//If the test run in default admin we need to stop and start LBS before starting a test
+//This will make sure AGPS module request assistance data,which will result in a initial reference network position being returned.  
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+START_TESTCASE LBS-Client-LastKnownPosReal-0014
+
+//!@SYMTestCaseID			LBS-Client-LastKnownPosReal-0014
+//!@SYMTestCaseDesc			Get Last Known Position when it is in cache passed by Open a sub-session with the network module.
+//!
+//!@SYMTestActions			1. Open a sub-session with the network module (specify moduleid)
+//!                                     2. Request a location update (passing in a TPositionInfo) and
+//!                                        wait for it to complete. Read the timestamp on this location.
+//!                                     3. Request last known Location (should now be in cache).
+//!                                     4. Wait for location request to complete.
+//!                                     5. Verify the return status of the request is KErrNone.
+//!                                     6. Verify that position data is received and that it contains
+//!                                        a timestamp that matches the one from the last request. 
+//!                                     7. Use GetPosition() to get the lat/long/altitude and verify that
+//!                                        they are within the appropriate range.
+//!                                     8. Verify that the location request has been logged.
+//!
+//!
+//!@SYMTestExpectedResults	Location Information is received and is correct. Log contains summary info.
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMREQ 					REQ786.08
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			3
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0105
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPos c:\testdata\configs\LbsClientLastKnownPos_real.ini LBS-LastKnownPos-0105
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-LastKnownPosReal-0014
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

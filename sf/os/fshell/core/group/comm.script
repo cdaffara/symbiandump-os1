@@ -1,0 +1,46 @@
+#!fshell
+# comm.script
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+variant wins && error -5 "comm.script is not supported on the emulator"
+
+# NaviEngine, port next to VGA
+variant naviengine && export ARGS "--console vt100busdevcons --console-title pdd=euart1,ldd=ecomm,port=1,rate=115200"
+
+# H4, serial riser marked "J3"
+variant h4 && export ARGS "--console vt100cons --console-title port=COMM::3,rate=115200"
+
+# H6 - port marked "UART 3"
+variant h6 && export ARGS "--console vt100busdevcons --console-title pdd=euart1,ldd=ecomm,port=7,rate=115200"
+
+# Beagle board, serial riser marked RS232 P9.
+variant beagle && export ARGS "--console vt100busdevcons --console-title port=2,rate=115200"
+
+# OPP Mid-Size Prototype, requires a special USB cable with a UART bridge built into it (normally covered in heat shrink) or a "black box".
+variant opp-mid-size && export ARGS "--console vt100busdevcons --console-title pdd=euart1,ldd=ecomm,rate=115200,port=4"
+
+# QEMU simulator - assumes you're using 2nd emulated serial port for fshell, ie with options similar to "-serial file:rdebug.txt -serial COMx"
+variant qemu && export ARGS "--console vt100busdevcons --console-title pdd=eserial,ldd=ecomm,rate=115200,port=1"
+
+# Bridge - terminal keyboard is broken for some reason, but USB now works
+variant -u 0x85001100 && export ARGS "--console vt100usbcons --console-title port=ACM::1,personality=1"
+
+# Add new variants here
+
+
+# Only try terminal keyboard if there hasn't been a better match for the hardware (and tracecore is supported)
+# Therefore, this rule should stay near the bottom of the file
+var ARGS not-defined && variant tracecore-support && export ARGS "--console terminalkeyboardcons --console-size 120,40" 
+
+# And finally, start fshell with the given configuration
+var ARGS defined || error -5 "Variant not recognised, can't open serial connection"
+fshell $ARGS &

@@ -1,0 +1,111 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName te_RConnectionServ
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+
+START_TESTCASE			COMINF-ESOCK-RConnectionServ-1701
+//! @SYMTestCaseID		COMINF-ESOCK-RConnectionServ-1701
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RConnectionServ::Connect()
+//RConnectionServ::AccessPointStatusQuery()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+//	Connect connserv1
+//	APQuery (none)
+//	Connect sock1 implicitly
+//	APQuery (ppp)
+//	Send and receive on sock1
+//	APQuery (ppp)
+//	Stop sock1
+//	Wait for idle
+//	APQuery (none)
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  CopyFile z:\testdata\configs\RConnectionServ\CIT_mixedap_config.txt c:\config.txt
+
+// Start by unloading esock, reseting commsdat and reloading esock
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\TestData\configs\RConnectionServ\RConnectionServ_MixedAPTypes.cfg -o c:\RConnectionServ.ced.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+// start simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StartSimTSYStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini SimTsy
+
+// Create entities required
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini CreateConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini ConnectConnectionServ1_1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini ConnectSockSvr1
+
+// Query (none)
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini APQuery1
+
+// Create, open and connect a socket Sock1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini CreateSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini OpenSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini ConnectSock1
+
+// Wait for implicit to start
+DELAY 10000
+
+// Query again (AP1)
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini APQuery2
+
+// Send some data on Sock1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini SendReceiveSock1
+
+// Query again (AP1)
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini APQuery3
+
+// Close the socket
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini CloseSocket1
+
+// Wait for at idle period
+DELAY 70000
+
+// Query again (none)
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini APQuery4
+
+// Close and cleanup resources
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini CloseConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// stop simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StopSimTSYStep z:\testdata\configs\RConnectionServ\RConnectionServ_01_050.ini SimTsy
+
+// Shutdown
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			COMINF-ESOCK-RConnectionServ-1701
+
+
+
+

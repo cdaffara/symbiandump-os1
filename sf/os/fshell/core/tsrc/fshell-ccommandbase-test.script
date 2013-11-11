@@ -1,0 +1,43 @@
+#!fshell
+# fshell-ccommandbase-test.script
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Syntax: fshell fshell-ccommandbase-test.script
+# Tests various features of CCommandBase relating to argument and option parsing
+
+source $SCRIPT_PATH\errordef.script
+
+# Check that negative integers are parsed correctly
+tinteger -1 -2 -3 -4 # -1 is a short option, -2 is an integer argument, -3 is a short option that takes an int (being -4). If any of them don't get filled in correctly tinteger will bail
+tinteger -3 -4 -2 -1 # This should be equivalent
+export TESTINT "-8"
+var TESTINT subtract "-5" # "subtract -5" is a trickier-to-parse equivalent of "add 5"
+var TESTINT == "-3" || $Error
+#TODO hmm should we have to quote the string arguments that start with a dash?
+
+# Check that 64-bit types are handled ok (these don't get used much so worth testing here)
+# If tfshellarguments doesn't see these exact values it will error
+tfshellarguments 1099511627776 3.1415927
+tfshellarguments 0x10000000000 31415927.0e-7
+tfshellarguments 0x10000000000 31415927 2>/dev/null && $Error # If this *succeeds* it's an error, because the floating point arg is wrong, hence the use of && rather than ||
+
+# Check that options and args can be filled in from the environment (run tenvarguments first with all args specified on command line as a control)
+tenvarguments StringArg 1234 0x1234 --boolopt --stringopt StringOpt --intopt 4321 --uintopt 0x4321
+export STRINGARG StringArg
+export INTARG 1234
+export UINTARG 0x1234
+export BOOLOPT 1
+export STRINGOPT StringOpt
+export INTOPT 4321
+export UINTOPT 0x4321
+tenvarguments # CCommandBase will moan if anything non-optional is not filled in, and tenvarguments itself checks the values it receives are what it expects.
+tnoncifenvarguments # same but testing that the behaviour is the same when not using a CIF (the way the arguments are set up is a slightly different code path)

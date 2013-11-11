@@ -1,0 +1,556 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName telephony-hwrm-validation-manual_vibra
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the CHWRMVibra, Crepository
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: CHWRMVibra, Crepository
+// The tests are fully automated.
+//
+
+
+
+LOAD_SUITE T_HWRM
+
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0001
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0001
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Start vibra for infinite duration and then after 5 seconds start it again for 2 seconds
+//!@SYMTestActions
+//!                1. Open Central repository instance (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn for infinite duration
+//!                5. Turn on VibraOn (duration=2000)
+//!                6.  Close HWRMVibra
+//!                7. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Start vibra for infinite duration and then after 5 seconds start it again for 2 seconds
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0001-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0001-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		StartVibraL
+		DELAY  6000000 
+		COMMAND		vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0001-0001-StartVibraL_command05
+		DELAY  3000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0001
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0002
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0002
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Try to use vibra for longer than maximum allowed duration
+//!@SYMTestActions
+//!                1.  Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=4295000)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Try to use vibra longer than maximum allowed duration.
+//!                KErrArgument is expected when a parameter is out of range.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0002-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0002-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		!Error=-6	vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0002-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0002
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0003
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0003
+//!@SYMAPI
+//!                Crepository::Set(TUint32, TInt)
+//!                CHWRMVibra::StartVibraL(TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Try to use vibra when it is not available in the profile
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,Off})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=5000)
+//!                5. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                6. Close HWRMVibra
+//!                7. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Try to use vibra when it is not available in the profile. 
+//!                KErrAccessDenied is expected because the permissions on the file do not allow the requested operation to be performed.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0003-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0003-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		!Error=-21	vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0003-0001-StartVibraL_command04
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0003-0001-Set_command05
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0003
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0004
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0004
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt, TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Try to use vibra with invalid intensity value
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (intensity=-101)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Try to use vibra with invalid intensity value.
+//!                KErrArgument is expected when a parameter is out of range.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0004-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0004-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		!Error=-6	vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0004-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0004
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0005
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0005
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Try to use vibra with negative duration
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=-1)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Try to use vibra with negative duration.
+//!                KErrArgument is expected when a parameter is out of range.
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0005-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0005-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		!Error=-6	vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0005-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0005
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0006
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0006
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Use vibra for 5 seconds
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=5000)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Use vibra for 5 seconds
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0006-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0006-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0006-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0006
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0007
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0007
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt, TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Use vibra with 0 intensity for 5 seconds
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=5000; intensity=0)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Use vibra with 0 intensity for 5 seconds
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0007-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0007-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0007-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0007
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0008
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0008
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt, TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Use vibra with maximum intensity for 5 seconds
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=5000; intensity=100)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Use vibra with maximum intensity for 5 seconds
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0008-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0008-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0008-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0008
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0009
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0009
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt, TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Use vibra with intensity value 50 for 5 seconds
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=5000; intensity=50)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Use vibra with intensity value 50 for 5 seconds
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0009-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0009-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0009-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0009
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0010
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0010
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt, TInt)
+//!                CHWRMVibra::ReadVibraStatus()
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		8/9/2008 
+//!@SYMTestCaseDesc		Use vibra and read vibra status
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=5000; intensity=50)
+//!                5. Verify vibra status (status=EVibraStatusOn)
+//!                6. Close HWRMVibra
+//!                7. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Use vibra and read vibra status
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0010-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0010-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0010-0001-StartVibraL_command04
+		COMMAND		vibra1		VibraStatus			TELEPHONY-HWRM-Vibra-0010-0001-VibraStatus_command05
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0010
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0011
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0011
+//!@SYMAPI
+//!                CHWRMVibra{ptr} CHWRMVibra::NewL(MHWRMVibraObserver{ptr} aCallback)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		8/9/2008 
+//!@SYMTestCaseDesc		Allocate vibra client with null pointer observer
+//!@SYMTestActions
+//!                1. Open vibra with NULL observer allocation (observer=0)
+//!                2. Close HWRMVibra
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Allocate vibra client with null pointer observer
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		COMMAND		!Error=-8	vibra1		NewL			TELEPHONY-HWRM-Vibra-0011-0001-NewL_command01
+		COMMAND		vibra1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0011
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0012
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0012
+//!@SYMAPI
+//!                CHWRMVibra::ReadVibraStatus()
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		8/9/2008 
+//!@SYMTestCaseDesc		Read vibra status
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Verify vibra status (status=EVibraStatusStopped)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Read vibra status
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0012-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0012-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		VibraStatus			TELEPHONY-HWRM-Vibra-0012-0001-VibraStatus_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0012
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0013
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0013
+//!@SYMAPI
+//!                Crepository::Set(TUint32, TInt)
+//!                CHWRMVibra::ReadVibraStatus()
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		8/9/2008 
+//!@SYMTestCaseDesc		Read vibra status when vibra is not allowed in profile
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,Off})
+//!                3. Open HWRMVibra
+//!                4. Verify vibra status (status=EVibraStatusNotAllowed)
+//!                5. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                6. Close HWRMVibra
+//!                7. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Read vibra status when vibra is not allowed in profile
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0013-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0013-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		VibraStatus			TELEPHONY-HWRM-Vibra-0013-0001-VibraStatus_command04
+		DELAY  6000000 
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0013-0001-Set_command05
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0013
+
+
+
+
+START_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0014
+
+//!@SYMTestCaseID		TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0014
+//!@SYMAPI
+//!                CHWRMVibra::StartVibraL(TInt, TInt)
+//!@SYMAuthor			mguevara
+//!@SYMCreationDate		25/8/2008
+//!@SYMTestCaseDesc		Use vibra with minimum intensity for 5 seconds
+//!@SYMTestActions
+//!                1. Open Central repository instance  (RepUID={RepositoryID,UidVibraCtrl})
+//!                2. Set repository settings (ItemID={ItemsID,IdVibraEnabled}; SetValue={DataID,On})
+//!                3. Open HWRMVibra
+//!                4. Turn on VibraOn (duration=5000; intensity=-100)
+//!                5. Close HWRMVibra
+//!                6. Close Central repository
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Use vibra with minimum intensity for 5 seconds
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	T_HWRM	\telephony\hwrm\telephony-hwrm-validation-manual_vibra.ini
+		CREATE_OBJECT	CHWRMVibra		vibra1
+		CREATE_OBJECT	CRepository		repository1
+		COMMAND		repository1		NewL			TELEPHONY-HWRM-Vibra-0014-0001-NewL_command01
+		COMMAND		repository1		Set			TELEPHONY-HWRM-Vibra-0014-0001-Set_command02
+		COMMAND		vibra1		NewL
+		COMMAND		vibra1		StartVibraL			TELEPHONY-HWRM-Vibra-0014-0001-StartVibraL_command04
+		DELAY  6000000 
+		COMMAND		vibra1		~
+		COMMAND		repository1		~
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY-HWRM-VALIDATION-MANUAL_VIBRA-0014
+
+DELAY 10000

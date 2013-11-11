@@ -1,0 +1,24 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef __CUSTOMCONTROLLERTESTCONSTANTS_H__
+#define __CUSTOMCONTROLLERTESTCONSTANTS_H__
+
+const TInt KUidTestASRLoadParametersVal = 0x101F8009;
+const TInt KUidTestASRCancelVal = 0x101F800A;
+const TUid KUidTestASRLoadParameters = {KUidTestASRLoadParametersVal};
+const TUid KUidTestASRCancel = {KUidTestASRCancelVal};
+
+#endif //__CUSTOMCONTROLLERTESTCONSTANTS_H__

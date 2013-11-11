@@ -1,0 +1,41 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run SsmPlatsecStep tests
+
+PRINT INFO: Ensure tssm_server does not have capability PowerMgmt(00000004), only ProtServ(00000100)
+RUN_PROGRAM -1 setcap tssm_server.exe 00000100 tssm_server0100.exe
+
+LOAD_SUITE tssm_server0100
+
+START_TESTCASE 			DEVSRVS-SSMA-SSM-0002
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SSM-0002
+//! @SYMPREQ 			PREQ1871
+//! @SYMREQ				REQ9116
+//! @SYMTestCaseDesc		Test capabilities in the security model.
+//! @SYMTestType			CIT	
+//! @SYMTestPriority		Critical
+//! @SYMTestCaseDependencies	setcap.exe is used in the script to modify the capabilities of the test execution server.
+//! 					tssm_statepolicy_capability.cpp file is used.
+//! @SYMTestActions			The test will perform a calls to SsmServer to methods that require some capabilities
+//! 					1. Call Connect() method of RSsmStateManager on a client with no PowerMgmt capability.
+//!					2. Call RequestStateTransition() for a command list containing PublishSystemState on a client with no PowerMgmt capability.
+//! 					3. Check policy has access to capabilities held by the calling client
+//! @SYMTestExpectedResults 	Client gets following results:
+//! 					1. KErrNone
+//! 					2. KErrNone (note that the cmd list is executed but the policy receives KErrPermissionDenied for the PublishSystemState cmd)
+//! 					3. Policy can ensure capabilities by checking the client
+RUN_TEST_STEP 100 tssm_server0100 SsmPlatsecStep
+END_TESTCASE 			DEVSRVS-SSMA-SSM-0002

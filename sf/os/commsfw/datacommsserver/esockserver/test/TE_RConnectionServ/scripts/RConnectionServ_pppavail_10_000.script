@@ -1,0 +1,99 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName te_RConnectionServ
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+START_TESTCASE			COMINF-ESOCK-RConnectionServ-PPPavailability-0101
+//! @SYMTestCaseID		COMINF-ESOCK-RConnectionServ-PPPavailability-0101
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RConnectionServ::Connect()
+//RConnectionServ::AccessPointStatusQuery()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+
+// Start by unloading esock, reseting commsdat and reloading esock
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+//CED -i z:\TestData\configs\RConnectionServ\RConnectionServ.alldummnif.cfg -o c:\RConnectionServ.alldummnif.ced.log
+CED -i z:\TestData\configs\RConnectionServ\RConnectionServ_MixedAPTypes_Ppp.cfg -o c:\RConnectionServ_mixedaptypes_ppp.ced.log
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  CopyFile z:\testdata\configs\RConnectionServ\CIT_pppavail_config.txt c:\config.txt
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+// Initialise the availability state of our test access points
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPppAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini InitPppAvailability1
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini InitAvailability2
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini InitAvailability3
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini InitAvailability4
+
+// Connect at *link* tier
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini CreateConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini ConnectConnectionServ1
+
+// Request all changes to availability
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini APNotificationRequest1
+
+// Make bearer available on home network and detect change at AP
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPppAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini SetPppAvailability1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini ReceiveNotification1
+
+// Set not registered no service and detect change
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPppAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini SetPppAvailability2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini ReceiveNotification2
+
+// Make bearer available on roaming and detect change at AP
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPppAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini SetPppAvailability3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini ReceiveNotification3
+
+// Make bearer Not registered Searching and detect change at AP
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPppAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini SetPppAvailability4
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini ReceiveNotification4
+
+// Make bearer available on home network and detect change at AP
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPppAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini SetPppAvailability5
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini ReceiveNotification5
+
+// Make bearer network busy on roaming and detect change at AP
+RUN_TEST_STEP 100 te_esockteststepsSuite SetPppAccessPointAvailabilityStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini SetPppAvailability6
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini ReceiveNotification6
+
+// Cancel the notification request
+RUN_TEST_STEP 100 te_esockteststepsSuite CancelAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini CancelAPNotificationRequest1
+
+// Close and cleanup resources
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_pppavail_10_000.ini CloseConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// Shutdown
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			COMINF-ESOCK-RConnectionServ-PPPavailability-0101
+
+
+
+

@@ -1,0 +1,103 @@
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Secondary PDP-context stress test 1.
+//
+
+
+//! @file te_pdpstresstest1.script
+
+LOAD_SUITE TE_SpudNetworkSide
+
+START_REPEAT z:\testdata\configs\te_pdpstresstestsparam.ini Repeat RepeatParam
+
+START_TESTCASE          PDP-STRESSTEST-SCENARIO-0101
+//! @SYMTestCaseID      PDP-STRESSTEST-SCENARIO-0101
+//! @SYMTestCaseDesc Sanity check: successfully activate Primary context. 
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interface. SIM TSY, etc successfully activate the primary context.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SPUD is started: RConnection::Start on SPUD returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide.ini PrimaryActivationOk1
+DELAY 1000
+END_TESTCASE            PDP-STRESSTEST-SCENARIO-0101
+
+START_TESTCASE          PDP-STRESSTEST-SCENARIO-0102
+//! @SYMTestCaseID      PDP-STRESSTEST-SCENARIO-0102
+//! @SYMTestCaseDesc Network deletes Activated Primary.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Activate the primary context only by explicitly starting Spud. After a pause, SIM.TSY deletes the primary context. 
+//! @SYMTestExpectedResults Spud is started successfully - the RConnection is started with KErrNone. KLinkLayerClosed / KErrDisconnected notification is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimaryEvent z:\testdata\configs\te_spudNetworkSide.ini PrimaryQoSEventDelete1
+DELAY 1000
+END_TESTCASE            PDP-STRESSTEST-SCENARIO-0102
+
+START_TESTCASE          PDP-STRESSTEST-SCENARIO-0101
+//! @SYMTestCaseID      PDP-STRESSTEST-SCENARIO-0101
+//! @SYMTestCaseDesc Sanity check: successfully activate Primary context. 
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interface. SIM TSY, etc successfully activate the primary context.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SPUD is started: RConnection::Start on SPUD returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide.ini PrimaryActivationOk1
+DELAY 1000
+END_TESTCASE            PDP-STRESSTEST-SCENARIO-0101
+
+START_TESTCASE          PDP-STRESSTEST-SCENARIO-0103
+//! @SYMTestCaseID      PDP-STRESSTEST-SCENARIO-0103
+//! @SYMTestCaseDesc Triggers the Primary PDP Context deletion before the lower NIF is up.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Explicitly start the SPUD interface to activate the primary context, it fails then deletes the Primary Context. 
+//! @SYMTestExpectedResults Spud start fails. RConnection::Start returns the error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide.ini PrimaryDeleteBeforeLowerNif
+DELAY 1000
+END_TESTCASE            PDP-STRESSTEST-SCENARIO-0103
+
+START_TESTCASE          PDP-STRESSTEST-SCENARIO-0101
+//! @SYMTestCaseID      PDP-STRESSTEST-SCENARIO-0101
+//! @SYMTestCaseDesc Sanity check: successfully activate Primary context. 
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interface. SIM TSY, etc successfully activate the primary context.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SPUD is started: RConnection::Start on SPUD returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide.ini PrimaryActivationOk1
+DELAY 1000
+END_TESTCASE            PDP-STRESSTEST-SCENARIO-0101
+
+START_TESTCASE          PDP-STRESSTEST-SCENARIO-0104
+//! @SYMTestCaseID      PDP-STRESSTEST-SCENARIO-0104
+//! @SYMTestCaseDesc Call RConnection::Stop while SPUDFSM is initialising the phone  
+//! @SYMFssId NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions  Cause RPhone::Initialise to take a very long time to complete, and call RConnection::Stop while it is running
+//! @SYMTestExpectedResults Connection stops successfully.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudPrimayStartingStop z:\testdata\configs\te_spudNetworkSide.ini PrimarySlowInitialisePhone
+DELAY 1000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide.ini ESockCheck
+END_TESTCASE            PDP-STRESSTEST-SCENARIO-0104
+
+END_REPEAT

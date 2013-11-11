@@ -1,0 +1,114 @@
+# sudo.cif
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+==name sudo
+
+==short-description
+
+Launch an executable with modified capabilities and / or other properties.
+
+==long-description
+
+The command operates in one of two modes, depending on whether C<--disk> is specified. With this option, a copy of the exe is made on the C drive, modified there then executed. Without it, the process is launched then before it is resumed the properties are modified in the kernel. The default (without C<--disk>) is neater but is limited in that it cannot change heap or stack sizes, and if the DLLs that are linked to have too many capabilities to allow the exe to launch as is, you won't get far enough to change them. Previously the C<--disk> option was the default. If no capability or sid etc options are specified then the exe will be launched with capabilities C<All -TCB> and no other changes.
+
+==argument string exe-name
+
+The executable to modify then launch.
+
+==argument string arguments optional last
+
+Arguments to pass to the exe.
+
+==option string a add-cap multiple
+
+Adds the specified capability.
+
+==option string r remove-cap multiple
+
+Removes the specified capability (if a cap is included in both add and remove lists, the remove takes precedence).
+
+==option uint s sid
+
+Sets the Secure ID to the specified value.
+
+==option uint v vid
+
+Sets the Vendor ID to the specified value.
+
+==option uint m heap-min
+
+Sets the process's default minimum heap size to the specified value (in bytes).
+
+==option uint x heap-max
+
+Sets the process's default maximum heap size to the specified value (in bytes).
+
+==option uint z stack-size
+
+Sets the process's default stack size to the specified value (in bytes).
+
+==option int p process-priority
+
+Sets the process priority to the specified value (as per C<TProcessPriority>).
+
+=over 5
+
+=item low
+
+150
+
+=item background
+
+250
+
+=item foreground
+
+350
+
+=item high
+
+450
+
+=item windowserver
+
+650
+
+=item fileserver
+
+750
+
+=item realtimeServer
+
+850
+
+=item supervisor
+
+950
+
+=back
+
+==option bool k keep
+
+Do not delete the modified exe when the process exits. If the exe is in the Core ROM, this option will keep the modified binary in memory until next reboot, such that any other code that launches the exe will pick up these settings (running sudo a second time on this exe without C<--keep> will undo it).
+
+==option bool d disk
+
+Change the on-disk binary rather than modifying the in-memory kernel process attributes. This option is required for changing heap and stack sizes. On WINSCW the C<--disk> option still operates on E32 binaries, therefore it is not possible to modify a WINSCW binary with C<--disk>.
+
+==option bool w wait
+
+Wait for a keypress before resuming the process. Use this option if you need to examine the process before it runs.
+
+==copyright
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+

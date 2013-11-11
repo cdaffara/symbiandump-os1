@@ -1,0 +1,370 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// The following tests ensure network induced and MTLRs without a prior privacy request requests are supported correctly by LBS and more specifically the NRH.
+// The network induced privacy behaviour is controlled by the admin setting KLbsSettingHomeNetworkInducedLocate and all values are tested. For MTLRs without a prior privacy request the admin setting KLbsSettingHomeExternalLocate is tested for all values also.
+// The hybrid protocol module test framework is used, where the test code interacts with the protocol module API (to process simulated network activity) and the privacy controller API (to response to privacy notifications).
+//
+
+//! @File
+//! @SYMTestSuiteName LBS-MTLR-NETWORKEDINDUCED
+//! @SYMScriptTestEnvironment TEF
+
+LOAD_SUITE LbsHybridMTLRTestServer -SharedData
+
+PRINT Run LbsHybridMTLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_mtlr.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_SetupProtocolStub
+
+// Now start LBS
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0001
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0001
+//! @SYMTestCaseDesc            Performs a network induced emergency location request, where the NRH invokes an accepted privacy request.
+//!                             .
+//!                             Request = Network induced
+//!                             Service = EServiceNetworkInduced
+//!                             Emergency = On
+//!                             Admin = Any
+//!                             Response = Accept
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a emergency location request (EServiceNetworkInduced) from the protocol module.
+//!                             2. Ensure the privacy controller is notified correctly with ENotifyLocationAccepted.
+//!                             3. Ensure the controller is sent the reference and a-gps positions.
+//!                             4. Ensure the a-gps position is sent to the protocol module.
+//!                             5. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 2 (notification), 3 (reference + a-gps position privacy notifier), and 4 (a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NetworkInduced_EmergencyOn_AdminAny
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0001
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0002
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0002
+//! @SYMTestCaseDesc            Performs a network induced non-emergency location request, where the NRH invokes an accepted privacy request.
+//!                             .
+//!                             Request = Network induced
+//!                             Service = EServiceNetworkInduced
+//!                             Emergency = Off
+//!                             Admin = On
+//!                             Response = Accept
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Configure the HomeNetworkInducedLocate admin setting to LocateOn.
+//!                             2. Start a non-emergency location request (EServiceNetworkInduced) from the protocol module.
+//!                             3. Ensure the privacy controller is notified correctly with ENotifyLocationAccepted.
+//!                             4. Ensure the controller is sent the reference and a-gps positions.
+//!                             5. Ensure the a-gps position is sent to the protocol module.
+//!                             6. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 3 (notification), 4 (reference + a-gps position privacy notifier), and 5 (a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NetworkInduced_EmergencyOff_AdminOn
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0002
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0003
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0003
+//! @SYMTestCaseDesc            Performs a network induced non-emergency location request, where the NRH invokes a privacy verification request which LBS accepts.
+//!                             .
+//!                             Request = Network induced
+//!                             Service = EServiceNetworkInduced
+//!                             Emergency = Off
+//!                             Admin = OnButAlwaysVerify
+//!                             Response = Accept
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Configure the HomeNetworkInducedLocate admin setting to OnButAlwaysVerify.
+//!                             2. Start a non-emergency location request (EServiceNetworkInduced) from the protocol module.
+//!                             3. Ensure the privacy controller is notified correctly with ENotifyAndVerifyLocationRejectedIfNoReponse.
+//!                             4. Allow the controller to accept the request.
+//!                             5. Ensure the controller is sent the reference and a-gps positions.
+//!                             6. Ensure the a-gps position is sent to the protocol module.
+//!                             7. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 3 (notification), 5 (reference + a-gps position privacy notifier), and 6 (a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NetworkInduced_EmergencyOff_AdminOnButAlwaysVerify_Accept
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0003
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0004
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0004
+//! @SYMTestCaseDesc            Performs a network induced non-emergency location request, where the NRH invokes a privacy verification request which LBS rejects.
+//!                             .
+//!                             Request = Network induced
+//!                             Service = EServiceNetworkInduced
+//!                             Emergency = Off
+//!                             Admin = OnButAlwaysVerify
+//!                             Response = Reject
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Configure the HomeNetworkInducedLocate admin setting to OnButAlwaysVerify.
+//!                             2. Start a non-emergency location request (EServiceNetworkInduced) from the protocol module.
+//!                             3. Ensure the privacy controller is notified correctly with ENotifyAndVerifyLocationRejectedIfNoReponse.
+//!                             4. Allow the controller to reject the request.
+//!                             5. Ensure a null a-gps position with error KErrAccessDenied is sent to the protcol module.
+//!                             6. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 3 (notification) and 5 (error a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NetworkInduced_EmergencyOff_AdminOnButAlwaysVerify_Reject
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0004
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0005
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0005
+//! @SYMTestCaseDesc            Performs a network induced non-emergency location request, which the NRH rejects.
+//!                             .
+//!                             Request = Network induced
+//!                             Service = EServiceNetworkInduced
+//!                             Emergency = Off
+//!                             Admin = Off
+//!                             Response = Reject
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Configure the HomeNetworkInducedLocate admin setting to Off.
+//!                             2. Start a non-emergency location request (EServiceNetworkInduced) from the protocol module.
+//!                             3. Ensure a null a-gps position with error KErrAccessDenied is sent to the protcol module.
+//!                             4. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify action 4 (error a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 60 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NetworkInduced_EmergencyOff_AdminOff
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0005
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0006
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0006
+//! @SYMTestCaseDesc            Performs a network induced non-emergency location request, where the NRH invokes a rejected privacy request.
+//!                             .
+//!                             Request = Network induced
+//!                             Service = EServiceNetworkInduced
+//!                             Emergency = Off
+//!                             Admin = OffButNotify
+//!                             Response = Reject
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Configure the HomeNetworkInducedLocate admin setting to Off.
+//!                             2. Start a non-emergency location request (EServiceNetworkInduced) from the protocol module.
+//!                             3. Ensure the privacy controller is notified correctly with ENotifyLocationRejected.
+//!                             4. Ensure a null a-gps position with error KErrAccessDenied is sent to the protcol module.
+//!                             5. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 3 (notification), 4 (error a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 60 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NetworkInduced_EmergencyOff_AdminOffButNotify
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0006
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0007
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0007
+//! @SYMTestCaseDesc            Performs a emergency MTLR without a prior privacy request, where the NRH rejects the location request with not supported.
+//!                             .
+//!                             Request = MTLR
+//!                             Service = EServiceMobileTerminated
+//!                             Emergency = On
+//!                             Admin = Any
+//!                             Response = Reject
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a emergency location request (EServiceMobileTerminated) from the protocol module.
+//!                             2. Ensure a null a-gps position with error KErrNotSupported is sent to the protcol module.
+//!                             3. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify action 2 (error a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 60 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NoPrivMTLR_EmergencyOn_AdminAny
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0007
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0008
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0008
+//! @SYMTestCaseDesc            Performs a non-emergency MTLR without a prior privacy request, where the NRH rejects the location request with not supported.
+//!                             .
+//!                             Request = MTLR
+//!                             Service = EServiceMobileTerminated
+//!                             Emergency = Off
+//!                             Admin = On
+//!                             Response = Reject
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a emergency location request (EServiceMobileTerminated) from the protocol module.
+//!                             2. Ensure a null a-gps position with error KErrNotSupported is sent to the protcol module.
+//!                             3. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify action 2 (error a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 60 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NoPrivMTLR_EmergencyOff_AdminOn
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0008
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0009
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0009
+//! @SYMTestCaseDesc            Performs a normal emergency MTLR, where the NRH invokes an accepted privacy request.
+//!                             .
+//!                             Request = Normal MTLR
+//!                             Service = EServiceMobileTerminated
+//!                             Emergency = On
+//!                             Admin = On
+//!                             Response = Accept
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Start a emergency location request (EServiceMobileTerminated) from the protocol module.
+//!                             2. Ensure the privacy controller is notified correctly with ENotifyLocationAccepted.
+//!                             3. Ensure the controller is sent the reference and a-gps positions.
+//!                             4. Ensure the a-gps position is sent to the protocol module.
+//!                             5. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 2 (notification), 3 (reference + a-gps position privacy notifier), and 4 (a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 60 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini MTLR_EmergencyOn_AdminAny
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0009
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0010
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0010
+//! @SYMTestCaseDesc            Performs a normal non-emergency MTLR, where the NRH invokes an accepted privacy request.
+//!                             .
+//!                             Request = Normal MTLR
+//!                             Service = EServiceMobileTerminated
+//!                             Emergency = Off
+//!                             Admin = On
+//!                             Response = Accept
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Configure the HomeNetworkInducedLocate admin setting to LocateOn.
+//!                             2. Start a non-emergency location request (EServiceMobileTerminated) from the protocol module.
+//!                             3. Ensure the privacy controller is notified correctly with ENotifyLocationAccepted.
+//!                             4. Ensure the controller is sent the reference and a-gps positions.
+//!                             5. Ensure the a-gps position is sent to the protocol module.
+//!                             6. Send session complete from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 3 (notification), 4 (reference + a-gps position privacy notifier), and 5 (a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            9/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 60 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini MTLR_EmergencyOff_AdminOn
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0010
+
+
+START_TESTCASE                LBS-MTLR-NETWORKINDUCED-0011
+//! @SYMTestCaseID              LBS-MTLR-NETWORKINDUCED-0011
+//! @SYMTestCaseDesc            Performs a network induced non-emergency location request, where the NRH invokes a privacy verification request which is timed out by LBS.
+//!                             .
+//!                             Request = Network induced
+//!                             Service = EServiceNetworkInduced
+//!                             Emergency = Off
+//!                             Admin = OnButAlwaysVerify
+//!                             Response = Timeout
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Configure the HomeNetworkInducedLocate admin setting to OnButAlwaysVerify.
+//!                             2. Start a non-emergency location request (EServiceNetworkInduced) from the protocol module.
+//!                             3. Ensure the privacy controller is notified correctly with ENotifyAndVerifyLocationRejectedIfNoReponse.
+//!                             4. Allow the controller to timeout the request.
+//!                             5. Ensure a null a-gps position with error KErrAccessDenied is sent to the protcol module.
+//!                             6. Send session complete with error KErrAccessDenied from the protocol module.
+//! @SYMTestExpectedResults     Verify actions 3 (notification) and 5 (error a-gps position to network).
+//! @SYMTestType                CIT
+//! @SYMCreationDate            16/4/2008
+//! @SYMAuthor                  GrahamL
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini NetworkInduced
+
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsNetworkInducedMTLR c:\testdata\configs\lbs_mtlr.ini NetworkInduced_EmergencyOff_AdminOnButAlwaysVerify_Timeout
+
+END_TESTCASE                  LBS-MTLR-NETWORKINDUCED-0011
+
+

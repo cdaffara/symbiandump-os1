@@ -1,0 +1,191 @@
+Rough notes on converting source to EC120
+-----------------------------------------
+
+- Classes have moved namespace and DLL:
+
+	- ESock::TClientIterBase		=> Messages::TClientIterBase
+	- ESock::TClientIter<>			=> Messages::TClientIter<>
+	- ESock::TCFNodeChannelId		=> Messages::TNodeCtxId
+	- ESock::TDefaultClientMatchPolicy	=> Messages::TDefaultClientMatchPolicy
+	- ESock::TCFSignatureBase		=> Messages::TRuntimeCtxId + ESock::TCFSignatureBase (where required)
+	- ESock::RNodeInterface			=> Messages::RNodeInterface
+	- ESock::TCFESockSignalBase		=> Messages::TSignalBase
+	- ESock::TCFNodeSignalBase		=> Messages::TNodeSignal
+
+	- ESock::TCFMessageSigVoid<ID, REALM>	=> Messages::TMessageSigVoid<ID, REALM>
+
+	- ESock::AFactoryObject			=> Factories::AFactoryObject
+	- ESock::CCommsFactoryBase		=> Factories::CFactoryBase
+	- ESock::MCommsFactoryQuery		=> Factories::MFactoryQuery
+	- ESock::TFactoryObjectInfo		=> Factories::TFactoryObjectInfo
+
+	- ESock::TCFNodeContextBase		=> MeshMachine::TNodeContextBase
+	- ESock::TCFNodeContext<>		=> MeshMachine::TNodeContext<>
+	- ESock::TStateTransition<TCONTEXT>	=> MeshMachine::TStateTransition<TCONTEXT>
+	- ESock::TState<TCONTEXT>		=> MeshMachine::TState<TCONTEXT>
+	- ESock::ECFActivityNull		=> MeshMachine::KActivityNull
+
+	- CoreStates::TAcceptErrorState<>	=> MeshMachine::TAcceptErrorState<>
+	- CoreStates::TNoTag			=> MeshMachine::TNoTag
+	- CoreStates::TTag<T>			=> MeshMachine::TTag<T>
+	- CoreStates::TDoNothing		=> MeshMachine::TDoNothing
+	- CoreStates::TErrorTagOr<T>		=> MeshMachine::TErrorTagOr<T>
+	- CoreStates::TRaiseAndClearActivityError => MeshMachine::TRaiseAndClearActivityError
+	- CoreStates::TClearError		=> MeshMachine::TClearError
+	- CoreStates::TRaiseError<T>		=> MeshMachine::TRaiseError<T>
+	- CoreStates::TErrorTag			=> MeshMachine::TErrorTag
+	- CoreStates::THandleErrorState<STATE>	=> MeshMachine::THandleErrorState<STATE, CONTEXT> ?
+	- CoreStates::TAlwaysAccept		=> MeshMachine::TAwaitingAny
+	- CoreStates::TAwaitingMessageState<S>	=> MeshMachine::TAwaitingMessageState<S>
+	- CoreStates::TNoTagOrErrorTag		=> MeshMachine::TNoTagOrErrorTag
+	- CoreStates::TRemoveClient		=> MeshMachine::TRemoveClient
+	- CoreStates::TStoreError		=> MeshMachine::TStoreError
+	- CoreStates::TAwaitingDestroy		=> MeshMachine::TAwaitingDestroy
+	- NetStateMachine::KNoTag		=> MeshMachine::KNoTag
+
+	- XCFNodePeerId				=> XNodePeerId
+
+- Some message classes have become generic and have moved out of ESock:
+
+	- TCFMessage::TError			=> TNodeMessage::TError
+	- TCFMessage::TErrorRecoveryRequest	=> TNodeMessage::TErrorRecoveryRequest
+
+- Iterators use TClientType::TCFClientType:
+
+	- RNodeInterface::EStarting		=> TCFClientType::EStarting
+	- RNodeInterface::EData			=> TCFClientType::EData
+	- RNodeInterface::ESecondary		=> TCFClientType::ESecondary
+	- RNodeInterface::EServProvider		=> TCFClientType::EServProvider
+	- RNodeInterface::EActivating		=> TCFClientType::EActivating
+
+	- CFNODE_SET_CLIENT_TYPENFLAGS(RNodeInterface::EData, RNodeInterface::ESecondary)
+	 	=>
+	  TClientType(TCFClientType::EData, TCFClientType::ESecondary)
+
+	- CFNODE_SET_CLIENT_TYPENFLAGS(RNodeInterface::EVAL1, RNodeInterface::EVAL2)
+		=>
+	  TClientType(TCFClientType::EVAL1, TCFClientType::EVAL2)
+
+- Messages no longer need to be constructed with sender and activity:
+	- TCFMessage::MSG(const ESock::TCommsId& aSenderId, TUint aActivityId, ...) => TCFMessage::MSG(...)
+	- ESock::TCFSignatureBase(aMessageId, aSenderId, aActivityId)		    => Messages::TSignatureBase(aMessageId)
+
+- PostToClients<T>() arguments have changed:
+	- PostToClients<T>(MSG&, RNodeInterface::EA)  =>  PostToClients<T>(const TNodeCtxId &, MSG&, TClientType(TCFClientType::EA));
+
+- PostToSender() applies to context rather than message:
+	- MSG1.PostToSender(MSG2) => iContext.PostToSender(MSG2)
+
+- PostTo() can be simplified to use PostToSender() in some cases:
+	- MSG(iContext.Node()(),iContext.iCFMessageSig.ActivityId(),...).PostTo(iContext.iCFMessageSig.iSender);
+			=>
+	  iContext.PostToSender(MSG(...));
+
+- MSG::PostTo() replaced with OpenPostMessageClose():
+
+	- MSG.PostTo(iNode());	// self
+			=>
+	  TNodeCtxId us(ActivityId(),iNode.Id());
+	  RClientInterface::OpenPostMessageClose(us, us, MSG());
+
+	- MSG.PostTo(iContext.Node()());
+			=>
+	  RClientInterface::OpenPostMessageClose(TNodeCtxId(iContext.ActivityId(), iContext.NodeId()),
+		  iContext.NodeId(), MSG());
+
+	- MSG.PostTo(iContext.Node()());
+			=>
+	  RClientInterface::OpenPostMessageClose(iContext.NodeId(), iContext.NodeId(), MSG());
+
+	- MSG(const TCommsId* src, ...).PostTo(const TCommsId& dest);
+		=>
+	  RClientInterface::OpenPostMessageClose(const TRuntimeCtxId& src, const TRuntimeCtxId& dest, MSG());
+
+	- TCommsId dest = ServiceProviderL();
+	  TCommsId self = NodeId();
+	  MSG(self, ACTIVITYID).PostTo(dest);
+		=>
+	  TNodeCtxId us(ACTIVITYID, NodeId());
+	  RClientInterface::OpenPostMessageClose(us, ServiceProviderL(), MSG());
+
+	- MSG.PostTo(RNodeInterface&);
+			=>
+	  RClientInterface::OpenPostMessageClose(Id(), RNodeInterface&, MSG);
+
+	- MSG.PostTo(self) => iNode.SelfInterface().PostMessage(self, MSG); 	// ??
+
+- RClientInterface::PostMessage(MSG);
+		=>
+  activity.PostRequestTo(RClientInterface&, MSG());
+
+- where a message used to be passed before, now message and runtime/node context are needed:
+
+	- void f(TMyMessage& aPolicyParam)  =>  void f(const Messages::TRuntimeCtxId& aSender, TMyMessage& aPolicyParam);
+
+	- INMSG.iSender = iContext.Node()();
+	  INMSG.SetActivity(iContext.iNodeActivity->ActivityId());
+	  iContext.Node().PostToClients<TPolicy>(INMSG, RNodeInterface::EData);
+			=>
+	  iContext.Node().PostToClients<TPolicy>(TNodeCtxId(iContext.ActivityId(), iContext.NodeId()), INMSG, TClientType(TCFClientType::EData));
+
+	- RNodeInterface::PostMessage(MSG) => RNodeInterface::PostMessage(TNodeCtxId(activityId, nodeId), MSG);
+
+	- TNodeContext<TNODE>(TNODE&, TSignatureBase& aMessage, const TRunTimeCtxId& aSender, const TNodeId& aRecipient, CNodeActivityBase* aNodeActivity = NULL);
+
+- on nodes, operator()() is replaced with Id():
+	- (*this)() => Id()
+	- NODE()    => NODE.Id()
+
+- iContext.iCFMessageSig.iPeer->PostMessage(MSG);
+		=>
+  iContext.PostToSender(MSG);
+
+- there are changes to the way activities can be retrieved:
+	- iContext.Node().FindAddressedActivity(iContext.iCFMessageSig)
+		=>
+	- TUint sendersActivityId = address_cast<TNodeCtxId>(iContext.iSender).NodeCtx();
+	  iContext.Node().FindActivityById(sendersActivityId)
+
+- TCFMessageSig<xxx> replaced with TMessageSig<xxx>
+	- ESock::TCFMessageSigNumber<EMSGID, EREALM> TMyMessage  =>  Messages::TMessageSigNumber<EMSGID, EREALM> TMyMessage
+
+- Retrieval of sender from a message is replaced with retrieval from context:
+	- MSG.iSender					=> iContext.iSender
+	- iContext.iCFMessageSig.iSender.NodePtr()	=> address_cast<TNodeId>(iContext.iSender).Ptr()
+
+- TErrContext:iActivityId => TErrContext:iActivitySigId
+
+- TCommsId is replaced with Messages::TNodeId:
+
+	- TCommsId::NullCommsId()	=> TNodeId::NullId()
+	- TCommsId::operator()()	=> TNodeId::Id();
+
+	- TRuntimeCtxId sometimes used in place of TCommsId (?)
+
+- ReceivedL() method signatures have changed.  May need to add User::LeaveIfError(...) to some ReceivedL() routines.
+
+- Changes to iContext data member names and methods:
+	- iContext.iCFMessageSig		=> iContext.iMessage
+	- iContext.iCFMessageSig.iCommsId	=> iContext.iMessage.iNodeId;
+	- iContext.iCFMessageSig.iPeer		=> iContext.iPeer
+	- iContext.iCFMessageSig.iSender	=> iContext.iSender
+	- iContext.Node()()			=> iContext.NodeId()
+	- iContext.iNode()			=> iContext.NodeId()
+
+- Changes to the way MPlatSecApiExt is retrieved:
+	- MPlatsecApiExt* platsec = iContext.iCFMessageSig.FetchPlatsecApiInterfaceL()
+		=>
+	  MPlatsecApiExt* platsec = reinterpret_cast<MPlatsecApiExt*>(address_cast<TNodeId>(iContext.iSender).Node().FetchNodeInterfaceL(EPlatsecApiExt));
+
+- Header files have moved location:
+	- ss_factnotify.h			=> elements/factorynotify.h
+	- comms-infras/sm_core.h		=> elements/sm_core.h
+	- comms-infras/sm_statetriple.h		=> elements/sm_statetriple.h
+	- comms-infras/ss_nodestates.h		=> elements/mm_states.h
+	- comms-infras/ss_nodeactivities.h	=> elements/mm_activities.h
+	- comms-infras/interfacetable.h		=> elements/interfacetable.h
+	- comms-infras/cftransport.h		=> elements/cftransport.h
+	- comms-infras/ss_nodeactivities.h &	=> comms-infras/ss_common.h (?)
+	  comms-infras/ss_nodemessages.h
+
+

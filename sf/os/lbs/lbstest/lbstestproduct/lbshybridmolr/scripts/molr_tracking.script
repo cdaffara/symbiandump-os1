@@ -1,0 +1,602 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-MOLR-TRACKING
+//! @SYMScriptTestEnvironment TestExecute
+
+
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+PRINT Run LbsHybridMOLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_ta.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// NOTE: When the network asks for TA it doesn't typically provide a reference position - need to update scripts + test framework to deal with that!
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+// Turn on self-locate API when Roaming	 - lrm: why is this step needed!?
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupRoamSelfLocate
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetBehaviourModeOriginal
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------- Admin = ATA -----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Set GPS mode to ATA in admin:
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetATAMode
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+//--------------------------------------------------------------- Module Caps = TA -----------------------------------------------------------------------
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+START_TESTCASE                MOLR-ATA-LASTKNOWNPOSITION-variant2
+//! @SYMTestCaseID              MOLR-ATA-LASTKNOWNPOSITION-variant2
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TA
+//!                             module supplies measurements
+//!                             There are two clients, not tracking
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//! @SYMTestExpectedResults     A client issues a LastKnpwnPostion and the test checks that
+//!                             a Network Calculated psotion is returned
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-LASTKNOWNPOSITION
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-LASTKNOWNPOSITION
+END_TESTCASE                  MOLR-ATA-LASTKNOWNPOSITION-variant2
+
+DELAY 15000
+// Stop and start LBS to clear the cache for the MaxAge test
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                MOLR-ATA-MAXAGE-variant2
+//! @SYMTestCaseID              MOLR-ATA-MAXAGE-variant2
+//! @SYMTestCaseDesc            Self Locate request with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TA
+//!                             module supplies measurements
+//!                             There are two clients, not tracking
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//! @SYMTestExpectedResults     The clients should be delivered the same FNP multipls times
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-MAXAGE
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-MAXAGE
+END_TESTCASE                  MOLR-ATA-MAXAGE-variant2
+
+
+START_TESTCASE                LBS-MOLR-ATA-CANCEL-1
+//! @SYMTestCaseID              LBS-MOLR-ATA-CANCEL-1
+//! @SYMTestCaseDesc            2 self-locate clients tracking. Both issue 2 NPUDs and then cancel after the PM issues a LocationRequest in the second session.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Client 1 issues NPUD request
+//!                             Client 2 issues NPUD request
+//!                             AdviceSystemStatus (LBS-->PM)     >> AdviceSystemStatus(ESystemStatusNone)
+//!                             AdviceSystemStatus (LBS-->PM)     >> AdviceSystemStatus(ESystemStatusClientTracking)
+//!                             RequestSelfLocate (LBS-->PM)     >> RequestSelfLocation()
+//!                             Status Update (PM-->LBS)    LBS)   LBS)     PM)   >> RequestAssistanceData(0)
+//!                             Location Response with measurements (LBS-->PM)  >> RespondLocationRequest(meas)
+//!                             Final Network Position (PM-->LBS)   PM)   >> RequestAssistanceData(0)
+//!                             Client 1 completes with KErrNone and issues new request
+//!                             Client 2 complete with KErrNone and issues new request
+//!                             AdviceSystemStatus (LBS-->PM)    >> AdviceSystemStatus(ESystemStatusNone)
+//!                             CancelSelfLocate as result of FNP (LBS->PM)  >> CancelSelfLocation() Note: we should really fix this (optimisation)
+//!                             ProcessSessionComplete (PM->LBS)   LBS)    PM)     >> AdviceSystemStatus(ESystemStatusClientTracking) - This is due to outstanding defect, we should not update tracking status between requests!
+//!                             RequestSelfLocate (LBS-->PM)    >> RequestSelfLocation(//!Status Update (PM-->LBS) LBS)   LBS)     PM)     >> AdviceSystemStatus(ESystemStatusNone)
+//!                             CancelSelfLocate (LBS->PM) due to cancels  >> CancelSelfLocation()
+//!                             SessionComplete (PM-->LBS)    LBS)
+//! @SYMTestExpectedResults     Both client's second NPUDs will complete with KErrCancel
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-CANCEL-1
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-CANCEL-1
+END_TESTCASE                  LBS-MOLR-ATA-CANCEL-1
+
+
+
+START_TESTCASE                LBS-MOLR-ATA-CANCEL-2
+//! @SYMTestCaseID              LBS-MOLR-ATA-CANCEL-2
+//! @SYMTestCaseDesc            2 self-locate clients tracking. Both cancel during different sessions.
+//! @SYMTestPriority            High
+//! @SYMTestActions             similar to LBS-MOLR-ATA-CANCEL-1
+//! @SYMTestExpectedResults     Both client's second NPUDs will complete with KErrCancel
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-CANCEL-2
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-CANCEL-2
+END_TESTCASE                  LBS-MOLR-ATA-CANCEL-2
+
+
+
+START_TESTCASE                LBS-MOLR-ATA-CANCEL-3
+//! @SYMTestCaseID              LBS-MOLR-ATA-CANCEL-3
+//! @SYMTestCaseDesc            2 self-locate clients tracking. First client cancels, second does not
+//! @SYMTestPriority            High
+//! @SYMTestActions             similar to LBS-MOLR-ATA-CANCEL-1
+//! @SYMTestExpectedResults     First client's last NPUD will complete with KErrCancel, all other requests complete with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-CANCEL-3
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-CANCEL-3
+END_TESTCASE                  LBS-MOLR-ATA-CANCEL-3
+
+
+
+START_TESTCASE                LBS-MOLR-ATA-TRACKING2CLIENTS-001
+//! @SYMTestCaseID              LBS-MOLR-ATA-TRACKING2CLIENTS-001
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TA
+//!                             module supplies measurements only
+//!                             There are two clients, both tracking, the first client starts immediatedly and the second one starts very quickly
+//!                             afterwards, while LBS is processing the first request.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking every 5 seconds
+//!                             While the first NPUD is processed the second client issues an NPUD with options set for tracking every 10 seconds
+//!                             Both clients get their requests satisfied and they continue tracking, the first one for 15 times, the second for 9 times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-TRACKING-2CLIENTS-1
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-TRACKING-2CLIENTS-1
+END_TESTCASE                  LBS-MOLR-ATA-TRACKING2CLIENTS-001
+
+
+
+START_TESTCASE                LBS-MOLR-ATA-TRACKING2CLIENTS-002
+//! @SYMTestCaseID              LBS-MOLR-ATA-TRACKING2CLIENTS-002
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TA
+//!                             module supplies measurements only
+//!                             There are two clients, both tracking, the first client starts immediatedly and the second one starts a bit later,
+//!                             after the first client's initial request was satisified.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking every 10 seconds
+//!                             The first client receives a position
+//!                             The second client issues an NPUD with options set for tracking every 7 seconds
+//!                             The second client receives a position
+//!                             Both continue tracking, the first one for 8 times, the second for 12 times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-TRACKING-2CLIENTS-2
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-TRACKING-2CLIENTS-2
+END_TESTCASE                  LBS-MOLR-ATA-TRACKING2CLIENTS-002
+
+
+
+START_TESTCASE                LBS-MOLR-ATA-TRACKING3CLIENTS-001
+//! @SYMTestCaseID              LBS-MOLR-ATA-TRACKING3CLIENTS-001
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TA
+//!                             network wants TA
+//!                             module supplies measurements only
+//!                             There are three clients, both tracking, the first client starts immediatedly, the second one starts very quickly
+//!                             after, when LBS is processing the first client's request, and the third client starts a bit later,
+//!                             after the first two clients' initial requests were satisified.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking every 5 seconds
+//!                             While the first NPUD is processed the second client issues an NPUD with options set for tracking every 9 seconds
+//!                             Both clients get their requests satisfied
+//!                             The third client issues an NPUD with options set for tracking every 7 seconds
+//!                             The third client receives a position
+//!                             All three clients continue tracking, the first one for 20 times, the second for 10 times and the third one for 15 times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-TRACKING-3CLIENTS-1
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-TRACKING-3CLIENTS-1
+END_TESTCASE                  LBS-MOLR-ATA-TRACKING3CLIENTS-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+//--------------------------------------------------------------- Module Caps = TB + TA -----------------------------------------------------------------------
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-MOLR-HYBRID-CANCEL-1
+//! @SYMTestCaseID              LBS-MOLR-HYBRID-CANCEL-1
+//! @SYMTestCaseDesc            2 self-locate clients tracking. Both issue 2 NPUDs and then cancel after the protocol module issues a Location Request
+//! @SYMTestPriority            High
+//! @SYMTestActions             Client 1 issues NPUD request
+//!                             Client 2 issues NPUD request
+//!                             AdviceSystemStatus (LBS-->PM)     >> AdviceSystemStatus(ESystemStatusNone)
+//!                             AdviceSystemStatus (LBS-->PM)     >> AdviceSystemStatus(ESystemStatusClientTracking)
+//!                             RequestSelfLocate (LBS-->PM)     >> RequestSelfLocation()
+//!                             Status Update (PM-->LBS)    LBS)   LBS)     PM)   >> RequestAssistanceData(0)
+//!                             Location Response with measurements (LBS-->PM)  >> RespondLocationRequest(meas)
+//!                             Final Network Position (PM-->LBS)   PM)   >> RequestAssistanceData(0)
+//!                             Client 1 completes with KErrNone and issues new request
+//!                             Client 2 complete with KErrNone and issues new request
+//!                             AdviceSystemStatus (LBS-->PM)    >> AdviceSystemStatus(ESystemStatusNone)
+//!                             CancelSelfLocate as result of FNP (LBS->PM)  >> CancelSelfLocation() Note: we should really fix this (optimisation)
+//!                             ProcessSessionComplete (PM->LBS)   LBS)    PM)     >> AdviceSystemStatus(ESystemStatusClientTracking) - This is due to outstanding defect, we should not update tracking status between requests!
+//!                             RequestSelfLocate (LBS-->PM)    >> RequestSelfLocation(//!Status Update (PM-->LBS) LBS)   LBS)     PM)   >> RequestAssistanceData(0)
+//!                             Client 2 cancels NPUD
+//!                             Client 2 completes with KErrCancel
+//!                             AdviceSystemStatus (LBS-->PM)     >> AdviceSystemStatus(ESystemStatusNone)
+//!                             CancelSelfLocate (LBS->PM) due to cancels  >> CancelSelfLocation()
+//!                             SessionComplete (PM-->LBS)    LBS)
+//! @SYMTestExpectedResults     Bothe client's second NPUDs will complete with KErrCancel
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-CANCEL-1
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-CANCEL-1
+END_TESTCASE                  LBS-MOLR-HYBRID-CANCEL-1
+
+
+
+START_TESTCASE                LBS-MOLR-HYBRID-CANCEL-2
+//! @SYMTestCaseID              LBS-MOLR-HYBRID-CANCEL-2
+//! @SYMTestCaseDesc            2 self-locate clients tracking. Both issue 2 NPUDs and then cancel at different parts of the same pm session
+//! @SYMTestPriority            High
+//! @SYMTestActions             Similar to other cancel tests above
+//! @SYMTestExpectedResults     Bothe client's second NPUDs will complete with KErrCancel
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-CANCEL-2
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-CANCEL-2
+END_TESTCASE                  LBS-MOLR-HYBRID-CANCEL-2
+
+
+
+START_TESTCASE                LBS-MOLR-HYBRID-CANCEL-3
+//! @SYMTestCaseID              LBS-MOLR-HYBRID-CANCEL-3
+//! @SYMTestCaseDesc            2 self-locate clients tracking. One cancels after issuing it's second request and the other does not cancel
+//! @SYMTestPriority            High
+//! @SYMTestActions             Similar to other cancel tests above
+//! @SYMTestExpectedResults     First client's second request will complete with KErrCancel, all other requests complete with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-CANCEL-3
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-CANCEL-3
+END_TESTCASE                  LBS-MOLR-HYBRID-CANCEL-3
+
+
+
+START_TESTCASE                LBS-MOLR-HYBRID-TRACKING2CLIENTS-001
+//! @SYMTestCaseID              LBS-MOLR-HYBRID-TRACKING2CLIENTS-001
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB+TA
+//!                             network wants TB+TA
+//!                             module supplies positions and measurements
+//!                             There are two clients, both tracking, the first client starts immediatedly and the second one starts very quickly
+//!                             afterwards, while LBS is processing the first request.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB + TA
+//!                             Read network request mode from test config - TB + TA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking every 5 seconds
+//!                             While the first NPUD is processed the second client issues an NPUD with options set for tracking every 10 seconds
+//!                             Both clients get their requests satisfied and they continue tracking, the first one for 15 times, the second for 9 times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-TRACKING-2CLIENTS-1
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-TRACKING-2CLIENTS-1
+END_TESTCASE                  LBS-MOLR-HYBRID-TRACKING2CLIENTS-001
+
+
+
+START_TESTCASE                LBS-MOLR-HYBRID-TRACKING2CLIENTS-002
+//! @SYMTestCaseID              LBS-MOLR-HYBRID-TRACKING2CLIENTS-002
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB+TA
+//!                             network wants TB+TA
+//!                             module supplies positions and measurements
+//!                             There are two clients, both tracking, the first client starts immediatedly and the second one starts a bit later,
+//!                             after the first client's initial request was satisified.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB + TA
+//!                             Read network request mode from test config - TB + TA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking every 10 seconds
+//!                             The first client receives a position
+//!                             The second client issues an NPUD with options set for tracking every 7 seconds
+//!                             The second client receives a position
+//!                             Both continue tracking, the first one for 8 times, the second for 12 times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-TRACKING-2CLIENTS-2
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-TRACKING-2CLIENTS-2
+END_TESTCASE                  LBS-MOLR-HYBRID-TRACKING2CLIENTS-002
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-MOLR-HYBRID-TRACKING3CLIENTS-001
+//! @SYMTestCaseID              LBS-MOLR-HYBRID-TRACKING3CLIENTS-001
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = ATA
+//!                             mod caps = TB+TA
+//!                             network wants TB+TA
+//!                             module supplies positions and measurements
+//!                             There are three clients, both tracking, the first client starts immediatedly, the second one starts very quickly
+//!                             after, when LBS is processing the first client's request, and the third client starts a bit later,
+//!                             after the first two clients' initial requests were satisified.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - ATA
+//!                             Get device capabilities - TB + TA
+//!                             Read network request mode from test config - TB + TA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking every 5 seconds
+//!                             While the first NPUD is processed the second client issues an NPUD with options set for tracking every 9 seconds
+//!                             Both clients get their requests satisfied
+//!                             The third client issues an NPUD with options set for tracking every 7 seconds
+//!                             The third client receives a position
+//!                             All three clients continue tracking, the first one for 20 times, the second for 10 times and the third one for 15 times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-TRACKING-3CLIENTS-1
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-HYBRID-TRACKING-3CLIENTS-1
+END_TESTCASE                  LBS-MOLR-HYBRID-TRACKING3CLIENTS-001
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                	LBS-MOLR-HYBRIDCAPS-TRACKING2Clients_TA_Auto-001
+//! @SYMTestCaseID              LBS-MOLR-HYBRIDCAPS-TRACKING2Clients_TA_Auto-001
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB
+//!                             network wants TB
+//!                             module supplies positions and measurements
+//!                             There are two clients, both tracking, both clients start immediatedly and one is autonomous
+//!                      
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking
+//!				The first client receives a position
+//!                             The second client issues an NPUD with options set for tracking
+//!                             The second client receives an error and stops sending requests
+//!                             First client continues tracking a number of times
+//! @SYMTestExpectedResults     All of the first clients requests should be satisfied and the client should receive the positions in the right windows.
+//!				The second clients request should receive KErrInUse 
+//! @SYMTestType                CIT
+//! @SYMCreationDate            30/12/2008
+//! @SYMAuthor                  lornam
+//! @SYMTESTSTATUS              Implemented
+//! @SYMPREQ                    PREQ1662
+//! @SYMREQ                     11647, 11652
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-TA-Auto-TRACKING-2CLIENTS-1
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-TA-Auto-TRACKING-2CLIENTS-1
+END_TESTCASE                  	LBS-MOLR-HYBRIDCAPS-TRACKING2Clients_TA_Auto-001
+
+//--------------------------------------------------------------- Module Caps = TA -----------------------------------------------------------------------
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_ta.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MOLR-ATA-WARMDOWNTIMER-1
+//! @SYMTestCaseID              LBS-MOLR-ATA-WARMDOWNTIMER-1
+//! @SYMTestCaseDesc            2 self-locate clients. One causes a warmdown timer to fire (because he accepts partial updates and stops sending requests)
+//!                             while the other client is still waiting for a request to complete.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Client 1 accepts partial updates (hence warmdowntimer started), has an interval of 5s and does 2 NPUDs
+//!                             Client 2 starts 2s later with an interval of 8s and does 4 NPUDs
+//! @SYMTestExpectedResults     The second clients request should NOT be cancelled when the first client's warmdown timer fires.
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-WARMDOWNTIMER-1
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-ATA-WARMDOWNTIMER-1
+END_TESTCASE LBS-MOLR-ATA-WARMDOWNTIMER-1
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+//--------------------------------------------------------------- Admin = PTB -----------------------------------------------------------------------
+//---------------------------------------------------------------------------------------------------------------------------------------------------
+
+// Set GPS mode to PTB in admin:
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetPTBMode
+
+//--------------------------------------------------------------- Module Caps = TB -----------------------------------------------------------------------
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_tb.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+START_TESTCASE                	LBS-MOLR-TBCAPS-TRACKING2Clients_Auto_TB-001
+//! @SYMTestCaseID              LBS-MOLR-TBCAPS-TRACKING2Clients_Auto_TB-001
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB
+//!                             network wants TB
+//!                             module supplies positions and measurements
+//!                             There are two clients, both tracking, the first client is autonomous and starts immediatedly. The second one starts after the first client's selflocate session hass started.
+//!                             after the first client's initial request was satisified.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking
+//!                             The first client receives a position
+//!                             The second client issues an NPUD with options set for tracking
+//!                             The second client receives a position
+//!                             Both continue tracking for a number of times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            30/12/2008
+//! @SYMAuthor                  lornam
+//! @SYMTESTSTATUS              Under Development
+//! @SYMPREQ                    PREQ1662
+//! @SYMREQ                     11647, 11649, 11650, 11651, 
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-Auto-TB-TRACKING-2CLIENTS-1
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-Auto-TB-TRACKING-2CLIENTS-1
+END_TESTCASE                  LBS-MOLR-TBCAPS-TRACKING2Clients_Auto_TB-001
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                	LBS-MOLR-TBCAPS-TRACKING2CLIENTS_TB_Auto-001
+//! @SYMTestCaseID              LBS-MOLR-TBCAPS-TRACKING2CLIENTS_TB_Auto-001
+//! @SYMTestCaseDesc            Self Locate requests with:
+//!                             admin gpsmode = PTB
+//!                             mod caps = TB
+//!                             network wants TB
+//!                             module supplies positions and measurements
+//!                             There are two clients, both tracking, the first client starts immediatedly and issues a TB request. The second client is autonomous and sends a request after the first client's selflocate session hass started
+//!                      
+//! @SYMTestPriority            High
+//! @SYMTestActions             Get admin gpsmode - PTB
+//!                             Get device capabilities - TB
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             The first client issues an NPUD with options set for tracking
+//!				The first client receives a position
+//!                             The second client issues an NPUD with options set for tracking
+//!                             The second client receives a position
+//!                             Both continue tracking for a number of times
+//! @SYMTestExpectedResults     All requests should be satisfied and the clients should receive the positions in the right windows.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            30/12/2008
+//! @SYMAuthor                  lornam
+//! @SYMTESTSTATUS              Under Development
+//! @SYMPREQ                    PREQ1662
+//! @SYMREQ                     11647, 11649, 11650, 11651, 
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr_tracking.ini LBS-MOLR-Tracking
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr_tracking.ini MOLR-TB-Auto-TRACKING-2CLIENTS-1
+RUN_TEST_STEP 180 LbsHybridMOLRTestServer LbsMolrTracking c:\testdata\configs\lbs_molr_tracking.ini MOLR-TB-Auto-TRACKING-2CLIENTS-1
+END_TESTCASE                  LBS-MOLR-TBCAPS-TRACKING2CLIENTS_TB_Auto-001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+// Tests Finished, Tidyup:
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+

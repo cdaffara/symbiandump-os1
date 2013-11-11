@@ -1,0 +1,145 @@
+class RConnectionServ : public RSessionBase
+	IMPORT_C RConnectionServ();
+	IMPORT_C TInt Connect(TUint aTierId);
+	IMPORT_C void Close();
+	IMPORT_C void AccessPointStatusQuery(const CConnectionServParameterBundle& aQuery, CConnectionServParameterBundle& aResult, TRequestStatus& aStatus);
+	IMPORT_C void CancelAccessPointStatusQuery();
+	IMPORT_C void AccessPointNotification(const CConnectionServParameterBundle& aQuery, MAccessPointNotificationObserver& aObserver);
+	IMPORT_C void CancelAccessPointNotification();
+
+properties of APs to be queried
+	C - Configured
+	R - Restricted
+	A - Available
+	S - Started
+
+parameters to vary
+	order of api opening (RConnServ vs RConn)
+	connections and subconnections
+	number of APs
+	AP types (PPP, dummy, ethernet)
+
+
+N.B. ALL these listed tests are on a commsdat with dummy/dummy/dummy/dummy bearers
+	Tests with 2nd number +500 are on a db with NTRas/ethernet/dummy/dummy
+
+Test Cases
+----------
+	00 - Debug and test of test suite
+	
+	01 - Queries - of active-status
+		Info
+			Value of static query to be before starting, after starting and after closing
+			To be compared to RConnection::EnumerateConnections()
+			Enumerate active connections (vs RConnection::EnumerateConnections())
+
+		Test Cases
+			NET_RCONNECTION_SERV_01_000 - Single *ppp* connection up and then down again
+			NET_RCONNECTION_SERV_01_010 - Two instances of the same *ppp* connection
+			NET_RCONNECTION_SERV_01_020 - Two different hard AP types (*ppp* and *eth*)
+			NET_RCONNECTION_SERV_01_023 - Two different soft AP types (*dummy* and *dummy*)
+			NET_RCONNECTION_SERV_01_025 - Two different AP types (*dummy* and *ppp*)
+			NET_RCONNECTION_SERV_01_030 - Multiple hard AP types and multiple hard APs of same type
+			NET_RCONNECTION_SERV_01_040 - Same as NET_RCONNECTION_SERV_01_020 but only open the RConnServ as we need it
+			NET_RCONNECTION_SERV_01_050 - Implicit socket
+			NET_RCONNECTION_SERV_01_060 - The Full Monty - all access point types up and down again (ppp, eth, dummy)
+
+	02 - Queries - of restricted and configured status
+		Info
+			These are the commsdat tests
+			In each case - Confirm no change to other access points
+
+		Test Cases
+			NET_RCONNECTION_SERV_02_000 - All points check - link tier - check status (num of, configured, avail) of all APs in the database
+			NET_RCONNECTION_SERV_02_020 - All points check - network tier - check status (num of, configured, avail) of all APs in the database
+			NET_RCONNECTION_SERV_02_100 - Change configured status of an AP on *link* tier and validate change with query
+			NET_RCONNECTION_SERV_02_110 - Change restricted status of an AP on *link* tier and validate change with query
+			NET_RCONNECTION_SERV_02_140 - Change configured status of an AP on *network* tier and validate change with query
+			NET_RCONNECTION_SERV_02_150 - Change restricted status of an AP on *network* tier and validate change with query
+			NET_RCONNECTION_SERV_02_200 - Trying various broken commsdats.
+				Load various commsdat config files and perform query for info about all APs each time
+				Trying to knock it over with legacy commsdat files
+				Also, any defects arising from corrupt commsdats should have their
+				  config files added to this test step.
+				
+	03 - Queries - of availability status
+		Info
+			Confirm expected changes to query when availability changes (all other things should stay equal)
+		
+		Test Cases
+			NET_RCONNECTION_SERV_03_000 - Check that a *link* layer connection appears available when it becomes so.
+			NET_RCONNECTION_SERV_03_010 - Check that a *network* layer connection appears available when it becomes so.
+			NET_RCONNECTION_SERV_03_015 - Confirm that multiple connections appear available independently on the *link* layer
+			NET_RCONNECTION_SERV_03_025 - All tiers propagation - changes to link APs with RConnectionServs watching all tiers
+			NET_RCONNECTION_SERV_03_035 - Cancellation of queries - should return KErrCancel - must still be able to use
+
+	04 - Negative tests
+		Notes
+			check that RConnServ instance errors and can then be used for valid query immediately afterward
+		
+		Curious query parameters
+			NET_RCONNECTION_SERV_04_000 - filter:none, apidfilter:single access point
+			NET_RCONNECTION_SERV_04_002 - filter:none, apidfilter:none
+			NET_RCONNECTION_SERV_04_005 - filter:invalid, apidfilter:single access point
+			NET_RCONNECTION_SERV_04_007 - filter:invalid, apidfilter:none
+			NET_RCONNECTION_SERV_04_010 - filter:invalid subset, apidfilter:none
+			NET_RCONNECTION_SERV_04_013 - filter:all don't cares - link and network tiers
+			NET_RCONNECTION_SERV_04_020 - filter:all, apidfilter:outside range - link tier
+		
+			TODO oops we also need a test against no type of parameters
+			TODO oops we also need a test against invalid type of parameters
+
+		RConnectionServ::Connect()
+			NET_RCONNECTION_SERV_04_030 - Invalid tier IDs on call to RConnectionServ::Connect()
+			NET_RCONNECTION_SERV_04_040 - Invalid connect to ipproto tier - KErrNotSupported
+			NET_RCONNECTION_SERV_04_045 - Try to reconnect with out closing first
+
+		Commsdat
+			NET_RCONNECTION_SERV_04_050 - Duplicated MCPR record - ensure we don't fall over
+
+		+ (rjl) set up commsdat with a PPP connection and invalid TsyName ("bananas").
+				then query availability on link layer.
+				for the bad AP the startup of PPP availability will raise KErrNotFound, and rather
+				than this rippling all the way back to be a KErrNotFound on the query request,
+				we need to ensure that a bundle *is* returned, with availability marked as unknown 
+				for the bad access point.
+
+	05 - Query - Other
+		Test Cases - Filtering by subset of APs
+			NET_RCONNECTION_SERV_05_100 - Filter by access point when querying each attribute and combinations of them
+
+	10 - Notifications - availability status
+			NET_RCONNECTION_SERV_10_000 - Availability notifications - *link* tier
+			NET_RCONNECTION_SERV_10_002 - Availability notifications - *link* tier - validated with queries
+			NET_RCONNECTION_SERV_10_005 - Availability notifications - *link* tier - filtered by single AP
+			NET_RCONNECTION_SERV_10_015 - Availability notifications - *network* tier
+			NET_RCONNECTION_SERV_10_025 - Availability notification - *link* and *network* tiers together
+			NET_RCONNECTION_SERV_10_030 - Multiple RConnServ instances at the *link* tier (2)
+			NET_RCONNECTION_SERV_10_040 - Multiple RConnServ instances at the *network* tier (2)
+
+	11 - Notifications - active status
+		Test Cases
+			NET_RCONNECTION_SERV_11_000 - Notifs: Active attribute - *link* tier
+			NET_RCONNECTION_SERV_11_010 - Notifs: Active attribute - *link* tier - validated with queries
+			NET_RCONNECTION_SERV_11_020 - Notifs: Active attribute - *link* tier - filtered by single AP
+			NET_RCONNECTION_SERV_11_040 - Notifs: Active attribute - *network* tier
+			NET_RCONNECTION_SERV_11_060 - Notifs: Active attribute - *link* and *network* tiers together
+			NET_RCONNECTION_SERV_11_070 - Notifs: Active attribute - *link* tier - implicit connection
+			NET_RCONNECTION_SERV_11_200 - Notifs: Active attribute - Connection going idle
+
+	12 - Notifications - configured and restricted status
+			NET_RCONNECTION_SERV_12_100 - Notifs: Detect change to configured status of an AP on *link* tier
+			NET_RCONNECTION_SERV_12_110 - Notifs: Detect change to restricted status of an AP on *link* tier
+			NET_RCONNECTION_SERV_12_140 - Notifs: Detect change to configured status of an AP on *network* tier
+			NET_RCONNECTION_SERV_12_150 - Notifs: Detect change to restricted status of an AP on *network* tier
+
+	16 - Notifications - cancelling
+			NET_RCONNECTION_SERV_16_000 - Cancellation of notifs - should return KErrCancel - must still be able to use
+
+Deprecated
+	13 - Notifications - mixed status
+		Available and started together
+		Combination of access point properties
+	
+	NET_RCONNECTION_SERV_03_040 - Test for different values of score and status and make sure they meet the bounds expected
+		No longer valid as status and score are a single value now and any nonzero value is available

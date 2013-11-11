@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<test>
+    <id>1</id>
+    <name>SyDo_Test_Automation_dosservices</name>
+    <target>
+        <device rank="none" alias="DEFAULT">
+            <property name="HARNESS" value="STIF" />
+            <property name="TYPE" value="Ariane" />
+        </device>
+    </target>
+    <plan id="1874.1739" name="Dosservices Test Plan" harness="STIF" enabled="true" passrate="100">
+        <session id="1874.1739.1" name="session" harness="STIF" enabled="true" passrate="100">
+            <set id="1874.1739.1.1" name="set" harness="STIF" enabled="true" passrate="100">
+                <target>
+                    <device rank="master" alias="DEFAULT"/>
+                </target>
+                <case id="1874.1739.1.1.1" name="Test Case 1" harness="STIF" enabled="true" passrate="100">
+                    <flash target-alias="DEFAULT" images="ATS3Drop/images/sydo_dosservices_ats3_image.fpsx" />
+                    <flash target-alias="DEFAULT" images="ATS3Drop/images/sydo_dosservices_ats3_image_udaerase.fpsx" />                    
+                    <!-- Create CTC coverage result folder -->
+                    <step id="1874.1739.1.1.1.x" name="Create CTC log dir" harness="STIF" enabled="true" passrate="100" significant="false">
+                        <command>makedir</command>
+                        <params>
+                            <param dir="c:\data\ctc\"/>
+                        </params>
+                    </step>
+                    <!-- Start CTC manager -->
+                    <step id="1874.1739.1.1.1.x" name="CTC start" harness="STIF" enabled="true" passrate="100" significant="false">
+                        <command>execute</command>
+                        <params>
+                            <param file="z:\sys\bin\ctcman.exe"/>
+                        </params>
+                    </step>
+                    <!-- Run test cases -->
+		                <step id="1874.1739.1.1.1.x" name="dsytfstifadapter" harness="STIF" enabled="true" passrate="100" significant="true">
+		                    <command>run-cases</command>
+		                    <params>
+		        							<param module="dsytfstifadapter"/>  
+		        							<param filter="*"/>		        							
+		        							<param timeout="600"/>
+		                    </params>
+		                </step>
+		                <!-- Fetch test results -->
+                    <step id="1874.1739.1.1.1.x" name="Fetch Test module Report" harness="STIF" enabled="true" passrate="100" significant="false">
+                        <command>fetch-log</command>
+                        <params>
+				  							    <param type="text"/>
+				  							    <param delete="true"/>
+				  							    <param path="C:\Logs\TestFramework\*"/>
+                        </params>
+                    </step>                    
+                     <!-- Save CTC coverage data -->
+                    <step id="1874.1739.1.1.1.x" name="Save CTC data" harness="STIF" enabled="true" passrate="100" significant="false">
+                        <command>execute</command>
+                        <params>
+                            <param parameters="writefile"/>
+                            <param file="z:\sys\bin\ctcman.exe"/>
+                        </params>
+                    </step>
+                    <!-- Fetch and clean CTC data -->
+                    <step id="1874.1739.1.1.1.x" name="Fetch and clean CTC data" harness="STIF" enabled="true" passrate="100" significant="false">
+                        <command>fetch-log</command>
+                        <params>
+                            <param delete="true"/>
+                            <param path="c:\data\ctc\ctcdata.txt"/>
+                        </params>
+                    </step>
+               </case>
+            </set>
+        </session>
+    </plan>
+    <files>
+        <file>ATS3Drop/images/sydo_dosservices_ats3_image.fpsx</file>
+        <file>ATS3Drop/images/sydo_dosservices_ats3_image_udaerase.fpsx</file>        
+    </files> 
+    <postAction>
+        <type>SendEmailAction</type>
+        <params>
+            <param name="type" value="ATS3_REPORT"/>
+            <param name="to" value="juha.niemi@nokia.com"/>
+            <param name="subject" value="ATS3 report for §RUN_NAME§ §RUN_START_DATE§ §RUN_START_TIME§"/>
+            <param name="send-files" value="true"/>
+        </params>
+    </postAction>
+    <postAction>
+        <type>FileStoreAction</type>
+        <params>
+            <param name="to-folder" value="\\ousrv058\data$\ATS3Reports\S60_5_0\systemswextensions\dosservices\"/>
+        </params>
+    </postAction>
+</test>

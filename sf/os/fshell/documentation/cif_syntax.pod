@@ -1,0 +1,220 @@
+# cif_syntax.pod
+#
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+=head1 Command Info Files
+
+I<This documentation is only useful for developers of fshell commands.>
+
+=head2 Introduction
+
+Command Info Files (CIFs) can be used to define the interface and documentation for fshell commands that are implemented using CCommandBase. Where previously details of arguments and options etc. were specified in C++ source code, the majority of this information can now be defined in a CIF, which is a plain text file. The format of CIFs is similar to POD (Perl's documentation source format), but with an additional set of keywords that relate to the specifics of command interfaces.
+
+CIF files for fshell commands live in F<\resource\cif\fshell> and should be named I<commandname>.cif where I<commandname> is the same as what is returned by the command's Name() function.
+
+=head2 Syntax
+
+=head3 ==name <commandname>
+
+The name of the command, without any prefix or suffix. Eg C<==name hello>. Mandatory.
+
+=head3 ==short-description
+
+A one-line summary of the functionality of the command. Mandatory. Eg:
+
+    ==short-description
+
+    Classic C<Hello World!> example.
+
+=head3 ==long-description
+
+A fuller description of the command can go here. Full POD syntax is supported, including lists and multiple paragraphs. The POD is terminated by the next CIF double-equals line, or the end of the file. Optional. For example:
+
+    ==long-description
+
+    Intended to be an example of a minimal command implementation. Simply prints C<Hello World!> to the console.
+
+=head3 ==argument <type> <name> [optional] [multiple | last] [<envvar-name>]
+
+One argument section is specified for each argument that the command accepts. C<type> is the type of the argument, one of the supported fshell types: int, int64, uint, uint64, string, filename, real, enum. See later for more details about the enum type. If a command doesn't take any arguments, then there will be no C<==argument> sections. Example:
+
+    ==argument int priority
+
+    The priority to set.
+
+    ==argument filename file optional multiple
+    
+    File or files to open. If not specified, opens an untitled document.
+
+The rules for the attributes are:
+
+=over 4
+
+=item *
+
+An argument with the C<optional> attribute cannot be followed by a non-optional argument.
+
+=item *
+
+Only the final argument is allowed to have the C<multiple> attribute set.
+
+=item *
+
+An argument with just the C<multiple> attribute can be specified one or more times, C<optional> means zero or one times. An argument may have both C<optional> and C<multiple> to indicate it can be specified zero or more times.
+
+=item *
+
+Only the final argument is allowed to have the C<last> attribute. It indicates that further arguments are allowed without needing to quote them and will be merged into this argument. C<last> may not be combined with C<multiple>. If a string provided for a C<last> argument naturally (i.e. as a result of normal string quote and escape handling) forms a single argument and consumes the whole of the remainder of the command line, the resulting single argument will be used as is. Otherwise, the string will be used without any quote or escape handling. Here are some examples (using fshell's 'time' command, which takes a single argument that uses the C<last> attribute):
+
+      Input command-line            Argument receive by the 'time' command
+
+ 1)   time echo foo                 echo foo
+ 2)   time 'echo foo'               echo foo
+ 3)   time echo^ foo                echo foo
+ 4)   time echo foo && echo bar     echo foo          (note, fshell intercepts the '&&' and launches 'echo bar' separately).
+ 5)   time 'echo foo && echo bar'   echo foo && echo bar
+ 6)   time echo -h                  echo -h
+
+Note, the presence of C<last> in C<time>'s argument specification makes cases (1) and (6) possible. If C<last> were not used, case (1) C<CCommandBase> would have failed to parse the command-line (due to the presence of C<foo>) and in case (6) C<CCommandBase> would have treated the C<-h> as an argument to C<time> and printed its help (rather than C<echo>'s).
+
+=back
+
+If an environment variable name is specified using C<envvar-name>, then fshell will use it to attempt to fill in this argument's value, if it isn't specified on the command line. Any arguments that are "filled in" in this manner cannot cause any non-filled in arguments to be reordered. In other words you can't try to supply arguments 1 and 3 on the command line and have argument 2 filled in from the environment. If an argument isn't supplied on the command line, and isn't available from the environment, and isn't optional, then it is a syntax error.
+
+=head3 ==option <type> <shortname> <longname> [multiple | <envvar-name>]
+
+Each option that the command supports is specified by an C<==option> section. C<Type> is an fshell type, one of: bool, int, int64, uint, uint64, string, filename, real, enum. C<shortname> is the single letter used as the short option (eg C<-v> as a short option for C<--verbose>). If a command doesn't have any options, then there will be no C<==option> sections. Example:
+
+    ==option bool c color
+
+    Write C<Hello World!> in color.
+
+Some commands have configuration options which can also be specified by defining an environment variable. The environment variable can be specified on the end of the C<==option> line. For example an option which can also be specified by exporting $TAB_WIDTH would be defined as:
+
+    ==option int w tab-width TAB_WIDTH
+
+    Specify the tab width to use (defaults to 4 characters).
+
+=head3 ==include <ciffile>
+
+The C<==include> tag can be used to import information from another CIF file. This is useful for commands that inherit from other commands for which the base class documentation is still relevant. For example, ymodem.cif includes xmodem.cif, and just overrides the options and arguments (and description) that differs between the xmodem and ymodem protocols. Optional. Example:
+
+    ==include xmodem.cif
+
+CIF files are processed sequentially, therefore any includes should normally be specified at the top of the file, so that later sections can override the included ones.
+
+=head3 ==see-also
+
+Optional. If present, a section titled "See Also" is generated in the resulting documentation. For example:
+
+    ==see-also
+
+    L<ps|ps>, L<objinfo|objinfo>
+
+=head2 The enum type
+
+The C<enum> type can be used for an option or argument that takes a limited number of named values, in much the same was as C/C++ enums are used. For an option or argument of type C<enum> you must specify the possible values that the enum can take using the C<==enum-value> keyword. These may optionally have a separate description per value. If any value has an individual description, they all must.
+
+    ==argument enum object-type
+
+    The type of object to list.
+
+    ==enum-value process
+
+    ==enum-value thread
+
+    ==enum-value chunk
+
+Or for an option (which, in this case, has individual descriptions for each value):
+
+    ==option enum e encoding
+
+    Encoding to use. If not specified, defaults to 'auto'.
+
+    ==enum-value auto
+
+    Use charconv to try and figure out the encoding (slow and error-prone for anything other than UTF-16 with BOM).
+
+    ==enum-value binary
+
+    Read the files in binary mode and do not perform any character conversion.
+
+    ==enum-value utf-8
+
+    Assume the file is UTF-8 (with or without BOM).
+
+The order of the values in the CIF file must match how the enum is defined in the C++. Example usage:
+
+    class CMyCommand : public CCommandBase
+        {
+        ...
+        enum TOperation
+            {
+            ELoad,
+            EStore,
+            EDelete,
+            };
+        TOperation iOperation;
+        };
+    ...
+    void CMyCommand::ArgumentsL(RCommandArgumentList& aArguments)
+        {
+        aArguments.AppendEnumL((TInt&)iOperation, _L("operation"));
+        }
+
+The CIF file would therefore contain:
+
+    ==argument enum operation optional
+
+    The operation to perform. If not specified, defaults to load.
+
+    ==enum-value load
+
+    ==enum-value store
+
+    ==enum-value delete
+
+Note how the C++ enum values C<ELoad, EStore, EDelete> are in the same order as the CIF declaration of C<load, store, delete>. The C++ enum must not specify any custom values, ie the enum must start from zero and be sequential.
+
+=head2 CIF types and CCommandBase types
+
+Each of the argument and option types mentioned here corresponds to a C++ type that is used in the command's implementation. In summary they are:
+
+    CIF type    CCommandBase type
+    --------    -----------------
+    bool        TBool
+    int         TInt
+    int64       TInt64
+    uint        TUint
+    uint64      TUint64
+    string      HBufC*
+    filename    IoUtils::TFileName2
+    real        TReal
+    enum        TInt (or more usually, some enum type)
+
+If the argument/option can take multiple values (by specifying C<multiple> in the CIF), the types are:
+
+    CIF type    CCommandBase type
+    --------    -----------------
+    bool        RArray<TBool>
+    int         RArray<TInt>
+    int64       RArray<TInt64>
+    uint        RArray<TUint>
+    uint64      RArray<TUint64>
+    string      RPointerArray<HBufC>
+    filename    RArray<IoUtils::TFileName2>
+    real        RArray<TReal>
+    enum        RArray<TInt>
+
+=head1 Copyright
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+

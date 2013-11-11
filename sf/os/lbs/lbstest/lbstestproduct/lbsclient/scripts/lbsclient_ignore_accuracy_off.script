@@ -1,0 +1,443 @@
+﻿//! @File
+//! @SYMTestSuiteName	lbsclient_ignore_accuracy_off.script
+//! @SYMScriptTestEnvironment
+
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+// Select the test A-GPS hybrid integration module and register onto the home network.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+	CopyFile c:\private\10202be9\1028224b.cre c:\private\10202be9\1028224b.bak
+	CopyFile c:\testdata\configs\1028224b_ignacc_off.cre c:\private\10202be9\1028224b.cre
+ 	CopyFile c:\testdata\configs\1028224b_ignacc_off.cre c:\private\10202be9\persists\1028224b.cre
+ 	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+// Reset the admin to ensure we are preferred terminal mode.
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+// Now start LBS. 
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+
+// Carry out the tests.
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0001
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0001
+//!@SYMTestCaseDesc			Checking the setting to ignore accuracy is disabled
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is disabled
+//!					2. The LBS sub-system is started
+//!					3. Check that the ignore accuracy setting is disabled
+//!					
+//!@SYMTestExpectedResults		The setting is disabled
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8232
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-DISABLED-001
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0001
+
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0002
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0002
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer), the position 
+//! 					returned is accurate
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					3. The module will return an accurate position
+//!					
+//!@SYMTestExpectedResults		The position is returned to the client and the TRequestStatus is KErrNone
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-ACCURATE
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-ACCURATE-001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0002
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0003
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0003
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer, TPositionModuleId aModuleId), 
+//!					the position returned is accurate
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer, TPositionModuleId aModuleId);
+//!					3. The module will return an accurate position
+//!					
+//!@SYMTestExpectedResults		The position is returned to the client and the TRequestStatus is KErrNone
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-ACCURATE
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-ACCURATE-002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0003
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0004
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0004
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer, const TPositionCriteriaBase& aCriteria), 
+//!					the position returned is accurate
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer, const TPositionCriteriaBase& aCriteria);
+//!					3. The module will return an accurate position
+//!					
+//!@SYMTestExpectedResults		The position is returned to the client and the TRequestStatus is KErrNone
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-ACCURATE
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-ACCURATE-003
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0004
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0005
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0005
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer), the position 
+//! 					returned is inaccurate
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					3. The module will return an inaccurate position
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KPositionQualityLoss
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-INACCURATE
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-INACCURATE-001
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0005
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0006
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0006
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer, TPositionModuleId aModuleId), 
+//!					the position returned is inaccurate
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer, TPositionModuleId aModuleId);
+//!					3. The module will return an inaccurate position
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KPositionQualityLoss
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-INACCURATE
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-INACCURATE-002
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0006
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0007
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0007
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer, const TPositionCriteriaBase& aCriteria), 
+//!					the position returned is inaccurate
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer, const TPositionCriteriaBase& aCriteria);
+//!					3. The module will return an inaccurate position
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KPositionQualityLoss
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-INACCURATE
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-INACCURATE-003
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0007
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0008
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0008
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer), no position is 
+//! 					returned before timer expires
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					3. The module won�t return any position before the timer expires
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KErrTimeOut
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-TIMEOUT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-TIMEOUT-001
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0008
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0009
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0009
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer, TPositionModuleId aModuleId), 
+//!					no position is returned before timer expires
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer, TPositionModuleId aModuleId);
+//!					3. The module won�t return any position before the timer expires
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KErrTimeOut
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-TIMEOUT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-TIMEOUT-002
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0009
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0010
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0010
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, after opening with 
+//!					TInt RPositioner::Open(RPositionServer& aPosServer, const TPositionCriteriaBase& aCriteria), 
+//!					no position is returned before timer expires
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer, const TPositionCriteriaBase& aCriteria);
+//!					3. The module won�t return any position before the timer expires
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KErrTimeOut
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-TIMEOUT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-TIMEOUT-003
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0010
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0011
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0011
+//!@SYMTestCaseDesc			Lbs Location Acquisition with Ignore Accuracy enabled, partial updates 
+//!					disabled, receiving partial updates only
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled and partial updates are disabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					3. The module returns only partial updates
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KPositionQualityLoss and no updates are sent to the client
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-PARTL-UPD
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-PARTL-UPD-001
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0011
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0012
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0012
+//!@SYMTestCaseDesc			Performing autonomous location request with ignore accuracy enabled and partialupdates option is set to 
+//!					enabled, only partial updates are produced
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is enabled
+//!					2. Client generates request after opening with TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					3. The module returns only partial updates
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KPositionPartialUpdate when updates are sent to the client
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-PARTL-UPD
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-PARTL-UPD-002
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0012
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0013
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0013
+//!@SYMTestCaseDesc			Performing location request with ignore accuracy disabled, partial updates are on and 
+//!					the client will request an early complete
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is disabled
+//!					2. Client generates request through TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					3. The module returns partial updates
+//!					4. The client requests an early complete
+//!					
+//!@SYMTestExpectedResults		The TRequestStatus is KPositionEarlyComplete
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-EARLY
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-EARLY-COMPLETE-001
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0013
+
+// Use the hybrid AGPS module
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StopLbs
+DELAY 2000
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+DELAY 2000
+
+START_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0014
+
+//!@SYMTestCaseID			 LBS-IGNORE-ACC-IgnoreAccuracyOff-0014
+//!@SYMTestCaseDesc			Performing tracking location request with ignore accuracy enabled, some of the positions returned are inaccurate, some are accurate
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is disabled
+//!					2. Client generates tracking request after opening with TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					3. The module returns inaccurate positions and accurate positions
+//!					
+//!@SYMTestExpectedResults		Only accurate positions are returned to the client
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACC
+RUN_TEST_STEP 060 LbsClientTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-TRACKING
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySettingTracking c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-OFF-TRACKING-001
+
+END_TESTCASE  LBS-IGNORE-ACC-IgnoreAccuracyOff-0014
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+  
+// Restore the original CenRep file
+RUN_UTILS CopyFile c:\private\10202be9\1028224b.bak c:\private\10202be9\1028224b.cre
+RUN_UTILS CopyFile c:\private\10202be9\1028224b.bak c:\private\10202be9\persists\1028224b.cre

@@ -1,0 +1,93 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         btgpspsy_listupdates.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE ctlbsbtgpspsytestserver
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+START_TESTCASE                LBS-BTGPSPSY-ListUpdates-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-ListUpdates-0001
+//! @SYMTestCaseDesc            Test to ensure the BT PSY does not listen to any updates made to the device list after the connection process has started.
+//! @SYMTestActions             1. Test should add a few unavailable devices to the list.
+//!                             2. Test makes a number of location request.
+//!                             3. Test should add a valid device to the end of the list
+//!                             4. The PSY should not see this new device and should load the BT device selection dialog, the test should provide it with a different BT device.
+//!                             5. The test should receive a location update from this device.
+//!                             6. Test should check to ensure the list now contains both valid BT devices and that the user entered device has not been moved.
+//! @SYMTestExpectedResults     Test should receive a location udpate from the the device added via the device selection dialog.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            7/1/2009
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10806
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_listupdates.ini ListUpdates01Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyListUpdatesStep c:\testdata\configs\btgpspsy_locationrequest.ini ListUpdates01
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_listupdates.ini ListUpdates01Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-ListUpdates-0001
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-ListUpdates-0002
+//! @SYMTestCaseID              LBS-BTGPSPSY-ListUpdates-0002
+//! @SYMTestCaseDesc            Test to ensure the BT PSY does not listen to any updates made to the device list after the connection process has started and that it does not re-add devices to the list if the client has deleted them.
+//! @SYMTestActions             1. Test should add a few unavailable devices to the list and one available device to the end of the list.
+//!                             2. Test makes a location request.
+//!                             3. Test should remove the valid device from the list (but the simulation device should remain)
+//!                             4. The PSY should not see this change and should be able to connect to the device and receive a location update.
+//!                             5. Test should check to ensure the list does not contain the valid device in the list (i.e. the PSY has not re-added the device after the client deleted it)
+//! @SYMTestExpectedResults     Test should receive a location update from the the device, but the PSY should not re-add the device to the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            7/1/2009
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              1. Under Development
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_listupdates.ini ListUpdates02Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyListUpdatesStep c:\testdata\configs\btgpspsy_locationrequest.ini ListUpdates02
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_listupdates.ini ListUpdates02Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-ListUpdates-0002
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-ListUpdates-0003
+//! @SYMTestCaseID              LBS-BTGPSPSY-ListUpdates-0003
+//! @SYMTestCaseDesc            Test to ensure the BT PSY does not listen to any updates made to the device list after the connection process has started.
+//! @SYMTestActions             1. Test should add a few unavailable devices to the list.
+//!                             2. Test makes a number of location request.
+//!                             3. Test should add a valid device to the end of the list
+//!                             4. The PSY should not see this new device and should load the BT device selection dialog, the test should provide it with the same BT device details that were just added.
+//!                             5. The test should receive a location update from this device.
+//!                             6. Test should check to ensure the list still contains the one device and that this has been moved to the top of the list.
+//! @SYMTestExpectedResults     Test should receive a location udpate from the the device and should move the device to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            7/1/2009
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              1. Under Development
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_listupdates.ini ListUpdates03Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyListUpdatesStep c:\testdata\configs\btgpspsy_locationrequest.ini ListUpdates03
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_listupdates.ini ListUpdates03Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-ListUpdates-0003
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+
+

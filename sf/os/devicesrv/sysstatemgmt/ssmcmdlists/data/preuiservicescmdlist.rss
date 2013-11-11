@@ -1,0 +1,200 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command list for the Pre-UI-Services startup state.
+*
+*/
+
+#include <ssm/conditionresourcetypes.rh>
+#include <ssm/ssmcmd.rh>
+
+#include "ssmsubstateext.hrh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStatePreUiServices;
+            resource_id = r_cmds;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmds
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds
+    {
+    commands =
+        {
+        r_cmd_publishstate, // prio 0xFFF1
+        // prio 0xFE01
+        r_cmd_sysagt,
+        r_cmd_initpskeys,
+        r_cmd_checkuserdrive,
+        r_cmd_deltempfiles,
+        r_cmd_reservedisk,
+        r_cmd_sysmon,
+        r_cmd_ssmutilsrv,
+        r_cmd_multiwaitforever // prio 0xFE00
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmd_checkuserdrive
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_checkuserdrive
+    {
+    priority = 0xFE01;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 13; // CheckUserDrive
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_deltempfiles
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_deltempfiles
+    {
+    priority = 0xFE01;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    severity = ECmdCriticalSeverity;
+    dllname = "customcmds.dll";
+    ordinal = 15; // DeleteTempFiles
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_initpskeys
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_CUSTOM_COMMAND r_cmd_initpskeys
+    {
+    priority = 0xFE01;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    severity = ECmdCriticalSeverity;
+    dllname = "ssmsystemcmds.dll";
+    ordinal = 1; // InitPsKeys
+    unload_on_finish = ENeverUnload;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_multiwaitforever
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_MULTIPLE_WAIT r_cmd_multiwaitforever
+    {
+    priority = 0xFE00;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_publishstate
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_cmd_publishstate
+    {
+    priority = 0xFFF1;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_reservedisk
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_reservedisk
+    {
+    priority = 0xFE01;
+    execution_behaviour = ESsmFireAndForget;
+    name = "Z:\\sys\\bin\\ssmdiskreserver.exe";
+    severity = ECmdCriticalSeverity;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_ssmutilsrv
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_ssmutilsrv
+    {
+    priority = 0xFE01;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    name = "Z:\\sys\\bin\\ssmutilsrv.exe";
+    severity = ECmdCriticalSeverity;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sysagt
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_sysagt
+    {
+    priority = 0xFE01;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    name = "Z:\\sys\\bin\\sysagt2svr.exe";
+    severity = ECmdCriticalSeverity;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sysmon
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_sysmon
+    {
+    priority = 0xFE01;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    name = "Z:\\sys\\bin\\sysmon.exe";
+    severity = ECmdCriticalSeverity;
+    retries = 2;
+    // It can't monitor itself
+    }

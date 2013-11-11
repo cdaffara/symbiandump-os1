@@ -1,0 +1,166 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		COMINF-ESOCK-RSocket-PublicAPI-Other
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with an echo server running.
+//!				A Java echo server is provided which runs on ports 10007 (TCP) and 10008 (UDP).
+//!				The server receives data on one port and echoes it to another, allowing
+//!				one socket to send data to another socket on the same device.
+//! @SYMScriptDescription	Tests all public elements of the RSocket class
+//!				as a means of confidence that the APIs work as expected.
+//! @SYMScriptPurpose		The purpose is to provide a regression test suite of Published All APIs for 
+//!				the RSocket class.
+//! @SYMScriptInfo		Negative testing is performed to confirm that correct errors are returned 
+//!				when incorrect parameters are given.
+//! @SYMScriptAutomation	The tests are fully automated using Test Execute Framework and Test Driver.
+//! @SYMScriptDependencies 	A PC based IP Echo Server
+//! @SYMScriptAuthor		James Mechen,Victor Shamarin
+//! @SYMScriptCreationDate	19/02/2007
+///////////////////////////////////////////////////////////////////////////////
+
+LOAD_SUITE	T_RSocket
+DELAY		2000
+
+START_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0001
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0001
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		Construct and destruct a socket.
+//!				Uses API elements: RSocket(),
+//!				                   ~RSocket()
+//! @SYMTestActions    		1. Construct socket.
+//!				2. Destruct socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	Socket is constructed and destructed with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-Other.ini 
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND		RSocketActive	Constructor
+		COMMAND		RSocketActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0001
+
+START_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0078
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0078
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Open() method with wrong value of protocol name on a TCP socket.
+//!				Uses API elements: Open(RSocketServ&, const TDesC&),
+//!				                   Close().
+//! @SYMTestActions    		1. Open sessions to socket servers.
+//!				2. Open active TCP socket with name of protocol 'abc'.
+//!				3. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	The Open() method call returns error code KErrNotFound (-1).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-Other.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND	!Error=-1	RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0078-0001-Open_command05
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0078
+
+START_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0079
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0079
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Open() method with wrong value of protocol type on a TCP socket.
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!				                   Close().
+//! @SYMTestActions    		1. Open sessions to socket servers.
+//!				2. Open active TCP socket with type of protocol 0.
+//!				3. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	The Open() method call returns error code KErrBadName (-28).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-Other.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket	RSocketActive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RSocketActive	Constructor
+		COMMAND	!Error=-28	RSocketActive	Open		COMINF-ESOCK-RSocket-PublicAPI-0079-0001-Open_command05
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~		
+	END_TEST_BLOCK	
+END_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0079
+
+//!START_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0096
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0096
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Connect() method before opening active TCP socket.
+//!				Uses API elements: Connect(TSockAddr&, TRequestStatus&),
+//! @SYMTestActions    		1. Open sessions to socket servers.
+//!				2. Connect active socket to remote host.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	The Connect() method call will panic (KERN-ExEC code 0).
+//! @SYMTestType		CIT
+//!	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-Other.ini 
+//!		CREATE_OBJECT	RSocketServ	RSocketServActive
+//!		CREATE_OBJECT	RSocket	RSocketActive
+//!		COMMAND		RSocketServActive	Constructor
+//!		COMMAND		RSocketServActive	Connect
+//!		COMMAND		RSocketActive	Constructor
+//!		COMMAND		RSocketActive	Connect		COMINF-ESOCK-RSocket-PublicAPI-0096-0001-Connect_command05
+//!		COMMAND		RSocketActive	~
+//!		COMMAND		RSocketServActive	Close
+//!		COMMAND		RSocketServActive	~		
+//!	END_TEST_BLOCK	!PanicCode=0
+//!END_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0096
+
+START_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0108
+//! @SYMTestCaseID		COMINF-ESOCK-RSocket-PublicAPI-0108
+//! @SYMAPI			RSocket
+//! @SYMTestCaseDesc		A negative test that calls Shutdown(TShutdown:ENormal) method with unconnected passive TCP socket. 
+//!				Uses API elements: Open(RSocketServ&, TUint, TUint, TUint),
+//!						   Shutdown(TShutdown, TRequestStatus &),
+//!						   Close().
+//! @SYMTestActions    		1. Open sessions to socket servers.
+//!				2. Open passive TCP socket.
+//!				3. Shutdown passive socket with TShutdown:ENormal
+//!				4. Close socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		Critical
+//! @SYMTestExpectedResults  	The Shutdown() method call will panic (ESock code 17).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RSocket	\comms-infras\esock\T_RSocket\COMINF-ESOCK-RSocket-PublicAPI-Other.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket	RSocketPassive
+		CREATE_OBJECT	RSocket	RSessionSocket
+		COMMAND		RSocketServPassive	Constructor
+		COMMAND		RSocketServPassive	Connect
+		COMMAND		RSessionSocket	Constructor
+		COMMAND		RSessionSocket	Open		COMINF-ESOCK-RSocket-PublicAPI-0108-0001-Open_command06
+		COMMAND		RSessionSocket	Shutdown
+		OUTSTANDING	
+		COMMAND		RSessionSocket	Close
+		COMMAND		RSessionSocket	~
+		COMMAND		RSessionSocket	Close
+		COMMAND		RSessionSocket	~
+		COMMAND		RSocketServPassive	Close
+		COMMAND		RSocketServPassive	~		
+	END_TEST_BLOCK	!PanicCode=17 !PanicString=ESock_client  
+END_TESTCASE 			COMINF-ESOCK-RSocket-PublicAPI-0108

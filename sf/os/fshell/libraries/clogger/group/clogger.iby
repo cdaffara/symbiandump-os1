@@ -1,0 +1,71 @@
+// clogger.iby
+// 
+// Copyright (c) 2010 Accenture. All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+// 
+// Initial Contributors:
+// Accenture - Initial contribution
+//
+#ifndef CLOGGER_IBY
+#define CLOGGER_IBY
+
+#include <fsh_config.iby>
+
+FSHELL_EXECUTABLE_FILE(CloggerServer.exe)
+FSHELL_EXECUTABLE_FILE(Clogger.dll)
+FSHELL_EXECUTABLE_FILE(Clogger-buffered.dll)
+
+#ifdef FSHELL_CLOGGER_REPLACE_FLOGGER
+FSHELL_RENAMED_EXECUTABLE_FILE(FLOGGER_clogger_stub.DLL, flogger.dll)
+#else
+FSHELL_EXECUTABLE_FILE(FLOGGER_clogger_stub.DLL)
+#endif // FSHELL_CLOGGER_REPLACE_FLOGGER
+
+#ifdef FSHELL_CLOGGER_REPLACE_CDU
+FSHELL_RENAMED_EXECUTABLE_FILE(COMSDBGUTIL_clogger_stub.DLL, comsdbgutil.dll)
+#else
+FSHELL_EXECUTABLE_FILE(COMSDBGUTIL_clogger_stub.DLL)
+#endif
+
+FSHELL_DATA_FILE(ZSYSTEM\install\clogger-stub.sis, system\install\clogger-stub.sis)
+//ToDo - fixme for SIS files.
+#ifdef FSHELL_ROMBUILD
+FSHELL_DATA_FILE(ZPRIVATE\10202BE9\10272EFD.txt, private\10202BE9\10272EFD.txt)
+#endif
+
+#ifdef FSHELL_CLOGGER_SUPPORT_DEBUG_ROUTER
+
+#ifdef CLOGGER_EARLY_DEBUG
+
+// If you  want debug from really early on you'll have to include this IBY nearer the top of the master IBY
+FSHELL_KERNEL_EXTENSION(clogger-debugrouter.ldd)
+
+#ifdef FSHELL_ROMBUILD
+ROM_IMAGE[0] {
+patchdata clogger-debugrouter.ldd@KEnableEarlyRdebug 1
+}
+#endif
+
+#ifndef CLOGGER_RDEBUG_BUFSIZE
+#define CLOGGER_RDEBUG_BUFSIZE 0x80000 // 512KB
+#endif
+
+#else // CLOGGER_EARLY_DEBUG
+
+FSHELL_DEVICE_DRIVER(clogger-debugrouter.ldd)
+
+#endif // CLOGGER_EARLY_DEBUG
+
+#if defined(CLOGGER_RDEBUG_BUFSIZE) && defined(FSHELL_ROMBUILD)
+// Patch this to increase the RDebug::Print buffer size. Default is 64KB, 0x10000
+ROM_IMAGE[0] {
+patchdata clogger-debugrouter.ldd@KChunkSize CLOGGER_RDEBUG_BUFSIZE
+}
+#endif
+
+#endif // FSHELL_CLOGGER_SUPPORT_DEBUG_ROUTER
+
+#endif // CLOGGER_IBY

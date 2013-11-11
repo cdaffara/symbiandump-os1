@@ -1,0 +1,1787 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTSdpAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the CSdpAgent class
+//! 							as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT SDP related classes.
+//! 							Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Symbio
+//! @SYMCreationDate			08/12/2006
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\sdp\
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\sdp\T_SdpAgent\
+
+LOAD_SUITE	T_BTSdpAPI	-SharedData
+DELAY		500
+
+// ****************************************************************************
+// Set up BT Addresses
+// ****************************************************************************
+
+START_TESTCASE	BTSDP-SearchPattern-PublicApi-Passive-SetBTAddresses
+
+	START_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Passive-SetBTAddresses-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect
+			COMMAND		CBluetoothSocket1	NewL		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Passive-SetBTAddresses-0001
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Passive-SetBTAddresses-0002		
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		TBTDevAddrRemote	Construct
+			COMMAND		TBTDevAddrRemote	OpenHostResolver		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrRemote	SetHostNameL		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0002command4SetHostNameL
+			COMMAND		TBTDevAddrRemote	GetDeviceAddress		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0002command5GetDeviceAddress
+			OUTSTANDING
+			COMMAND		TRfcommSockAddr1	Construct
+			COMMAND		TRfcommSockAddr1	SetSecurity		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0002command8SetSecurity
+			COMMAND		TRfcommSockAddr1	SetBTAddr		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0002command9SetBTAddr
+			COMMAND		TRfcommSockAddr1	BTAddr		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0002command10BTAddr
+			COMMAND		TRfcommSockAddr1	SetPort		BTSDP-SearchPattern-PublicApi-Active-SetBTAddresses-0002command11SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Passive-SetBTAddresses-0002
+END_TESTCASE	BTSDP-SearchPattern-PublicApi-Passive-SetBTAddresses
+
+
+// ****************************************************************************
+// T_RSdpdatabase
+// ****************************************************************************	
+
+START_TESTCASE BTSDP-AttrValURL-PublicApi-Active-Slave-0301
+//! @SYMTestCaseID				BTSDP-AttrValURL-PublicApi-Active-Slave-0301
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0501-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-AttrValURL-PublicApi-Active-0301-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0501-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0501-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0501-0002
+
+END_TESTCASE   BTSDP-AttrValURL-PublicApi-Active-Slave-0301
+
+
+START_TESTCASE BTSDP-AttrValURL-PublicApi-Active-Slave-0302
+//! @SYMTestCaseID				BTSDP-AttrValURL-PublicApi-Active-Slave-0302
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0502-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-AttrValURL-PublicApi-Active-0302-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0502-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0502-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0502-0002
+
+END_TESTCASE   BTSDP-AttrValURL-PublicApi-Active-Slave-0302
+
+
+START_TESTCASE BTSDP-AttrValURL-PublicApi-Active-Slave-0303
+//! @SYMTestCaseID				BTSDP-AttrValURL-PublicApi-Active-Slave-0303
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0503-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-AttrValURL-PublicApi-Active-0303-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0503-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0503-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0503-0002
+
+END_TESTCASE   BTSDP-AttrValURL-PublicApi-Active-Slave-0303
+
+
+START_TESTCASE BTSDP-AttrValURL-PublicApi-Active-Slave-0304
+//! @SYMTestCaseID				BTSDP-AttrValURL-PublicApi-Active-Slave-0304
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0504-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-AttrValURL-PublicApi-Active-0304-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0504-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0504-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0504-0002
+
+END_TESTCASE   BTSDP-AttrValURL-PublicApi-Active-Slave-0304
+
+
+START_TESTCASE BTSDP-AttrValURL-PublicApi-Active-Slave-0305
+//! @SYMTestCaseID				BTSDP-AttrValURL-PublicApi-Active-Slave-0305
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0505-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-AttrValURL-PublicApi-Active-0305-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0505-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0505-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0505-0002
+
+END_TESTCASE   BTSDP-AttrValURL-PublicApi-Active-Slave-0305
+
+
+
+
+START_TESTCASE BTSDP-ElementParser-PublicApi-Active-Slave-0306
+//! @SYMTestCaseID				BTSDP-ElementParser-PublicApi-Active-Slave-0306
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-ElementParser-PublicApi-Active-0506-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0306-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-ElementParser-PublicApi-Active-0306-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-ElementParser-PublicApi-Active-0306-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-ElementParser-PublicApi-Active-0306-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-ElementParser-PublicApi-Active-0306-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-ElementParser-PublicApi-Active-0306-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-ElementParser-PublicApi-Active-0306-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-ElementParser-PublicApi-Active-0306-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-ElementParser-PublicApi-Active-0506-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0506-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0506-0002
+
+END_TESTCASE   BTSDP-ElementParser-PublicApi-Active-Slave-0306
+
+
+START_TESTCASE BTSDP-ElementParser-PublicApi-Active-Slave-0307
+//! @SYMTestCaseID				BTSDP-ElementParser-PublicApi-Active-Slave-0307
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-ElementParser-PublicApi-Active-0507-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0307-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-ElementParser-PublicApi-Active-0307-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			DELAY	1000000
+			COMMAND		TBTSdpagent	NewL		BTSDP-ElementParser-PublicApi-Active-0307-0001command12NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-ElementParser-PublicApi-Active-0307-0001command13SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-ElementParser-PublicApi-Active-0307-0001command14NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-ElementParser-PublicApi-Active-0307-0001command16AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-ElementParser-PublicApi-Active-0307-0001command19AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-ElementParser-PublicApi-Active-0307-0001command20AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-ElementParser-PublicApi-Active-0507-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0507-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0507-0002
+
+END_TESTCASE   BTSDP-ElementParser-PublicApi-Active-Slave-0307
+
+
+START_TESTCASE BTSDP-ElementParser-PublicApi-Active-Slave-0308
+//! @SYMTestCaseID				BTSDP-ElementParser-PublicApi-Active-Slave-0308
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-ElementParser-PublicApi-Active-0508-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0308-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-ElementParser-PublicApi-Active-0308-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-ElementParser-PublicApi-Active-0308-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-ElementParser-PublicApi-Active-0308-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-ElementParser-PublicApi-Active-0308-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-ElementParser-PublicApi-Active-0308-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-ElementParser-PublicApi-Active-0308-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-ElementParser-PublicApi-Active-0308-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-ElementParser-PublicApi-Active-0508-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0508-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0508-0002
+
+END_TESTCASE   BTSDP-ElementParser-PublicApi-Active-Slave-0308
+
+
+START_TESTCASE BTSDP-ElementParser-PublicApi-Active-Slave-0309
+//! @SYMTestCaseID				BTSDP-ElementParser-PublicApi-Active-Slave-0309
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-ElementParser-PublicApi-Active-0509-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0309-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-ElementParser-PublicApi-Active-0309-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-ElementParser-PublicApi-Active-0309-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-ElementParser-PublicApi-Active-0309-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-ElementParser-PublicApi-Active-0309-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-ElementParser-PublicApi-Active-0309-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-ElementParser-PublicApi-Active-0309-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-ElementParser-PublicApi-Active-0309-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-ElementParser-PublicApi-Active-0509-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0509-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0509-0002
+
+END_TESTCASE   BTSDP-ElementParser-PublicApi-Active-Slave-0309
+
+
+START_TESTCASE BTSDP-ElementParser-PublicApi-Active-Slave-0310
+//! @SYMTestCaseID				BTSDP-ElementParser-PublicApi-Active-Slave-0310
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add some attribute ids into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-ElementParser-PublicApi-Active-0510-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0310-0001command3AddL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0310-0001command4AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-ElementParser-PublicApi-Active-0310-0001command8AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-ElementParser-PublicApi-Active-0310-0001command12NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-ElementParser-PublicApi-Active-0310-0001command13SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-ElementParser-PublicApi-Active-0310-0001command14NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-ElementParser-PublicApi-Active-0310-0001command16AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-ElementParser-PublicApi-Active-0310-0001command19AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-ElementParser-PublicApi-Active-0310-0001command20AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-ElementParser-PublicApi-Active-0510-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0510-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0510-0002
+
+END_TESTCASE   BTSDP-ElementParser-PublicApi-Active-Slave-0310
+
+
+START_TESTCASE BTSDP-ElementParser-PublicApi-Active-Slave-0311
+//! @SYMTestCaseID				BTSDP-ElementParser-PublicApi-Active-Slave-0311
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-ElementParser-PublicApi-Active-0511-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0311-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-ElementParser-PublicApi-Active-0311-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-ElementParser-PublicApi-Active-0311-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-ElementParser-PublicApi-Active-0311-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-ElementParser-PublicApi-Active-0311-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-ElementParser-PublicApi-Active-0311-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-ElementParser-PublicApi-Active-0311-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-ElementParser-PublicApi-Active-0311-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-ElementParser-PublicApi-Active-0511-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0511-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0511-0002
+
+END_TESTCASE   BTSDP-ElementParser-PublicApi-Active-Slave-0311
+
+
+START_TESTCASE BTSDP-ElementParser-PublicApi-Active-Slave-0312
+//! @SYMTestCaseID				BTSDP-ElementParser-PublicApi-Active-Slave-0312
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-ElementParser-PublicApi-Active-0512-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-ElementParser-PublicApi-Active-0312-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-ElementParser-PublicApi-Active-0312-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-ElementParser-PublicApi-Active-0312-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-ElementParser-PublicApi-Active-0312-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-ElementParser-PublicApi-Active-0312-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-ElementParser-PublicApi-Active-0312-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-ElementParser-PublicApi-Active-0312-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-ElementParser-PublicApi-Active-0312-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-ElementParser-PublicApi-Active-0512-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0512-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0512-0002
+
+END_TESTCASE   BTSDP-ElementParser-PublicApi-Active-Slave-0312
+
+
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0313
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0313
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0513-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command3AddL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command4AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command8AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command12NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command13SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command14NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command16AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command19AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0313-0001command20AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0513-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0513-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0513-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0313
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0314
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0314
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0514-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command7AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command11NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command12SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command13NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command15AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command18AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0314-0001command19AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0514-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0514-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0514-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0314
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0315
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0315
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0515-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command3AddL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command4AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command8AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command9AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command10AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command14NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command15SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command16NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command18AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command21AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0315-0001command22AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0515-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0515-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0515-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0315
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0316
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0316
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL(), Remove() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Remove service UUID from searchpattern using Remove() function
+//!								6. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Set the service record filter with the serchpattern
+//!								8. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								9. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								10. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								11. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								12. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								13. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								14. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0516-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command7AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command8AddL
+			COMMAND		TBTSearchpattern1	Remove		BTSDP-SearchPattern-PublicApi-Active-0316-0001command9Remove
+			COMMAND		TBTSearchpattern1	Remove		BTSDP-SearchPattern-PublicApi-Active-0316-0001command10Remove
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command14NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command15SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command16NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command18AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command21AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0316-0001command22AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0516-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0516-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0516-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0316
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0317
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0317
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL(), Remove(), Find() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Remove service UUID from searchpattern using Remove() function
+//!								6. Add service UUID into searchpattern using AddL() function again. Return KErrNone if successed
+//!								7. Gets the position of the specified UUID in the searchpattern using Find() function
+//!								8. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								9. Set the service record filter with the serchpattern
+//!								10. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								11. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								12. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								13. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								14. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								15. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								16. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0517-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command7AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command8AddL
+			COMMAND		TBTSearchpattern1	Remove		BTSDP-SearchPattern-PublicApi-Active-0317-0001command9Remove
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command10AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command11AddL
+			COMMAND		TBTSearchpattern1	Find		BTSDP-SearchPattern-PublicApi-Active-0317-0001command12Find
+			COMMAND		TBTSearchpattern1	Find		BTSDP-SearchPattern-PublicApi-Active-0317-0001command13Find
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command17NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command18SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command19NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command21AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command24AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0317-0001command25AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0517-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0517-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0517-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0317
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0318
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0318
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL(), Remove(), Find(), Count() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Remove service UUID from searchpattern using Remove() function
+//!								6. Add service UUID into searchpattern using AddL() function again. Return KErrNone if successed
+//!								7. Get the position of the specified UUID in the searchpattern using Find() function
+//!								8. Get the number of UUID in the searchpattern using Count() function
+//!								9. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. Set the service record filter with the serchpattern
+//!								11. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								12. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								13. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								14. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								15. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								16. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								17. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0518-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command7AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command8AddL
+			COMMAND		TBTSearchpattern1	Remove		BTSDP-SearchPattern-PublicApi-Active-0318-0001command9Remove
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command10AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command11AddL
+			COMMAND		TBTSearchpattern1	Find		BTSDP-SearchPattern-PublicApi-Active-0318-0001command12Find
+			COMMAND		TBTSearchpattern1	Count		BTSDP-SearchPattern-PublicApi-Active-0318-0001command13Count
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command17NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command18SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command19NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command21AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command24AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0318-0001command25AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0518-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0518-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0518-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0318
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0319
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0319
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL(), At() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Get the UUID at the specified position in the searchpattern using At() function
+//!								6. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Set the service record filter with the serchpattern
+//!								8. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								9. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								10. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								11. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								12. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								13. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								14. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0519-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command7AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command8AddL
+			COMMAND		TBTSearchpattern1	At		BTSDP-SearchPattern-PublicApi-Active-0319-0001command9At
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command13NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command14SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command15NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command17AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command20AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0319-0001command21AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0519-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0519-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0519-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0319
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0320
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0320
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL(), Reset() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Remove all UUID from the searchpattern using Reset() function
+//!								6. Add service UUID into searchpattern using AddL() function again. Return KErrNone if successed
+//!								7. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Set the service record filter with the serchpattern
+//!								9. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								11. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								12. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								13. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								14. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								15. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0520-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command7AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command8AddL
+			COMMAND		TBTSearchpattern1	Reset
+			COMMAND		TBTSearchpattern1	Count		BTSDP-SearchPattern-PublicApi-Active-0320-0001command10Count
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command11AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command15NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command16SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command17NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command19AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command22AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0320-0001command23AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0520-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0520-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0520-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0320
+
+
+START_TESTCASE BTSDP-SearchPattern-PublicApi-Active-Slave-0321
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0321
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL(), Reset(), IsEmpty() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Remove all UUID from the searchpattern using Reset() function
+//!								6. Test if the searchpattern is empty using IsEmpty() function
+//!								7. Add service UUID into searchpattern using AddL() function again. Return KErrNone if successed
+//!								8. Test if the searchpattern is empty using IsEmpty() function again
+//!								9. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. Set the service record filter with the serchpattern
+//!								11. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								12. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								13. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								14. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								15. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								16. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								17. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0521-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command3AddL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command4AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command8AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command9AddL
+			COMMAND		TBTSearchpattern1	Reset
+			COMMAND		TBTSearchpattern1	IsEmpty		BTSDP-SearchPattern-PublicApi-Active-0321-0001command11IsEmpty
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command12AddL
+			COMMAND		TBTSearchpattern1	IsEmpty		BTSDP-SearchPattern-PublicApi-Active-0321-0001command13IsEmpty
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command17NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command18SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command19NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command21AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command24AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0321-0001command25AcceptVisitorL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0521-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0521-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0521-0002
+
+END_TESTCASE   BTSDP-SearchPattern-PublicApi-Active-Slave-0321
+
+
+START_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-Slave-0322
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0322
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0522-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0322-0001command3AddL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0322-0001command4AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0322-0001command8AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0322-0001command9AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0322-0001command13NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0322-0001command14SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0322-0001command15NextRecordRequestL
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0522-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0522-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0522-0002
+END_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-Slave-0322
+
+
+START_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-Slave-0323
+//! @SYMTestCaseID				BTSDP-SearchPattern-PublicApi-Active-Slave-0323
+//! @SYMAPI						CSdpAgent, CSdpAttrIdMatchList, CSdpSearchPattern, MSdpAttributeValueVisitor, MSdpAgentNotifier, CSdpAttrValueDES 
+//! @SYMTestCaseDesc			Search for service on slave device, search for service attributes and retrieve attribute values
+//!								Uses API elements: 	NewL(), AddL() from CSdpAttrIdMatchList
+//!													NewL(), ConstructL(), AddL() from CSdpSearchPattern
+//!													VisitAttributeValueL() from MSdpAttributeValueVisitor
+//!													NewDESL(), AppendValueL(), AcceptVisitorL() from CSdpAttrValueDES
+//!													AttributeRequestComplete(), AttributeRequestResult(), NextRecordRequestComplete() from MSdpAgentNotifier
+//!													NewL(), SetRecordFilterL(), NextRecordRequestL(), AttributeRequestL() from CSdpAgent
+//! @SYMTestActions				1. Construct a CSdpAttrIdMatchList object
+//!								2. Add attribute id into the idmatchlist
+//!								3. Construct a CSdpSearchPattern object
+//!								4. Add service UUID into searchpattern using AddL() function. Return KErrNone if successed
+//!								5. Construct a CSdpAgent object with the bt-address of the slave device provided by the TBTDevAddr object.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Set the service record filter with the serchpattern
+//!								7. Call NextRecordRequestL() to get service record of slave device which matches the search pattern.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. The call back function NextRecordRequestComplete() is executed if the results comes back.
+//!								   Verify the number of service records being found.
+//!								9. Search for service attributes of the service we've found using the attridmatchlist.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. The call back functions AttributeRequestComplete() and AttributeRequestResult() are executed when 
+//!									the result of attribute request comes back in the form of a list. 
+//!								11. Switch to CSdpAttrValueDES data wrapper. Append the request results of CSdpAgent onto CSdpAttrValueDES object.
+//!									Verify the resulting err code is KErrNone.
+//!								12. Call CSdpAttrValueDES::AcceptVisitorL to retrieve the data. Verify the resulting err code is KErrNone.
+//!								13. Check the result by comparing the result string generated by VisitAttributeValueL().
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults		Attribute values are retrieved from slave device and the result is as expected.
+//! @SYMTestType				CIT
+	START_SYNCHRONISED_TESTCASE BTSDP-SearchPattern-PublicApi-Active-0523-0001
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-SearchPattern-PublicApi-Active-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CSdpAgent	TBTSdpagent	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	CSdpAttrIdMatchList	TBTAttridmatchlist1	
+			CREATE_OBJECT	CSdpSearchPattern	TBTSearchpattern1	
+			CREATE_OBJECT	CSdpAttrValueDES	TBTAttrValueDES1	
+			COMMAND		TBTAttridmatchlist1	NewL
+			COMMAND		TBTAttridmatchlist1	AddL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command3AddL
+			COMMAND		TBTSearchpattern1	NewL
+			COMMAND		TBTSearchpattern1	ConstructL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command7AddL
+			COMMAND		TBTSearchpattern1	AddL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command8AddL
+			COMMAND		TBTAttrValueDES1	NewDESL
+			COMMAND		TBTSdpagent	NewL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command12NewL
+			COMMAND		TBTSdpagent	SetRecordFilterL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command13SetRecordFilterL
+			COMMAND		TBTSdpagent	NextRecordRequestL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command14NextRecordRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTSdpagent	AttributeRequestL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command16AttributeRequestL
+			OUTSTANDING	1000000
+			COMMAND		TBTAttrValueDES1	AppendValueL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command19AppendValueL
+			COMMAND		TBTAttrValueDES1	AcceptVisitorL		BTSDP-SearchPattern-PublicApi-Active-0323-0001command20AcceptVisitorL
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-0523-0001
+
+	START_SYNCHRONISED_TESTCASE BTSDP-AttrValURL-PublicApi-Active-0523-0002
+	END_SYNCHRONISED_TESTCASE	BTSDP-AttrValURL-PublicApi-Active-0523-0002
+END_TESTCASE	BTSDP-SearchPattern-PublicApi-Active-Slave-0323
+
+
+
+DELAY		2000
+
+

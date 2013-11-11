@@ -1,0 +1,98 @@
+# ciftest.cif
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+==name ciftest
+
+==short-description
+
+Run fshell command smoke tests.
+
+==long-description
+
+This command runs smoke-tests for any or all commands that define a C<==smoke-test> section in their CIF file. A C<==smoke-test> section defines a short snippet of fshell script which tests the basic functionality offered by the command. It can be as simple as running the command with no arguments to make sure nothing catastrophic is wrong, or it can be a more in-depth test of all the command's functionality, or anything in between.
+
+Example CIF file that supports ciftest:
+
+    ==name mycmd
+    
+    [...]
+    
+    ==smoke-test
+    
+    mycmd | export -s RESULT
+    var RESULT == "Expected results of running mycmd" || $Error
+
+The following environment variables are defined for convenience when ciftest runs a smoke-test section:
+
+=over 5
+
+=item * Error
+
+Expands to a string that will cause a test to fail. Additionally it prints the current environment, hence is useful to use when C<var> commands fail, as in the above example. Equivalent to something like C<env && error>.
+
+=item * SCRIPT_NAME
+
+The script name is appended with ":smoke-test", eg "cifname.cif:smoke-test".
+
+=item * SCRIPT_PATH, 0
+
+Set as in any other script.
+
+=item * SCRIPT_LINE
+
+Set as in any other script. Line numbers are relative to the start of the CIF file, not the first line of the smoke-test section.
+
+=item * Quiet
+
+Used to supress stdout from a command, for when you don't want it to appear in the smoketest results. Usage:
+
+    mynoisycommand $Quiet
+
+Equivalent to putting C<E<gt>/dev/null> on the end of the command.
+
+=item * Silent
+
+Supresses both stdout and stderr. Useful when an operation is expected to fail. Usage:
+
+    mycommand expectfailure $Silent && $Error
+
+Note how $Silent is combined with C<&& $Error> such that if the command actually succeeded where it was expected to fail, the $Error case would cause the script to abort.
+
+=item * Verbose
+
+Defined if the C<--verbose> option was given to ciftest. Example usage:
+
+    var Verbose defined && echo "About to test something-or-other"
+
+=back
+
+The environment used for running the smoke-test snippets is not shared between commands, so do not set things in one smoketest script and expect to be able to see them in another. (Ie the snippets are run as if with "fshell" not "source").
+
+==argument string command optional
+
+If specified, run the tests associated with the specified command. If not specified, run tests for all commands.
+
+==option bool v verbose
+
+Print information about every test even when they succeed. By default only failures are printed. Also causes a summary to be printed at the end. Scripts can also print extra information themselves if this flag is set, by checking for the C<Verbose> environment variable.
+
+==option bool k keep-going
+
+Rather than stop on the first failure, attempt to run all tests even if some of them fail. Only relevant if no command argument is given.
+
+==copyright
+
+Copyright (c) 2010 Accenture. All rights reserved.
+
+==smoke-test
+
+# Ciftest itself doesn't have a smoketest!

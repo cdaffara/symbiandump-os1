@@ -1,0 +1,115 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         btgpspsy_notifier.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE ctlbsbtgpspsytestserver
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+START_TESTCASE                LBS-BTGPSPSY-Notifier-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-Notifier-0001
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains no available devices.  It ensures that the PSY is able to load the standard BT selection dialog to get the user entered device.  It should be able to connect to and receive a location update from this device and should add it to the top of the device list.
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  All of the devices should be unavailable.
+//!                             2. Test makes a location request and the PSY should attempt to connect to all the devices in the list, failing to connect to any.
+//!                             3. The PSY should launch the standard BT Device Selection dialog to allow the user to enter the available BT device (done automatically via a notifier)
+//!                             4. The PSY should be able to connect to the newly added device and should receive a location update.  This device should have been added to the top of the device list.
+//! @SYMTestExpectedResults     Test should receive location update and should contain the new device added to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10804
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier01Pre
+RUN_TEST_STEP 300 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier01Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Notifier-0001
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Notifier-0002
+//! @SYMTestCaseID              LBS-BTGPSPSY-Notifier-0002
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with an empty device list.  It ensures that the PSY is able to load the standard BT selection dialog to get the user entered device.  It should be able to connect to and receive a location update from this device and should add it to the top of the device list.
+//! @SYMTestActions             1. Test should ensure there are no devices in the list (list is empty)
+//!                             2. Test makes a location request and the PSY should load the standard BT Device Selection dialog to allow the user to enter the available BT device (done automatically via a notifier)
+//!                             3. The PSY should be able to connect to the newly added device and should receive a location update.  This device should have been added to the top of the device list.
+//! @SYMTestExpectedResults     Test should receive location update and should contain the new device added to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10804
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier02Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier02Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Notifier-0002
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Notifier-0003
+//! @SYMTestCaseID              LBS-BTGPSPSY-Notifier-0003
+//! @SYMTestCaseDesc            Test ensures that the BT PSY responds correctly after trying to add a new device to the list when the list is actually already full.  The test should still be able to receive a location update from the PSY, but the device should not be added to the list.
+//! @SYMTestActions             1. Test should fill up the device list with unavailable devices.
+//!                             2. Test makes a location request and the PSY should start to attempt to and fail to connect to the devices in the list.
+//!                             3. The PSY should load the BT device selection dialog and get the user entered available device.
+//!                             4. The PSY should attempt to add this device to the top of the list, but this action will fail.  The PSY should continue in its operation and should return a location to the test.
+//!                             5. The test should check to ensure the device has not been added to the device list.
+//! @SYMTestExpectedResults     Test should receive location update but the list should not contain the valid BT device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10804
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier03Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier03Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Notifier-0003
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Notifier-0004
+//! @SYMTestCaseID              LBS-BTGPSPSY-Notifier-0004
+//! @SYMTestCaseDesc            Test ensures that the BT PSY is handle receiving unavailable devices in the device notifier.  The PSY will be unable to conenct to the device entered by the tests, so the PSY should continually display the notifier until the test enters a valid device or cancels it.  All devices entered in the notifier should be added to the list.
+//! @SYMTestActions             1. Test empties the BT device list.
+//!                             2. Test makes a location request.  With no devices in the list, the PSY should load the device selection notifier
+//!                             3. Test provides details of an unavailable device to the notifier.  The PSY will be unable to connect to this device, so the notifier should be re-displayed.
+//!                             4. Test provides details of a valid available BT device to the notifier, which the PSY should be able to connect to.
+//!                             5. The test should ensure a location update is recieved and that both devices have been added to the list.  The first device in the list should be the second entered device with the standard device type.  The second device should be the first device entered with the unknown device type.
+//! @SYMTestExpectedResults     Test should receive location update and the PSY should have added two devices to the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            16/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10804
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier04Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_notifier.ini Notifier04Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Notifier-0004
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+
+

@@ -1,0 +1,159 @@
+/*
+* Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command list for the UI-Services startup state (UI shell version) for extended startup.
+*
+*/
+
+#include <ssm/conditionresourcetypes.rh>
+#include <ssm/ssmcmd.rh>
+
+#include "ssmsubstateext.hrh"
+#include "ssmdlldatadefs.rh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateStartingUiServices;
+            resource_id = r_cmds;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmds
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds
+    {
+    commands =
+        {
+		//prio 0xFFA7
+		r_cmd_splash,
+        // prio 0xFF99
+        r_cmd_tzsrv,
+        r_cmd_mediator,
+        r_cmd_hwrmsrv,
+        // prio 0xFF89
+        r_cmd_dbrecovery
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmd_dbrecovery
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_dbrecovery
+    {
+    priority = 0xFF89;
+    name = "z:\\sys\\bin\\dbrecovery.exe";
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_hwrmsrv
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_hwrmsrv
+    {
+    priority = 0xFF99;
+    name = "Z:\\sys\\bin\\hwrmserver.exe";
+    severity = ECmdCriticalSeverity;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    retries = 2;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_mediator
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_mediator
+    {
+    priority = 0xFF99;
+    name = "Z:\\sys\\bin\\mediatorserver.exe";
+    severity = ECmdCriticalSeverity;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    monitor_info = r_mon_3_restarts_reset;
+    conditional_information = r_cond_feat_mediator;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_splash
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_splash
+    {
+    priority = 0xFFA7;
+    name = "Z:\\sys\\bin\\splashscreen.exe";
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_tzsrv
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_tzsrv
+    {
+    priority = 0xFF99;
+    name = "Z:\\sys\\bin\\tzserver.exe";
+    severity = ECmdCriticalSeverity;
+    execution_behaviour = ESsmDeferredWaitForSignal;
+    }
+
+// ===========================================================================
+// DLL data items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_mediator
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_mediator
+    {
+    feature_id = KFeatureIdMediator;
+    }
+// monitoring.rss contains resource definitions, so it may not be included
+// before entry point.
+#include "monitoring.rss"

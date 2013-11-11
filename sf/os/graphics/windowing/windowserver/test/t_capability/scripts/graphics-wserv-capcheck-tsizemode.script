@@ -1,0 +1,78 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// graphics-wserv-capability-tsizemode.script
+// Createa a window server client and makes a call to ,
+// CWsScreenDevice::SetCurrentScreenmodeAttributes.
+// The outcome depends on the platsec capabilities of 
+// the window server client application
+// permissions writedevicedata - call produces no error
+// permissions none - call produces platsec error and 
+// panics with Main Panic WSERV 66
+// The test step loads the executable created by this test script
+// i.e. negative test graphics-wserv-capability-tsizemode-0001-001
+// creates window server client app t_sizemode_none.exe
+// positive test step graphics-wserv-capability-tsizemode-0002-001
+// creates window server client app t_sizemode_writedevicedata.exe
+// 
+//
+
+/
+// The tests are fully automated.
+/////////////////////////////////////////////////////////////////////
+
+//! @file
+//! @SYMTestSuiteName           graphics-wserv-capcheck
+//! @SYMScriptTestEnvironment   This test script requires a basic ROM.
+
+LOAD_SUITE	t_wservcapcheckserver
+
+PRINT Create test application with capability set to "None" (00000000) t_sizemode->t_sizemode_none
+RUN_PROGRAM -1 setcap t_sizemode.exe 00000000 c:\sys\bin\t_sizemode_none.exe
+PRINT Test Server capability now set to "None" 
+
+START_TESTCASE                  GRAPHICS-WSERV-CAPCHECK-TSIZEMODE-0001
+//! @SYMTestCaseID              GRAPHICS-WSERV-CAPCHECK-TSIZEMODE-0001
+//! @SYMDEF                     DEF119442
+//! @SYMAPI                     CWsScreenDevice::SetCurrentScreenmodeAttributes
+//! @SYMAuthor                  John Mercer
+//! @SYMCreationDate            08/04/2008
+//! @SYMTestCaseDependencies    graphics-wserv-capcheck-tsizemode.script
+//! @SYMTestCaseDesc            TSizeMode Negative Platsec Test 				
+//! @SYMTestActions             Call SetCurrentScreenmodeAttributes with no permissions set 
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            1
+//! @SYMTestExpectedResults     Window server client is panicced with a Main Panic WSERV 66
+//! @SYMTestType                IT
+RUN_TEST_STEP	t_wservcapcheckserver	WServCapCheckStepTSizeModeNeg
+END_TESTCASE	GRAPHICS-WSERV-CAPCHECK-TSIZEMODE-0001
+PRINT Create test application with capabilities set to "WriteDeviceData" (00000020) t_sizemode->t_sizemode_writedevicedata
+RUN_PROGRAM -1 setcap t_sizemode.exe 00000020 c:\sys\bin\t_sizemode_writedevicedata.exe
+PRINT Test Server capabilities now set to WriteDeviceData 
+
+START_TESTCASE	GRAPHICS-WSERV-CAPCHECK-TSIZEMODE-0002
+//! @SYMTestCaseID              GRAPHICS-WSERV-CAPCHECK-TSIZEMODE-0002
+//! @SYMDEF                     DEF119442
+//! @SYMAPI                     CWsScreenDevice::SetCurrentScreenmodeAttributes
+//! @SYMAuthor                  John Mercer
+//! @SYMCreationDate            08/04/2008
+//! @SYMTestCaseDependencies    graphics-wserv-capcheck-tsizemode.script
+//! @SYMTestCaseDesc            TSizeMode Positive Platsec Test 				
+//! @SYMTestActions             Call SetCurrentScreenmodeAttributes permissions writedevicedata set 
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            1
+//! @SYMTestExpectedResults     Window server client sets the attributes with no error
+//! @SYMTestType                IT
+RUN_TEST_STEP	500	t_wservcapcheckserver	WServCapCheckStepTSizeModePos
+END_TESTCASE	GRAPHICS-WSERV-CAPCHECK-TSIZEMODE-0002
+

@@ -1,0 +1,87 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT ********* Perform ESOCK Stress Test *********
+
+LOAD_SUITE te_esockutil
+RUN_SCRIPT z:\testdata\scripts\exec_esock_default_to_config_1.script
+
+# Activate memory allocation failures
+RUN_UTILS DeleteFile c:\private\101f7988\esock*.cmi
+RUN_TEST_STEP 10 te_esockutil CopyFiles z:\testdata\configs\ESock_Stress_Test.ini StressConfig
+RUN_TEST_STEP 10 te_esockutil LoadConfig z:\testdata\configs\ESock_Stress_Test.ini StressConfig
+
+# Unload ESock, load CommDB and ESock
+RUN_SCRIPT z:\testdata\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\testdata\configs\te_esock.xml ced.log
+RUN_SCRIPT z:\testdata\scripts\te_esock_test_loadesock.script
+
+# Run Stress Test (excludes mem tests)
+START_REPEAT z:\testdata\configs\ESock_Stress_Test.ini StressTest loops
+RUN_SCRIPT z:\testdata\scripts\te_socket_tests.script
+RUN_UTILS CopyFile z:\testdata\configs\test_esock_ip6.ini c:\test_esock_ip.ini
+RUN_UTILS MakeReadWrite c:\test_esock_ip.ini
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-net-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-net-ip6.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip6.script
+RUN_UTILS CopyFile z:\testdata\configs\test_esock_ip4_vlan7.ini c:\test_esock_ip.ini
+RUN_UTILS MakeReadWrite c:\test_esock_ip.ini
+RUN_UTILS CopyFile c:\test_esock_ip.ini c:\test_esock_ip4.ini
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-net-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip4.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet.script
+RUN_UTILS DeleteFile c:\test_esock_ip.ini
+RUN_UTILS DeleteFile c:\test_esock_ip4.ini
+RUN_SCRIPT z:\testdata\scripts\te_ipctest_tests.script
+END_REPEAT
+
+# Deactivate memory allocation failures.
+RUN_UTILS DeleteFile c:\private\101f7988\esock*.cmi
+RUN_TEST_STEP 10 te_esockutil TE_ESockUtilResetAllocFails
+
+# Run soak test once
+//PRINT ********** Perform ESOCK Soak Test **********
+
+RUN_SCRIPT z:\testdata\scripts\te_socket_tests.script
+RUN_SCRIPT z:\testdata\scripts\te_socket_tests-mem.script
+
+// Run ESock IPv6 tests
+RUN_UTILS CopyFile z:\testdata\configs\test_esock_ip6.ini c:\test_esock_ip.ini
+RUN_UTILS MakeReadWrite c:\test_esock_ip.ini
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-net-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-net-ip6.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip6.script
+
+// Run Esock IPv4 tests
+RUN_UTILS CopyFile z:\testdata\configs\test_esock_ip4_vlan7.ini c:\test_esock_ip.ini
+RUN_UTILS MakeReadWrite c:\test_esock_ip.ini
+RUN_UTILS CopyFile c:\test_esock_ip.ini c:\test_esock_ip4.ini
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-net-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet-ip4.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-nonet.script
+RUN_SCRIPT z:\testdata\scripts\te_esock_tests-mem-nonet.script
+
+RUN_UTILS DeleteFile c:\test_esock_ip.ini
+RUN_UTILS DeleteFile c:\test_esock_ip4.ini
+
+RUN_SCRIPT z:\testdata\scripts\te_ipctest_tests.script
+RUN_SCRIPT z:\testdata\scripts\te_ipctest_tests-mem.script
+
+RUN_SCRIPT z:\testdata\scripts\te_esock_test_unloadesockForced.script

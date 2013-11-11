@@ -1,0 +1,151 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: 
+//
+//
+//! @file
+//! @SYMTestSuiteName multimedia-mmf-devsound-validation-automated-comb_rr
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the CMMFDevSound
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: CMMFDevSound
+// The tests are fully automated.
+//
+
+
+
+LOAD_SUITE t_devsound
+
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RR-0001
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RR-0001
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                CMMFDevSound::InitializeL(MDevSoundObserver {ref}, TMMFState )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings {ref} )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities {ref} )
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::RecordInitL()
+//!                CMMFDevSound::Stop()
+//!                
+//! TEST_BLOCK 002
+//!                CMMFDevSound::InitializeL(MDevSoundObserver {ref}, TMMFState )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings {ref} )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities {ref} )
+//!                CMMFDevSound::RecordInitL()
+//!                CMMFDevSound::Stop()
+//!                
+//!@SYMAuthor			etorres
+//!@SYMCreationDate		7/28/2008 
+//!@SYMTestCaseDesc		SIZE Mixing rule - Stop and perform
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Create Devsound instance 
+//!                2. Initialize Devsound (Mode = EMMFStateRecording; FourCC = AMR)
+//!                3. Set Priority (Priority = {Priority,PriorityVoiceRecording}; Preference = {PriorityPreference,PriorityPreferenceVoiceRecording} ; PriorityState = EMMFStateRecording)
+//!                4. Capabilities
+//!                5. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                6. ReplaceFile (Filename={drive,mmc}\multimedia\mmf\devsound\Recording\SizeMixingRuleSR.amr)
+//!                7. Record 20 s
+//!                8. Stop 5s
+//!                9. CloseFile
+//!                10. Initialize Devsound (Mode = EMMFStatePlaying; FourCC = AMR)
+//!                11. Set Priority (Priority = {Priority,PriorityAudioPlayback}; Preference = {PriorityPreference,PriorityPreferenceAudioPlayback}; PriorityState = EMMFStatePlaying)
+//!                12. Capabilities
+//!                13. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                14. OpenFile (Filename={drive,mmc}\multimedia\mmf\devsound\Recording\SizeMixingRuleSR.amr)
+//!                15. Play EOF
+//!                16. CloseFile
+//!                17. Delete devsound instance
+//! TEST_BLOCK 002
+//!                1. Create Devsound instance 
+//!                2. Initialize Devsound (Mode = EMMFStateRecording; FourCC = AMR)
+//!                3. Set Priority (Priority = {Priority,PriorityVoiceRecording}; Preference = {PriorityPreference,PriorityPreferenceVoiceRecording} ; PriorityState = EMMFStateRecording)
+//!                4. Capabilities
+//!                5. Set Configuration 10s(Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                6. ReplaceFile (Filename={drive,mmc}\multimedia\mmf\devsound\Recording\SizeMixingRuleSR.pcm )
+//!                7. Record 60 s
+//!                8. Stop
+//!                9. CloseFile
+//!                10. Delete devsound instance
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                SIZE Mixing rule - Stop and perform
+//! TEST_BLOCK 001
+//!                AMR record for 20s and playback until EOF
+//! TEST_BLOCK 002
+//!                AMR recording with expected error -21
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	50	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rr.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-SetPrioritySettings_command03
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-SetConfigL_command05
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-ReplaceFile_command06
+		COMMAND		devsound1		RecordInitL
+		ASYNC_DELAY  20000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-InitializeL_command10
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-SetPrioritySettings_command11
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-SetConfigL_command13
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0001-OpenFile_command14
+		COMMAND		   devsound1		PlayInitL
+		OUTSTANDING
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	80	t_devsound	\multimedia\mmf\devsound\multimedia-mmf-devsound-validation-automated-comb_rr.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0002-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0002-SetPrioritySettings_command03
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0002-SetConfigL_command05
+		DELAY  10000000 
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSound-Comb_Rr-0001-0002-ReplaceFile_command06
+    COMMAND              !AsyncError=-21    devsound1 RecordInitL      
+		ASYNC_DELAY  60000000 
+		COMMAND		devsound1		Stop
+		DELAY  2000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUND-VALIDATION-AUTOMATED-COMB_RR-0001

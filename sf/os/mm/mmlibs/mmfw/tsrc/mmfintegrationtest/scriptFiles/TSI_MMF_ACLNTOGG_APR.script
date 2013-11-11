@@ -1,0 +1,470 @@
+@file TSI_MMF_ACLNTOGG_APR.script
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+# Audio Client Utilities for Ogg-Vorbis Auto Pause & Resume tests
+
+LOAD_SUITE TSI_MMFACLNT.DLL
+
+delay 10000
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////// POSITIVE TESTS //////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+######################### Audio Player tests #########################
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0020-CP
+//!@SYMTestCaseDesc           Register for notification, but make no request to play audio
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           1
+//!@SYMTestActions            iAudioPlayer[1] - Medium Priority iAudioPlayer[2] - High Priority a. Open 2 clients b. Open iAudioPlayer[1] c. Register
+//! iAudioPlayer[1] for Notification d. Open and Play iAudioPlayer[2] e. iAudioPlayer[2] completes playing f. iAudioPlayer[1] is NOT notified (as it dis
+//! not make a request for play)
+//!@SYMTestExpectedResults    The Client which has registered for notification, but makes no request for playing, should not receive the notification.
+//! KErrNone should be returned.
+RUN_TEST_STEP 800000 ACLNT MM-MMF-ACLNTOGG-I-0020-CP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0021-CP
+//!@SYMTestCaseDesc           Register (b4 play, after Open) and Receive Notification of a Resource Available Event.(when audio resource is currently
+//! unavailable and then available)
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           1
+//!@SYMTestActions            iAudioPlayer[1] - Low Priority iAudioPlayer[2] - High Priority a. Open 2 clients b. Open iAudioPlayer[1] c. Register iAudioPlayer[1]
+//! for Notification d. Check if registration is successful, and notification is not received immediately. e. Open and Play iAudioPlayer[2] f. Play iAudioPlayer[1]
+//! (get Play Error as iAudioPlayer[2] is still playing) g. iAudioPlayer[2] stops playing h. Check if iAudioPlayer[1] is notified.
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0021-CP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0022-CP
+//!@SYMTestCaseDesc           Register (at the time of Play) and Receive Notification of a Resource Available Event.(when audio resource is currently
+//! available and subsequently unavailable, and then available)
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           1
+//!@SYMTestActions            iAudioPlayer[1] - Low Priority iAudioPlayer[2] - High Priority a. Open 2 clients b. Open and Play iAudioPlayer[1] c. Register
+//! iAudioPlayer[1] for Notification d. Check if registration is successful, and notification is not received immediately. e. Open and Play iAudioPlayer[2]
+//! f. iAudioPlayer[2] completes playing g. Check if iAudioPlayer[1] is notified.
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0022-CP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0023-CP
+//!@SYMTestCaseDesc           Registration (b4 File Open) and Cancellation of  the notification request
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           1
+//!@SYMTestActions            iAudioPlayer[1] - Medium Priority iAudioPlayer[2] - High Priority a. Open 2 clients b. Register iAudioPlayer[1] for Notification
+//! c. Check if registration is successful. d. Open and Play iAudioPlayer[1] e. Open and Play iAudioPlayer[2] f. Cancel the notification request for iAudioPlayer[1]
+//! g. Check if cancellation is successful. h. iAudioPlayer[2] stops playing i. Check if iAudioPlayer[1] is NOT notified.
+//!@SYMTestExpectedResults    The Client should be able to cancel the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0023-CP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0024-CP
+//!@SYMTestCaseDesc           Register (after Play Error) and Get the actual position from where the paused audio can be resumed. Low priority client
+//! is played first.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           1
+//!@SYMTestActions            iAudioPlayer[1] - Medium Priority iAudioPlayer[2] - High Priority a. Open 2 clients b. Open and Play iAudioPlayer[1] c.
+//! Open and Play iAudioPlayer[2] d. Play Error is received by iAudioPlayer[1]. Note the time when iAudioPlayer[1] is paused e. Register iAudioPlayer[1]
+//! for Notification f. Check if registration is successful. g. iAudioPlayer[2] completes playing h. iAudioPlayer[1] is notified. i. Get the position, and
+//! check whether it matches the position got from step d.
+//!@SYMTestExpectedResults    The medium priority Client should be able to receive the offset time and that should be correct without any errors in the
+//! process. KErrNone should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0024-CP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0025-HP
+//!@SYMTestCaseDesc           Register (after Play Error) and Get the actual position from where the paused audio can be resumed. High priority client
+//! is played first.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer[1] - Medium Priority iAudioPlayer[2] - High Priority a. Open 2 clients b. Open and Play iAudioPlayer[2] c.
+//! Open and Play iAudioPlayer[1] d. Play Error is received by iAudioPlayer[1]. iAudioPlayer[1] not played. e. Register iAudioPlayer[1] for Notification
+//! f. Check if registration is successful. g. iAudioPlayer[2] completes playing h. iAudioPlayer[1] is notified. i. Get the position, and check whether it
+//! is zero (initial position).
+//!@SYMTestExpectedResults    The medium priority Client should be able to receive the offset time and that should be correct without any errors in the
+//! process. KErrNone should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0025-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0026-HP
+//!@SYMTestCaseDesc           Client does not need to Re-register for the same event when the event is received i.e API is not one shot. (Will resume
+//! play is called)
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer[1] - Medium Priority iAudioPlayer[2] - High Priority a. Open 2 clients b. Open and Play iAudioPlayer[1] c.
+//! Register iAudioPlayer[1] for Notification e. Open and Play iAudioPlayer[2] g. iAudioPlayer[2] completes playing h. iAudioPlayer[1] is notified, calls
+//! WillResumePlay() and after 5 seconds resumes playing. i. Play iAudioPlayer[2] again. j. iAudioPlayer[2] completes playing k. Check if iAudioPlayer[2]
+//! is notified again.
+//!@SYMTestExpectedResults    The Client should be able to register for notification only once, and should receive the notification if the resource is
+//! lost and regained more than once succesfully. KErrNone should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0026-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0027-HP
+//!@SYMTestCaseDesc           Call WillResumePlay()
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer[1] - Medium Priority iAudioPlayer[2] - High Priority iAudioPlayer[3] - Low Priority a. Open 3 clients b. Open
+//! and Play iAudioPlayer[1] c. Register iAudioPlayer[1] for Notification d. Register iAudioPlayer[3] for Notification e. Check if registration is successful.
+//! f. Open iAudioPlayer[3] g. Open and Play iAudioPlayer[2] h. iAudioPlayer[2] stops playing i. iAudioPlayer[1] is notified. j. iAudioPlayer[1] calls WillResumePlay()
+//! k. Check after 5 seconds, iAudioPlayer[3] does not get the notification. l. iAudioPlayer[1] starts playing. m. iAudioPlayer[1] completes playing. n.
+//! Check if iAudioPlayer[3] gets the notification now.
+//!@SYMTestExpectedResults    The low priority Client should NOT receive notification if the medium priority client calls WillResumePlay()
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0027-HP \audio.ini
+TEST_COMPLETE
+
+//CR1424: ARN test for Ogg
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0030-HP \audio.ini
+TEST_COMPLETE
+
+######################### Audio Recorder tests #########################
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0125-CP
+//!@SYMTestCaseDesc           Register for notification, but make no request to play audio
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           1
+//!@SYMTestActions            iAudioRecorder[1] - Medium Priority iAudioRecorder[2] - High Priority a. Open 2 clients b. Open iAudioRecorder[1] c. Register
+//! iAudioRecorder[1] for Notification d. Open and Play iAudioRecorder[2] e. iAudioRecorder[2] completes playing f. iAudioRecorder[1] is NOT notified (as
+//! it dis not make a request for play)
+//!@SYMTestExpectedResults    The Client which has registered for notification, but makes no request for playing, should not receive the notification.
+//! KErrNone should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0125-CP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0126-CP
+//!@SYMTestCaseDesc           Register (b4 play, after Open) and Receive Notification of a Resource Available Event.(when audio resource is currently
+//! unavailable and then available)
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           1
+//!@SYMTestActions            iAudioRecorder[1] - Low Priority iAudioRecorder[2] - High Priority a. Open 2 clients b. Open iAudioRecorder[1] c. Register
+//! iAudioRecorder[1] for Notification d. Check if registration is successful, and notification is not received immediately. e. Open and Play iAudioRecorder[2]
+//! f. Play iAudioRecorder[1] (get Play Error as iAudioRecorder[2] is still playing) g. iAudioRecorder[2] stops playing h. Check if iAudioRecorder[1] is
+//! notified.
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0126-CP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0127-HP
+//!@SYMTestCaseDesc           Register (at the time of Play) and Receive Notification of a Resource Available Event.(when audio resource is currently
+//! available and subsequently unavailable, and then available)
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioRecorder[1] - Low Priority iAudioRecorder[2] - High Priority a. Open 2 clients b. Open and Play iAudioRecorder[1]
+//! c. Register iAudioRecorder[1] for Notification d. Check if registration is successful, and notification is not received immediately. e. Open and Play
+//! iAudioRecorder[2] f. iAudioRecorder[2] stops playing g. Check if iAudioRecorder[1] is notified.
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0127-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0128-HP
+//!@SYMTestCaseDesc           Registration (b4 File Open) and Cancellation of  the notification request
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioRecorder[1] - Medium Priority iAudioRecorder[2] - High Priority a. Open 2 clients b. Register iAudioRecorder[1] for
+//! Notification c. Check if registration is successful. d. Open and Play iAudioRecorder[1] e. Open and Play iAudioRecorder[2] f. Cancel the notification
+//! request for iAudioRecorder[1] g. Check if cancellation is successful. h. iAudioRecorder[2] stops playing i. Check if iAudioRecorder[1] is NOT notifie
+//!d.
+//!@SYMTestExpectedResults    The Client should be able to cancel the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0128-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0129-HP
+//!@SYMTestCaseDesc           Get the actual position from where the paused audio can be resumed.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioRecorder[1] - Medium Priority iAudioRecorder[2] - High Priority a. Open 2 clients b. Open and Play iAudioRecorder[1]
+//! c. Register iAudioRecorder[1] for Notification d. Check if registration is successful. e. Open and Play iAudioRecorder[2] f. Note the time when iAudioRecorder[1]
+//! is paused g. iAudioRecorder[2] stops playing h. iAudioRecorder[1] is notified. i. Get the position, and check whether it matches the position got from
+//! step f.
+//!@SYMTestExpectedResults    The medium priority Client should be able to receive the offset time and that should be correct without any errors in the
+//! process. KErrNone should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0129-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0130-HP
+//!@SYMTestCaseDesc           Call WillResumePlay()
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioRecorder[1] - Medium Priority iAudioRecorder[2] - High Priority iAudioRecorder[3] - Low Priority a. Open 2 clients
+//! b. Open and Play iAudioRecorder[1] c. Register iAudioRecorder[1] for Notification d. Register iAudioRecorder[3] for Notification e. Check if registration
+//! is successful. f. Open iAudioRecorder[3] g. Open and Play iAudioRecorder[2] h. iAudioRecorder[2] stops playing i. iAudioRecorder[1] is notified. j. iAudioRecorder[1]
+//! calls WillResumePlay() k. Check after 1 second, iAudioRecorder[3] does not get the notification. l. iAudioRecorder[1] starts playing. m. iAudioRecorder[1]
+//! completes playing. n. Check if iAudioRecorder[3] gets the notification now.
+//!@SYMTestExpectedResults    The low priority Client should NOT receive notification if the medium priority client calls WillResumePlay()
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0130-HP \audio.ini
+TEST_COMPLETE
+
+####################### Audio Multi-Client tests #######################
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0201-HP
+//!@SYMTestCaseDesc           Receipt of Notification (on deleting the Audio Play Client instance of a Notified Client) of a Resource Available Event.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Medium Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioPlayer for Notification e. Register iAudioOutputStream for Notification. f. Delete
+//! the instance iAudioPlayer g. iAudioRecorder stops playing h. Check if iAudioOutputStream gets the notification
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0201-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0202-HP
+//!@SYMTestCaseDesc           Receipt of Notification (on completion of play of a Notifed Client) of a Resource Available Event.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Medium Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioPlayer for Notification e. Register iAudioOutputStream for Notification. f. iAudioRecorder
+//! stops playing g. iAudioPlayer receives teh notification and resumes playback h. iAudioPlayer completes the playback i. Check if iAudioOutputStream gets
+//! the notification
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0202-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0203-HP
+//!@SYMTestCaseDesc           Receipt of Notification (on stopping play of a Notitifed Client) of a Resource Available Event.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Medium Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioPlayer for Notification e. Register iAudioOutputStream for Notification. f. iAudioRecorder
+//! stops playing g. iAudioPlayer receives the notification and resumes playback h. The playback of iAudioPlayer is stopped midway i. Check if iAudioOutputStream
+//! gets the notification
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0203-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0204-HP
+//!@SYMTestCaseDesc           Receipt of Notification (chronological order for equal priority clients) of a Resource Available Event.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Low Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioOutputStream for Notification e. Register iAudioPlayer for Notification f. iAudioRecorder
+//! stops playing g. Check if iAudioOutputStream gets the notification
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0204-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0205-HP
+//!@SYMTestCaseDesc           Non Receipt of Notification (on calling WillResumePlay() of a notified client) of a Resource Available Event.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Medium Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioPlayer for Notification. e. Register iAudioOutputStream for Notification. f.
+//! iAudioRecorder stops playing g. iAudioPlayer receives the notification. h. iAudioPlayer calls WillResumePlay(). i. Check if iAudioOutputStream does not
+//! get the notification (after 2 second))
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0205-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0206-HP
+//!@SYMTestCaseDesc           Receipt of Notification (on timeout of a notified client, 1 sec assumed, call WillResumePlay() after 1 second) of a Resource
+//! Available Event.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Medium Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioPlayer for Notification. e. Register iAudioOutputStream for Notification. f.
+//! iAudioRecorder stops playing g. iAudioPlayer receives the notification. h. After 1 second, iAudioPlayer calls WillResumePlay(). h. iAudioPlayer does
+//! not resume playback. i. Check if iAudioOutputStream gets the notification (after 1 second)
+//!@SYMTestExpectedResults    The Client should be able to receive the notification succesfully, without any errors in the process. KErrNone should be
+//! returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0206-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0207-HP
+//!@SYMTestCaseDesc           Receipt of Notification (on cancellation of the notification of a client that has requested for notification) of a Resource
+//! Available Event.  [Cancel before receipt of Notification]
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Medium Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioPlayer for Notification e. Register iAudioOutputStream for Notification f. Cancel
+//! the notification request for iAudioPlayer g. iAudioRecorder stops playing h. Check if iAudioOutputStream gets the notification
+//!@SYMTestExpectedResults    The medium priority Client should be able to cancel the notification succesfully, and the low priority client should be
+//! able to receive the notification without any errors in the process. KErrNone should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0207-HP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-0208-HP
+//!@SYMTestCaseDesc           Receipt of Notification (on cancellation of notification of a client that has just received notification) of a Resource
+//! Available Event. [Cancel after receipt of Notification]
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           2
+//!@SYMTestActions            iAudioPlayer - Medium Priority iAudioRecorder - High Priority iAudioOutputStream - Low Priority a. Create 3 clients b. Open
+//! and Play iAudioPlayer c. Open and Play iAudioRecorder d. Register iAudioPlayer for Notification e. Register iAudioOutputStream for Notification f. iAudioRecorder
+//! stops playing g. iAudioPlayer receives notification and it starts playing h. Cancel the notification request for iAudioPlayer i. Play iAudioRecorder
+//! j.  iAudioRecorder stops playing k. Check if iAudioOutputStream gets the notification (but not the iAudioPlayer)
+//!@SYMTestExpectedResults    The medium priority Client should be able to cancel the notification succesfully, and the low priority client should be
+//! able to receive the notification without any errors in the process. KErrNone should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-0208-HP \audio.ini
+TEST_COMPLETE
+
+/////////////////////////////////////////////////////////////////////
+/////////////////////////// NEGATIVE TESTS //////////////////////////
+/////////////////////////////////////////////////////////////////////
+
+######################### Audio Player tests #########################
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1012-LP
+//!@SYMTestCaseDesc           Register for notification with an unsupported event type.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioPlayer[0] - Medium Priority iAudioPlayer[1] - High Priority a. Create 2 clients b. Open & Play iAudioPlayer[0] c.
+//! Open & Play iAudioPlayer[1] d. Register iAudioPlayer[0] for notification, passing an unsupported event type as parameter.
+//!@SYMTestExpectedResults    KErrNotSupported should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1012-LP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1013-LP
+//!@SYMTestCaseDesc           Cancel the request for notification with an unsupported event type.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioPlayer[0] - Medium Priority iAudioPlayer[1] - High Priority a. Create 2 clients b. Open & Play iAudioPlayer[0] c.
+//! Open & Play iAudioPlayer[1] d. Register iAudioPlayer[0] for notification. e. Cancel the notification request for iAudioPlayer[0], passing an unsupported
+//! event type as parameter.
+//!@SYMTestExpectedResults    KErrNotSupported should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1013-LP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1014-LP
+//!@SYMTestCaseDesc           Cancel when no resource Notification is requested.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioPlayer[0] - Medium Priority iAudioPlayer[1] - High Priority a. Create 2 clients b. Open & Play iAudioPlayer[0] c.
+//! Open & Play iAudioPlayer[1] d. Cancel the notification request for iAudioPlayer[0]
+//!@SYMTestExpectedResults    KErrNotSupported should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1014-LP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1015-LP
+//!@SYMTestCaseDesc           Multiple Registration for notification for the same event type.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioPlayer[0] - Medium Priority iAudioPlayer[1] - High Priority a. Create 2 clients b. Open & Play iAudioPlayer[0] c.
+//! Open & Play iAudioPlayer[1] d. Register iAudioPlayer[0] for audio resource available notification e. Register iAudioPlayer[0] again for audio resource
+//! available notification
+//!@SYMTestExpectedResults    KErrInUse / KErrAlreadyExists should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1015-LP \audio.ini
+TEST_COMPLETE
+
+######################### Audio Recorder tests #########################
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1109-LP
+//!@SYMTestCaseDesc           Register for notification with an unsupported event type.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioRecorder[0] - Medium Priority iAudioRecorder[1] - High Priority a. Create 2 clients b. Open & Play iAudioRecorder[0]
+//! c. Open & Play iAudioRecorder[1] d. Register iAudioRecorder[0] for notification, passing an unsupported event type as parameter.
+//!@SYMTestExpectedResults    KErrNotSupported should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1109-LP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1110-LP
+//!@SYMTestCaseDesc           Cancel the request for notification with an unsupported event type.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioRecorder[0] - Medium Priority iAudioRecorder[1] - High Priority a. Create 2 clients b. Open & Play iAudioRecorder[0]
+//! c. Open & Play iAudioRecorder[1] d. Register iAudioRecorder[0] for notification. e. Cancel the notification request for iAudioRecorder[0], passing an
+//! unsupported event type as parameter.
+//!@SYMTestExpectedResults    KErrNotSupported should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1110-LP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1111-LP
+//!@SYMTestCaseDesc           Cancel when no resource Notification is requested.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioRecorder[0] - Medium Priority iAudioRecorder[1] - High Priority a. Create 2 clients b. Open & Play iAudioRecorder[0]
+//! c. Open & Play iAudioRecorder[1] d. Cancel the notification request for iAudioRecorder[0]
+//!@SYMTestExpectedResults    KErrNotSupported should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1111-LP \audio.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MMF-ACLNTOGG-I-1112-LP
+//!@SYMTestCaseDesc           Multiple Registration for notification for the same event type.
+//!@SYMREQ                    REQ5481
+//!@SYMPREQ                   PREQ452
+//!@SYMTestPriority           4
+//!@SYMTestActions            iAudioRecorder[0] - Medium Priority iAudioRecorder[1] - High Priority a. Create 2 clients b. Open & Play iAudioRecorder[0]
+//! c. Open & Play iAudioRecorder[1] d. Register iAudioRecorder[0] for audio resource available notification e. Register iAudioRecorder[0] again for audio
+//! resource available notification
+//!@SYMTestExpectedResults    KErrInUse / KErrAlreadyExists should be returned.
+RUN_TEST_STEP 600000 ACLNT MM-MMF-ACLNTOGG-I-1112-LP \audio.ini
+TEST_COMPLETE

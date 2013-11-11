@@ -1,0 +1,1148 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the CBluetoothSynchronousLink class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Zoe Chen and Cliff Chang
+//! @SYMCreationDate			19/09/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	T_BTUserAPI	-SharedData
+DELAY		500
+
+
+START_TESTCASE	BT-USER-PublicApi-Slave-SetBTAddresses
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PublicApi-Passive-SetBTAddresses-0001command3NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			COMMAND		TRfcommSockAddr1	Construct		
+			COMMAND		TRfcommSockAddr1	SetFamily		BT-USER-PublicApi-Passive-SetBTAddresses-0001command8SetFamily
+			COMMAND		TRfcommSockAddr1	SetPort		BT-USER-PublicApi-Passive-SetBTAddresses-0001command9SetPort
+			COMMAND		TRfcommSockAddr1	SetSecurity		BT-USER-PublicApi-Passive-SetBTAddresses-0001command10SetSecurity
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PublicApi-Passive-SetBTAddresses-0001command12Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PublicApi-Passive-SetBTAddresses-0001command13Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PublicApi-Passive-SetBTAddresses-0001command15SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PublicApi-Passive-SetBTAddresses-0001command16NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct		
+			COMMAND		TBTDevAddrLocal	OpenHostResolver		BT-USER-PublicApi-Passive-SetBTAddresses-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BT-USER-PublicApi-Passive-SetBTAddresses-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable		
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TBTDevAddrLocal	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0003
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PublicApi-Passive-SetBTAddresses-0003command1Accept
+			OUTSTANDING	
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0003
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0004
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			COMMAND		CBluetoothSessionSocket	Recv		BT-USER-PublicApi-Passive-SetBTAddresses-0004command1Recv
+			OUTSTANDING	
+			COMMAND		TBTDevAddrLocal	SetBTAddr		BT-USER-PublicApi-Passive-SetBTAddresses-0004command4SetBTAddr
+			COMMAND		TBTDevAddrRemote	Construct		
+			COMMAND		TBTDevAddrRemote	SetBTAddr		BT-USER-PublicApi-Passive-SetBTAddresses-0004command7SetBTAddr
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0004
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0005
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			COMMAND		CBluetoothSessionSocket	Shutdown		BT-USER-PublicApi-Passive-SetBTAddresses-0005command1Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSessionSocket	~		
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PublicApi-Passive-SetBTAddresses-0005command5Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0005
+
+END_TESTCASE	BT-USER-PublicApi-Slave-SetBTAddresses
+
+DELAY		500
+
+// ****************************************************************************
+// CBluetoothSynchronousLink
+// ****************************************************************************	
+// Connected
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0001
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0001
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr
+//! @SYMTestCaseDesc			Cancel ability to respond to a remote request to set up a synchronous link
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewLC(), AcceptConnection()1, CancelAccept() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//! @SYMTestActions				1. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Create a TRfcommSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								7. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								8. Call the listen()1 method of the CBluetoothSocket object
+//!								9. Create and start a session on the socket server
+//!								10. Allocate and open a socket sub-session for Bluetooth SCO using NewLC() function
+//!								11. Prepare for a remote device to set up a synchronous link on the local device with ESyncPacketsHV1
+//!								    using AcceptConnection()1 function. Return KErrNone if successful
+//!								12. Cancel ability to respond to a remote request to set up a synchronous link using CancelAccept() function
+//!								13. Delete the synchronous link using destructor
+//!								14. Close the session on the socket server
+//!								15. Shut down a connected socket using Shutdown()1 function
+//!								16. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Cancel succeeded
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0001-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command3NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command8SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command9SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command10SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command12Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command13Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewLC		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command18NewLC
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0001-0001command19AcceptConnection
+			COMMAND		CBluetoothSynchronousLinkData	CancelAccept
+			OUTSTANDING
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0001-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0001-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			ASYNC_DELAY	10000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0001-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0001-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0001
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0002
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0002
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr, TBTSyncBandwidth
+//! @SYMTestCaseDesc			Specify maximum bandwidths in octets/second
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewLC(), AcceptConnection()1, SetMaxBandwidth() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//!													TBTSyncBandwidth() from TBTSyncBandwidth
+//! @SYMTestActions				1. Construct a TBTSyncBandwidth object using TBTSyncBandwidth() function
+//!								2. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								3. Create an empty TBTServiceSecurity object
+//!								4. Create a TRfcommSockAddr object
+//!								5. Set the Family to Bluetooth (257)
+//!								6. Set the port to the one matching the protocol to use
+//!								7. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								8. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								9. Call the listen()1 method of the CBluetoothSocket object
+//!								10. Create and start a session on the socket server
+//!								11. Allocate and open a socket sub-session for Bluetooth SCO using NewLC() function
+//!								12. Prepare for a remote device to set up a synchronous link on the local device
+//!								    using AcceptConnection()1 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify maximum bandwidths in octets/second with TBTSyncBandwidth object using SetMaxBandwidth() function
+//!								16. Delete the synchronous link using destructor
+//!								17. Close the session on the socket server
+//!								18. Shut down a connected socket using Shutdown()1 function
+//!								19. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Maximum bandwidths was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0002-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			CREATE_OBJECT	TBTSyncBandwidth	TBTSyncBandwidthData	
+			COMMAND		TBTSyncBandwidthData	TBTSyncBandwidth		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command2TBTSyncBandwidth
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command5NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command10SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command11SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command12SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command14Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command15Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewLC		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command20NewLC
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command21AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetMaxBandwidth		BT-USER-SynchronousLink-PublicApi-Passive-0002-0001command23SetMaxBandwidth
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener	
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE	TBTSyncBandwidthData
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0002-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0002-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			RESTORE_OBJECT	TBTSyncBandwidth	TBTSyncBandwidthData
+			ASYNC_DELAY	10000000		
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0002-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0002-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0002
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0003
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0003
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr, TBTSyncPackets
+//! @SYMTestCaseDesc			Specify link retransmission policy
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()2, SetRetransmissionEffort() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV2) using TBTSyncPackets() function
+//!								2. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								3. Create an empty TBTServiceSecurity object
+//!								4. Create a TRfcommSockAddr object
+//!								5. Set the Family to Bluetooth (257)
+//!								6. Set the port to the one matching the protocol to use
+//!								7. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								8. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								9. Call the listen()1 method of the CBluetoothSocket object
+//!								10. Create and start a session on the socket server
+//!								11. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								12. Prepare for a remote device to set up a synchronous link on the local device with ESyncPacketsHV2
+//!								    using AcceptConnection()2 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify link retransmission policy with EeSCORetransmitNone using SetRetransmissionEffort() function
+//!								16. Delete the synchronous link using destructor
+//!								17. Close the session on the socket server
+//!								18. Shut down a connected socket using Shutdown()1 function
+//!								19. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Link retransmission policy was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0003-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command2TBTSyncPackets
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command5NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command10SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command11SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command12SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command14Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command15Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command20NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command21AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetRetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Passive-0003-0001command23SetRetransmissionEffort
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE	TBTSyncPacketsData
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0003-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0003-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			RESTORE_OBJECT	TBTSyncPackets		TBTSyncPacketsData
+			ASYNC_DELAY	10000000
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0003-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0003-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0003
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0004
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0004
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr, TBTSyncPackets
+//! @SYMTestCaseDesc			Specify Voice Setting
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()2, SetRetransmissionEffort(), SetCoding() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV3) using TBTSyncPackets() function
+//!								2. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								3. Create an empty TBTServiceSecurity object
+//!								4. Create a TRfcommSockAddr object
+//!								5. Set the Family to Bluetooth (257)
+//!								6. Set the port to the one matching the protocol to use
+//!								7. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								8. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								9. Call the listen()1 method of the CBluetoothSocket object
+//!								10. Create and start a session on the socket server
+//!								11. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								12. Prepare for a remote device to set up a synchronous link on the local device with ESyncPacketsHV3
+//!								    using AcceptConnection()2 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify link retransmission policy with EeSCORetransmitPower using SetRetransmissionEffort() function
+//!								16. Specify Voice Setting with decimal 8 using SetCoding() function
+//!								17. Delete the synchronous link using destructor
+//!								18. Close the session on the socket server
+//!								19. Shut down a connected socket using Shutdown()1 function
+//!								20. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Voice Setting was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0004-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command2TBTSyncPackets
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command5NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command10SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command11SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command12SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command14Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command15Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command20NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command21AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetRetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command23SetRetransmissionEffort
+			COMMAND		CBluetoothSynchronousLinkData	SetCoding		BT-USER-SynchronousLink-PublicApi-Passive-0004-0001command24SetCoding
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE	TBTSyncPacketsData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0004-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0004-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			RESTORE_OBJECT	TBTSyncPackets		TBTSyncPacketsData
+			ASYNC_DELAY	10000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0004-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0004-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0004
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0005
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0005
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr, TBTSyncPackets
+//! @SYMTestCaseDesc			Specify maximum acceptable latency in milliseconds
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()2, SetRetransmissionEffort(), SetMaxLatency() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV1) using TBTSyncPackets() function
+//!								2. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								3. Create an empty TBTServiceSecurity object
+//!								4. Create a TRfcommSockAddr object
+//!								5. Set the Family to Bluetooth (257)
+//!								6. Set the port to the one matching the protocol to use
+//!								7. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								8. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								9. Call the listen()1 method of the CBluetoothSocket object
+//!								10. Create and start a session on the socket server
+//!								11. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								12. Prepare for a remote device to set up a synchronous link on the local device with ESyncPacketsHV1
+//!								    using AcceptConnection()2 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify link retransmission policy with EeSCORetransmitReliability using SetRetransmissionEffort() function
+//!								16. Specify maximum acceptable latency in milliseconds with decimal 10 using SetMaxLatency() function
+//!								17. Delete the synchronous link using destructor
+//!								18. Close the session on the socket server
+//!								19. Shut down a connected socket using Shutdown()1 function
+//!								20. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Maximum acceptable latency was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0005-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command2TBTSyncPackets
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command5NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command10SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command11SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command12SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command14Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command15Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command20NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command21AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetRetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command23SetRetransmissionEffort
+			COMMAND		CBluetoothSynchronousLinkData	SetMaxLatency		BT-USER-SynchronousLink-PublicApi-Passive-0005-0001command24SetMaxLatency
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE	TBTSyncPacketsData		
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0005-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0005-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			RESTORE_OBJECT	TBTSyncPackets		TBTSyncPacketsData
+			ASYNC_DELAY	10000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0005-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0005-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0005
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0006
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0006
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr, TBTSyncPackets
+//! @SYMTestCaseDesc			Specify link retransmission policy
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()2, SetRetransmissionEffort() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//!													TBTSyncPackets() from TBTSyncPackets
+//! @SYMTestActions				1. Construct a synchronous packet type (ESyncPacketsHV3) using TBTSyncPackets() function
+//!								2. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								3. Create an empty TBTServiceSecurity object
+//!								4. Create a TRfcommSockAddr object
+//!								5. Set the Family to Bluetooth (257)
+//!								6. Set the port to the one matching the protocol to use
+//!								7. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								8. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								9. Call the listen()1 method of the CBluetoothSocket object
+//!								10. Create and start a session on the socket server
+//!								11. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								12. Prepare for a remote device to set up a synchronous link on the local device with ESyncPacketsHV3
+//!								    using AcceptConnection()2 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify link retransmission policy with EeSCORetransmitDontCare using SetRetransmissionEffort() function
+//!								16. Delete the synchronous link using destructor
+//!								17. Close the session on the socket server
+//!								18. Shut down a connected socket using Shutdown()1 function
+//!								19. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Link retransmission policy was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0006-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			CREATE_OBJECT	TBTSyncPackets	TBTSyncPacketsData	
+			COMMAND		TBTSyncPacketsData	TBTSyncPackets		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command2TBTSyncPackets
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command5NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command10SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command11SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command12SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command14Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command15Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command20NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command21AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetRetransmissionEffort		BT-USER-SynchronousLink-PublicApi-Passive-0006-0001command23SetRetransmissionEffort
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE	TBTSyncPacketsData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0006-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0006-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			RESTORE_OBJECT	TBTSyncPackets		TBTSyncPacketsData
+			ASYNC_DELAY	10000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0006-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0006-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0006
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0007
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0007
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr
+//! @SYMTestCaseDesc			Prepare for a remote device to set up a synchronous link on the local device
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()1 and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//! @SYMTestActions				1. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Create a TRfcommSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								7. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								8. Call the listen()1 method of the CBluetoothSocket object
+//!								9. Create and start a session on the socket server
+//!								10. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								11. Prepare for a remote device to set up a synchronous link on the local device
+//!								    using AcceptConnection()1 function. Return KErrNone if successful
+//!								12. Return callback HandleAcceptConnectionCompleteL() function
+//!								13. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								14. Delete the synchronous link using destructor
+//!								15. Close the session on the socket server
+//!								16. Shut down a connected socket using Shutdown()1 function
+//!								17. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0007-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command3NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command8SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command9SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command10SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command12Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command13Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command18NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0007-0001command19AcceptConnection
+			OUTSTANDING	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0007-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0007-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			ASYNC_DELAY	10000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0007-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0007-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0007
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0008
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0008
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr
+//! @SYMTestCaseDesc			Prepare for a remote device to set up a synchronous link on the local device
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()1 and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//! @SYMTestActions				1. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Create a TRfcommSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								7. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								8. Call the listen()1 method of the CBluetoothSocket object
+//!								9. Create and start a session on the socket server
+//!								10. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								11. Prepare for a remote device to set up a synchronous link on the local device
+//!								    using AcceptConnection()1 function. Return KErrNone if successful
+//!								12. Return callback HandleAcceptConnectionCompleteL() function
+//!								13. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								14. Delete the synchronous link using destructor
+//!								15. Close the session on the socket server
+//!								16. Shut down a connected socket using Shutdown()1 function
+//!								17. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0008-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command3NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command8SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command9SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command10SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command12Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command13Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command18NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0008-0001command19AcceptConnection
+			OUTSTANDING
+			ASYNC_DELAY	10000000	
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0008-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0008-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			ASYNC_DELAY	10000000		
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0008-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0008-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0008
+
+
+// ****************************************************************************
+// Negative test cases
+// ****************************************************************************
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0011
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0011
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr, TBTSyncBandwidth
+//! @SYMTestCaseDesc			Specify maximum bandwidths in octets/second as 0
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()1, SetMaxBandwidth() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//!													TBTSyncBandwidth() from TBTSyncBandwidth
+//! @SYMTestActions				1. Construct a TBTSyncBandwidth object using TBTSyncBandwidth() function
+//!								2. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								3. Create an empty TBTServiceSecurity object
+//!								4. Create a TRfcommSockAddr object
+//!								5. Set the Family to Bluetooth (257)
+//!								6. Set the port to the one matching the protocol to use
+//!								7. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								8. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								9. Call the listen()1 method of the CBluetoothSocket object
+//!								10. Create and start a session on the socket server
+//!								11. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								12. Prepare for a remote device to set up a synchronous link on the local device with ESyncAnySCOPacket
+//!								    using AcceptConnection()1 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify maximum bandwidths in octets/second with TBTSyncBandwidth object(decimal 0) using SetMaxBandwidth() function
+//!								16. Delete the synchronous link using destructor
+//!								17. Close the session on the socket server
+//!								18. Shut down a connected socket using Shutdown()1 function
+//!								19. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Maximum bandwidths was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0011-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			CREATE_OBJECT	TBTSyncBandwidth	TBTSyncBandwidthData	
+			COMMAND		TBTSyncBandwidthData	TBTSyncBandwidth		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command2TBTSyncBandwidth
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command5NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command10SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command11SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command12SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command14Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command15Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command20NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command21AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetMaxBandwidth		BT-USER-SynchronousLink-PublicApi-Passive-0011-0001command23SetMaxBandwidth
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE	TBTSyncBandwidthData		
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0011-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0011-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			RESTORE_OBJECT	TBTSyncBandwidth	TBTSyncBandwidthData
+			ASYNC_DELAY	10000000
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0011-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0011-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0011
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0012
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0012
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr
+//! @SYMTestCaseDesc			Specify maximum acceptable latency in milliseconds as 0
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()1, SetMaxLatency() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//! @SYMTestActions				1. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Create a TRfcommSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								7. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								8. Call the listen()1 method of the CBluetoothSocket object
+//!								9. Create and start a session on the socket server
+//!								10. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								11. Prepare for a remote device to set up a synchronous link on the local device with ESyncAnySCOPacket
+//!								    using AcceptConnection()1 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify maximum acceptable latency in milliseconds with decimal 0 using SetMaxLatency() function
+//!								16. Delete the synchronous link using destructor
+//!								17. Close the session on the socket server
+//!								18. Shut down a connected socket using Shutdown()1 function
+//!								19. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Maximum acceptable latency was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0012-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command3NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command8SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command9SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command10SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command12Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command13Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command18NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command19AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetMaxLatency		BT-USER-SynchronousLink-PublicApi-Passive-0012-0001command21SetMaxLatency
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0012-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0012-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			ASYNC_DELAY	10000000	
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0012-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0012-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0012
+
+
+START_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0013
+//! @SYMTestCaseID				BT-USER-SynchronousLink-PublicApi-Passive-Slave-0013
+//! @SYMAPI						RSocketServ, CBluetoothSynchronousLink, MBluetoothSynchronousLinkNotifier, CBluetoothSocket, MBluetoothSocketNotifier, TBTServiceSecurity, TRfcommSockAddr
+//! @SYMTestCaseDesc			Specify a Voice Setting that the local device does not support
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL()1, Bind(), Listen()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													NewL(), AcceptConnection()1, SetCoding() and destructor from CBluetoothSynchronousLink
+//!													HandleAcceptConnectionCompleteL() from MBluetoothSynchronousLinkNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TRfcommSockAddr(), SetFamily(), SetPort() and SetSecurity() from TRfcommSockAddr
+//! @SYMTestActions				1. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Create a TRfcommSockAddr object
+//!								4. Set the Family to Bluetooth (257)
+//!								5. Set the port to the one matching the protocol to use
+//!								6. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								7. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								8. Call the listen()1 method of the CBluetoothSocket object
+//!								9. Create and start a session on the socket server
+//!								10. Allocate and open a socket sub-session for Bluetooth SCO using NewL() function
+//!								11. Prepare for a remote device to set up a synchronous link on the local device with ESyncAnySCOPacket
+//!								    using AcceptConnection()1 function. Return KErrNone if successful
+//!								13. Return callback HandleAcceptConnectionCompleteL() function
+//!								14. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								15. Specify Voice Setting with 1111111111 using SetCoding() function
+//!								16. Delete the synchronous link using destructor
+//!								17. Close the session on the socket server
+//!								18. Shut down a connected socket using Shutdown()1 function
+//!								19. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Voice Setting was set
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0013-0001
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketListener	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddrData	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData	
+			COMMAND		CBluetoothSocketListener	RSocketServerConnect		
+			COMMAND		CBluetoothSocketListener	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command3NewL
+			COMMAND		TBTServiceSecurityData	Construct		
+			COMMAND		TRfcommSockAddrData	Construct		
+			COMMAND		TRfcommSockAddrData	SetFamily		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command8SetFamily
+			COMMAND		TRfcommSockAddrData	SetPort		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command9SetPort
+			COMMAND		TRfcommSockAddrData	SetSecurity		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command10SetSecurity
+			COMMAND		CBluetoothSocketListener	Bind		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command12Bind
+			COMMAND		CBluetoothSocketListener	Listen		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command13Listen
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothSynchronousLinkData	NewL		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command18NewL
+			COMMAND		CBluetoothSynchronousLinkData	AcceptConnection		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command19AcceptConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothSynchronousLinkData	SetCoding		BT-USER-SynchronousLink-PublicApi-Passive-0013-0001command21SetCoding
+			STORE	CBluetoothSynchronousLinkData	
+			STORE	RSocketServData	
+			STORE	CBluetoothSocketListener
+			STORE	TRfcommSockAddrData
+			STORE	TBTServiceSecurityData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0013-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0013-0002
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-SynchronousLink-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSynchronousLink	CBluetoothSynchronousLinkData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketListener
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddrData
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurityData
+			ASYNC_DELAY	10000000		
+			COMMAND		CBluetoothSynchronousLinkData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSocketListener	Shutdown		BT-USER-SynchronousLink-PublicApi-Passive-0013-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketListener	~		
+			COMMAND		CBluetoothSocketListener	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-SynchronousLink-PublicApi-Active-0013-0002
+
+END_TESTCASE	BT-USER-SynchronousLink-PublicApi-Passive-Slave-0013
+
+
+DELAY		500

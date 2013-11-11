@@ -1,0 +1,157 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//
+//! @SYMTestSuiteName lbsprivfwnoinstall_api2.script
+//
+//! @SYMScriptTestEnvironment Note: Need to confirm that reqs 8020/8021 apply to all notifiers/controller and not just the QnN.
+//
+//Also, these tests are in their own script because it will require a special build/rom creating which does not have the notifiers/controller.
+
+LOAD_SUITE LbsPrivFwTestServer -SharedData
+PRINT Run LbsPrivFwTestServer
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-NOINSTALL-0001
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-NOINSTALL-0001
+//! @SYMTestCaseDesc            Privacy Verifiction when no Privacy Controller installed
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use Privacy Controller
+//!                             3. Make sure that Privacy Controller is not installed
+//!                             4. Issue a VerifyLocationRequestL()
+//!                             5. Verify the responses sent to network
+//! @SYMTestExpectedResults     Verification 'reject' response is sent to the network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            29/8/2007
+//! @SYMAuthor                  alans
+//! @SYMREQ                     REQ8021
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini CTRL-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyWithNoCtlr
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_NoInstall  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOINSTALL-0002
+END_TESTCASE                   LBS-PRIVACYFWAPI2-NOINSTALL-0001
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-NOINSTALL-0002
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-NOINSTALL-0002
+//! @SYMTestCaseDesc            Privacy Verifiction when no QnN notifier installed
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use QnN notifier
+//!                             3. Make sure that Privacy Notifer plug-in is not installed
+//!                             4. Issue a VerifyLocationRequestL()
+//!                             5. Verify the responses sent to network
+//! @SYMTestExpectedResults     Verification 'reject' response is sent to the network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            29/8/2007
+//! @SYMAuthor                  alans
+//! @SYMREQ                     REQ8021
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini QNN-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_NoInstall  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOINSTALL-0002
+END_TESTCASE                   LBS-PRIVACYFWAPI2-NOINSTALL-0002
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-NOINSTALL-0003
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-NOINSTALL-0003
+//! @SYMTestCaseDesc            Privacy Verifiction when no Privacy Notifier installed
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use the default Privacy Notifer
+//!                             3. Make sure that Privacy Notifer plug-in is not installed
+//!                             4. Issue a VerifyLocationRequestL()
+//!                             5. Verify the responses sent to network
+//! @SYMTestExpectedResults     Verification 'reject' response is sent to the network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            29/8/2007
+//! @SYMAuthor                  alans
+//! @SYMREQ                     REQ8021
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini NOTIFIER-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_NoInstall  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOINSTALL-0002
+END_TESTCASE                   LBS-PRIVACYFWAPI2-NOINSTALL-0003
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-NOINSTALL-0004
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-NOINSTALL-0004
+//! @SYMTestCaseDesc            Privacy Notification when no Privacy Controller installed
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use Privacy Controller
+//!                             3. Make sure that Privacy Controller is not installed
+//!                             4. Issue a NotifyLocationRequestL()
+//!                             5. Verify the responses sent to network
+//! @SYMTestExpectedResults     1. Request should be ignored and completed without errors
+//! @SYMTestType                CIT
+//! @SYMCreationDate            29/8/2007
+//! @SYMAuthor                  alans
+//! @SYMREQ                     REQ8020
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini CTRL-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyWithNoCtlr
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_NoInstall  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOINSTALL-0001
+END_TESTCASE                   LBS-PRIVACYFWAPI2-NOINSTALL-0004
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-NOINSTALL-0005
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-NOINSTALL-0005
+//! @SYMTestCaseDesc            Privacy Notification when no QnN notifier installed
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use the QnN notifier
+//!                             3. Make sure that QnN notifier plug-in is not installed
+//!                             4. Issue a NotifyLocationRequestL()
+//!                             5. Verify the responses sent to network
+//! @SYMTestExpectedResults     1. Request should be ignored and completed without errors
+//! @SYMTestType                CIT
+//! @SYMCreationDate            29/8/2007
+//! @SYMAuthor                  alans
+//! @SYMREQ                     REQ8020
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini QNN-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_NoInstall  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOINSTALL-0001
+END_TESTCASE                   LBS-PRIVACYFWAPI2-NOINSTALL-0005
+
+
+START_TESTCASE                LBS-PRIVACYFWAPI2-NOINSTALL-0006
+//! @SYMTestCaseID              LBS-PRIVACYFWAPI2-NOINSTALL-0006
+//! @SYMTestCaseDesc            Privacy Notification when no Privacy Notifer installed
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use the default Privacy Notifer
+//!                             3. Make sure that Privacy Notifer plug-in is not installed
+//!                             4. Issue a NotifyLocationRequestL()
+//!                             5. Verify the responses sent to network
+//! @SYMTestExpectedResults     1. Request should be ignored and completed without errors
+//! @SYMTestType                CIT
+//! @SYMCreationDate            29/8/2007
+//! @SYMAuthor                  alans
+//! @SYMREQ                     REQ8020
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini NOTIFIER-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_NoInstall  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFWAPI2-NOINSTALL-0001
+END_TESTCASE                   LBS-PRIVACYFWAPI2-NOINSTALL-0006
+
+

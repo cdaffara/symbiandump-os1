@@ -1,0 +1,145 @@
+#!perl
+# exportall
+# 
+# Copyright (c) 2008 - 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Description:
+# exportall - A tool to export a whole folder of files from a bld.inf
+
+use strict;
+use Cwd;
+use Getopt::Long;
+use File::Copy;
+use File::Basename;
+use File::Path;
+
+sub ProcessCommandLine();
+sub DisplayHelp();
+sub FindSourceFiles();
+sub DoCopy($$);
+
+my %options;
+my $sourceDir;
+my $destDir;
+
+ProcessCommandLine();
+
+my $sourceFiles = FindSourceFiles();
+my @destFiles = @$sourceFiles;
+map { s|^\Q$sourceDir\E(.*)|$destDir$1| } @destFiles;
+map { s|\\\\|\\| } @destFiles; # get rid of double \\
+
+if ($options{what}) {
+  if (@destFiles > 0) {
+    local $, = "\n";
+    print @destFiles;
+    print "\n";
+  }
+} elsif ($options{clean}) {
+  map {unlink} @destFiles;
+} else {
+  local $, = "\n";
+  map { my $src =$_;
+        s|^\Q$sourceDir\E(.*)|$destDir$1|;
+        DoCopy($src, $_);
+      } @$sourceFiles;
+}
+
+sub ProcessCommandLine() {
+  my $help;
+  GetOptions('h|help' => \$help,
+	     'v|verbose' => \$options{verbose},
+	     'w|what' => \$options{what},
+	     'c|clean' => \$options{clean}) or DisplayHelp();
+	     
+  DisplayHelp() if $help;
+  
+  if (scalar(@ARGV)!=2) {
+    print "ERROR: Invalid number of arguments.\n";
+    DisplayHelp();
+  }
+  $sourceDir = shift(@ARGV);
+  $destDir = shift(@ARGV);
+  print STDERR "Exporting from $sourceDir to $destDir\n" if ($options{verbose});  
+}
+
+sub DoCopy($$) {
+  my ($src, $dest) = @_;
+  my $destDir = dirname($dest);
+  unless (-d $destDir) {
+    mkpath $destDir or die "Can't create $destDir: $!";
+  }
+  if (-e $dest) {
+    unlink $dest;
+  }
+  copy($src, $dest) or die "Can't copy $src to $_: $!"
+}
+
+sub FindSourceFiles() {
+  my @sourceFiles;
+  my @dirStack;
+  push @dirStack, $sourceDir;
+  while (scalar(@dirStack)) {
+    my $dir = pop(@dirStack);
+    opendir DIR, "$dir";
+    my @dirContents = readdir(DIR);
+    closedir(DIR);
+    push @sourceFiles, (map {"$dir\\$_"} (grep {-f "$dir\\$_"} @dirContents));
+    push @dirStack, (map {"$dir\\$_"} (grep {(-d "$dir\\$_")  && !(m|^\.\.?|)} @dirContents));
+  }
+  return \@sourceFiles;
+}
+
+sub DisplayHelp() {
+  require Pod::Text;
+  print "\n";
+  my $parser = Pod::Text->new();
+  $parser->parse_from_file($0);
+  exit;
+}
+
+__END__
+
+=head1 NAME
+
+exportall - A tool to export an entire directory tree from a project. Designed to be invoked from a custom makefile.
+
+=head1 SYNOPSIS
+
+	exportall [options] sourceDir destDir
+
+options:
+
+=over
+
+=item -h
+
+Show help
+
+=item -v
+
+Verbose
+
+=item -w
+
+Print list of files to be exported, for a C<-what>.
+
+=item -c
+
+Clean. Deletes all files that aer exported.
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+
+=cut=cut

@@ -1,0 +1,238 @@
+#ifndef __GRAPHICS_ADAPTATION_HBY__
+#define __GRAPHICS_ADAPTATION_HBY__
+
+REM Graphics Adaptation Selection
+
+// Supported Graphics Adaptations
+#define SGA_CLASSIC                0x1000 // Pre-NGA
+#define SGA_SW                     0x1001 // NGA Pure software
+#define SGA_MBX                    0x1002 // NGA Fully MBX-accelerated
+#define SGA_SW_NO_GRAPHICSRESOURCE 0x1003 // Software NGA without Graphics Resource and DirectGDI
+
+// Apply defaults
+#ifndef SYMBIAN_GRAPHICS_ADAPTATION
+#  ifndef SYMBIAN_GRAPHICS_USE_GCE
+#    define SYMBIAN_GRAPHICS_ADAPTATION SGA_CLASSIC
+#  else
+#    define SYMBIAN_GRAPHICS_ADAPTATION SGA_SW
+#  endif
+#endif
+
+// Validate user choices
+#if !defined(SYMBIAN_GRAPHICS_USE_GCE) && SYMBIAN_GRAPHICS_ADAPTATION != SGA_CLASSIC
+#  error Invalid adaptation choice.  Pre-NGA must use SGA_CLASSIC.
+#endif
+#if defined(SYMBIAN_GRAPHICS_USE_GCE) && SYMBIAN_GRAPHICS_ADAPTATION == SGA_CLASSIC
+#  error Invalid adaptation choice.  NGA must not use SGA_CLASSIC.
+#endif
+#if defined(SYMBIAN_GRAPHICS_DIRECTGDI_USE_OPENVG) && SYMBIAN_GRAPHICS_ADAPTATION == SGA_CLASSIC
+#  error Invalid adaptation choice.  Pre-NGA must not use DirectGDI.
+#endif
+#if defined(SYMBIAN_GRAPHICS_USE_OPENWF_MIGRATION) && SYMBIAN_GRAPHICS_ADAPTATION != SGA_SW && SYMBIAN_GRAPHICS_ADAPTATION != SGA_SW_NO_GRAPHICSRESOURCE
+#  error Invalid adaptation choice.  NGA-OPENWF (GCE migration) must only use basic NGA configuration SGA_SW.
+#endif
+
+
+// Apply over-rides here so that no redefining warnings are given
+#if defined(SYMBIAN_GRAPHICS_DIRECTGDI_USE_OPENVG)
+#	define DIRECTGDI_DRV <directgdiadapter_vg.iby>
+#endif
+
+#if defined(MBXBACKEND)
+WARNING MBXBACKEND is deprecated.
+#	define GCE_DRV <compositionbackend_mbx.iby> 
+#endif
+
+#if defined(SGXBACKEND)
+WARNING SGXBACKEND is deprecated.
+#	define GRAPHICSRESOURCE_DRV <graphicsresourceadapter_sgx.iby> 
+#	define SGRESOURCE_DRV <sgresource_sgx.iby> 
+#endif
+
+// Select default drivers
+#if SYMBIAN_GRAPHICS_ADAPTATION == SGA_CLASSIC
+	#ifndef OPENGLES_DRV
+    #	define OPENGLES_DRV <opengles_sw.iby>
+	#endif
+
+	#ifndef OPENVG_DRV
+    #	define OPENVG_DRV <openvg_sw.iby>
+	#endif
+
+	#ifndef EGL_DRV
+    #	define EGL_DRV <egl_hg_nongce.iby>
+	#endif
+
+	#ifndef FBSRASTERIZER_DRV
+	#	define FBSRASTERIZER_DRV <fbsrasterizer_stub.iby>
+	#endif
+	
+	#if defined(GRAPHICS_TEST_GCE)
+	// In order to run tests on the GCE a non-NGA environment is required
+		#ifndef GCE_DRV
+		#	define GCE_DRV <compositionbackend_arm.iby>
+		#endif
+
+		#ifndef SURFACEMANAGER_DRV
+		#	define SURFACEMANAGER_DRV <surfacemanager_ref.iby>
+		#endif
+
+		#ifndef SURFACEUPDATE_DRV
+		#	define SURFACEUPDATE_DRV <surfaceupdate_ref.iby>
+		#endif
+	#endif
+#elif SYMBIAN_GRAPHICS_ADAPTATION == SGA_SW
+	#ifndef OPENGLES_DRV
+    #	define OPENGLES_DRV <opengles_sw.iby>
+	#endif
+
+	#ifndef OPENVG_DRV
+    #	define OPENVG_DRV <openvg_sw.iby>
+	#endif
+
+	#ifndef EGL_DRV
+	#	ifdef SYMBIAN_GRAPHICS_USE_EGL_REF
+	#		define EGL_DRV <egl_ref.iby>
+	#	else
+	#		define EGL_DRV <egl_hg_gce.iby>
+	#	endif
+	#endif
+
+	#ifndef GCE_DRV
+	#	define GCE_DRV <compositionbackend_arm.iby>
+	#endif
+
+	#ifndef SURFACEMANAGER_DRV
+	#	define SURFACEMANAGER_DRV <surfacemanager_ref.iby>
+	#endif
+
+	#ifndef SURFACEUPDATE_DRV
+	#	define SURFACEUPDATE_DRV <surfaceupdate_ref.iby>
+	#endif
+
+    #define INCLUDE_GRAPHICSRESOURCEADAPTER
+
+	#ifndef GRAPHICSRESOURCE_DRV
+	#	define GRAPHICSRESOURCE_DRV <graphicsresourceadapter_sw.iby>
+	#endif
+
+	#ifndef SGRESOURCE_DRV
+	#	define SGRESOURCE_DRV <sgresource_sw.iby>
+	#endif
+
+	#ifndef DIRECTGDI_DRV
+	#	define DIRECTGDI_DRV <directgdiadapter_sw.iby>
+	#endif
+
+	#ifndef FBSRASTERIZER_DRV
+	#	define FBSRASTERIZER_DRV <fbsrasterizer_stub.iby>
+	#endif
+	
+	#ifndef OPENWFCLIB_DRV
+	#	define OPENWFCLIB_DRV <openwfc_ref.iby>
+	#endif
+	
+#elif SYMBIAN_GRAPHICS_ADAPTATION == SGA_MBX
+	// Imagination's MBX drivers used as default
+	#ifndef OPENGLES_DRV
+    #	define OPENGLES_DRV <img_opengles.iby>
+	#endif
+
+	#ifndef OPENVG_DRV
+    #	define OPENVG_DRV <img_openvg.iby>
+	#endif
+
+	#ifndef EGL_DRV
+    #	define EGL_DRV <img_egl.iby>
+	#endif
+
+	#ifndef GCE_DRV
+	#	define GCE_DRV <compositionbackend_mbx.iby>
+	#endif
+
+	#ifndef SURFACEMANAGER_DRV
+	#	define SURFACEMANAGER_DRV <surfacemanager_ref.iby>
+	#endif
+
+	#ifndef SURFACEUPDATE_DRV
+	#	define SURFACEUPDATE_DRV <surfaceupdate_ref.iby>
+	#endif
+
+    #define INCLUDE_GRAPHICSRESOURCEADAPTER
+    
+	#ifndef GRAPHICSRESOURCE_DRV
+	#	define GRAPHICSRESOURCE_DRV <graphicsresourceadapter_mbx.iby>
+	#endif
+
+	#ifndef SGRESOURCE_DRV
+	#	define SGRESOURCE_DRV <sgresource_mbx.iby>
+	#endif
+
+	#ifndef DIRECTGDI_DRV
+	#	define DIRECTGDI_DRV <directgdiadapter_vg.iby>
+	#endif
+	
+	#ifndef FBSRASTERIZER_DRV
+	#	define FBSRASTERIZER_DRV <fbsrasterizer_stub.iby>
+	#endif
+	
+#elif SYMBIAN_GRAPHICS_ADAPTATION == SGA_SW_NO_GRAPHICSRESOURCE
+	#ifndef OPENGLES_DRV
+    #	define OPENGLES_DRV <opengles_sw.iby>
+	#endif
+
+	#ifndef OPENVG_DRV
+    #	define OPENVG_DRV <openvg_sw.iby>
+	#endif
+
+	#ifndef EGL_DRV
+	#	ifdef SYMBIAN_GRAPHICS_USE_EGL_REF
+	#		define EGL_DRV <egl_ref.iby>
+	#	else
+	#		define EGL_DRV <egl_hg_gce.iby>
+	#	endif
+	#endif
+
+	#ifndef GCE_DRV
+	#	define GCE_DRV <compositionbackend_arm.iby>
+	#endif
+
+	#ifndef SURFACEMANAGER_DRV
+	#	define SURFACEMANAGER_DRV <surfacemanager_ref.iby>
+	#endif
+
+	#ifndef SURFACEUPDATE_DRV
+	#	define SURFACEUPDATE_DRV <surfaceupdate_ref.iby>
+	#endif
+	
+	#ifndef FBSRASTERIZER_DRV
+	#	define FBSRASTERIZER_DRV <fbsrasterizer_stub.iby>
+	#endif
+
+	#ifndef SGRESOURCE_DRV
+	#	define SGRESOURCE_DRV <sgresource_sw.iby>
+	#endif
+	
+	#ifndef OPENWFCLIB_DRV
+	# define OPENWFCLIB_DRV <openwfc_ref.iby>
+	#endif
+	
+#else
+#  error "Unsupported Graphics adaptation selected"
+#endif
+
+
+// Log selections to the generated OBY file
+REM "OPENGLES DRV"         : OPENGLES_DRV
+REM "OPENVG DRV"           : OPENVG_DRV
+REM "EGL DRV"              : EGL_DRV
+REM "GCE DRV"              : GCE_DRV
+REM "GRAPHICSRESOURCE DRV" : GRAPHICSRESOURCE_DRV 
+REM "SURFACEMANAGER DRV"   : SURFACEMANAGER_DRV
+REM "SURFACEUPDATE DRV"    : SURFACEUPDATE_DRV
+REM "DIRECTGDI DRV"        : DIRECTGDI_DRV 
+REM "FBSRASTERIZER DRV"    : FBSRASTERIZER_DRV 
+REM "SRGRESOURCE DRV"      : SGRESOURCE_DRV 
+REM "OPENWFCLIB DRV"       : OPENWFCLIB_DRV 
+
+#endif  // __GRAPHICS_ADAPTATION_HBY__

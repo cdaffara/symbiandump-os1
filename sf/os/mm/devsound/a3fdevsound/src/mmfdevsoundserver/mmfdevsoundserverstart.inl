@@ -1,0 +1,33 @@
+/*
+* Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* TDevSoundServerStart::TDevSoundServerStart
+* C++ Constructor
+* (other items were commented in a header).
+*
+*/
+
+
+
+inline TDevSoundServerStart::TDevSoundServerStart(
+	CMMFAudioServer* aAudioServer,
+	const TProcessId& aProcessId,
+	RServer2& aDevSoundServerHandle)
+	: iProcessId(aProcessId),
+	iAudioServer(aAudioServer),
+	iDevSoundServerHandle(aDevSoundServerHandle)
+	{
+	}
+
+//  End of File

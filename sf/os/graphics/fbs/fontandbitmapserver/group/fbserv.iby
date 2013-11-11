@@ -1,0 +1,63 @@
+// Copyright (c) 1998-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef __FBSERV_IBY__
+#define __FBSERV_IBY__
+
+REM FBSERV - Font & Bitmap Server
+
+#ifdef WITH_FLEXIBLE_MM
+
+	// Configure the writable data paging mode of the font and bitmap server.
+	// Note that these settings may be overridden by global writable data paging configuration.
+	#if defined(SYMBIAN_GRAPHICS_FBSERV_PAGEDDATA)
+		ECHO Font and bitmap server writable data paging mode: requesting to page all data.
+		WARNING This configuration is intended for performance investigation purposes only.
+		patchdata fbserv.exe@KFbServWritableDataPagingMode 0x01
+		#define FBSERV_PAGEDDATA_CONFIG pageddata
+	#elif defined(SYMBIAN_GRAPHICS_FBSERV_UNPAGEDDATA)
+		ECHO Font and bitmap server writable data paging mode: requesting to not page all data.
+		WARNING This configuration is intended for performance investigation purposes only.
+		patchdata fbserv.exe@KFbServWritableDataPagingMode 0x02
+		#define FBSERV_PAGEDDATA_CONFIG unpageddata
+	#elif defined(SYMBIAN_GRAPHICS_FBSERV_PAGE_BITMAP_DATA_ONLY)
+		ECHO Font and bitmap server writable data paging mode: requesting to page bitmap data only.
+		WARNING This configuration is intended for performance investigation purposes only.
+		patchdata fbserv.exe@KFbServWritableDataPagingMode 0x03
+		#define FBSERV_PAGEDDATA_CONFIG unpageddata
+	#elif defined(SYMBIAN_GRAPHICS_FBSERV_PAGE_BITMAP_DATA_AND_SHARED_HEAP_ONLY)
+		ECHO Font and bitmap server writable data paging mode: requesting to page bitmap data and shared heap chunks only.
+		WARNING This configuration is intended for performance investigation purposes only.
+		patchdata fbserv.exe@KFbServWritableDataPagingMode 0x04
+		#define FBSERV_PAGEDDATA_CONFIG unpageddata
+	#else
+		// Default to not page all data.
+		#define FBSERV_PAGEDDATA_CONFIG unpageddata
+	#endif
+
+	file=ABI_DIR\BUILD_DIR\fbserv.exe 	\sys\bin\fbserv.exe	FBSERV_PAGEDDATA_CONFIG
+	file=ABI_DIR\BUILD_DIR\fbscli.dll 	\sys\bin\fbscli.dll
+#else
+	file=ABI_DIR\DEBUG_DIR\fbserv.exe 	sys\bin\fbserv.exe
+	file=ABI_DIR\DEBUG_DIR\fbscli.dll 	sys\bin\fbscli.dll
+#endif //WITH_FLEXIBLE_MM
+
+// extended bitmap rasterizer dll
+#include <graphics_adaptation.hby>
+#include FBSRASTERIZER_DRV
+
+//#include <fbsoogmplugin.iby>
+
+#endif //__FBSERV_IBY__

@@ -1,0 +1,236 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName LBS-AssistanceData-Roaming
+//! @SYMScriptTestEnvironment TestExecute using lbsroaming.script.script
+
+LOAD_SUITE LbsAssDataTestServer -SharedData
+
+PRINT Run LbsAssDataTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+REMOVE_PREFIX
+
+//Select default admin settings
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_ResetDefaultAdmin
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsAssDataTestServer LbsStep_StartLbs
+
+
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0001
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0001
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone registration changed from not registred to home network
+//! @SYMTestPriority            High
+//! @SYMTestActions             1.Select home gps mode LBS admin is set to"EGpsAutonomous"
+//!                             2.Phone Not Register on any network
+//!                             3.Again select home gps mode LBS admin is set to "EGpsPreferTerminalBased"
+//!                             4.Register phone on the home network
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous for the first time and EGpsPreferTerminalBased for the second time
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/2/2008
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0001
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0001
+END_TESTCASE LBS-AssistanceData-Roaming-0001
+
+RUN_TEST_STEP 030 LbsAssDataTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsAssDataTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0002
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0002
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when phone is registered roaming
+//! @SYMTestPriority            High
+//! @SYMTestActions             1.Select roaming gps mode LBS admin is set to "EGpsAutonomous".
+//!                             2.Register phone on the roaming
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/2/2008
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0002
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0002
+END_TESTCASE LBS-AssistanceData-Roaming-0002
+
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0003
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0003
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone registration changed from home network to roaming
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Select home gps mode LBS admin is set to "EGpsPreferTerminalBased"
+//!                             2. Register phone on the home network
+//!                             3. Again select roaming gps mode LBS admin is set to "EGpsAutonomous".
+//!                             4. Register phone on the roaming
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsPreferTerminalBased for the first time and EGpsAutonomous for the second time
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/2/2008
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0003
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0003
+END_TESTCASE LBS-AssistanceData-Roaming-0003
+
+RUN_TEST_STEP 030 LbsAssDataTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsAssDataTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0004
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0004
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone is Not registered
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Select home gps mode LBS admin is set to"EGpsAutonomous".
+//!                             2. Phone Not Register on any network
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0004
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0010
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0004
+END_TESTCASE LBS-AssistanceData-Roaming-0004
+
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0005
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0005
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone Registration status is unknown
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Select home gps mode LBS admin is set to"EGpsAutonomous".
+//!                             2. Phone Registration status is unknown
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0005
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0010
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0005
+END_TESTCASE LBS-AssistanceData-Roaming-0005
+
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0006
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0006
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone Not registered but make emergency calls only
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Select home gps mode LBS admin is set to"EGpsAutonomous".
+//!                             2. Phone Registration status is Not registered but make emergency calls only
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/2/2008
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0006
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0010
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0006
+END_TESTCASE LBS-AssistanceData-Roaming-0006
+
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0007
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0007
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone Not registered but currently searching a new operator to register
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Select home gps mode LBS admin is set to"EGpsAutonomous".
+//!                             2. Phone Registration status is Not registered but currently searching a new operator to register
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/2/2008
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0007
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0010
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0007
+END_TESTCASE LBS-AssistanceData-Roaming-0007
+
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0008
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0008
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone Registered, network busy
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Select home gps mode LBS admin is set to"EGpsAutonomous".
+//!                             2. Phone Registration status is Registered, network busy
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/2/2008
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0008
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0010
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0008
+END_TESTCASE LBS-AssistanceData-Roaming-0008
+
+
+START_TESTCASE                LBS-AssistanceData-Roaming-0009
+//! @SYMTestCaseID              LBS-AssistanceData-Roaming-0009
+//! @SYMTestCaseDesc            Verify A-GPS module gps mode when the phone Registration denied
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Select home gps mode LBS admin is set to"EGpsAutonomous".
+//!                             2. Phone Registration status is Registration denied
+//! @SYMTestExpectedResults     Ensure the actual module gps mode is set to EGpsAutonomous
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ162
+//! @SYMREQ                     REQ162.09
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsroaming.ini LBS-Roaming
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsroaming.ini LBS-Roaming-0009
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0010
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsRoamingStep c:\testdata\configs\lbsroaming.ini LBS-Roaming-0009
+END_TESTCASE LBS-AssistanceData-Roaming-0009
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+

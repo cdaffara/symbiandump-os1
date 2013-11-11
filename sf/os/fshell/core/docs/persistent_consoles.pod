@@ -1,0 +1,139 @@
+# persistent_consoles.pod
+#
+# Copyright (c) 2008-2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+__END__
+
+=head1 Persistent consoles
+
+Persistent consoles allow you to maintain a persistent L<fshell|fshell> (or other console application) instance on a device while actual console connections come and go. A persistent console consists of a I<persistent> side, which is owned by a L<fshell|fshell> or other application as its console, and a I<transient> side, which can be connected to or disconnected from another console at any time. This allows you to interact with the persistent console owning application using any console connection available on the device at the time.
+
+To illustrate, we can create a new persistent console thus:
+
+	c:\>pcons new "my pcons"
+
+This create a new, disconnected persistent console. We can use the L<pcons|pcons> command see it:
+
+	c:\>pcons list
+	Name      Creator           Reader  Writer
+	my pcons  fshell::pcons_00  -       -
+
+Note that no reader or writer are attached. We can now connect to the console:
+
+	c:\>pcons connect "my pcons"
+	pcons: connecting to existing console my pcons.
+	c:\>pcons list
+	Name         Creator           Reader               Writer
+	my pcons(*)  fshell::pcons_00  vt100tcpcons_fshell  vt100tcpcons_fshell
+	(*) indicates current console
+
+Now, C<pcons list> shows what I<transient> console the persistent console is connected to - C<vt100tcpcons_fshell>. It also indicates with a C<(*)> the persistent console that we are currently interacting with.
+
+If the TCP console we are currently using is disconnected for any reason (perhaps we lost the connection with the device), then the I<transient> side of the console will simply be disconnected and the I<persistent> side will be unaffected. If it tries to interact with the console (perhaps to write some data to it), the call will simply block until we get a new I<transient> side. Hence, after the I<transient> console connection is lost, we can simply reconnect to the same C<fshell> when we are able to re-establish a connection with the device and continue from where we left off, with no state lost.
+
+Note, if we exit the C<fshell> session that is connected to the I<persistent> side of the console, the persistent console will be destroyed:
+
+	c:\>exit
+	pcons: disconnected from my pcons
+	c:\>pcons list
+	c:\>
+
+Hence you should be careful not to exit the C<fshell> session attached to the I<persistent> side of the console if you are relying on the persistency of it to maintain state.
+
+We can disconnect the I<transient> side of a persistent console using C<pcons disconnect>:
+
+	c:\>pcons disconnect
+	pcons: disconnected from my pcons
+	c:\>pcons
+	Name      Creator           Reader  Writer
+	my pcons  fshell::pcons_00  -       -
+	c:\>
+
+We can also disconnect a persistent console that we are not currently interacting with by specifying it's name to C<pcons disconnect>.
+
+=head2 Creating persistent consoles
+
+The above shows the basics of creating a persistent console, however there are several ways of doing this.
+
+All L<fshell|fshell> commands support an option C<--persistent-console>, similar to C<--console> but creating a persistent console. For example,
+
+	c:\>fshell --persistent-console "fshell_pcons"
+
+Note, this call does not return; the new C<fshell> instance is waiting for input on the persistent console, which is currently disconnected. Instead, it may be more useful to use the L<start|start> command to create the new fshell session:
+
+	c:\>start fshell --persistent-console "fshell_pcons"
+	c:\>
+
+This creates a new process in the background, which owns a a new persistent console.
+
+	c:\>pcons list
+	Name          Creator           Reader  Writer
+	my pcons      fshell::pcons_00  -       -
+	fshell_pcons  fshell(2)         -       -
+
+This equivilant to typing C<pcons new fshell_pcons>.
+
+You can also specify a process to launch when using C<pcons new> by specifying a command and arguments after the console name. For example,
+
+	c:\>pcons new ptf_pcons ptf
+	c:\>pcons connect ptf_pcons
+	pcons: connecting to existing console ptf_pcons.
+	
+	PromptTestFramework 007d
+	!>
+
+Instead of C<pcons new>, you could have instead used
+
+	c:\>start ptf --persistent-console ptf_pcons
+
+The L<pcons|pcons> command also supports a C<start> argument, which is similar to C<new>, but with the following semantics:
+
+=over
+
+=item *
+
+If a persistent console with the given name already exists, it will not be created
+
+=item *
+
+a connection with the named persistent console will be established.
+
+=back
+
+This can provide a useful shortcut to start interacting with the process attached to the I<persistent> side of the console, creating it if it doesn't already exist. Note, you can specify a command and arguments to C<start> as with C<new>, but these will be ignored if the persistent console already exists.
+
+	c:\>pcons start "my pcons"
+	pcons: connecting to existing console my pcons.
+	c:\>
+	
+	c:\>pcons start "new pcons"
+	pcons: connecting to new console new pcons.
+	c:\>
+
+=head2 Connecting other consoles
+
+You can use C<pcons connect> to connect a new console as the I<transient> side by using the C<--console> option:
+
+	c:\>pcons connect "my pcons" --console vt100tcpcons
+
+This will create a new console implementation of the type specified and connect it to the persistent console.
+
+As stated earlier, when a persistent consoles I<transient> side is disconnected, any operations on it will block. This will generally cause the process connected to the I<persistent> side to lock up until a real console implementation is connected. If you want to allow this process to run, without blocking while no I<transient> console is connected, you can connect it to the null console:
+
+	c:\>pcons connect "my pcons" --console nullcons
+
+This cause all output written by the persistent process to be discarded, and hence allow the process to run while no console is connected to the device.
+
+=head1 Copyright
+
+Copyright (c) 2009-2010 Accenture. All rights reserved.
+
+=cut

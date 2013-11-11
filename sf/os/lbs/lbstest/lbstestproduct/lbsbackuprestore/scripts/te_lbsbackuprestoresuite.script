@@ -1,0 +1,54 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//
+PRINT Run all te_lbsbackuprestore Suite Tests
+
+//
+LOAD_SUITE te_lbsbackuprestoresuite
+//
+
+// Store a List of all psys available
+RUN_TEST_STEP 100 te_lbsbackuprestoresuite ListPsyEntriesStep c:\testdata\configs\te_lbsbackuprestoresuite.ini
+
+
+RUN_TEST_STEP 100 te_lbsbackuprestoresuite CheckPSYExistStep c:\testdata\configs\te_lbsbackuprestoresuite.ini
+
+
+// Clean the old backup archive
+RUN_UTILS DeleteDirectory c:\BackupArchive
+
+RUN_TEST_STEP 100 te_lbsbackuprestoresuite BrandPSYStep c:\testdata\configs\te_lbsbackuprestoresuite.ini
+
+// Do a partial Backup: only the relevant data are saved (the data specified in backup_registration.xml) 
+LOAD_SUITE BURTestServer
+RUN_TEST_STEP -1 BURTestServer TestBackup c:\testdata\configs\te_lbsbackuprestoresuite.ini backup
+
+// Delete LastKnownPos.dat
+PRINT Delete LastKnownPos.dat
+RUN_UTILS Delete c:\private\101f97b2\LastKnownPos.dat
+
+// Corrupt psy centrep files
+PRINT Corrupt psy centrep files
+
+RUN_TEST_STEP 100 te_lbsbackuprestoresuite CorruptPSYStep c:\testdata\configs\te_lbsbackuprestoresuite.ini
+
+RUN_TEST_STEP !Result=Fail 100 te_lbsbackuprestoresuite CheckPSYExistStep c:\testdata\configs\te_lbsbackuprestoresuite.ini
+
+RUN_TEST_STEP -1 BURTestServer TestRestore c:\testdata\configs\te_lbsbackuprestoresuite.ini restore
+
+RUN_TEST_STEP 100 te_lbsbackuprestoresuite CheckPSYExistStep c:\testdata\configs\te_lbsbackuprestoresuite.ini
+
+PRINT lbsbackuprestore Tests Completed

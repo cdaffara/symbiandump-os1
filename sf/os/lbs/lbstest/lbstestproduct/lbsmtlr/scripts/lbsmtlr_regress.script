@@ -1,0 +1,278 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT TO DO: need to add correct PREQ/REQ numbers to these test cases:
+
+LOAD_SUITE LbsMTLRTestServer -SharedData
+
+PRINT Run LbsMTLRTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PRINT select the test A-GPS integration module to use (copy .ini file to appropriate place)
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\lbstestprofile.ini c:\private\10282253\lbs\lbsprofile.ini 
+        CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr
+
+RUN_TEST_STEP 030 LbsMTLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-MTLR-Regress-0001
+
+//!@SYMTestCaseID			LBS-MTLR-Regress-0001
+//!@SYMTestCaseDesc		'Notify and Accept' request from network accepted
+//!
+//!@SYMTestActions		
+//!					1. Register as the privacy observer app. 
+//!					2. Change admin settings (use EExternalLocateOn) to allow MT-LRs and wait for this to propogate (verify). 				
+//!					3. Configure netSim (use ERequestAdviceNotify) and kick off an privacy request of type 'notify the user and automatically accept'.  
+//!					4. When privacy controller is called (with ProcessNetworkLocationRequest()), accept the request (use RespondNetworkLocationRequest() ).
+//!					5. Verify that 'accept' response is sent to the network
+//!					6. When response to privacy request has been sent to network, kick off a network location request (via NetSim)
+//!					7. Confirm that privacy controller callbacks ProcessNetworkPositionUpdate() and ProcessRequestComplete() are called
+//!					8. Confirm that location is sent to network
+//!
+//!@SYMTestExpectedResults	Privacy request accepted and location sent to network
+//!@SYMPREQ					PREQ 436
+//!@SYMREQ					REQ 436.04
+//!@SYMREQ					REQ 436.05
+//!@SYMREQ					REQ 436.06
+//!@SYMREQ					REQ 436.13
+//!
+//!@SYMPREQ					PREQ 162
+//!@SYMREQ					162.05
+//!@SYMREQ					162.06
+//!
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ					REQ 89.04
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus				Implemented. 
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-Position
+RUN_TEST_STEP 120 LbsMTLRTestServer LbsMTLRPrivCntrlStep_Main c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-0001
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-MTLR-Regress-0001
+
+
+START_TESTCASE LBS-MTLR-Regress-0002
+
+//!@SYMTestCaseID			LBS-MTLR-Regress-0002
+//!@SYMTestCaseDesc		'Verify, Accept if no response' request from network rejected
+//!
+//!@SYMTestActions		
+//!					1. Register as the privacy observer app. 
+//!					2. Change admin settings (use EExternalLocateOn) to allow MT-LRs and wait for this to propogate (verify). 				
+//!					3. Configure netSim (use ERequestAdviceVerify) and kick off an privacy request of type 'verify, accept'.  
+//!					4. When privacy controller is called (with ProcessNetworkLocationRequest()), reject the request (use RespondNetworkLocationRequest() ).
+//!					5. When privacy controller is called with ProcessRequestComplete(), verify that the reason is KErrNone
+//!					6. Verify that 'rejected' response is sent to the network
+//!
+//!@SYMTestExpectedResults	Privacy request rejected
+//!@SYMPREQ					PREQ 436
+//!@SYMREQ					
+//!
+//!@SYMPREQ					PREQ 162
+//!@SYMREQ	
+//!
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ		
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus				Implemented. 
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-Position
+RUN_TEST_STEP 120 LbsMTLRTestServer LbsMTLRPrivCntrlStep_Main c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-0003
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-MTLR-Regress-0002
+
+
+START_TESTCASE LBS-MTLR-Regress-0003
+
+//!@SYMTestCaseID			LBS-MTLR-Regress-0003
+//!@SYMTestCaseDesc		Location request received after privacy request rejected
+//!
+//!@SYMTestActions		
+//!					1. Register as the privacy observer app. 
+//!					2. Change admin settings (use EExternalLocateOn) to allow MT-LRs and wait for this to propogate (verify). 
+//!					3. Configure netSim (use ERequestAdviceVerify) and kick off an privacy request of type 'verify, accept'.  
+//!					4. When privacy controller is called (with ProcessNetworkLocationRequest()), reject the request (use RespondNetworkLocationRequest() ).
+//!					5. Verify that 'rejected' response is sent to the network
+//!					6. Kick off a network location request (via NetSim)
+//!					7. Confirm that privacy controller callbacks ProcessNetworkPositionUpdate() is not called
+//!					8. When privacy controller is called with ProcessRequestComplete(), verify that the reason is KErrNone
+//!					9. Confirm that control failure is sent to network with reason KErrPermissionDenied
+//!
+//!@SYMTestExpectedResults		Control failure is sent with reason KErrPermissionDenied
+//!@SYMPREQ					PREQ 436
+//!@SYMREQ					
+//!
+//!@SYMPREQ					PREQ 162
+//!@SYMREQ		
+//!
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ					REQ 89.04
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus				Implemented. 
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-Position
+RUN_TEST_STEP 120 LbsMTLRTestServer LbsMTLRPrivCntrlStep_Main c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-0012
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-MTLR-Regress-0003
+
+START_TESTCASE LBS-MTLR-Regress-0004
+
+//!@SYMTestCaseID			LBS-MTLR-Regress-0004
+//!@SYMTestCaseDesc		Request when external locate turned off in admin
+//!
+//!@SYMTestActions		
+//!					1. Register as the privacy observer app. 
+//!					2. Change admin settings (use EExternalLocateOff) to disallow MT-LRs and wait for this to propogate (verify). 				
+//!					3. Configure netSim and kick off a privacy request.  
+//!					4. Verify that the privacy controller callbacks are not called
+//!					5. Confirm that location is not sent to network
+//!
+//!@SYMTestExpectedResults		Privacy controller is never called and location not sent to network
+//!@SYMPREQ					PREQ 436
+//!@SYMREQ					
+//!
+//!@SYMPREQ					PREQ 162
+//!@SYMREQ		
+//!
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ					REQ 89.04
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus				Implemented. 
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-Position
+RUN_TEST_STEP 120 LbsMTLRTestServer LbsMTLRPrivCntrlStep_Main c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-0014
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-MTLR-Regress-0004
+
+
+START_TESTCASE LBS-MTLR-Regress-0005
+
+//!@SYMTestCaseID			LBS-MTLR-Regress-0005
+//!@SYMTestCaseDesc		Emergency request of type 'accept and notify' is rejected by privacy controller
+//!
+//!@SYMTestActions		
+//!					1. Register as the privacy observer app. 
+//!					2. Change admin settings (use EExternalLocateOn) to allow Emergency MT-LRs and wait for this to propogate (verify). 				
+//!					3. Configure netSim (use SetEmergenyStatus) and kick off an emergency privacy requestof type 'accept and notify'(ERequestAdviceNotify).  
+//!					4. When privacy controller is called (with ProcessNetworkLocationRequest()), reject the request (use RespondNetworkLocationRequest() ).
+//!					5. Verify that 'accept' response is sent to the network (despite the priv controller rejecting it)
+//!					6. When response to privacy request has been sent to network, kick off a network location request (via NetSim)
+//!					7. Confirm that privacy controller callbacks ProcessNetworkPositionUpdate() and ProcessRequestComplete() are called
+//!					8. Confirm that location is sent to network
+//!
+//!@SYMTestExpectedResults	Privacy request is accepted and location is sent to network
+//!@SYMPREQ					PREQ 436
+//!@SYMREQ					
+//!
+//!@SYMPREQ					PREQ 162
+//!@SYMREQ		
+//!
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ					REQ 89.04
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus				Implemented. 
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-Position
+RUN_TEST_STEP 120 LbsMTLRTestServer LbsMTLRPrivCntrlStep_Main c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Priv-Cntr-Emergency-0002
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-MTLR-Regress-0005
+
+
+START_TESTCASE LBS-MTLR-Regress-0006
+
+//!@SYMTestCaseID			LBS-MTLR-Regress-0006
+//!@SYMTestCaseDesc		Request a location update from Network by setting required quality profile Id in admin
+//!
+//!@SYMTestActions		
+//!					1. Register as the privacy observer app. 
+//!					2. Change admin settings (use KSettingQualityProfileExternalLocate) to allow MT-LR uses quality profile and wait for this to propogate (verify). 				
+//!					3. Configure netSim (use ERequestAdviceNotify) and set MAXTime to zero by calling SetQuality function
+//!                                         *Note: Ensure ntework uses qualityprofile while requesting a location.
+//!                                     4. kick off an privacy request of type 'notify the user and automatically accept'.  
+//!					5. When privacy controller is called (with ProcessNetworkLocationRequest()), accept the request (use RespondNetworkLocationRequest() ).
+//!					6. Verify that 'accept' response is sent to the network
+//!					7. When response to privacy request has been sent to network, kick off a network location request (via NetSim)
+//!					8. Confirm that privacy controller callbacks ProcessNetworkPositionUpdate() and ProcessRequestComplete() are called
+//!					9. Confirm that location is sent to network
+//!
+//!@SYMTestExpectedResults	Privacy request accepted and location sent to network with the specified accuracy
+//!@SYMPREQ					PREQ 436
+//!@SYMREQ					REQ 436.04
+//!@SYMREQ					REQ 436.05
+//!@SYMREQ					REQ 436.06
+//!@SYMREQ					REQ 436.13
+//!
+//!@SYMPREQ					PREQ 162
+//!@SYMREQ					162.05
+//!@SYMREQ					162.06
+//!
+//!@SYMPREQ					PREQ 89
+//!@SYMREQ					REQ 89.04
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus				Implemented. 
+
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Quality-Profile-0001
+RUN_TEST_STEP 120 LbsMTLRTestServer LbsMTLRPrivCntrlStep_Main c:\testdata\configs\lbsmtlr.ini LBS-MTLR-Quality-Profile-0001
+RUN_TEST_STEP 010 LbsMTLRTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-MTLR-Regress-0006
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsMTLRTestServer LbsStep_StopLbs
+
+// Re-select the lbsprofile.ini .
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+// Re-select the real A-GPS integration module.
+PRINT Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

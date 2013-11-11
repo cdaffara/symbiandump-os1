@@ -1,0 +1,823 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-X3P-GPSOPTIONS
+//! @SYMScriptTestEnvironment TestExecute
+
+LOAD_SUITE LbsHybridX3PTestServer -SharedData
+
+PRINT Run LbsHybridX3PTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_tb.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// NOTE: When the network asks for TA it doesn't typically provide a reference position - need to update scripts + test framework to deal with that!
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_ResetDefaultAdmin
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_SetupProtocolStub
+
+
+//--------------------------------------------------------------- Module Caps = TB -----------------------------------------------------------------------
+
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_tb.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+START_TESTCASE                LBS-X3P-TBCAP-TBNETWORK-001
+//! @SYMTestCaseID              LBS-X3P-TBCAP-TBNETWORK-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB
+//!                             network wants TB
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TBNET
+END_TESTCASE LBS-X3P-TBCAP-TBNETWORK-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBCAP-TBTANET-001
+//! @SYMTestCaseID              LBS-X3P-TBCAP-TBTANET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB
+//!                             network wants TB+TA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB
+//!                             Read network request mode from test config - TB+TA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TBTANET
+END_TESTCASE LBS-X3P-TBCAP-TBTANET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBCAP-TANET-001
+//! @SYMTestCaseID              LBS-X3P-TBCAP-TANET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB
+//!                             network wants TA
+//!                             Rejected by NRH
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - not used
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus(ESystemStatusNone)
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response with KErrNotSupported (LBS-->PM)    >> RespondLocationRequest(KErrNotsupported)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNotSupported     >> RunL (KErrNotSupported)
+//! @SYMTestExpectedResults     Network Request is Rejected by NRH
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TANET
+END_TESTCASE LBS-X3P-TBCAP-TANET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBCAP-TATBNET-001
+//! @SYMTestCaseID              LBS-X3P-TBCAP-TATBNET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB
+//!                             network wants TA+TB
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB
+//!                             Read network request mode from test config - TA+TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBCAP-TATBNET
+END_TESTCASE LBS-X3P-TBCAP-TATBNET-001
+
+
+//--------------------------------------------------------------- Module Caps = TA -----------------------------------------------------------------------
+
+// Change module caps to TA only:
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_ta.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TACAP-TBNET-001
+//! @SYMTestCaseID              LBS-X3P-TACAP-TBNET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TA
+//!                             network wants TB
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TA
+//!                             Read network request mode from test config - TB (not used)
+//!                             Read 'position originator' (network/module) from test config - module (not used)
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus(ESystemStatusNone)
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response with KErrNotSupported (LBS-->PM)    >> RespondLocationRequest(KErrNotsupported)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete(KErrNotSupported)
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (KErrNotSupported)
+//! @SYMTestExpectedResults     NRH Rejects the network request and transmitPosition is completed with KErrNotSupported
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TBNET
+END_TESTCASE LBS-X3P-TACAP-TBNET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TACAP-TBTANET-001
+//! @SYMTestCaseID              LBS-X3P-TACAP-TBTANET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TA
+//!                             network wants TBTA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TA
+//!                             Read network request mode from test config - TBTA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTA mode. Module returns 2 measurements. Network calculates position. TransmitPosition is completed with KErrNone
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TBTANET
+END_TESTCASE LBS-X3P-TACAP-TBTANET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TACAP-TANET-001
+//! @SYMTestCaseID              LBS-X3P-TACAP-TANET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TA
+//!                             network wants TA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM)      >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTA mode. Module returns 2 measurements. Network calculates position. TransmitPosition is completed with KErrNone
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TANET
+END_TESTCASE LBS-X3P-TACAP-TANET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TACAP-TATBNET-001
+//! @SYMTestCaseID              LBS-X3P-TACAP-TATBNET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TA
+//!                             network wants TATB
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TA
+//!                             Read network request mode from test config - TATB
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM)      >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTA mode. Module returns 2 measurements. Network calculates position. TransmitPosition is completed with KErrNone
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TACAP-TATBNET
+END_TESTCASE LBS-X3P-TACAP-TATBNET-001
+
+
+//--------------------------------------------------------------- Module Caps = TB || TA -----------------------------------------------------------------------
+
+// Change module caps to TA || TB:
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource_exclusive.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBORTACAP-TBNET-001
+//! @SYMTestCaseID              LBS-X3P-TBORTACAP-TBNET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB||TA
+//!                             network wants TB
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TBNET
+END_TESTCASE LBS-X3P-TBORTACAP-TBNET-001
+
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+//PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBORTACAP-TBTANET-001
+//! @SYMTestCaseID              LBS-X3P-TBORTACAP-TBTANET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB||TA
+//!                             network wants TB+TA
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TB+TA (hybrid)
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TBTANET
+END_TESTCASE LBS-X3P-TBORTACAP-TBTANET-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBORTACAP-TANETWORK-001
+//! @SYMTestCaseID              LBS-X3P-TBORTACAP-TANETWORK-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB || TA
+//!                             network wants TA
+//!                             module supplies measurements
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB || TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM)      >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTA mode. Module returns 2 measurements. Network calculates position. TransmitPosition is completed with KErrNone
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TANET
+END_TESTCASE LBS-X3P-TBORTACAP-TANETWORK-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBORTACAP-TATBNET-001
+//! @SYMTestCaseID              LBS-X3P-TBORTACAP-TATBNET-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB||TA
+//!                             network wants TA+TB
+//!                             module supplies an accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB||TA
+//!                             Read network request mode from test config - TA+TB (hybrid)
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM)      >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBORTACAP-TATBNET
+END_TESTCASE LBS-X3P-TBORTACAP-TATBNET-001
+
+//--------------------------------------------------------------- Module Caps = TB && TA -----------------------------------------------------------------------
+
+// Change module caps to Hybrid (TA && TB):
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBANDTACAP-TBNETWORK-001
+//! @SYMTestCaseID              LBS-X3P-TBANDTACAP-TBNETWORK-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB && TA
+//!                             network wants TB
+//!                             module supplies accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TBNET
+END_TESTCASE LBS-X3P-TBANDTACAP-TBNETWORK-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBANDTACAP-TBTANETWORK-001
+//! @SYMTestCaseID              LBS-X3P-TBANDTACAP-TBTANETWORK-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB && TA
+//!                             network wants TB+TA
+//!                             module supplies 2 sets of measurements then a position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TB+TA
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TBTA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in Hybrid mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TBTANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TBTANET
+END_TESTCASE LBS-X3P-TBANDTACAP-TBTANETWORK-001
+
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBANDTACAP-TANETWORK-001
+//! @SYMTestCaseID              LBS-X3P-TBANDTACAP-TANETWORK-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB && TA
+//!                             network wants TA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TA
+//!                             Read 'position originator' (network/module) from test config - network
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM)      >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData(0)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TA)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify Location Response (LBS-->PM)       >> RespondLocationRequest(meas)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTA mode. Module returns 2 measurements. Network calculates position. TransmitPosition is completed with KErrNone
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TANET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TANET
+END_TESTCASE LBS-X3P-TBANDTACAP-TANETWORK-001
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBANDTACAP-TATBNETWORK-001
+//! @SYMTestCaseID              LBS-X3P-TBANDTACAP-TATBNETWORK-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB && TA
+//!                             network wants TA+TB
+//!                             module supplies one (complete) position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - TA+TB
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM)      >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(TATB)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in Hybrid mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TATBNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-TATBNET
+END_TESTCASE LBS-X3P-TBANDTACAP-TATBNETWORK-001
+
+
+// The following test requires gpsmode in admin = PTB:
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_SetPTBMode
+
+// Note: Currently all the tests cases check for a SystemStatus update being sent by lbs. But this only happens on startup.
+// Alternative would be to remove Stop Start and not have all tests checking for status update...?
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+PRINT ----------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+START_TESTCASE                LBS-X3P-TBANDTACAP-UNSPECIFIEDNETWORK-001
+//! @SYMTestCaseID              LBS-X3P-TBANDTACAP-UNSPECIFIEDNETWORK-001
+//! @SYMTestCaseDesc            X3P request with:
+//!                             mod caps = TB && TA
+//!                             network doesn't specify mode
+//!                             module supplies accurate position
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             Get device capabilities - TB && TA
+//!                             Read network request mode from test config - unspecified
+//!                             Read 'position originator' (network/module) from test config - module
+//!                             create the protocol module proxy
+//!                             Verify AdviceSystemStatus (LBS-->PM)       >> AdviceSystemStatus()
+//!                             Issue a Transmit Position (App-->LBS)      << TransmitPosition()
+//!                             Verify RequestTransmitLocation (LBS-->PM) with appropriate techtype (TB) >> RequestTransmitLocation()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceTransmitPosition)
+//!                             Send ref pos (PM-->LBS)        << ProcessLocationUpdate(SessionId, RefPosition)
+//!                             Send Assistance Data response (PM-->LBS)     << ProcessAssistanceData()
+//!                             Send Loc Request (PM-->LBS)       << ProcessLocationRequest(gpsmode not specified)
+//!                             Verify Assistance data request (LBS-->PM)     >> RequestAssistanceData(0)
+//!                             Verify the ref pos received by App (LBS-->App)     >> RunL (ref pos)
+//!                             Verify Location Response  (LBS-->PM)       >> RespondLocationRequest(gps pos)
+//!                             Send Final Network Position (PM-->LBS)      << ProcessLocationUpdate(SessionId, FNP)
+//!                             Send SessionComplete (PM-->LBS)       << ProcessSessionComplete()
+//!                             Send Status Update (PM-->LBS)       << ProcessStatusUpdate(EServiceNone)
+//!                             Verify X3P completes with KErrNone      >> RunL (gps pos, KErrNone)
+//! @SYMTestExpectedResults     GPS module is asked to run in PTB mode. Module will return the position; returned to client with techtype 'terminal based'
+//! @SYMTestType                CIT
+//! @SYMTESTSTATUS              Implemented.
+//! @SYMPREQ                    PREQ2081
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-UNSPECIFIEDNET
+RUN_TEST_STEP 120 LbsHybridX3PTestServer LbsX3PGpsOptions c:\testdata\configs\lbs_x3p.ini X3P-TBANDTACAP-UNSPECIFIEDNET
+END_TESTCASE LBS-X3P-TBANDTACAP-UNSPECIFIEDNETWORK-001
+
+
+//--------------------------------------------------------------------- END TESTS - Tidyup ---------------------------------------------------------------------
+
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_StopLbs
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+

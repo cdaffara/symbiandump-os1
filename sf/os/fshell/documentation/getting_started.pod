@@ -1,0 +1,286 @@
+#!perl
+# getting_started.pod
+#
+# Copyright (c) 2008-2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+
+__END__
+
+=head1 Getting started with FShell
+
+B< I<Note:> > This guide is in the process of being migrated to the wiki, here: http://developer.symbian.org/wiki/index.php/Fshell/Getting_Started
+
+=head1 Retreiving the FShell Source Code
+
+fshell is hosted on the Symbian Foundation here: http://developer.symbian.org/main/source/packages/fshell
+
+To clone the MCL repository, do:
+
+    hg clone https://developer.symbian.org/oss/MCL/sf/os/fshell/
+
+=head1 Building FShell
+
+FShell is normally distributed in source code form, and so needs to be compiled before it can be used. The conventional Symbian build tools -- either SBSv1 (aka abld) or SBSv2 (aka Raptor) -- are used. Currently three Symbian OS based platforms are supported:
+
+=over 5
+
+=item * Symbian Foundation (S^2 and S^3)
+
+=item * Nokia S60 (3.x and 5.x)
+
+=item * Nokia Symbian Timebox 9.2
+
+=back
+
+Each of these platforms have a separate directory within F<\fshell\build>. For some platforms there may be further separate sub-directories for specific variants of the platform. You need to identify a suitable directory (that contains a file named F<bld.inf>) from which to build from. For example to build for the Symbian^3 release you need to build from F<\fshell\build\sf\3>. Open a command prompt and C<cd> to this directory.
+
+You also need to identify the type of binaries you want to build. Common ones are:
+
+=over 5
+
+=item * C<winscw>
+
+Used for running fshell on the WINSCW emulator. Requires an installation of the CodeWarrior Win32 compiler.
+
+=item * C<armv5>
+
+Used for running fshell on either physical or simulated ARM hardware. Requires an installation of ARM's RVCT compiler. Version 2.2 is commonly used on current Symbian based handsets.
+
+=item * C<gcce>
+
+Used for running fshell on either physical or simulated ARM hardware. Requires an installation of the GCC crosscompiler (for arm-none-symbianelf) - see here for more information: http://developer.symbian.org/wiki/index.php/The_GCCE_toolchain_initiative.
+
+=back
+
+Lastly, you need to identify the build variant you plan to use, either debug (C<udeb>) or release (C<urel>). Commonly, C<udeb> is used on the emulator whereas C<urel> is used on target hardware. For the purposes of this introduction we will assume that you will be building C<winscw udeb> and C<armv5 urel>.
+
+=head2 SBSv1 (aka abld)
+
+  M:\fshell\build\s60\3>bldmake bldfiles
+  M:\fshell\build\s60\3>abld build winscw udeb
+  M:\fshell\build\s60\3>abld build armv5 urel
+
+=head2 SBSv2 (aka Raptor)
+
+  M:\fshell\build\sf\2>sbs -c armv5_urel
+  M:\fshell\build\sf\2>sbs -c winscw_udeb
+
+I<Note:> There are currently some concurrency issues in the build process that mean we don't recommend building multiple platforms in a single invocation of sbs. Ie do the above rather than C<sbs -c armv5_urel -c winscw_udeb>. In some cases you may even need to add the option C<-j 1> to sbs to have it run completely single-threaded. We'll fix this as soon as we can!
+
+=head2 Notes on building for GCC
+
+Fshell has only been tested to build with GCC-E 4.4.1, and the legacy 3.4.2.
+
+I<Note:> The SF website appears to be out of date with regards to how to build with GCC-E on Raptor - at the time of writing the way to build is as follows:
+
+  S:\fshell\build\sf\3>set SBS_GCCE432BIN=Nothing
+  S:\fshell\build\sf\3>set SBS_GCCE433BIN=Nothing
+  S:\fshell\build\sf\3>set SBS_GCCE441BIN=c:/apps/gcce/bin
+  S:\fshell\build\sf\3>sbs -c arm.v5.urel.gcce4_4_1
+
+You may also need to update the compiler support libraries - I had to unzip rt_3_1_bin.zip from \sf\os\kernelhwsrv\kernel\eka\compsupp from a different baseline. (Unzip over \epoc32\release\armv5). The working libraries I used had datestamp of 28/1/2009, the non-working ones were 1/1/2009.
+
+There's one final gotcha if you want to build with GCC-E - at the time of writing the makefiles produced by SBS for PIPS executables is incorrect, therefore you need to add C<#define FSHELL_NO_PIPS_SUPPORT> to \fshell\build\sf\platform_shared.mmh. Hopefully this is a temporary measure.
+
+=head1 Installation
+
+Having performed a build, you should have a full set of binaries in your F<\epoc32> tree. If you want to run fshell on the emulator, no further action is necessary. If you want to run fshell on the simulator or target hardware, then the fshell binaries need to be either added to a ROM image or installed at runtime.
+
+=head2 Adding FShell to a ROM Image
+
+This is probably the easiest approach, assuming you have a means of reprogramming the ROM of the hardware you plan to use. By putting fshell in the ROM, the complexities of platform security are normally avoided.
+
+Detailed instructions for building a ROM image for your hardware are outside of the scope of this document, however adding fshell fundamentally boils down to adding F<\epoc32\rom\include\fshell.iby> to your ROMBUILD scripts. Often the easiest way to do this is to add the following line to your main F<.oby> file:
+
+  #include <fshell.iby>
+
+Alternatively, depending on how you're building the ROM you can specify additional F<.oby> or F<.iby> files as command line arguments. For example:
+
+=over 5
+
+=item * buildrom
+
+  buildrom techview fshell.iby
+
+=item * imaker
+
+  imaker default BLDROBY="\epoc32\rom\include\fshell.iby"
+
+=back
+
+=head2 Installing fshell at Runtime
+
+Another product of the fshell build is F<\epoc32\fshell\fshell.unsigned.sis>. This is a Symbian OS install file that contains precisely the same set of files that F<fshell.iby> refers to. There are however some additional hurdles that need to be negotiated in order to be able to install the SIS file.
+
+=over 5
+
+=item 1
+
+Most production handset will not allow unsigned SIS files to be installed. The SIS file that the fshell build process produced must therefore be signed first. The Symbian Foundation provide a tool called F<signsis.exe> to perform the signing, however you need to get hold of a suitable certificate to sign with. Refer to http://www.symbiansigned.com/ for more details. Building on some platforms may automatically generate a signed SIS file F<\epoc32\fshell\fshell.sis> if there is a standard certificate for the platform.
+
+=item 2
+
+By default the fshell build produces binaries that use B<all> security capabilities (including C<TCB>). When they are installed at ROM build time, this isn't a problem. However, SIS files are generally restricted in the set of security capabilities that they can be signed for. To cater for this, you will need to restrict the fshell build to the set of capabilities that you are able to sign for. This is done by editing your platform's F<platform.mmh> (or in the case of platforms that support multiple variants, F<platform_(generic|shared).mmh>). You'll need to replace the following line:
+
+  #define FSHELL_CAP_ALL
+
+The file F<\fshell\build\common\common.mmh> contains definitions of the complete set of platform security macros that the fshell build system supports. For example, suppose you have access to all the user capabilities, your would replace the above line with:
+
+  #define FSHELL_CAP_MMP_MAX localservices location networkservices readuserdata userenvironment writeuserdata
+
+  #define FSHELL_CAP_LOCALSERVICES
+  #define FSHELL_CAP_LOCATION
+  #define FSHELL_CAP_NETWORKSERVICES
+  #define FSHELL_CAP_READUSERDATA
+  #define FSHELL_CAP_USERENVIRONMENT
+  #define FSHELL_CAP_WRITEUSERDATA
+
+The macro C<FSHELL_CAP_MMP_MAX> should be set to all the capabilities that you have access to. There is another macro C<FSHELL_CAP_MMP_NORMAL> which is what most DLLs and EXEs in fshell actually use. The difference is only important if you can sign for all capabilities (ie C<FSHELL_CAP_MMP_MAX> is C<All>) - in this case C<FSHELL_CAP_MMP_NORMAL> is set to C<All -TCB> to make sure you can link against normal DLLs.
+
+The act of defining the above macros may cause certain fshell binaries not to be built (for example, if the bianry can't do anything useful unless a particular capability is available). However, F<fshell.iby> and F<fshell.unsigned.sis> should automatically accommodate for the missing binaries without any further action on your part. If they don't, please contact the maintainers of fshell because that's probably a bug!
+
+=item 2
+
+Depending on the configuration of the target handset's certificate store and the key you are signing with, you may also need to use UIDs from the non-protected range. By default the fshell builds with UIDs from the protected range. To change this, remove the definition of C<FSHELL_PROTECTED_UIDS> from your platform's F<platform.mmh>. Note however, that currently the fshell's non-protected UIDs are not properly allocated UIDs. Rather they are the protected UID values but with the top nibble changed from 0x1 to 0xE. It is therefore possible (albeit pretty unlikely) that they could clash with UIDs used in other software.
+
+=back
+
+If you needed to change your F<platform.mmh> to satisfy platform security requirements, you'll need to perform a re-build of the source. It's advisable to run C<abld reallyclean> (or C<sbs reallyclean>) before doing this to ensure that everything is fully re-built.
+
+Having built and signed a SIS file, it can be installed by copying it to a memory card and inserting this in the target hardware. Details of how to do this for your particular hardware are outside of the scope of this document, but normally there's a File Manager type application that can be used to launch the SIS file. Alternatively, some handsets provide a PC Connectivity Suite that can be used to install SIS files from your PC.
+
+=head2 Running FShell
+
+Once fshell has been installed, the following icons should appear in the menu application*:
+
+* Note, the folder in which the icons can be found varies between hardware and software platforms. For S60, try looking in "Installations", "Installed", "Applications" or "Applications->My Own".
+
+=over 5
+
+=item * fshell
+
+This icon will launch an L<fshell|fshell> instance using the default console. Where supported, this will be fshell's own GuiCons console, but on platforms where this isn't supported it will fall back to the Symbian Foundation F<econs> or F<econseik> consoles (see L<consoles|plugins::consoles> for a discussion of the various consoles that fshell supports). This puts up a full-screen window and allows text input via whatever keyboard the handset has. It is certainly the easiest console to get going with, but (depending on the handset you're using) entering text can be fairly tiresome.
+
+=item * fshell (USB)
+
+This icon will launch an L<fshell|fshell> instance that is connected to a remote terminal (e.g. HyperTerminal) via USB. The following steps must be taken before using this launch method:
+
+=over 5
+
+=item 1
+
+Install the PC Suite USB drivers applicable for your device.
+
+=item 2
+
+Connect your handset to your PC via USB.
+
+=item 3
+
+On your handset, if a dialog appears asking what USB service to use, select "PC Suite". You may have to change the USB settings in the control panel if you don't see this dialog.
+
+=item 4
+
+On your PC determine the name of the virtual serial port associated with your device. This can be done by right clicking on "My Computer", selecting "Manage". Then select "Device Manager" and expand the category "Ports (COM & LPT)". You should see one of the ports labelled something like "Nokia N96 USB". Make a note of the name that follow this in brackets (e.g. "(COM7)").
+
+=item 5
+
+On your PC, open a terminal emulator (such as TeraTerm or HyperTerminal). Instruct this application to open the serial port you identified in the previous step. Set the bits per second to 115200, data bits to "8", parity to "None", stop bits to "1" and flow control to "None". HyperTerminal has many restrictions, so we generally recommend TeraTerm Pro 4.6, available from http://ttssh2.sourceforge.jp/ .
+
+=item 6
+
+Connect your terminal emulator to the port identified in step 4.
+
+=item 7
+
+On your handset, tap "fshell (USB)". You should see a command prompt appear in your terminal emulator. If you don't you may need to reboot both your PC and your handset.
+
+=back
+
+After you have finished using the command prompt, the 'polite' way to disconnect your handset is as follows. Generally if you're using recent software you can get away with just closing the terminal emulator and/or unplugging the cable (in either order). Less tolerant USB drivers may require you to take care to follow the instructions below:
+
+=over 5
+
+=item 1
+
+Type "exit" to exit from fshell.
+
+=item 2
+
+Disconnect your terminal emulator from the serial port.
+
+=item 3
+
+Remove your USB cable.
+
+=back
+
+To reconnect, repeat steps 6 and 7 above. (Reconnecting the USB cable and choosing the usb service, if necessary.)
+
+=item * fshell (BT)
+
+This icon will launch an L<fshell|fshell> instance using the Bluetooth variant of L<vt100cons|vt100cons>. Assuming your PC is paired with the handset, after launching this icon it should be possible to establish a serial connection from your PC to the handset. Once that has been done, HyperTerminal (or some other VT100 compatible terminal emulator) can be pointed at the PC side virtual serial port, and an fshell prompt should appear.
+
+=item * fshell (TCP)
+
+This icon will launch an L<fshell|fshell> instance using the TCP variant of L<vt100cons|vt100cons> in passive mode. This means that the handset will listen for an incoming TCP connection on a particular port. After you launch the icon, you will first have to select the bearer for the TCP/IP session. Assuming it is available on your handset, WLAN is probably the best choice of bearer. Once the WLAN connection has been established, a console window should appear stating the IP address and port that is being listened on. Your PC will need to be connected to the same network. Open HyperTerminal (assuming you're using Windows) and connect using "TCP/IP (Winsock)" mode, specifying the IP and port displayed on the handset. An fshell prompt should appear in HyperTerminal.
+
+If you're using hardware that doesn't support WLAN, then all is still not lost. It is possible to establish a remote console session using a packet context. However, the hoops you have to jump through to achieve this are rather tighter than any of the other methods described. There are two main problems that have to be overcome. Firstly, most PCs don't have a public IP address, and so cannot be connected to directly. Secondly, most packet context connection don't have a public IP address, and so the same applies. The latter issue can be handled by using F<vt100tcpcons> in active mode (i.e. where it actively connects to a particular host). The first issue can be handled using an SSH tunnel. However, its not possible to configure an SSH tunnel that listens on both ends - one end must listen (i.e. be passive) and the other connect (i.e. be active). Because we need the end that F<vt100tcpcons> will be connecting to to listen, we need to provide something for the other end to connect to. This can't be HyperTerminal, because that only supports active connection. So instead we use C<com2tcp> (see http://com0com.sourceforge.net/) to listen on a particular port and then present this as a virtual serial port that HyperTerminal can connect to. In a more visual form, we end up with:
+
+  |   Handset        |       SSH Server     |                               PC                                 |
+
+  vt100tcpcons.dll  <-->  SSH tunnel end  <-->  SSH tunnel end  <-->  com2tcp  <--> com0com  <-->  HyperTerminal
+
+All this can be achieved with the following steps:
+
+=over 5
+
+=item *
+
+Install C<com0com>, C<com2tcp> and an SSH client (the example below uses OpenSSH provided by Cygwin).
+
+=item *
+
+Establish an SSH tunnel between your PC and an SSH server that has a public IP address:
+
+  ssh <username>@<ssh_server> -R <ssh_server_IP>:8080:localhost:8080
+
+Note, C<ssh_server_IP> is the public IP address of the SSH server. This is necessary ensure that the tunnel listens on the public IP rather than the loopback interface. If you're using OpenSSH, make sure that C<AllowTcpForwarding> is set to C<yes> on the server.
+
+=item *
+
+Configure C<com2tcp> to listen on port 8080 of the PC's loopback interface:
+
+  com2tcp \\.\<com0com_port_name> 8080
+
+Note, C<com0com_port_name> is the name of one port of a virtual serial port pair provided by C<com0com>. You can create a suitable virtual serial port pair using "Start | Programs | com0com | Setup". Be sure to work your way through "New hardware detected dialogs" as the pop up (rather than simply dismissing them), because if you don't the ports won't be visible to Windows software. No actual driver file should be necessary.
+
+=item *
+
+Open HyperTerminal and point it at the other port of the virtual serial port pair provided by C<com0com>.
+
+=item *
+
+Configure F<vt100tcpcons> to use an outgoing TCP connection by running the following at an fshell prompt (you may need a "local" fshell prompt for this):
+
+  fshell --console vt100tcpcons --console-title host=<ssh_server>,port=8080
+
+=back
+
+If all has gone well, you should see an fshell prompt in HyperTerminal.
+
+=back
+
+=head1 Copyright
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+
+=cut

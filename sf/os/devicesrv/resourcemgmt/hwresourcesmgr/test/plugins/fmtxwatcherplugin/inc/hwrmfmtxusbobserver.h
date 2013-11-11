@@ -1,0 +1,109 @@
+/*
+* Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+
+
+
+#ifndef HWRMFMTXUSBOBSERVER_H
+#define HWRMFMTXUSBOBSERVER_H
+
+#include <usbman.h>
+#include "hwrmfmtxwatcherplugin.h"
+#include "hwrmfmtxconnobserver.h"
+
+/**
+* Active object for obtaining notification of changes in USB connections.
+*
+*/
+NONSHARABLE_CLASS(CHWRMFmtxUsbObserver) : public CActive, 
+                                  public MHWRMFmtxConnObserver
+	{
+public:
+    /**
+    * This is a two-phase constructor method that is used to create a new
+    * instance for listening to the changes in USB connections.
+    *
+    * @param aObserver A reference to an observer instance.
+    * @return A pointer to a new instance of the CHWRMFmtxUsbObserver class.
+    *
+	* @leave One of the Symbian OS error codes.
+    */
+    static CHWRMFmtxUsbObserver* NewL( MHWRMFmtxConnObserverCallback& aObserver );
+    
+    /**
+    * Destructor.
+    */
+    ~CHWRMFmtxUsbObserver();
+    
+    // From MHWRMFmtxConnObserver
+    TBool GetStatusL();
+	void StartObservingL();
+	void StopObserving();
+
+private:
+
+    /**
+    * Constructor.
+    *
+    * @param aObserver A reference to an observer instance.
+    */
+    CHWRMFmtxUsbObserver( MHWRMFmtxConnObserverCallback& aObserver );
+    
+    /**
+    * By default Symbian OS constructor is private.
+    */
+    void ConstructL();
+    
+    /**
+    * Orders USB notification.
+    */
+    void OrderUsbNotification();
+
+protected:
+
+    // from CActive
+    void RunL();
+    void DoCancel();
+
+private:
+
+    /**
+    * Handle to usbman.
+    */    
+	RUsb iUsbMan;
+
+    /**
+    * Storage for USB device state.
+    * Updated upon completion of USB notification.
+    */
+    TUsbDeviceState iDeviceState;
+
+    /**
+    * Response callback pointer.
+    */    
+    MHWRMFmtxConnObserverCallback& iCallback;
+    
+    /**
+    * Stores USB connection status, ETrue if connected.
+    * Used for filtering out excess USB configuration change notifications.
+    */    
+    TBool iConnected;
+	};
+
+
+#endif      // HWRMFMTXUSBOBSERVER_H
+            
+// End of File

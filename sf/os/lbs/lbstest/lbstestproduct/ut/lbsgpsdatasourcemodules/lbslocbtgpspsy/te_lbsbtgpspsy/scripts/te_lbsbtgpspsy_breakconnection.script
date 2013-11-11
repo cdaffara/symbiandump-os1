@@ -1,0 +1,100 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//!@File
+//!@SYMTestSuiteName         LBS-BTGPSPSY-0001
+//!@SYMScriptTestEnvironment TestExecute with LBS-BTGPSPSY-0001
+//
+//
+//
+
+LOAD_SUITE LbsBluetoothUtilsTestServer -SharedData
+LOAD_SUITE te_lbsbtgpspsysuite
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+ 
+START_TESTCASE              LBS-BTGPSPSY-BreakConnection-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-BreakConnection-0001
+//! @SYMTestCaseDesc            This test first unbans the device which will be connected to in future. This is followed by the unpairing of
+//!								that device. The test notifier then has it's address that it will be connected to set. This is followed by a
+//! 							standard position request. Following this the physical link to the bluetooth device is destroyed. A subsequent
+//!								position request is made in which a position should be return successfully.
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Unban the device which will be connected to in a future step.
+//!								2. Unpair the device which will be connected to.
+//!								3. Set the device to be connected to in the test notifier.
+//!								4. Connect to the device and retrieve a position.
+//!								5. Destroy bluetooth physical links.
+//!								6. Connect to the device and retrieve a position.
+//! @SYMTestExpectedResults     Verify Actions 1 to 6.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMPREQ                    PREQ1657
+//! @SYMREQ                     REQ8878 
+//!                             
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite UnBanHWAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite RemoveHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite TDBTConnectionStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-PairingSuccessful-0001
+RUN_TEST_STEP 50 LbsBluetoothUtilsTestServer TestStepInit
+RUN_TEST_STEP 50 LbsBluetoothUtilsTestServer TestStepDisconnectAll
+RUN_TEST_STEP 50 LbsBluetoothUtilsTestServer TestStepFinish 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTLastDeviceStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-BreakConnection-0001
+ 
+END_TESTCASE                LBS-BTGPSPSY-BreakConnection-0001
+
+START_TESTCASE              LBS-BTGPSPSY-BreakConnection-0002
+//! @SYMTestCaseID              LBS-BTGPSPSY-BreakConnection-0002
+//! @SYMTestCaseDesc            This test first unpairs the last connected device, followed by setting the device to be connected to
+//!								in the test notifier to a valid bluetooth address. A position request is then made. After a position has been
+//!								received successfully the physical bluetooth connection will be destroyed. After this, to ensure that the
+//!								bluetooth gps psy cannot reconnect to that device, the device is banned in the bluetooth registry.
+//!								The test will then try to get another position from the bluetooth device but is expected to fail.
+//!								Following this the device is unbanned so that it may be used in other tests.
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Unpair the device which will be used in a future step.
+//!								2. Set the device to be connected to in the test notifier.
+//!								3. Connect to the device and retrieve a position.
+//!								4. Destroy bluetooth physical links.
+//!								5. Ban the previously connected device in the bt registry.
+//!								6. Make a new position request but expect it to fail.
+//!								7. Unban the hardware device which was banned.
+//! @SYMTestExpectedResults     Verify Actions 1 to 7.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMPREQ                    PREQ1657
+//! @SYMREQ                     REQ8878
+//!                             
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite RemoveHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite TDBTConnectionStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-PairingSuccessful-0001
+RUN_TEST_STEP 50 LbsBluetoothUtilsTestServer TestStepInit 
+RUN_TEST_STEP 50 LbsBluetoothUtilsTestServer TestStepDisconnectAll
+RUN_TEST_STEP 50 LbsBluetoothUtilsTestServer TestStepFinish 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetSecondaryHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini null_address_2 
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite BanHWAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTConnectionStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-PairingFailedCancelled-0001 
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite UnBanHWAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W
+END_TESTCASE                LBS-BTGPSPSY-BreakConnection-0002 
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+PRINT Completed te_LbsBtGpsPsy_BreakConnection Tests

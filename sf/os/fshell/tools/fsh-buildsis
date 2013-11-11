@@ -1,0 +1,193 @@
+#!perl
+# fsh-buildsis
+# 
+# Copyright (c) 2008 - 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Description:
+# fsh-buildsis - A tool that generates SIS files.
+
+use strict;
+use Cwd;
+use Getopt::Long;
+use File::Basename;
+use File::Copy;
+use FindBin;
+use lib "$FindBin::Bin";
+use fshu;
+
+
+#
+# Constants.
+#
+
+# Have to hard-code the old GCC CPP path, because SBS puts the new version in %PATH%, and that breaks our macros. Need to fix properly or fix the actual macros
+#my $kCpp = "cpp -P -I../../include -I. -include ltk_makesis_defs.iby";
+my $kCpp = "$ENV{EPOCROOT}epoc32\\gcc\\bin\\cpp -P -I../../include -I. -include fsh_makesis_defs.iby";
+
+#
+# Globals.
+#
+
+my %options = ();
+
+
+#
+# Main.
+#
+
+BuildSis(ProcessCommandLine());
+ 
+#
+# Subs.
+#
+
+sub ProcessCommandLine {
+  my $help;
+  GetOptions('h|help' => \$help,
+	     'k|keep-pkg-file' => \$options{keepPkgFile},
+	     'u|keep-unsigned-sis' => \$options{keepUnsignedSis},
+	     'v|verbose' => \$options{verbose}) or DisplayHelp();
+  DisplayHelp() if ($help);
+  warn "Invalid arguments\n" and DisplayHelp() unless ((@ARGV == 3) or (@ARGV == 5));
+  return @ARGV;
+}
+
+sub DisplayHelp {
+  require Pod::Text;
+  print "\n";
+  my $parser = Pod::Text->new();
+  $parser->parse_from_file($0);
+  exit;
+}
+
+sub BuildSis {
+  my $platform = shift;
+  my $ibyFileName = shift;
+  my $sisFileName = shift;
+  my $certFileName = shift;
+  my $keyFileName = shift;
+
+  #
+  # 1) Run the pre-processor over the supplied .iby file and capture the output
+  #    to a temporary file.
+  my $tempFileName = "$ENV{TEMP}\\fsh-buildsis_temp.pkg";
+  if (-e $tempFileName) {
+    unlink $tempFileName;
+  }
+  my $ibyDirName = dirname($ibyFileName);
+  $ibyFileName = basename($ibyFileName);
+  my $cwd = cwd();
+  chdir ($ibyDirName) or die "Error: Couldn't chdir to \"$ibyDirName\": $!\n";
+  my $command = "$kCpp -D$platform $ibyFileName 2>&1 >$tempFileName |";
+  print "Running \"$command\"\n" if ($options{verbose});
+  open (CPP, $command) or die "Error: Couldn't run \"cpp.exe\": $!\n";
+  my $error = 0;
+  while (my $line = <CPP>) {
+    print STDERR $line;
+    $error = 1;
+  }
+  close (CPP);
+  chdir ($cwd) or die "Error: Couldn't chdir back to \"$cwd\": $!\n";
+  if ($error) {
+    die "Aborting due to the above error(s)\n";
+  }
+
+  #
+  # 2) Change the \n line endings in the temporary file to \r\n (that makesis.exe expects).
+  #    Also, substitute some version information.
+  #
+  my $version = fshu::Version();
+  $version =~ s/[^\d]//g;
+  if ($version =~ /^\s*$/) {
+    $version = 0;
+  }
+  my $timestamp = int ((time() % (24*60*60)) / 4); # Number of seconds since midnight, munged to fit in the buildnum (max 2^16)
+  copy ($tempFileName, "$tempFileName.bak") or die "Error: Couldn't copy \"$tempFileName\" to \"$tempFileName.bak\": $!\n";
+  open (ORIG, "$tempFileName.bak") or die "Error: Couldn't open \"$tempFileName.bak\" for reading: $!\n";
+  open (NEW, ">$tempFileName") or die "Error: Couldn't open \"$tempFileName\" for writing: $!\n";
+  while (my $line = <ORIG>) {
+    $line =~ s/FSHELL_VERSION/$version/;
+    $line =~ s/FSHELL_TIMESTAMP/$timestamp/;
+   print NEW $line;
+  }
+  close (NEW);
+  close (ORIG);
+  unlink "$tempFileName.bak";
+
+  #
+  # 3) Run makesis.exe itself.
+  #
+  my $unsignedSisFileName = $sisFileName;
+  $unsignedSisFileName =~ s/\.sis/\.unsigned\.sis/i;
+  fshu::MakePath(dirname($unsignedSisFileName));
+  $command = "$ENV{EPOCROOT}epoc32\\tools\\makesis -d$ENV{EPOCROOT} $tempFileName $unsignedSisFileName 2>&1";
+  print "Running \"$command\"\n" if ($options{verbose});
+  my $exitcode = system($command) >> 8;
+  print "\n"; # Makesis doesn't do this
+  print "Exit code from makesis: $exitcode\n" if ($options{verbose});
+
+  if ($exitcode) {
+    die "Aborting due to the above error(s) - check $tempFileName\n";
+  }
+  elsif ($options{keepPkgFile}) {
+    print "Kept \"$tempFileName\"\n";
+  }
+  else {
+    unlink $tempFileName;
+  }
+
+  #
+  # 4) Run signsis.exe.
+  #
+  if (defined $certFileName and defined $keyFileName) {
+    $command = "signsis $unsignedSisFileName $sisFileName $certFileName $keyFileName";
+    print "Running \"$command\"\n" if ($options{verbose});
+    system ($command);
+  }
+
+  unless ($options{keepUnsignedSis}) {
+    unlink $unsignedSisFileName;
+  }
+}
+
+__END__
+
+=head1 NAME
+
+fsh-buildsis - A tool that generates SIS files.
+
+=head1 SYNOPSIS
+
+fsh-buildsis <platform> <input_iby_file_name> <output_sis_file_name> [<certificate_file_name> <private_key_file_name>]
+
+options:
+
+  -h (--help)               Display this help page.
+  -v (--verbose)            Verbose output.
+  -k (--keep-pkg-file)      Don't delete the generated .pkg file.
+  -u (--keep-unsigned-sis)  Keep a copy the .SIS file before it is signed.
+                            Appends ".unsigned" to the base file name.
+
+=head1 DESCRIPTION
+
+FShell uses pre-processor magic to allow its F<.iby> files to be used by both C<BUILDROM> and C<MAKESIS>. Because C<BUILDROM> runs the pre-processor over any files it reads, this arrangement just works when building ROMs. However, C<MAKESIS> doesn't use the pre-processor. This script is responsible for generating a temporary file that contains suitably pre-processed F<.iby> data. It then runs C<MAKESIS> on this temporary file.
+
+The <platform> argument must be one of gcce or armv5.
+
+=head1 KNOWN BUGS
+
+None known.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+
+=cut

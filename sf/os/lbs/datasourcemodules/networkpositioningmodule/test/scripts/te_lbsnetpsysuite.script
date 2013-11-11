@@ -1,0 +1,374 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// The script for the Lbs Net PSY Test Suite
+// 
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-NetPsySuite
+//! @SYMScriptTestEnvironment TestExecute using te_lbsnetpsysuite.script
+
+//The quality profile and the internalapi buses are directly initialized from the test
+//without starting lbsroot [so lbsprofile.ini & agpsintegmodule.ini have to be copied to the private folder of the test process]
+PREFIX RUN_UTILS
+MkDir c:\private\102869c3
+MkDir c:\private\102869c3\lbs
+MkDir c:\private\102869c3\lbs\locmods
+DeleteFile c:\private\102869c3\lbs\lbsprofile.ini
+DeleteFile c:\private\102869c3\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\te_lbsnetpsy_lbsprofile.ini c:\private\102869c3\lbs\lbsprofile.ini
+CopyFile c:\testdata\configs\te_lbsnetpsy_agpsintegmodule.ini c:\private\102869c3\lbs\locmods\agpsintegmodule.ini
+REMOVE_PREFIX
+
+LOAD_SUITE te_lbsnetpsysuite
+
+PRINT RUN ALL te_lbsnetpsysuite TESTS
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdate-Section0
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdate-Section0
+//! @SYMTestCaseDesc            Runs several pos update scenarios, which completes normally.
+//! @SYMTestActions             SIMPLE POSITION UPDATE
+//!				1. Create the positioner and update request listener.
+//!                             2. The update request listener starts listening. 
+//!				3. The positioner issues NPUD.
+//!				4. Start the active scheduler for some time.
+//!				5. Check that default update request is received with newClient flag set to ETrue.
+//!				6. Create and issue the simple pos update.
+//!				7. Start the active scheduler for some time.
+//!				8. Check the pos update	is received and equal to the sent one.
+//!
+//!				TWO SIMPLE POSITION UPDATES
+//!				9. Create the second positioner.
+//!				10. The update request listener starts listening. 
+//!				11. The first positioner issues NPUD.
+//!				12. Start the active scheduler for some time.
+//!				13. Check that default update request is received.
+//!				14. The second positioner issues NPUD.
+//!				15. Start the active scheduler for some time.
+//!				16. Check that no new update request is received.
+//!				17. Create and issue the simple pos update.
+//!				18. Start the active scheduler for some time.
+//!				19. Check the pos update is received and equal to the sent one for both positioners.
+//!				20. Delete the second positioner.
+//!				
+//!				CANCEL A POSITION UPDATE
+//!				21. The update request listener starts listening.
+//!				22. The positioner issues NPUD.
+//!				23. Start the active scheduler for some time.
+//!				24. Check that default update request is received.
+//!				25. The positioner cancels the NPUD.
+//!				26. Start the active scheduler for some time.
+//!				27. Check that a cancel update request is received.
+//!				28. Check that the positioner NPUD is completed with KErrCancel.
+//!				29. Create and issue the simple pos update.
+//!			
+//!				PARTIAL UPDATE
+//!				30. Set the positioner to accept partial updates.
+//!				31. Set the update timeout to KWarmDownInterval.
+//!				32. The update request listener starts listening.
+//!				33. The positioner issues NPUD.
+//!				34. Start the active scheduler for some time.
+//!				35. Check that the update request is received with the timeout set to KWarmDownInterval.
+//!				36. Create and issue the partial pos update.
+//!				37. Start the active scheduler for some time.
+//!				38. Check the pos update is received and equal to the sent one.
+//!				39. Start the active scheduler wait forKWarmDownInterval to make warm down timer working.
+//!				
+//!				TEST METHODS WHICH ARE NEVER CALLED IN THE PRODUCTION CODE
+//!				40. Simulate the timer errors.  
+//!
+//!				CLEANUP
+//!				41. Delete the positioner and update request listener.
+//!
+//!
+//! @SYMTestExpectedResults     The expected pos update requests and pos updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11250, REQ 11253, REQ 11255, REQ 11256, REQ 11257, REQ 11485, REQ 11487, REQ 11490, REQ 11491, REQ 11492, REQ 8827, REQ 8828, REQ 8831
+//! @SYMCreationDate            20/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite NotifyPositionUpdate c:\testdata\configs\te_lbsnetpsy.ini Section0
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdate-Section0
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdateTiming-Section0
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdateTiming-Section0
+//! @SYMTestCaseDesc            Runs several pos update scenarios with the accent on the timing issues.
+//! @SYMTestActions             HANDLING THE OLD POSITION UPDATE
+//!				1. Create the positioner and update request listener. 
+//!				2. The update request listener starts listening. 
+//!				3. The positioner issues NPUD.
+//!				4. Start the active scheduler for some time.
+//!				5. Check that default update request is received with newClient flag set to ETrue.
+//!				6. Create and issue the pos update with the actual time < target time.
+//!				7. Check that no position update is received by the positioner.
+//!				8. The update request listener starts listening. 
+//!				9. The positioner cancels the request.
+//!				10. Start the active scheduler for some time.
+//!				11. Check that a cancel request is received.
+//!
+//!				SETTING MAXAGE AND USING CACHED UPDATE
+//!				12. Set the MaxAge for the positioner to some time ago.				
+//!				13. The update request listener starts listening.
+//!				14. The positioner issues NPUD.
+//!				15. Start the active scheduler for some time.
+//!				16. Check the cached FNP update is received and equal to the sent one.
+//!				17. Check that an update request is not received.
+//!				18. Cancel listening for the update requests.
+//!				19. Restore the MaxAge to 0.
+//!
+//!				SETTING MAXAGE, NO CACHED UPDATE
+//!				20. Set the MaxAge for the positioner to now.				
+//!				21. The update request listener starts listening.
+//!				22. The positioner issues NPUD.
+//!				23. Start the active scheduler for some time.
+//!				24. Check that default update request is received.
+//!				25. Create and issue the simple pos update.
+//!				26. Start the active scheduler for some time.
+//!				27. Check the pos update is received and equal to the sent one.
+//!				28. Restore the MaxAge to 0.
+//!
+//!				SIMPLE TRACKING SCENARIO
+//!				29. Check that the tracking flag overriden.
+//!				30. The positioner starts tracking.
+//!				31. Start the active scheduler for some time.
+//!				32. The positioner issues NPUD.
+//!				33. Start the active scheduler for some time.
+//!				34. Create and issue the simple pos update.
+//!				35. Start the active scheduler for some time.
+//!				36. Check the pos update is received and equal to the sent one.
+//!				37. The positioner stops tracking.
+//!
+//!				TRACKING SCENARIO WITH LATE REQUEST
+//!				38. The positioner starts tracking.
+//!				39. Start the active scheduler for some time.
+//!				40. The positioner issues NPUD.
+//!				41. Start the active scheduler for some time.
+//!				42. Create and issue the simple pos update.
+//!				43. Start the active scheduler for some time.
+//!				44. Check the pos update is received and equal to the sent one.
+//!				45. Start the active scheduler for some time.
+//!				46. The positioner issues NPUD.
+//!				47. Start the active scheduler for some time.
+//!				48. Create and issue the simple pos update.
+//!				49. Start the active scheduler for some time.
+//!				50. Check the pos update is received and equal to the sent one.
+//!				51. The positioner stops tracking.
+//!
+//!				CLEANUP
+//!				52. Delete the positioner and update request listener.				
+//!
+//!
+//! @SYMTestExpectedResults     The expected pos update requests and pos updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11249, REQ 11253, REQ 11254, REQ 11255, REQ 11487, REQ 11488, REQ 11489, REQ 11492, REQ 8827, REQ 8828, REQ 8829 
+//! @SYMCreationDate            20/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite NotifyPositionUpdateTiming c:\testdata\configs\te_lbsnetpsy.ini Section0
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdateTiming-Section0
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdateErr-Section0
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdateErr-Section0
+//! @SYMTestCaseDesc            Runs several pos update scenarios with errors.
+//! @SYMTestActions             SIMPLE POSITION UPDATE ERROR
+//!				1. Create the positioner and update request listener. 
+//!                             2. The update request listener starts listening. 
+//!				3. The positioner issues NPUD.
+//!				4. Start the active scheduler for some time.
+//!				5. Check that default update request is received with newClient flag set to ETrue.
+//!				6. Create and issue the error pos update.
+//!				7. Start the active scheduler for some time.
+//!				8. Check the pos update	error is received and equal to the sent one.
+//!
+//!
+//!				CPOSITIONER CREATION/DESTRUCTION WITH MEMORY LEAKS
+//!				9. Inject the heap error for the Nth(N==0 first) memory allocation.
+//!				10. Try to create the positioner and then delete it.
+//!				11. Check wheter a memory allocation fails during the positioner creation.
+//!				12. If alloc failure occured outside the factory method, stop the test.
+//!				13. If alloc failure occured inside the factory method and no leave occured, the positioner must be created.
+//!				14. Increment N and go to step 16.
+//!
+//!				SIMPLE POSITION UPDATE WITH OOM WHILE CALLING NotifyPositionUpdate
+//!				15. The update request listener starts listening.
+//!				16. Inject the heap error for the Nth(N==0 first) memory allocation.
+//!				17. The positioner issues NPUD.
+//!				18. Check wheter a memory allocation fails during the positioner creation.
+//!				19. Start the active scheduler for some time.
+//!				20. If alloc failure occured outside the NPUD, stop the test.
+//!				21. If the pos update request is received, check that the pos update is received.
+//!				22. If the pos update request is not received, check that the pos update is not received.
+//!
+//!				CLEANUP
+//!				23. Delete the positioner and update request listener.		
+//!
+//! @SYMTestExpectedResults     The errors are handled correctly and the methods fail with the appropriate err codes.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11487, REQ 11492, REQ 8827, REQ 8828
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 300 te_lbsnetpsysuite NotifyPositionUpdateErr c:\testdata\configs\te_lbsnetpsy.ini Section0
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdateErr-Section0
+
+START_TESTCASE                	LBS-NetPsySuite-ModuleInfo-Section0
+//! @SYMTestCaseID              LBS-NetPsySuite-ModuleInfo-Section0
+//! @SYMTestCaseDesc            Runs the scenarios where the module info is get.
+//! @SYMTestActions             1. Create the positioner and assign the positioner, which will receive the notifications.
+//!				2. Issue the module status updates.
+//!				3. Check that the information is received by the positioner.
+//!				4. Repeat 2-3 with various sets of parameters.
+//!
+//!
+//! @SYMTestExpectedResults     The expected module info updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11260, REQ 11261, REQ 11270, REQ 11487, REQ 11492, REQ 8827, REQ 8832, REQ 8833
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite ModuleInfo c:\testdata\configs\te_lbsnetpsy.ini Section0
+END_TESTCASE                  	LBS-NetPsySuite-ModuleInfo-Section0
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdate-Section1
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdate-Section1
+//! @SYMTestCaseDesc            Runs several pos update scenarios, which completes normally.
+//! @SYMTestActions             See LBS-NetPsySuite-NotifyPositionUpdate-Section0 actions.
+//! @SYMTestExpectedResults     The expected pos update requests and pos updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11250, REQ 11253, REQ 11255, REQ 11256, REQ 11257, REQ 11485, REQ 11487, REQ 11490, REQ 11491, REQ 11492, REQ 8827, REQ 8828, REQ 8831
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite NotifyPositionUpdate c:\testdata\configs\te_lbsnetpsy.ini Section1
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdate-Section1
+
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdateTiming-Section1
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdateTiming-Section1
+//! @SYMTestCaseDesc            Runs several pos update scenarios with the accent on the timing issues.
+//! @SYMTestActions             See LBS-NetPsySuite-NotifyPositionUpdateTiming-Section0 actions.
+//! @SYMTestExpectedResults     The expected pos update requests and pos updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11249, REQ 11253, REQ 11254, REQ 11255, REQ 11487, REQ 11488, REQ 11489, REQ 11492, REQ 8827, REQ 8828, REQ 8829 
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite NotifyPositionUpdateTiming c:\testdata\configs\te_lbsnetpsy.ini Section1
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdateTiming-Section1
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdateErr-Section1
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdateErr-Section1
+//! @SYMTestCaseDesc            Runs several pos update scenarios with errors.
+//! @SYMTestActions             See LBS-NetPsySuite-NotifyPositionUpdateErr-Section0 actions.
+//! @SYMTestExpectedResults     The errors are handled correctly and the methods fail with the appropriate err codes.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11487, REQ 11492, REQ 8827, REQ 8828
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 300 te_lbsnetpsysuite NotifyPositionUpdateErr c:\testdata\configs\te_lbsnetpsy.ini Section1
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdateErr-Section1
+
+
+
+START_TESTCASE                	LBS-NetPsySuite-ModuleInfo-Section1
+//! @SYMTestCaseID              LBS-NetPsySuite-ModuleInfo-Section1
+//! @SYMTestCaseDesc            Runs the scenarios where the module info is get.
+//! @SYMTestActions             See the LBS-NetPsySuite-ModuleInfo-Section0 actions.
+//! @SYMTestExpectedResults     The expected module info updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11260, REQ 11261, REQ 11270, REQ 11487, REQ 11492, REQ 8827, REQ 8832, REQ 8833
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite ModuleInfo c:\testdata\configs\te_lbsnetpsy.ini Section1
+END_TESTCASE                  	LBS-NetPsySuite-ModuleInfo-Section1
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdate-Section2
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdate-Section2
+//! @SYMTestCaseDesc            Runs several pos update scenarios, which completes normally.
+//! @SYMTestActions             See LBS-NetPsySuite-NotifyPositionUpdate-Section0 actions.
+//! @SYMTestExpectedResults     The expected pos update requests and pos updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11250, REQ 11253, REQ 11255, REQ 11256, REQ 11257, REQ 11485, REQ 11487, REQ 11490, REQ 11491, REQ 11492, REQ 8827, REQ 8828, REQ 8831
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite NotifyPositionUpdate c:\testdata\configs\te_lbsnetpsy.ini Section2
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdate-Section2
+
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdateTiming-Section2
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdateTiming-Section2
+//! @SYMTestCaseDesc            Runs several pos update scenarios with the accent on the timing issues.
+//! @SYMTestActions             See LBS-NetPsySuite-NotifyPositionUpdateTiming-Section0 actions.
+//! @SYMTestExpectedResults     The expected pos update requests and pos updates are received.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11249, REQ 11253, REQ 11254, REQ 11255, REQ 11487, REQ 11488, REQ 11489, REQ 11492, REQ 8827, REQ 8828, REQ 8829 
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 100 te_lbsnetpsysuite NotifyPositionUpdateTiming c:\testdata\configs\te_lbsnetpsy.ini Section2
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdateTiming-Section2
+
+
+START_TESTCASE                	LBS-NetPsySuite-NotifyPositionUpdateErr-Section2
+//! @SYMTestCaseID              LBS-NetPsySuite-NotifyPositionUpdateErr-Section2
+//! @SYMTestCaseDesc            Runs several pos update scenarios with errors.
+//! @SYMTestActions             See LBS-NetPsySuite-NotifyPositionUpdateErr-Section0 actions.
+//! @SYMTestExpectedResults     The errors are handled correctly and the methods fail with the appropriate err codes.
+//! @SYMTestPriority            High
+//! @SYMTestType                UT
+//! @SYMTestStatus              Released
+//! @SYMPREQ                    PREQ 1662
+//! @SYMREQ                     REQ 11248, REQ 11487, REQ 11492, REQ 8827, REQ 8828
+//! @SYMCreationDate            21/10/2008
+//! @SYMAuthor                  NicolayB
+RUN_TEST_STEP 300 te_lbsnetpsysuite NotifyPositionUpdateErr c:\testdata\configs\te_lbsnetpsy.ini Section2
+END_TESTCASE                  	LBS-NetPsySuite-NotifyPositionUpdateErr-Section2
+
+RUN_UTILS DeleteFile c:\private\102869c3\lbs\lbsprofile.ini
+RUN_UTILS DeleteFile c:\private\102869c3\lbs\locmods\agpsintegmodule.ini
+
+PRINT COMPLETE ALL te_lbsnetpsysuite TESTS
+
+
+

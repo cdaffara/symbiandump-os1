@@ -1,0 +1,64 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// To check if error conditions like adding duplicate AMCs, accessing database
+// while its locked, providing non existant values, are handled correctly.
+// (Test case keeps the backup of old database and restore it at the end of the test case.)
+// 
+//
+
+//! @file
+//! @test
+//! @internalComponent - Internal Symbian test code 
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0003
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			CIT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies
+//! @SYMTestCaseDesc		Tests the basic DscStore APIs for error conditions.
+//! @SYMTestActions			Test the Dsc APIs to create the error conditions.
+//! @SYMTestExpectedResults 	All the basic DSC APIs should handle error conditions correctly.
+
+PRINT Run DEVSRVS-APPFWK-DSCSTORE-0003 test 
+
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_backup.script
+
+LOAD_SUITE tdscstore_server
+
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0003
+
+RUN_TEST_STEP 				100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-11	100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-1		100 tdscstore_server DeleteDsc		z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_5
+RUN_TEST_STEP 				100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+RUN_TEST_STEP !error=-11	100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+RUN_TEST_STEP !error=-11	100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1_ArgsWithSpaces
+
+CONCURRENT
+
+RUN_TEST_STEP 				100 tdscstore_server EnumDscItems	z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-22	100 tdscstore_server CreateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_2
+RUN_TEST_STEP !error=-22	100 tdscstore_server UpdateDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+
+CONSECUTIVE
+
+RUN_TEST_STEP 				100 tdscstore_server DeleteDscItem 	z:\sysstarttest\ini\tdscstore_api.ini AMC_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemCount	z:\sysstarttest\ini\tdscstore_api.ini Dsc_11
+RUN_TEST_STEP 				100 tdscstore_server DeleteDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-1 	100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0003
+
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_restore.script

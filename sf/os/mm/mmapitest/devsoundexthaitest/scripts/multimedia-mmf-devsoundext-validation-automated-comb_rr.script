@@ -1,0 +1,163 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: 
+//
+//
+//! @file
+//! @SYMTestSuiteName multimedia-mmf-devsoundext-validation-automated-comb_rr
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the CMMFDevSound
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: CMMFDevSound
+// The tests are fully automated.
+//
+
+
+
+LOAD_SUITE t_devsoundext
+
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-COMB_RR-0002
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-COMB_RR-0002
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                CMMFDevSound::InitializeL(MDevSoundObserver{ref}, TFourCC, TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings{ref})
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities{ref})
+//!                CMMFAudioInput::SetAudioInputL(TAudioInputArray)
+//!                CMMFDevSound::RecordInitL()
+//!                CMMFDevSound::Stop()
+//!                CMMFDevSound::PlayInitL()
+//! TEST_BLOCK 002
+//!                CMMFDevSound::InitializeL(MDevSoundObserver{ref}, TFourCC, TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings{ref})
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities{ref})
+//!                CMMFDevSound::Pause()
+//!                CMMFAudioInput::SetAudioInputL(TAudioInputArray)
+//!                CMMFDevSound::RecordInitL()
+//!                
+//!@SYMAuthor			myanez
+//!@SYMCreationDate		8/25/2008 
+//!@SYMTestCaseDesc		HW limitation - Radio recording during voice recording from mic**
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Create DevSound Instance
+//!                2. Create AudioInput Instance (DevSoundInstanceName = devsound1)
+//!                3. Replace File (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\HwLimitRadioRecDuringMicRec1.amr)      
+//!                4. Initialize DevSound (Mode = EMMFStateRecording; FourCC = AMR)                
+//!                5. Set Priority (Priority = {Priority,PriorityVoiceRecording}; Preference = {PriorityPreference,PriorityPreferenceVoiceRecording};PriorityState=EMMFStateRecording)           
+//!                6. Capabilities                  
+//!                7. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)             
+//!                8. Set Audio Input (AudioInput = Input_DefaultMic)                          
+//!                9.Start Record for 20 seconds                              
+//!                10. Stop for 5 seconds.                              
+//!                11. Initialize DevSound (Mode = EMMFStatePlaying; FourCC = AMR)                  
+//!                12. Set Priority (Priority = {Priority,PriorityAudioPlayback}; Preference = {PriorityPreference,PriorityPreferenceAudioPlayback};PriorityState=EMMFStatePlaying)
+//!                13. Capabilities       
+//!                14. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)            
+//!                15. Start File Positions                  
+//!                16. Start Play                             
+//!                17. Close File                     
+//!                18. Destroy AudioInput Instance             
+//!                19. Destroy DevSound Instance
+//! TEST_BLOCK 002
+//!                1. Create DevSound Instance
+//!                2. Create AudioInput Instance (DevSoundInstanceName = devsound1)
+//!                3. Replace File (Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\HwLimitRadioRecDuringMicRec2.pcm)     
+//!                4. Initialize DevSound (Mode = EMMFStateRecording; FourCC = P16)            
+//!                5. Set Priority (Priority = {Priority,PriorityVoiceRecording}; Preference = {PriorityPreference,PriorityPreferenceVoiceRecording};PriorityState=EMMFStateRecording)    
+//!                6. Capabilities       
+//!                7. Set Configuration (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)      
+//!                8.  Stop for 10 seconds               
+//!                9. Set Audio Input (AudioInput = Input_FMRadio)                         
+//!                10. Start Record (expected async error=-21)            
+//!                11. Close File                
+//!                12. Destroy AudioInput Instance            
+//!                13. Destroy DevSound Instance
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Radio recording during voice recording from mic
+//! TEST_BLOCK 001
+//!                Record with Voice Recording Priority and Voice Recording Preference; Play with Audio PLayback Priority  and Audio PLayback Preference
+//! TEST_BLOCK 002
+//!                Record File with Voice Recording Priority and Voice Recording Preference, Expecting Error -21
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	60	t_devsoundext	\multimedia\mmf\devsound\multimedia-mmf-devsoundext-validation-automated-comb_rr.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CAudioInput		audioinput1
+		COMMAND		devsound1		NewL
+		COMMAND		audioinput1		NewL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-NewL_command02
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-ReplaceFile_command03
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-InitializeL_command04
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-SetPrioritySettings_command05
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-SetConfigL_command07
+		COMMAND		audioinput1		SetAudioInput			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-SetAudioInput_command08
+		COMMAND		devsound1		RecordInitL
+		ASYNC_DELAY  20000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-InitializeL_command11
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-SetPrioritySettings_command12
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0001-SetConfigL_command14
+		COMMAND		devsound1		FileStartPosition
+		COMMAND		devsound1		PlayInitL
+		OUTSTANDING
+		COMMAND		devsound1		CloseFile
+		COMMAND		audioinput1		~
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	80	t_devsoundext	\multimedia\mmf\devsound\multimedia-mmf-devsoundext-validation-automated-comb_rr.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CAudioInput		audioinput1
+		COMMAND		devsound1		NewL
+		COMMAND		audioinput1		NewL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0002-NewL_command02
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0002-ReplaceFile_command03
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0002-InitializeL_command04
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0002-SetPrioritySettings_command05
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0002-SetConfigL_command07
+		COMMAND		devsound1		Stop
+		DELAY  10000000 
+		COMMAND		audioinput1		SetAudioInput			MULTIMEDIA-MMF-DevSoundExt-Com_Rr-0002-0002-SetAudioInput_command09
+		COMMAND   !AsyncError=-21   devsound1		RecordInitL
+		ASYNC_DELAY  60000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		audioinput1		~
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-COMB_RR-0002

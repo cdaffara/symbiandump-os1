@@ -1,0 +1,141 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-DATAMON
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i  z:\testdata\configs\DataMonitoring\DataMonitoring.ced.cfg c:\DataMonitoring.ced.cfg
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-1501
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-DataMonitoring-1501
+//!@SYMTestCaseDesc           	Confirm valid reception of data sent notifications on two connections on independent bearers
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RCommsDataMonitoringApiExt::Open()
+//RCommsDataMonitoringApiExt::RequestDataSentNotification()
+//RCommsDataMonitoringApiExt::Close()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+//Create and open 2 connections, Conn1 and Conn2 respectively. Connect each on separate IAPs.
+//Confirm number of independent connections established with RConnection::EnumerateConnections.
+//Create, open and connect sockets Socket1 and Socket2 on Conn1 and Conn2 respectively.
+//Create and open data monitors on each connection. DataMonitor1 and DataMonitor2 respectively and request data sent notifications on each with ::RequestDataSentNotification().
+//Send and receive data on Socket1 (on Conn1) ensuring with each iteration that the threshold is not breached and that the notification is therefore not fired.
+//Send and receive a final chunk of data that pushes the total for Conn1 over the requested threshold. Confirm that the notification is now received.
+//Cancel the notification on DataMonitor2 (Conn2) and ensure it completes with KErrCancel.
+//Reissue the same ::RequestDataSentNotification() on each of the two data monitors.
+//Perform the same procedure of confirming data sent with the threshold but this time with DataMonitor2.
+//Cancel the notification on DataMonitor1 (Conn1) and ensure it completes with KErrCancel.
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	Expect valid notifications based on amount of data transferred.
+
+// Create and connect the socket server required
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\DataMonitoring\765429.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\DataMonitoring\765429.ini ConnectSockSvr1
+
+// Create and explicitly start two connections on independent IAPs
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\DataMonitoring\765429.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openRConnectionStep z:\testdata\configs\DataMonitoring\765429.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite StartRConnectionStep z:\testdata\configs\DataMonitoring\765429.ini StartConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\DataMonitoring\765429.ini CreateConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite openRConnectionStep z:\testdata\configs\DataMonitoring\765429.ini OpenConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite StartRConnectionStep z:\testdata\configs\DataMonitoring\765429.ini StartConn2
+
+// Enumerate the connections so we are sure we have what we expected
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\DataMonitoring\765429.ini EnumerateConnections1
+
+// Open separate UDP sockets on each of our 2 established connections
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765429.ini CreateSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765429.ini OpenSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765429.ini ConnectSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765429.ini CreateSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765429.ini OpenSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765429.ini ConnectSocket2
+
+// Create data monitoring APIs for each of our connections
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765429.ini OpenDataMonitor1
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765429.ini OpenDataMonitor2
+
+// Issue data sent notification request for each connection
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RequestSentOnMonitor1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RequestSentOnMonitor2_1
+
+// Send data in chunks (on connection 1 only) waiting for expected data sent notification
+// Expect timeout for the first two waits and completion on the third
+// Check against minimum expected data volume sent
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765429.ini SendReceiveSocket1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765429.ini SendReceiveSocket1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor1_3
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765429.ini SendReceiveSocket1_3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor1_4
+
+// First check that alternate connection monitor times out (we didn't send any data on that one)
+// Then cancel the monitor for the alternate connection and confirm that it is KErrCancel 
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor2_1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite CancelDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini CancelNotifDataMonitor2
+
+// Issue the notification requests again for each connection
+// Make sure that monitor2 (live ethernet) has a large enough threshold to account for the DHCP and ARP data that
+// has already been sent in setting up the connection. This means the sent data value is not starting at zero.
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RequestSentOnMonitor1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RequestSentOnMonitor2_2
+
+// Send data in chunks (on connection 2 only) waiting for expected data sent notification
+// Expect timeout for the first two waits and completion on the third
+// Check against minimum expected data volume sent
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor2_2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765429.ini SendReceiveSocket2_1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor2_3
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765429.ini SendReceiveSocket2_2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor2_4
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765429.ini SendReceiveSocket2_3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor2_5
+
+// First check that conn1 monitor times out (we didn't send any data on that one)
+// Then cancel the monitor on conn1 and confirm that it is KErrCancel
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini RecvNotifMonitor1_5
+RUN_TEST_STEP 100 te_esockteststepsSuite CancelDataSentNotificationStep z:\testdata\configs\DataMonitoring\765429.ini CancelNotifDataMonitor1
+
+// Close the networking entities we used
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765429.ini CloseDataMonitor1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765429.ini CloseDataMonitor2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765429.ini CloseSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765429.ini CloseSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\DataMonitoring\765429.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\DataMonitoring\765429.ini CloseConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\DataMonitoring\765429.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-1501
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+PRINT Completed NET-DATAMON-0429
+
+
+

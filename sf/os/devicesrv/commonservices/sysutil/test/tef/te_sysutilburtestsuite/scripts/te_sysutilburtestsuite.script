@@ -1,0 +1,116 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run BUR Suite Tests
+
+LOAD_SUITE te_sysutilburtestsuite –SharedData
+LOAD_SUITE BURTestServer
+
+RUN_UTILS MkDir c:\versions
+
+
+START_TESTCASE				BASESRVCS-BAFL-CT-4073
+//!@SYMTestCaseID			BASESRVCS-BAFL-CT-4073
+//!@SYMTestPriority			HIGH
+//!@SYMTestCaseDesc			To make sure the device type information APIs continue to work 
+//!@SYMTestCaseDesc			during a backup operation.
+//!@SYMTestCaseDesc			Note: A plug-in containing valid device type information must be 
+//!@SYMTestCaseDesc			located in C:\sys\bin. In addition an INI file containing 
+//!@SYMTestCaseDesc			valid device type information should be copied in to 
+//!@SYMTestCaseDesc			C:\versions\deviceattributes.ini.
+//!@SYMTestCaseDesc			
+//!@SYMTestCaseDesc			The P&S properties should be deleted so new ones can be created.
+//!@SYMTestCaseDesc			
+//!@SYMTestCaseDesc			A backup and restore observer must be created.
+//!@SYMTestActions			1.	Start a backup of drive C.
+//!@SYMTestActions			2.	Once the backup has started call 
+//!@SYMTestActions			SysUtil::GetDeviceTypeInfoL() followed by calls to all the 
+//!@SYMTestActions			CDeviceTypeInformation APIs checking the return values and 
+//!@SYMTestActions			retrieved data to make sure they are correct. This should be 
+//!@SYMTestActions			done by the observer when the operation is 
+//!@SYMTestActions			MBackupOperationObserver::EStart.
+//!@SYMTestActions			3.	Start a restore of drive C.
+//!@SYMTestActions			4.	Once the restore has started call 
+//!@SYMTestActions			SysUtil::GetDeviceTypeInfoL() followed by calls to all the 
+//!@SYMTestActions			CDeviceTypeInformation APIs checking the return values and 
+//!@SYMTestActions			retrieved data to make sure they are correct. This should be 
+//!@SYMTestActions			done by the observer when the operation is 
+//!@SYMTestActions			MBackupOperationObserver::EStart.
+//!@SYMTestExpectedResults	The device type information APIs should function as expected. 
+//!@SYMTestExpectedResults	All the CDeviceTypeInformation should return KErrNone and 
+//!@SYMTestExpectedResults	retrieve a set of valid data (as documented in the component 
+//!@SYMTestExpectedResults	design document see [R1] in section 4.2). The only exceptions 
+//!@SYMTestExpectedResults	to this are Model Code and Default Device Name which should 
+//!@SYMTestExpectedResults	return CDeviceTypeInformation::KDefaultValue and both 
+//!@SYMTestExpectedResults	retrieve Symbian.
+//!@SYMREQ					CR1328
+//!@SYMDEF 					DEF141094
+RUN_UTILS CopyFile z:\resource\versions\deviceattributes_incomplete.ini c:\versions\deviceattributes.ini
+RUN_PROGRAM -1 setcap sysutilplugin_test.dll 00000030 C:\sys\bin\sysutilplugin.dll
+
+RUN_TEST_STEP 100 te_sysutilburtestsuite SysUtilTestDeviceTypeInfoPreBackupRestoreStep
+RUN_TEST_STEP -1 BURTestServer TestBackupAsync z:\testdata\inifiles\te_sysutilburtestdata.ini bur
+RUN_TEST_STEP -1 BURTestServer TestRestoreAsync z:\testdata\inifiles\te_sysutilburtestdata.ini bur
+RUN_TEST_STEP 100 te_sysutilburtestsuite SysUtilTestDeviceTypeInfoPostBackupRestoreStep
+
+RUN_PROGRAM -1 setcap sysutilplugin_test.dll 00000000 C:\sys\bin\sysutilplugin.dll
+RUN_UTILS MakeReadWrite c:\versions\deviceattributes.ini
+RUN_UTILS DeleteFile c:\versions\deviceattributes.ini
+END_TESTCASE				BASESRVCS-BAFL-CT-4073
+
+
+START_TESTCASE				BASESRVCS-BAFL-CT-4074
+//!@SYMTestCaseID			BASESRVCS-BAFL-CT-4074
+//!@SYMTestPriority			HIGH
+//!@SYMTestCaseDesc			To make sure the device type information APIs continue to work 
+//!@SYMTestCaseDesc			during a backup operation.
+//!@SYMTestCaseDesc			Note: Valid versions of sw.txt, lang.txt and langsw.txt 
+//!@SYMTestCaseDesc			should be located in:
+//!@SYMTestCaseDesc			Z: \resource\versions
+//!@SYMTestCaseDesc			
+//!@SYMTestCaseDesc			The P&S properties should be deleted so new ones can be created.
+//!@SYMTestCaseDesc			
+//!@SYMTestCaseDesc			A backup and restore observer must be created.
+//!@SYMTestActions			1.	Start a backup of drive C.
+//!@SYMTestActions			2.	Once the backup has started call 
+//!@SYMTestActions			the version APIs checking the return values and retrieved data 
+//!@SYMTestActions			to make sure they are correct. This should be done by the 
+//!@SYMTestActions			observer when the operation is MBackupOperationObserver::EStart.
+//!@SYMTestActions			3.	Start a restore of drive C.
+//!@SYMTestActions			4.	Once the backup has started call 
+//!@SYMTestActions			the version APIs checking the return values and retrieved data 
+//!@SYMTestActions			to make sure they are correct. This should be done by the 
+//!@SYMTestActions			observer when the operation is MBackupOperationObserver::EStart.
+//!@SYMTestExpectedResults	The version APIs should function as expected. All the return 
+//!@SYMTestExpectedResults	values should be KErrNone and retrieve a set of valid data (as 
+//!@SYMTestExpectedResults	documented in the component design document see [R1] in 
+//!@SYMTestExpectedResults	section 4.2).
+//!@SYMREQ					CR1328
+//!@SYMDEF 					DEF141094
+RUN_UTILS CopyFile z:\resource\versions\deviceattributes_incomplete.ini c:\versions\deviceattributes.ini
+RUN_PROGRAM -1 setcap sysutilplugin_test.dll 00000030 C:\sys\bin\sysutilplugin.dll
+
+RUN_TEST_STEP 100 te_sysutilburtestsuite SysUtilTestVersionInfoPreBackupRestoreStep
+RUN_TEST_STEP -1 BURTestServer TestBackupAsync z:\testdata\inifiles\te_sysutilburtestdata.ini bur
+RUN_TEST_STEP -1 BURTestServer TestRestoreAsync z:\testdata\inifiles\te_sysutilburtestdata.ini bur
+RUN_TEST_STEP 100 te_sysutilburtestsuite SysUtilTestVersionInfoPostBackupRestoreStep
+
+RUN_PROGRAM -1 setcap sysutilplugin_test.dll 00000000 C:\sys\bin\sysutilplugin.dll
+RUN_UTILS MakeReadWrite c:\versions\deviceattributes.ini
+RUN_UTILS DeleteFile c:\versions\deviceattributes.ini
+END_TESTCASE				BASESRVCS-BAFL-CT-4074
+
+
+RUN_UTILS DeleteDirectory c:\versions

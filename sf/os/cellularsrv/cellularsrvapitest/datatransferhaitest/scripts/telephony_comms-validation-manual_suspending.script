@@ -1,0 +1,666 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName telephony_comms-validation-manual_suspending
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+// 
+// Tests all public elements of the Rsocket, RSocketServ, Rconnection, RHostResolver, RMmCustomAPi, RMobileCall, RMobileLine, RMobilePhone and RTelServer
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: Rsocket, RSocketServ, Rconnection, RHostResolver, RMmCustomAPi, RMobileCall, RMobileLine, RMobilePhone and RTelServer
+// The tests are fully automated.
+//
+
+
+
+LOAD_SUITE t_esock_etelmm
+
+
+
+
+
+START_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0001
+
+//!@SYMTestCaseID		TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0001
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                TInt RSocketServ::Connect (TUint aMessageSlots=KESockDefaultMessageSlots);
+//!                void RHostResolver:: GetByName(const TDesC {ref}aName, TNameEntry {ref}aResult, TRequestStatus {ref}aStatus);
+//!                void Rconnection :: Start(TConnPref {ref}aPref, TRequestStatus {ref}aStatus);
+//!                void RSocket:: RecvOneOrMore(TDes8 {ref}aDesc, TUint flags, TRequestStatus {ref}aStatus, TSockXfrLength {ref}aLen);
+//! TEST_BLOCK 002
+//!                TInt RMobileCall::OpenExistingCall(RLine {ref}aLine, const TDesC {ref}aName);
+//!                void RMobileCall::AnswerIncomingCall(TRequestStatus {ref}aStatus);
+//!                void RMobileCall::HangUp(TRequestStatus {ref}aStatus) const;
+//!@SYMAuthor			ddamian
+//!@SYMCreationDate		21/4/2008
+//!@SYMTestCaseDesc		PSD Data Transfer GSM (3MB Verified) then MT Voice Call. Data transfer is suspended while incoming voice call is answered and until it is ended.
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer=telServer1; Phone=0)
+//!                3. Initialize custom API (RMobilePhone = rMobilePhone1)
+//!                4. Change mode to GSM (ChangeMode = GSM)
+//!                5. Get the current mode
+//!                6. Check the mode is GSM (CheckMode = GSM)
+//!                7.- OpenLine (Line = Data; RMobilePhone = rMobilePhone1)
+//!                8.- ConnectSocketServ
+//!                9.- OpenRConnection (IAP = IAPGPRS; RSocketServ = rSocketServ1)
+//!                10.- SelectOutgoingIAP (IAP = IAPGPRS)
+//!                11.- StartRConnection (Retries = 1)
+//!                12.- OpenHostResolver (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                13.- GetByName (Address = {URL,address1})
+//!                14.- CloseHostResolver
+//!                15.-RSocketOpen (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                16.-RSocketConnect (Port = 80; Address = {URL,address1}; RHostResolver = rHostResolver1)
+//!                17.-WriteRequest (File = /dy/big/3mb-1.txt; Protocol = HTTP)
+//!                18.-StartFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0001.txt)
+//!                19.-StartDealer (DataDealer = 0)
+//!                20.-CheckHSDPA (HSDPA = )
+//!                21.-DownloadToFile (Protocol = HTTP; Save = {DRIVES,SysDrive}\3mb-1-tc-0001.txt; DataDealer = 0; Duration = -1)
+//!                22.-EndFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0001.txt)
+//!                23.-CalcDnloadStats (Duration = -1; MinSpeed = -1)
+//!                24.-RSocketShutDown
+//!                25.-RSocketClose
+//!                26.-VerifyData (VerifyType = MD5; VerifyFile = {DRIVES,SysDrive}\3mb-1-tc-0001.txt; Checksum = 7fae292c77026cbb5a78a7da499032c5 )
+//!                27.-StopRConnection
+//!                28.-CloseRConnection
+//!                29.-CloseLine
+//!                30.-CloseSocketServ
+//!                31.Close custom API
+//!                32.Close mobile phone
+//!                33.Close telephony server
+//! TEST_BLOCK 002
+//!                1. Connect to TelServer
+//!                2. Open RMobilePhone (RTelServer = telServer1; Phone=0)
+//!                3. Open RMmCustomApi (RMobilePhone = rMobilePhone1)
+//!                4. Open line (Line = Voice1; RMobilePhone = rMobilePhone1)
+//!                5. Notify incoming call (Call = 1)
+//!                6. Open the existing call (RMobileLine=mobileLine1; Call=1)
+//!                7. Get VoiceCall capabilities for the call (RMobileLine=mobileLine1; Capabilities = VoiceCall; Call = 1)
+//!                8. Answer the incoming call (RMobileLine=mobileLine1; Call = 1)
+//!                9. Answer the incoming call result (RMobileLine=mobileLine1; Call = 1)
+//!                10. Get call duration (RMobileLine=mobileLine1; Call = 1)
+//!                11. Hang up (RMobileLine=mobileLine1; Call = 1)
+//!                12. Close call (RMobileLine=mobileLine1; Call = 1)
+//!                13. Close line
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Connect to a GPRS Access Point in GSM mode,  download a 3 MB file and, while downloading, receive an incoming call. The phone should suspend the download and answer the incoming voice call automatically. After hanging up, the GPRS download should continue from where it was suspended. Verify received file integrity using checksum. 
+//!                
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RSocketServ		rSocketServ1
+		CREATE_OBJECT	RSocket		rSocket1
+		CREATE_OBJECT	RHostResolver		rHostResolver1
+		CREATE_OBJECT	RConnection		rConnection1
+		CREATE_OBJECT	DataVerify		dataVerify1
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0001-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0001-Open_command03
+		COMMAND		mmCustomAPI1		SetSystemNetworkMode			TELEPHONY-Comms-Manual-Suspending-0001-0001-SetSystemNetworkMode_command04
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		ModeCheck			TELEPHONY-Comms-Manual-Suspending-0001-0001-ModeCheck_command06
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0001-Open_command07
+		COMMAND		rSocketServ1		Connect
+		COMMAND		rConnection1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0001-Open_command09
+		COMMAND		rConnection1		SelectOutgoingIAP			TELEPHONY-Comms-Manual-Suspending-0001-0001-SelectOutgoingIAP_command10
+		COMMAND		rConnection1		Start			TELEPHONY-Comms-Manual-Suspending-0001-0001-Start_command11
+		COMMAND		rHostResolver1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0001-Open_command12
+		COMMAND		rHostResolver1		GetByName			TELEPHONY-Comms-Manual-Suspending-0001-0001-GetByName_command13
+		OUTSTANDING
+		COMMAND		rHostResolver1		Close
+		COMMAND		rSocket1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0001-Open_command15
+		COMMAND		rSocket1		Connect			TELEPHONY-Comms-Manual-Suspending-0001-0001-Connect_command16
+		OUTSTANDING
+		COMMAND		rSocket1		WriteRequest			TELEPHONY-Comms-Manual-Suspending-0001-0001-WriteRequest_command17
+		OUTSTANDING
+		COMMAND		rSocket1		StartFile			TELEPHONY-Comms-Manual-Suspending-0001-0001-StartFile_command18
+		COMMAND		rSocket1		StartDealer			TELEPHONY-Comms-Manual-Suspending-0001-0001-StartDealer_command19
+		COMMAND		rSocket1		CheckHSDPA			TELEPHONY-Comms-Manual-Suspending-0001-0001-CheckHSDPA_command20
+		COMMAND		rSocket1		RecvOneOrMore			TELEPHONY-Comms-Manual-Suspending-0001-0001-RecvOneOrMore_command21
+		COMMAND		rSocket1		EndFile			TELEPHONY-Comms-Manual-Suspending-0001-0001-EndFile_command22
+		COMMAND		rSocket1		CalcDnloadStats			TELEPHONY-Comms-Manual-Suspending-0001-0001-CalcDnloadStats_command23
+		COMMAND		rSocket1		ShutDown
+		OUTSTANDING
+		COMMAND		rSocket1		Close
+		COMMAND		dataVerify1		VerifyData			TELEPHONY-Comms-Manual-Suspending-0001-0001-VerifyData_command26
+		COMMAND		rConnection1		Stop
+		COMMAND		rConnection1		Close
+		COMMAND		mobileLine1		Close
+		COMMAND		rSocketServ1		Close
+		COMMAND		mmCustomAPI1		Close
+		COMMAND		rMobilePhone1		Close
+		COMMAND		telServer1		Close
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		DELAY 40000000
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0002-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0002-Open_command03
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0001-0002-Open_command04
+		COMMAND		mobileLine1		NotifyIncomingCall			TELEPHONY-Comms-Manual-Suspending-0001-0002-NotifyIncomingCall_command05
+		OUTSTANDING
+		COMMAND		rMobileCall1		OpenExistingCall			TELEPHONY-Comms-Manual-Suspending-0001-0002-OpenExistingCall_command06
+		COMMAND		rMobileCall1		GetCaps			TELEPHONY-Comms-Manual-Suspending-0001-0002-GetCaps_command07
+		COMMAND		rMobileCall1		AnswerIncomingCall			TELEPHONY-Comms-Manual-Suspending-0001-0002-AnswerIncomingCall_command08
+		OUTSTANDING
+		COMMAND		rMobileCall1		AnswerIncomingCallPost			TELEPHONY-Comms-Manual-Suspending-0001-0002-AnswerIncomingCallPost_command09
+		OUTSTANDING
+		COMMAND		rMobileCall1		GetCallDuration			TELEPHONY-Comms-Manual-Suspending-0001-0002-GetCallDuration_command10
+		COMMAND		rMobileCall1		HangUp			TELEPHONY-Comms-Manual-Suspending-0001-0002-HangUp_command11
+		OUTSTANDING
+		COMMAND		rMobileCall1		Close			TELEPHONY-Comms-Manual-Suspending-0001-0002-Close_command12
+		COMMAND		mobileLine1		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0001
+
+
+
+
+START_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0002
+
+//!@SYMTestCaseID		TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0002
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                TInt RSocketServ::Connect (TUint aMessageSlots=KESockDefaultMessageSlots);
+//!                void RHostResolver:: GetByName(const TDesC {ref}aName, TNameEntry {ref}aResult, TRequestStatus {ref}aStatus);
+//!                void Rconnection :: Start(TConnPref {ref}aPref, TRequestStatus {ref}aStatus);
+//!                void RSocket:: RecvOneOrMore(TDes8 {ref}aDesc, TUint flags, TRequestStatus {ref}aStatus, TSockXfrLength {ref}aLen);
+//! TEST_BLOCK 002
+//!                TInt RMobileCall::Dial(const TTelNumberC {ref}aTelNumber) const;
+//!                void RMobileCall:: HangUp(TRequestStatus {ref}aStatus) const;
+//!@SYMAuthor			ddamian
+//!@SYMCreationDate		21/4/2008
+//!@SYMTestCaseDesc		PSD Data Transfer GSM (3MB Verified) then MO Voice Call. Data transfer is suspended while voice call is made and until it is ended.
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer = telServer1; Phone=0)
+//!                3. Initialize custom API (RMobilePhone = rMobilePhone1)
+//!                4. Change mode to GSM (ChangeMode = GSM)
+//!                5. Get the current mode
+//!                6. Check the mode is GSM (CheckMode = GSM)
+//!                7.- OpenLine (Line = Data; RMobilePhone = rMobilePhone1)
+//!                8.- ConnectSocketServ
+//!                9.- OpenRConnection (IAP = IAPGPRS; RSocketServ = rSocketServ1)
+//!                10.- SelectOutgoingIAP (IAP = IAPGPRS)
+//!                11.- StartRConnection (Retries = 1)
+//!                12.- OpenHostResolver (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                13.- GetByName (Address = {URL,address1})
+//!                14.- CloseHostResolver
+//!                15.-RSocketOpen (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                16.-RSocketConnect (Port = 80; Address = {URL,address1}; RHostResolver = rHostResolver1)
+//!                17.-WriteRequest (File = /dy/big/3mb-1.txt; Protocol = HTTP)
+//!                18.-StartFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0002.txt)
+//!                19.-StartDealer (DataDealer = 0)
+//!                20.-CheckHSDPA (HSDPA = )
+//!                21.-DownloadToFile (Protocol = HTTP; Save = {DRIVES,SysDrive}\3mb-1-tc-0002.txt; DataDealer = 0; Duration = -1)
+//!                22.-EndFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0002.txt)
+//!                23.-CalcDnloadStats (Duration = -1; MinSpeed = -1)
+//!                24.-RSocketShutDown
+//!                25.-RSocketClose
+//!                26.-VerifyData (VerifyType = MD5; VerifyFile = {DRIVES,SysDrive}\3mb-1-tc-0002.txt; Checksum = 7fae292c77026cbb5a78a7da499032c5 )
+//!                27.-StopRConnection
+//!                28.-CloseRConnection
+//!                29.-CloseLine
+//!                30.-CloseSocketServ
+//!                31.Close custom API
+//!                32.Close mobile phone
+//!                33.Close telephony server
+//! TEST_BLOCK 002
+//!                1. Connect to TelServer
+//!                2. Open RMobilePhone (RTelServer = telServer1; Phone=0)
+//!                3. Open RMmCustomApi (RMobilePhone = rMobilePhone1)
+//!                4. Open line (Line = Voice1;RMobilePhone = rMobilePhone1)
+//!                5. Open new call (RMobileLine = mobileLine1; Call = 1)
+//!                6. Get VoiceCall capabilities for the call (RMobileLine = mobileLine1; Capabilities = VoiceCall; Call = 1)
+//!                7. Dial (RMobileLine = mobileLine1; Call = 1; PhoneNumber = {PHONENUMBERS, PhoneNumber1};CallTimeout = 10)
+//!                8. Cancel dial if timeout is reached (RMobileLine = mobileLine1; Call = 1)
+//!                9. Get call duration (RMobileLine = mobileLine1; Call = 1)
+//!                10. Hang up (RMobileLine = mobileLine1; Call = 1)
+//!                11. Close call (RMobileLine = mobileLine1; Call = 1)
+//!                12. Close line
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Connect to a GPRS Access Point in GSM mode,  download a 3 MB file and, while downloading, make an outgoing voice call. The phone should suspend the download and make the voice call automatically. After hanging up, the GPRS download should continue from where it was suspended. Verify received file integrity using checksum.
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RSocketServ		rSocketServ1
+		CREATE_OBJECT	RSocket		rSocket1
+		CREATE_OBJECT	RHostResolver		rHostResolver1
+		CREATE_OBJECT	RConnection		rConnection1
+		CREATE_OBJECT	DataVerify		dataVerify1
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0001-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0001-Open_command03
+		COMMAND		mmCustomAPI1		SetSystemNetworkMode			TELEPHONY-Comms-Manual-Suspending-0002-0001-SetSystemNetworkMode_command04
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		ModeCheck			TELEPHONY-Comms-Manual-Suspending-0002-0001-ModeCheck_command06
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0001-Open_command07
+		COMMAND		rSocketServ1		Connect
+		COMMAND		rConnection1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0001-Open_command09
+		COMMAND		rConnection1		SelectOutgoingIAP			TELEPHONY-Comms-Manual-Suspending-0002-0001-SelectOutgoingIAP_command10
+		COMMAND		rConnection1		Start			TELEPHONY-Comms-Manual-Suspending-0002-0001-Start_command11
+		COMMAND		rHostResolver1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0001-Open_command12
+		COMMAND		rHostResolver1		GetByName			TELEPHONY-Comms-Manual-Suspending-0002-0001-GetByName_command13
+		OUTSTANDING
+		COMMAND		rHostResolver1		Close
+		COMMAND		rSocket1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0001-Open_command15
+		COMMAND		rSocket1		Connect			TELEPHONY-Comms-Manual-Suspending-0002-0001-Connect_command16
+		OUTSTANDING
+		COMMAND		rSocket1		WriteRequest			TELEPHONY-Comms-Manual-Suspending-0002-0001-WriteRequest_command17
+		OUTSTANDING
+		COMMAND		rSocket1		StartFile			TELEPHONY-Comms-Manual-Suspending-0002-0001-StartFile_command18
+		COMMAND		rSocket1		StartDealer			TELEPHONY-Comms-Manual-Suspending-0002-0001-StartDealer_command19
+		COMMAND		rSocket1		CheckHSDPA			TELEPHONY-Comms-Manual-Suspending-0002-0001-CheckHSDPA_command20
+		COMMAND		rSocket1		RecvOneOrMore			TELEPHONY-Comms-Manual-Suspending-0002-0001-RecvOneOrMore_command21
+		COMMAND		rSocket1		EndFile			TELEPHONY-Comms-Manual-Suspending-0002-0001-EndFile_command22
+		COMMAND		rSocket1		CalcDnloadStats			TELEPHONY-Comms-Manual-Suspending-0002-0001-CalcDnloadStats_command23
+		COMMAND		rSocket1		ShutDown
+		OUTSTANDING
+		COMMAND		rSocket1		Close
+		COMMAND		dataVerify1		VerifyData			TELEPHONY-Comms-Manual-Suspending-0002-0001-VerifyData_command26
+		COMMAND		rConnection1		Stop
+		COMMAND		rConnection1		Close
+		COMMAND		mobileLine1		Close
+		COMMAND		rSocketServ1		Close
+		COMMAND		mmCustomAPI1		Close
+		COMMAND		rMobilePhone1		Close
+		COMMAND		telServer1		Close
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		DELAY 40000000
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0002-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0002-Open_command03
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0002-0002-Open_command04
+		COMMAND		rMobileCall1		OpenNewCall			TELEPHONY-Comms-Manual-Suspending-0002-0002-OpenNewCall_command05
+		COMMAND		rMobileCall1		GetCaps			TELEPHONY-Comms-Manual-Suspending-0002-0002-GetCaps_command06
+		COMMAND		rMobileCall1		Dial			TELEPHONY-Comms-Manual-Suspending-0002-0002-Dial_command07
+		OUTSTANDING
+		COMMAND		rMobileCall1		DialCancel			TELEPHONY-Comms-Manual-Suspending-0002-0002-DialCancel_command08
+		COMMAND		rMobileCall1		GetCallDuration			TELEPHONY-Comms-Manual-Suspending-0002-0002-GetCallDuration_command09
+		COMMAND		rMobileCall1		HangUp			TELEPHONY-Comms-Manual-Suspending-0002-0002-HangUp_command10
+		OUTSTANDING
+		COMMAND		rMobileCall1		Close			TELEPHONY-Comms-Manual-Suspending-0002-0002-Close_command11
+		COMMAND		mobileLine1		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0002
+
+
+
+
+START_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0003
+
+//!@SYMTestCaseID		TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0003
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                TInt RSocketServ::Connect (TUint aMessageSlots=KESockDefaultMessageSlots);
+//!                void RHostResolver:: GetByName(const TDesC {ref}aName, TNameEntry {ref}aResult, TRequestStatus {ref}aStatus);
+//!                void Rconnection :: Start(TConnPref {ref}aPref, TRequestStatus {ref}aStatus);
+//!                void RSocket:: RecvOneOrMore(TDes8 {ref}aDesc, TUint flags, TRequestStatus {ref}aStatus, TSockXfrLength {ref}aLen);
+//! TEST_BLOCK 002
+//!                TInt RMobileCall::Dial(const TTelNumberC {ref}aTelNumber) const;
+//!                void RMobileCall:: HangUp(TRequestStatus {ref}aStatus) const;
+//!@SYMAuthor			ddamian
+//!@SYMCreationDate		21/4/2008
+//!@SYMTestCaseDesc		PSD Data Transfer WCDMA (3MB Verified) then MO Voice Call. Data transfer is suspended while voice call is made and until it is ended.
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer = telServer1; Phone=0)
+//!                3. Initialize custom API (RMobilePhone = rMobilePhone1)
+//!                4. Change mode to WCDMA (ChangeMode = WCDMA)
+//!                5. Get the current mode
+//!                6. Check the mode is WCDMA (CheckMode = WCDMA)
+//!                7.- OpenLine (Line = Data; RMobilePhone = rMobilePhone1)
+//!                8.- ConnectSocketServ
+//!                9.- OpenRConnection (IAP = IAPGPRS; RSocketServ = rSocketServ1)
+//!                10.- SelectOutgoingIAP (IAP = IAPGPRS)
+//!                11.- StartRConnection (Retries = 1)
+//!                12.- OpenHostResolver (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                13.- GetByName (Address = {URL,address1})
+//!                14.- CloseHostResolver
+//!                15.-RSocketOpen (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                16.-RSocketConnect (Port = 80; Address = {URL,address1}; RHostResolver = rHostResolver1)
+//!                17.-WriteRequest (File = /dy/big/3mb-1.txt; Protocol = HTTP)
+//!                18.-StartFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0003.txt)
+//!                19.-StartDealer (DataDealer = 0)
+//!                20.-CheckHSDPA (HSDPA = )
+//!                21.-DownloadToFile (Protocol = HTTP; Save = {DRIVES,SysDrive}\3mb-1-tc-0003.txt; DataDealer = 0; Duration = -1)
+//!                22.-EndFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0003.txt)
+//!                23.-CalcDnloadStats (Duration = -1; MinSpeed = -1)
+//!                24.-RSocketShutDown
+//!                25.-RSocketClose
+//!                26.-VerifyData (VerifyType = MD5; VerifyFile = {DRIVES,SysDrive}\3mb-1-tc-0003.txt; Checksum = 7fae292c77026cbb5a78a7da499032c5 )
+//!                27.-StopRConnection
+//!                28.-CloseRConnection
+//!                29.-CloseLine
+//!                30.-CloseSocketServ
+//!                31.Close custom API
+//!                32.Close mobile phone
+//!                33.Close telephony server
+//! TEST_BLOCK 002
+//!                1. Connect to TelServer
+//!                2. Open RMobilePhone (RTelServer = telServer1; Phone=0)
+//!                3. Open RMmCustomApi (RMobilePhone = rMobilePhone1)
+//!                4. Open line (Line = Voice1;RMobilePhone = rMobilePhone1)
+//!                5. Open new call (RMobileLine = mobileLine1; Call = 1)
+//!                6. Get VoiceCall capabilities for the call (RMobileLine = mobileLine1; Capabilities = VoiceCall; Call = 1)
+//!                7. Dial (RMobileLine = mobileLine1; Call = 1; PhoneNumber ={PHONENUMBERS, PhoneNumber1};CallTimeout = 10)
+//!                8. Cancel dial if timeout is reached (RMobileLine = mobileLine1; Call = 1)
+//!                9. Get call duration (RMobileLine = mobileLine1; Call = 1)
+//!                10. Hang up (RMobileLine = mobileLine1; Call = 1)
+//!                11. Close call (RMobileLine = mobileLine1; Call = 1)
+//!                12. Close line
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Connect to a GPRS Access Point in WCDMA mode,  download a 3 MB file and, while downloading, make an outgoing voice call. The phone should suspend the download and make the voice call automatically. After hanging up, the GPRS download should continue from where it was suspended. Verify received file integrity using checksum.
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RSocketServ		rSocketServ1
+		CREATE_OBJECT	RSocket		rSocket1
+		CREATE_OBJECT	RHostResolver		rHostResolver1
+		CREATE_OBJECT	RConnection		rConnection1
+		CREATE_OBJECT	DataVerify		dataVerify1
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0001-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0001-Open_command03
+		COMMAND		mmCustomAPI1		SetSystemNetworkMode			TELEPHONY-Comms-Manual-Suspending-0003-0001-SetSystemNetworkMode_command04
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		ModeCheck			TELEPHONY-Comms-Manual-Suspending-0003-0001-ModeCheck_command06
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0001-Open_command07
+		COMMAND		rSocketServ1		Connect
+		COMMAND		rConnection1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0001-Open_command09
+		COMMAND		rConnection1		SelectOutgoingIAP			TELEPHONY-Comms-Manual-Suspending-0003-0001-SelectOutgoingIAP_command10
+		COMMAND		rConnection1		Start			TELEPHONY-Comms-Manual-Suspending-0003-0001-Start_command11
+		COMMAND		rHostResolver1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0001-Open_command12
+		COMMAND		rHostResolver1		GetByName			TELEPHONY-Comms-Manual-Suspending-0003-0001-GetByName_command13
+		OUTSTANDING
+		COMMAND		rHostResolver1		Close
+		COMMAND		rSocket1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0001-Open_command15
+		COMMAND		rSocket1		Connect			TELEPHONY-Comms-Manual-Suspending-0003-0001-Connect_command16
+		OUTSTANDING
+		COMMAND		rSocket1		WriteRequest			TELEPHONY-Comms-Manual-Suspending-0003-0001-WriteRequest_command17
+		OUTSTANDING
+		COMMAND		rSocket1		StartFile			TELEPHONY-Comms-Manual-Suspending-0003-0001-StartFile_command18
+		COMMAND		rSocket1		StartDealer			TELEPHONY-Comms-Manual-Suspending-0003-0001-StartDealer_command19
+		COMMAND		rSocket1		CheckHSDPA			TELEPHONY-Comms-Manual-Suspending-0003-0001-CheckHSDPA_command20
+		COMMAND		rSocket1		RecvOneOrMore			TELEPHONY-Comms-Manual-Suspending-0003-0001-RecvOneOrMore_command21
+		COMMAND		rSocket1		EndFile			TELEPHONY-Comms-Manual-Suspending-0003-0001-EndFile_command22
+		COMMAND		rSocket1		CalcDnloadStats			TELEPHONY-Comms-Manual-Suspending-0003-0001-CalcDnloadStats_command23
+		COMMAND		rSocket1		ShutDown
+		OUTSTANDING
+		COMMAND		rSocket1		Close
+		COMMAND		dataVerify1		VerifyData			TELEPHONY-Comms-Manual-Suspending-0003-0001-VerifyData_command26
+		COMMAND		rConnection1		Stop
+		COMMAND		rConnection1		Close
+		COMMAND		mobileLine1		Close
+		COMMAND		rSocketServ1		Close
+		COMMAND		mmCustomAPI1		Close
+		COMMAND		rMobilePhone1		Close
+		COMMAND		telServer1		Close
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		DELAY 40000000
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0002-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0002-Open_command03
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0003-0002-Open_command04
+		COMMAND		rMobileCall1		OpenNewCall			TELEPHONY-Comms-Manual-Suspending-0003-0002-OpenNewCall_command05
+		COMMAND		rMobileCall1		GetCaps			TELEPHONY-Comms-Manual-Suspending-0003-0002-GetCaps_command06
+		COMMAND		rMobileCall1		Dial			TELEPHONY-Comms-Manual-Suspending-0003-0002-Dial_command07
+		OUTSTANDING
+		COMMAND		rMobileCall1		DialCancel			TELEPHONY-Comms-Manual-Suspending-0003-0002-DialCancel_command08
+		COMMAND		rMobileCall1		GetCallDuration			TELEPHONY-Comms-Manual-Suspending-0003-0002-GetCallDuration_command09
+		COMMAND		rMobileCall1		HangUp			TELEPHONY-Comms-Manual-Suspending-0003-0002-HangUp_command10
+		OUTSTANDING
+		COMMAND		rMobileCall1		Close			TELEPHONY-Comms-Manual-Suspending-0003-0002-Close_command11
+		COMMAND		mobileLine1		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0003
+
+
+
+
+START_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0004
+
+//!@SYMTestCaseID		TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0004
+//!@SYMAPI
+//! TEST_BLOCK 001
+//!                TInt RSocketServ::Connect (TUint aMessageSlots=KESockDefaultMessageSlots);
+//!                void RHostResolver:: GetByName(const TDesC {ref}aName, TNameEntry {ref}aResult, TRequestStatus {ref}aStatus);
+//!                void Rconnection :: Start(TConnPref {ref}aPref, TRequestStatus {ref}aStatus);
+//!                void RSocket:: RecvOneOrMore(TDes8 {ref}aDesc, TUint flags, TRequestStatus {ref}aStatus, TSockXfrLength {ref}aLen);
+//! TEST_BLOCK 002
+//!                TInt RMobileCall::OpenExistingCall(RLine {ref}aLine, const TDesC {ref}aName);
+//!                void RMobileCall::AnswerIncomingCall(TRequestStatus {ref}aStatus);
+//!                void RMobileCall::HangUp(TRequestStatus {ref}aStatus) const;
+//!@SYMAuthor			ddamian
+//!@SYMCreationDate		21/4/2008
+//!@SYMTestCaseDesc		PSD Data Transfer WCDMA (3MB Verified) then MT Voice Call. Data transfer is suspended while incoming voice call is answered and until it is ended.
+//!@SYMTestActions
+//! TEST_BLOCK 001
+//!                1. Open telephony server
+//!                2. Open mobile phone (RTelServer = telServer1; Phone=0)
+//!                3. Initialize custom API (RMobilePhone = rMobilePhone1)
+//!                4. Change mode to WCDMA (ChangeMode = WCDMA)
+//!                5. Get the current mode
+//!                6. Check the mode is WCDMA (CheckMode = WCDMA)
+//!                7.- OpenLine (Line = Data; RMobilePhone = rMobilePhone1)
+//!                8.- ConnectSocketServ
+//!                9.- OpenRConnection (IAP = IAPGPRS; RSocketServ = rSocketServ1)
+//!                10.- SelectOutgoingIAP (IAP = IAPGPRS)
+//!                11.- StartRConnection (Retries = 1)
+//!                12.- OpenHostResolver (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                13.- GetByName (Address = {URL,address1})
+//!                14.- CloseHostResolver
+//!                15.-RSocketOpen (RConnection = rConnection1; RSocketServ = rSocketServ1)
+//!                16.-RSocketConnect (Port = 80; Address = {URL,address1}; RHostResolver = rHostResolver1)
+//!                17.-WriteRequest (File = /dy/big/3mb-1.txt; Protocol = HTTP)
+//!                18.-StartFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0004.txt)
+//!                19.-StartDealer (DataDealer = 0)
+//!                20.-CheckHSDPA (HSDPA = )
+//!                21.-DownloadToFile (Protocol = HTTP; Save = {DRIVES,SysDrive}\3mb-1-tc-0004.txt; DataDealer = 0; Duration = -1)
+//!                22.-EndFile (Save = {DRIVES,SysDrive}\3mb-1-tc-0004.txt)
+//!                23.-CalcDnloadStats (Duration = -1; MinSpeed = -1)
+//!                24.-RSocketShutDown
+//!                25.-RSocketClose
+//!                26.-VerifyData (VerifyType = MD5; VerifyFile = {DRIVES,SysDrive}\3mb-1-tc-0004.txt; Checksum = 7fae292c77026cbb5a78a7da499032c5 )
+//!                27.-StopRConnection
+//!                28.-CloseRConnection
+//!                29.-CloseLine
+//!                30.-CloseSocketServ
+//!                31.Close custom API
+//!                32.Close mobile phone
+//!                33.Close telephony server
+//! TEST_BLOCK 002
+//!                1. Connect to TelServer
+//!                2. Open RMobilePhone (RTelServer = telServer1; Phone=0)
+//!                3. Open RMmCustomApi (RMobilePhone = rMobilePhone1)
+//!                4. Open line (Line = Voice1; RMobilePhone = rMobilePhone1)
+//!                5. Notify incoming call (Call = 1)
+//!                6. Open the existing call (RMobileLine=mobileLine1; Call=1)
+//!                7. Get VoiceCall capabilities for the call (RMobileLine=mobileLine1; Capabilities = VoiceCall; Call = 1)
+//!                8. Answer the incoming call (RMobileLine=mobileLine1; Call = 1)
+//!                9. Answer the incoming call result (RMobileLine=mobileLine1; Call = 1)
+//!                10. Get call duration (RMobileLine=mobileLine1; Call = 1)
+//!                11. Hang up (RMobileLine=mobileLine1; Call = 1)
+//!                12. Close call (RMobileLine=mobileLine1; Call = 1)
+//!                13. Close line
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		high
+//!@SYMTestExpectedResults
+//!                Connect to a GPRS Access Point in WCDMA mode,  download a 3 MB file and, while downloading, receive an incoming call. The phone should suspend the download and answer the incoming voice call automatically. After hanging up, the GPRS download should continue from where it was suspended. Verify received file integrity using checksum. 
+//!                
+//!@SYMTestType			CIT
+
+
+	CONCURRENT
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RSocketServ		rSocketServ1
+		CREATE_OBJECT	RSocket		rSocket1
+		CREATE_OBJECT	RHostResolver		rHostResolver1
+		CREATE_OBJECT	RConnection		rConnection1
+		CREATE_OBJECT	DataVerify		dataVerify1
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0001-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0001-Open_command03
+		COMMAND		mmCustomAPI1		SetSystemNetworkMode			TELEPHONY-Comms-Manual-Suspending-0004-0001-SetSystemNetworkMode_command04
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		GetCurrentSystemNetworkModes
+		OUTSTANDING
+		COMMAND		mmCustomAPI1		ModeCheck			TELEPHONY-Comms-Manual-Suspending-0004-0001-ModeCheck_command06
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0001-Open_command07
+		COMMAND		rSocketServ1		Connect
+		COMMAND		rConnection1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0001-Open_command09
+		COMMAND		rConnection1		SelectOutgoingIAP			TELEPHONY-Comms-Manual-Suspending-0004-0001-SelectOutgoingIAP_command10
+		COMMAND		rConnection1		Start			TELEPHONY-Comms-Manual-Suspending-0004-0001-Start_command11
+		COMMAND		rHostResolver1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0001-Open_command12
+		COMMAND		rHostResolver1		GetByName			TELEPHONY-Comms-Manual-Suspending-0004-0001-GetByName_command13
+		OUTSTANDING
+		COMMAND		rHostResolver1		Close
+		COMMAND		rSocket1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0001-Open_command15
+		COMMAND		rSocket1		Connect			TELEPHONY-Comms-Manual-Suspending-0004-0001-Connect_command16
+		OUTSTANDING
+		COMMAND		rSocket1		WriteRequest			TELEPHONY-Comms-Manual-Suspending-0004-0001-WriteRequest_command17
+		OUTSTANDING
+		COMMAND		rSocket1		StartFile			TELEPHONY-Comms-Manual-Suspending-0004-0001-StartFile_command18
+		COMMAND		rSocket1		StartDealer			TELEPHONY-Comms-Manual-Suspending-0004-0001-StartDealer_command19
+		COMMAND		rSocket1		CheckHSDPA			TELEPHONY-Comms-Manual-Suspending-0004-0001-CheckHSDPA_command20
+		COMMAND		rSocket1		RecvOneOrMore			TELEPHONY-Comms-Manual-Suspending-0004-0001-RecvOneOrMore_command21
+		COMMAND		rSocket1		EndFile			TELEPHONY-Comms-Manual-Suspending-0004-0001-EndFile_command22
+		COMMAND		rSocket1		CalcDnloadStats			TELEPHONY-Comms-Manual-Suspending-0004-0001-CalcDnloadStats_command23
+		COMMAND		rSocket1		ShutDown
+		OUTSTANDING
+		COMMAND		rSocket1		Close
+		COMMAND		dataVerify1		VerifyData			TELEPHONY-Comms-Manual-Suspending-0004-0001-VerifyData_command26
+		COMMAND		rConnection1		Stop
+		COMMAND		rConnection1		Close
+		COMMAND		mobileLine1		Close
+		COMMAND		rSocketServ1		Close
+		COMMAND		mmCustomAPI1		Close
+		COMMAND		rMobilePhone1		Close
+		COMMAND		telServer1		Close
+	END_TEST_BLOCK
+
+
+
+	START_TEST_BLOCK	3600	t_esock_etelmm	\mixed_technology\telephony_comms\telephony_comms-validation-manual_suspending.ini
+		CREATE_OBJECT	RMmCustomAPI		mmCustomAPI1
+		CREATE_OBJECT	RTelServer		telServer1
+		CREATE_OBJECT	RMobileLine		mobileLine1
+		CREATE_OBJECT	RMobilePhone		rMobilePhone1
+		CREATE_OBJECT	RMobileCall		rMobileCall1
+		DELAY 40000000
+		COMMAND		telServer1		Connect
+		COMMAND		rMobilePhone1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0002-Open_command02
+		COMMAND		mmCustomAPI1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0002-Open_command03
+		COMMAND		mobileLine1		Open			TELEPHONY-Comms-Manual-Suspending-0004-0002-Open_command04
+		COMMAND		mobileLine1		NotifyIncomingCall			TELEPHONY-Comms-Manual-Suspending-0004-0002-NotifyIncomingCall_command05
+		OUTSTANDING
+		COMMAND		rMobileCall1		OpenExistingCall			TELEPHONY-Comms-Manual-Suspending-0004-0002-OpenExistingCall_command06
+		COMMAND		rMobileCall1		GetCaps			TELEPHONY-Comms-Manual-Suspending-0004-0002-GetCaps_command07
+		COMMAND		rMobileCall1		AnswerIncomingCall			TELEPHONY-Comms-Manual-Suspending-0004-0002-AnswerIncomingCall_command08
+		OUTSTANDING
+		COMMAND		rMobileCall1		AnswerIncomingCallPost			TELEPHONY-Comms-Manual-Suspending-0004-0002-AnswerIncomingCallPost_command09
+		OUTSTANDING
+		COMMAND		rMobileCall1		GetCallDuration			TELEPHONY-Comms-Manual-Suspending-0004-0002-GetCallDuration_command10
+		COMMAND		rMobileCall1		HangUp			TELEPHONY-Comms-Manual-Suspending-0004-0002-HangUp_command11
+		OUTSTANDING
+		COMMAND		rMobileCall1		Close			TELEPHONY-Comms-Manual-Suspending-0004-0002-Close_command12
+		COMMAND		mobileLine1		Close
+	END_TEST_BLOCK
+END_TESTCASE TELEPHONY_COMMS-VALIDATION-MANUAL_SUSPENDING-0004
+
+
+DELAY 10000

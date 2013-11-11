@@ -1,0 +1,10 @@
+Horizontal accuracy=20;
+Vertical accuracy=30;
+TimeToFix min=0;
+TimeToFix max=0;
+Powreup time=0;
+Longitudede=130.0;
+Latitude=89.99;
+Speed=1000;
+Course=0.0;
+Deterministic=0;

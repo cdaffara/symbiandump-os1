@@ -1,0 +1,407 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the TBTAccessRequirements class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Cliff Chuang
+//! @SYMCreationDate			21/09/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	T_BTUserAPI	-SharedData
+DELAY		500
+
+// ****************************************************************************
+// TBTAccessRequirements - Slave (Auto Tests)
+// ****************************************************************************	
+
+START_TESTCASE	BT-USER-AccessRequirements-PublicApi-Passive-Slave-0001
+//! @SYMTestCaseID				BT-USER-AccessRequirements-PublicApi-Passive-Slave-0001
+//! @SYMAPI						CBluetoothSocket, TBTDevAddr, RHostResolver, TRfcommSockAddr, TBTAccessRequirements
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint
+//!								Set SetEncryption() to FALSE
+//!								Set SetDenied() to FALSE
+//!								Set SetPasskeyMinLength() to 4
+//!								Set SetAuthentication() to FALSE
+//!								Set SetAuthorisation() to FALSE
+//!								Connection creates with those setting successfully and test case passes without any error.
+//!								Uses API elements: 	SetEncryption(), SetDenied(), SetPasskeyMinLength(), SetAuthentication(), SetAuthorisation() from TBTAccessRequirements
+//!													NewL()1, Bind(), listen()1, Accept(), Shutdown() and NewL()4 from CBluetoothSocket
+//!													TBTDevAddr() from TBTDevAddr
+//!													Open(), SetHostName(), SetDiscoverable() from RHostResolver
+//!													TRfcommSockAddr(), SetFamily(), SetSecurity() and SetPort() from TRfcommSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Set the encryption requirement using SetEncryption() function (FALSE)
+//!								4. Set the denied requirement using SetDenied() function (FALSE)
+//!								5. Set the minimal length requrement for passkey using SetPasskeyMinLength() function (4)
+//!								6. Set the authentication requirement using SetAuthentication() function (FALSE)
+//!								7. Set the authorisation requirement using SetAuthorisation() function (FALSE)
+//!								8. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								9. Create an TRfcommSockAddr object
+//!								10. Set the Family to Bluetooth (257)
+//!								11. Set the security to TBTServiceSecurity
+//!								12. Set the port to the one matching the protocol to use
+//!								13. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								14. Call the listen()10 method of the CBluetoothSocket object
+//!								15. Create a new empty CBluetoothSocket using NewL()4
+//!								16. Create an TBTDevAddr object (slave)
+//!								17. Create and initialise an RHostResolver
+//!								18. Set Hostname (SlaveDevice) of the device
+//!								19. Set discover of the device
+//!								20. Accept the bluetooth connection
+//!								21. Shut down the CBluetoothSocket object
+//!								22. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Connection creates successfully and closes successfully.
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1
+			COMMAND		TBTServiceSecurity1	Construct
+			COMMAND		TBTServiceSecurity1	SetEncryption		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command1SetEncryption
+			COMMAND		TBTServiceSecurity1	SetDenied		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command2SetDenied
+			COMMAND		TBTServiceSecurity1	SetPasskeyMinLength	BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command3SetPasskeyMinLength
+			COMMAND		TBTServiceSecurity1	SetAuthentication	BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command4SetAuthentication
+			COMMAND		TBTServiceSecurity1	SetAuthorisation		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command5SetAuthorisation
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command3NewL
+			COMMAND		TRfcommSockAddr1	Construct		
+			COMMAND		TRfcommSockAddr1	SetFamily	BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command6SetFamily
+			COMMAND		TRfcommSockAddr1	SetSecurity	BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command6SetSecurity
+			COMMAND		TRfcommSockAddr1	SetPort		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-AccessRequirements-PublicApi-Passive-0001-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket
+			STORE	TRfcommSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-0001-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct		
+			COMMAND		TBTDevAddrLocal	OpenHostResolver	BT-USER-AccessRequirements-PublicApi-Passive-0001-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BT-USER-AccessRequirements-PublicApi-Passive-0001-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable		
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-0001-0002
+
+	START_SYNCHRONISED_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-0001-0003
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddr1	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-AccessRequirements-PublicApi-Passive-0001-0003command1Accept
+			OUTSTANDING	
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-0001-0003
+
+	START_SYNCHRONISED_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-0001-0004
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1
+			COMMAND		CBluetoothSessionSocket	Shutdown		BT-USER-AccessRequirements-PublicApi-Passive-0001-0004command1Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~		
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-AccessRequirements-PublicApi-Passive-0001-0004command4Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-0001-0004
+
+END_TESTCASE	BT-USER-AccessRequirements-PublicApi-Passive-Slave-0001
+
+
+// ****************************************************************************
+// TBTAccessRequirement - Slave (Manual Tests)
+// ****************************************************************************	
+// Connected
+
+START_TESTCASE	BT-USER-Access-PublicApi-Passive-Slave-0001
+//! @SYMTestCaseID				BT-USER-Access-PublicApi-Passive-Slave-0001
+//! @SYMAPI						CBluetoothSocket, TBTDevAddr, RHostResolver, TRfcommSockAddr, TBTAccessRequirements
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint
+//!								Set SetEncryption() to FALSE
+//!								Set SetDenied() to FALSE
+//!								Set SetPasskeyMinLength() to 4
+//!								Set SetAuthentication() to TRUE
+//!								Set SetAuthorisation() to FALSE
+//!								Passkey is asked first in slave and then in master while connecting. The min passkey lengthis specified as 4 in the passkey entrance window. The test case passes without any error.
+//!								Uses API elements: 	SetEncryption(), SetDenied(), SetPasskeyMinLength(), SetAuthentication(), SetAuthorisation() from TBTAccessRequirements
+//!													NewL()1, Bind(), listen()1, Accept(), Shutdown() and NewL()4 from CBluetoothSocket
+//!													TBTDevAddr() from TBTDevAddr
+//!													Open(), SetHostName(), SetDiscoverable() from RHostResolver
+//!													TRfcommSockAddr(), SetFamily(), SetSecurity() and SetPort() from TRfcommSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Set the encryption requirement using SetEncryption() function (FALSE)
+//!								4. Set the denied requirement using SetDenied() function (FALSE)
+//!								5. Set the minimal length requrement for passkey using SetPasskeyMinLength() function (4)
+//!								6. Set the authentication requirement using SetAuthentication() function (TRUE)
+//!								7. Set the authorisation requirement using SetAuthorisation() function (FALSE)
+//!								8. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								9. Create an TRfcommSockAddr object
+//!								10. Set the Family to Bluetooth (257)
+//!								11. Set the security to TBTServiceSecurity
+//!								12. Set the port to the one matching the protocol to use
+//!								13. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								14. Call the listen()10 method of the CBluetoothSocket object
+//!								15. Create a new empty CBluetoothSocket using NewL()4
+//!								16. Create an TBTDevAddr object (slave)
+//!								17. Create and initialise an RHostResolver
+//!								18. Set Hostname (SlaveDevice) of the device
+//!								19. Set discover of the device
+//!								20. Accept the bluetooth connection
+//!								21. Shut down the CBluetoothSocket object
+//!								22. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Pre-condition : no authenticated devices in both emulators.
+//!								Passkey is asked first in slave and then in master while connecting. The min passkey lengthis specified as 4 in the passkey entrance window.
+//!								In the master emulator, slave is seen as authenticated. In the slave emulator, master is seen as authenticated.
+//!								The test case passes without any error.
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1
+			COMMAND		TBTServiceSecurity1	Construct
+			COMMAND		TBTServiceSecurity1	SetEncryption		BT-USER-Access-PublicApi-Passive-0001-0001command1SetEncryption
+			COMMAND		TBTServiceSecurity1	SetDenied		BT-USER-Access-PublicApi-Passive-0001-0001command2SetDenied
+			COMMAND		TBTServiceSecurity1	SetPasskeyMinLength	BT-USER-Access-PublicApi-Passive-0001-0001command3SetPasskeyMinLength
+			COMMAND		TBTServiceSecurity1	SetAuthentication	BT-USER-Access-PublicApi-Passive-0001-0001command4SetAuthentication
+			COMMAND		TBTServiceSecurity1	SetAuthorisation		BT-USER-Access-PublicApi-Passive-0001-0001command5SetAuthorisation
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-Access-PublicApi-Passive-0001-0001command3NewL
+			COMMAND		TRfcommSockAddr1	Construct		
+			COMMAND		TRfcommSockAddr1	SetFamily		BT-USER-Access-PublicApi-Passive-0001-0001command6SetFamily
+			COMMAND		TRfcommSockAddr1	SetSecurity	BT-USER-Access-PublicApi-Passive-0001-0001command6SetSecurity
+			COMMAND		TRfcommSockAddr1	SetPort		BT-USER-Access-PublicApi-Passive-0001-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-Access-PublicApi-Passive-0001-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-Access-PublicApi-Passive-0001-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-Access-PublicApi-Passive-0001-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-Access-PublicApi-Passive-0001-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TRfcommSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0001-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct		
+			COMMAND		TBTDevAddrLocal	OpenHostResolver		BT-USER-Access-PublicApi-Passive-0001-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BT-USER-Access-PublicApi-Passive-0001-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable		
+			STORE	CBluetoothSocket1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0001-0002
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0001-0003
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddr1	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-Access-PublicApi-Passive-0001-0003command1Accept
+			OUTSTANDING	
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0001-0003
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0001-0004
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			COMMAND		CBluetoothSessionSocket	Shutdown		BT-USER-Access-PublicApi-Passive-0001-0004command1Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~		
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-Access-PublicApi-Passive-0001-0004command4Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0001-0004
+
+END_TESTCASE	BT-USER-Access-PublicApi-Passive-Slave-0001
+
+
+START_TESTCASE	BT-USER-Access-PublicApi-Passive-Slave-0002
+//! @SYMTestCaseID				BT-USER-Access-PublicApi-Passive-Slave-0002
+//! @SYMAPI						CBluetoothSocket, TBTDevAddr, RHostResolver, TRfcommSockAddr, TBTAccessRequirements
+//! @SYMTestCaseDesc			Set up a Bluetooth endpoint
+//!								Set SetEncryption() to FALSE
+//!								Set SetDenied() to FALSE
+//!								Set SetPasskeyMinLength() to 4
+//!								Set SetAuthentication() to FALSE
+//!								Set SetAuthorisation() to FALSE
+//!								Passkey is asked first in master and then in slave while connecting. The min passkey lengthis specified as 4 in the passkey entrance window. The test case passes without any error.
+//!								Uses API elements: 	SetEncryption(), SetDenied(), SetPasskeyMinLength(), SetAuthentication(), SetAuthorisation() from TBTAccessRequirements
+//!													NewL()1, Bind(), listen()1, Accept(), Shutdown() and NewL()4 from CBluetoothSocket
+//!													TBTDevAddr() from TBTDevAddr
+//!													Open(), SetHostName(), SetDiscoverable() from RHostResolver
+//!													TRfcommSockAddr(), SetFamily(), SetSecurity() and SetPort() from TRfcommSockAddr
+//! @SYMTestActions				Wait for master to order start
+//!								1. Create and start a session on the socket server
+//!								2. Create an empty TBTServiceSecurity object
+//!								3. Set the encryption requirement using SetEncryption() function (FALSE)
+//!								4. Set the denied requirement using SetDenied() function (FALSE)
+//!								5. Set the minimal length requrement for passkey using SetPasskeyMinLength() function (4)
+//!								6. Set the authentication requirement using SetAuthentication() function (FALSE)
+//!								7. Set the authorisation requirement using SetAuthorisation() function (FALSE)
+//!								8. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								9. Create an TRfcommSockAddr object
+//!								10. Set the Family to Bluetooth (257)
+//!								11. Set the security to TBTServiceSecurity
+//!								12. Set the port to the one matching the protocol to use
+//!								13. Use the Bind method of the CBluetoothSocket to bind the socket using the TRfcommSockAddr object
+//!								14. Call the listen()10 method of the CBluetoothSocket object
+//!								15. Create a new empty CBluetoothSocket using NewL()4
+//!								16. Create an TBTDevAddr object (slave)
+//!								17. Create and initialise an RHostResolver
+//!								18. Set Hostname (SlaveDevice) of the device
+//!								19. Set discover of the device
+//!								20. Accept the bluetooth connection
+//!								21. Shut down the CBluetoothSocket object
+//!								22. delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Because authentication has already been done in the previous test case, 
+//!								the Passkey will not be asked again in master and then in slave while connecting.
+//!								In the master emulator, slave is seen as authenticated. In the slave emulator, master is seen as authenticated.
+//!								The test case passes without any error.
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1
+			COMMAND		TBTServiceSecurity1	Construct
+			COMMAND		TBTServiceSecurity1	SetEncryption		BT-USER-Access-PublicApi-Passive-0002-0001command1SetEncryption
+			COMMAND		TBTServiceSecurity1	SetDenied		BT-USER-Access-PublicApi-Passive-0002-0001command2SetDenied
+			COMMAND		TBTServiceSecurity1	SetPasskeyMinLength	BT-USER-Access-PublicApi-Passive-0002-0001command3SetPasskeyMinLength
+			COMMAND		TBTServiceSecurity1	SetAuthentication	BT-USER-Access-PublicApi-Passive-0002-0001command4SetAuthentication
+			COMMAND		TBTServiceSecurity1	SetAuthorisation		BT-USER-Access-PublicApi-Passive-0002-0001command5SetAuthorisation
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-Access-PublicApi-Passive-0002-0001command3NewL
+			COMMAND		TRfcommSockAddr1	Construct		
+			COMMAND		TRfcommSockAddr1	SetFamily		BT-USER-Access-PublicApi-Passive-0002-0001command6SetFamily
+			COMMAND		TRfcommSockAddr1	SetSecurity	BT-USER-Access-PublicApi-Passive-0002-0001command6SetSecurity
+			COMMAND		TRfcommSockAddr1	SetPort		BT-USER-Access-PublicApi-Passive-0002-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-Access-PublicApi-Passive-0002-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-Access-PublicApi-Passive-0002-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-Access-PublicApi-Passive-0002-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-Access-PublicApi-Passive-0002-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TRfcommSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0002-0002
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct		
+			COMMAND		TBTDevAddrLocal	OpenHostResolver		BT-USER-Access-PublicApi-Passive-0002-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BT-USER-Access-PublicApi-Passive-0002-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable		
+			STORE	CBluetoothSocket1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0002-0002
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0002-0003
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddr1	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-Access-PublicApi-Passive-0002-0003command1Accept
+			OUTSTANDING	
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0002-0003
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0002-0004
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			COMMAND		CBluetoothSessionSocket	Shutdown		BT-USER-Access-PublicApi-Passive-0002-0004command1Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~		
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-Access-PublicApi-Passive-0002-0004command4Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Access-PublicApi-Active-Master-0002-0004
+
+END_TESTCASE	BT-USER-Access-PublicApi-Passive-Slave-0002
+
+
+DELAY		500

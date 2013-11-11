@@ -1,0 +1,49 @@
+// Copyright (c) 2009-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run SusAdaptionServerStep tests
+
+//Set the server with SID of telephony(c32 process) to test the emergency call under OOM condition
+RUN_PROGRAM -1 setcap tsus_ssmutilsrv.exe 00001134 -SID 101F7989  tsus_ssmutilsrv_WithC32_SID.exe
+
+
+LOAD_SUITE tsus_ssmutilsrv_WithC32_SID
+
+START_TESTCASE 			DEVSRVS-SSMA-SUS-0011
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SUS-0011
+//! @SYMPREQ 			PREQ1871
+//! @SYMREQ			REQ9159
+//! @SYMTestType		IT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc		Check basic behaviour of SSM server class CSusAdaptionServer. 
+//! @SYMTestActions			The test will create a new instance of the server calling NewL on CSusAdaptionServer for the following cases:
+//! 					1.When process is not ESystemCritical
+//! 					2.Under OOM conditions. 
+//!						3.Allow priority client with telephony SID to make Emergencycall under OOM condition.
+//!						4.Test to set SetPriorityClient() from two diff client 
+//!						5.Normal client calling Activate/DeactivateRfForEmergencyCall Rf in OOM condition
+//!						6.Multiple client performing Activate/DeactivateRfForEmergencyCall during OOM situation
+//!						7.Iterate the OOM through Activate/DeactivateRfForEmergencyCall
+//! @SYMTestExpectedResults 	The test ends with the following results:
+//! 					1.No error is reported a new object is created and the process is set to ESystemCritical.
+//! 					2.Intermediate iterations finish with KErrNoMemory with successful one completing with KErrNone. Memory is not leaked in any iteration.
+//!						3.Emergencycall allowed in OOM condition
+//!						4.Call to SetPriorityClient() with error KErrAlreadyExists fails from the second client
+//!						5.Call fails with KErrNoMemory.
+//!						6.Only Priority client will be able to perform  Activate/DeactivateRfForEmergencyCall, for other client KErrNoMemory will be returned
+//!						7.Activate/DeactivateRfForEmergencyCall works fine.
+RUN_TEST_STEP 100 tsus_ssmutilsrv_WithC32_SID  SusAdaptionServerStep
+END_TESTCASE 			DEVSRVS-SSMA-SUS-0011

@@ -1,0 +1,928 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the CBluetoothPhysicalLinks class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Sherry Ho and Zoe Chen
+//! @SYMCreationDate			16/08/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	UCCControlTE
+LOAD_SUITE	T_BTUserAPI	-SharedData
+DELAY		2000
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini BuildRunPhysicalLinksPassiveSlave
+
+DELAY		5000
+// ****************************************************************************
+// CBluetoothPhysicalLinks Master
+// **************************************************************************** 
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0001
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0001
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSocket, 
+//!								MBluetoothSocketNotifier, TBTServiceSecurity, TL2CAPSockAddr, TBTDevAddr
+//! @SYMTestCaseDesc			Bring a new member to a piconet with waiting for 10000000 micro secs
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection(), Enumerate() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL()1, Connect()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleConnectCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TL2CAPSockAddr(), SetSecurity(), SetBTAddr(), BTAddr() and SetPort() from TL2CAPSockAddr
+//!													TBTDevAddr() from TBTDevAddr
+//!													Open() and SetHostName() from RHostResolver
+//! @SYMTestActions				1. Order slave to set up connection
+//!								2. Get result from slave to wait for it to be ready
+//!								3. Create a connection to the RSocket server
+//!								4. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								5. Create an empty TBTServiceSecurity object
+//!								6. Create an empty TBTDevAddr object (slave)
+//!								7. Create and initialise an RHostResolver
+//!								8. Set Hostname (MasterDevice) of the device
+//!								9. Get the slave device address
+//!								10. Create a TL2CAPSockAddr object
+//!								11. Set the Security of the TL2CAPSockAddr (Use default/empty as on server)
+//!								12. Set the BT address of the TL2CAPSockAddr to the one of the Casira pod of the slave that we connect to
+//!								13. Verify the set BT Address
+//!								14. Set the port to the specific one of the protocol we use
+//!								15. Create and start a session on the socket server
+//!								16. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								17. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								18. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								19. Bring in a new member to the piconet with the slave device address using 
+//!								    CreateConnection() function. Return KErrNone if successful
+//!								20. Return callback HandleCreateConnectionCompleteL() function
+//!								21. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								22. Waiting for 10000000 micro secs
+//!								23. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								24. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								25. Use the TL2CAPSockAddr in the connect of the CBluetooth object
+//!								26. HandleConnectCompleteL gets called indicating that connecting the BT connection completed
+//!								27. Get result from slave
+//!								28. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								29. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								30. Do socket cleanup by calling Shutdown()1
+//!								31. HandleShutdownCompleteL gets called verify error code
+//!								32. delete CBluetoothSocket object
+//!								33. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								34. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								35. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrNone returned from HandleCreateConnectionCompleteL() callback
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0001-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	DELAY 2000
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		TBTDevAddrRemote	Construct		
+			COMMAND		TBTDevAddrRemote	OpenHostResolver		BT-USER-PhysicalLinks-PublicApi-Active-0001-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrRemote	SetHostNameL		BT-USER-PhysicalLinks-PublicApi-Active-0001-0002command4SetHostNameL
+			COMMAND		TBTDevAddrRemote	GetDeviceAddress		BT-USER-PhysicalLinks-PublicApi-Active-0001-0002command5GetDeviceAddress
+			OUTSTANDING
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetSecurity		BT-USER-PhysicalLinks-PublicApi-Active-0001-0002command8SetSecurity
+			COMMAND		TL2CAPSockAddr1	SetBTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0001-0002command9SetBTAddr
+			COMMAND		TL2CAPSockAddr1	BTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0001-0002command10BTAddr
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Active-0001-0002command11SetPort
+			STORE	CBluetoothSocket1
+			STORE	TL2CAPSockAddr1
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY 5000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command6Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command7CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command9Enumerate
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command11Connect
+			OUTSTANDING				
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command13Enumerate
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command15Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0001-0003command20Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			STORE	TBTDevAddrRemote	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0001
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0002
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0002
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSocket, 
+//!								MBluetoothSocketNotifier, TBTServiceSecurity
+//! @SYMTestCaseDesc			Disconnect a single member of piconet
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection(), Enumerate(), Disconnect() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() and HandleDisconnectCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL()1, Connect()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleConnectCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TL2CAPSockAddr(), SetSecurity(), SetBTAddr(), BTAddr() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				1. Order slave to set up connection
+//!								2. Get result from slave to wait for it to be ready
+//!								3. Create a connection to the RSocket server
+//!								4. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								5. Create an empty TBTServiceSecurity object
+//!								6. Create a TL2CAPSockAddr object
+//!								7. Set the Security of the TL2CAPSockAddr (Use default/empty as on server)
+//!								8. Set the BT address of the TL2CAPSockAddr to the one of the Casira pod of the slave that we connect to
+//!								9. Verify the set BT Address
+//!								10. Set the port to the specific one of the protocol we use
+//!								11. Create and start a session on the socket server
+//!								12. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								13. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								14. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								15. Bring in a new member to the piconet with the slave device address using 
+//!								    CreateConnection() function. Return KErrNone if successful
+//!								16. Return callback HandleCreateConnectionCompleteL() function
+//!								17. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								18. Waiting for 10000000 micro secs
+//!								19. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								20. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								21. Use the TL2CAPSockAddr in the connect of the CBluetooth object
+//!								22. HandleConnectCompleteL gets called indicating that connecting the BT connection completed
+//!								23. Get result from slave
+//!								24. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								25. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								26. Do socket cleanup by calling Shutdown()1
+//!								27. HandleShutdownCompleteL gets called verify error code
+//!								28. delete CBluetoothSocket object
+//!								29. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								30. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								31. Disconnect a single member of piconet with the slave device address using Disconnect() function. 
+//!								    Return KErrNone if successful
+//!								32. Return callback HandleDisconnectCompleteL() function
+//!								33. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								34. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrNone returned from HandleDisconnectCompleteL() callback
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0002-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetSecurity		BT-USER-PhysicalLinks-PublicApi-Active-0002-0001command7SetSecurity
+			COMMAND		TL2CAPSockAddr1	SetBTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0002-0001command8SetBTAddr
+			COMMAND		TL2CAPSockAddr1	BTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0002-0001command9BTAddr
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Active-0002-0001command10SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TBTDevAddrRemote	
+			STORE	TL2CAPSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	DELAY 2000
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY 5000
+	START_TEST_BLOCK	1000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command6Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command7CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command9Enumerate
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command11Connect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command13Enumerate
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command15Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command20Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	Disconnect		BT-USER-PhysicalLinks-PublicApi-Active-0002-0002command21Disconnect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			STORE	TBTDevAddrRemote	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0002
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0003
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0003
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSocket, 
+//!								MBluetoothSocketNotifier, TBTServiceSecurity
+//! @SYMTestCaseDesc			Disconnect all members of piconet
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection(), Enumerate(), DisconnectAll() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() and HandleDisconnectAllCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL()1, Connect()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleConnectCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TL2CAPSockAddr(), SetSecurity(), SetBTAddr(), BTAddr() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				1. Order slave to set up connection
+//!								2. Get result from slave to wait for it to be ready
+//!								3. Create a connection to the RSocket server
+//!								4. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								5. Create an empty TBTServiceSecurity object
+//!								6. Create a TL2CAPSockAddr object
+//!								7. Set the Security of the TL2CAPSockAddr (Use default/empty as on server)
+//!								8. Set the BT address of the TL2CAPSockAddr to the one of the Casira pod of the slave that we connect to
+//!								9. Verify the set BT Address
+//!								10. Set the port to the specific one of the protocol we use
+//!								11. Create and start a session on the socket server
+//!								12. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								13. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								14. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								15. Bring in a new member to the piconet with the slave device address using 
+//!								    CreateConnection() function. Return KErrNone if successful
+//!								16. Return callback HandleCreateConnectionCompleteL() function
+//!								17. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								18. Waiting for 10000000 micro secs
+//!								19. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								20. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								21. Use the TL2CAPSockAddr in the connect of the CBluetooth object
+//!								22. HandleConnectCompleteL gets called indicating that connecting the BT connection completed
+//!								23. Get result from slave
+//!								24. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								25. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								26. Do socket cleanup by calling Shutdown()1
+//!								27. HandleShutdownCompleteL gets called verify error code
+//!								28. delete CBluetoothSocket object
+//!								29. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								30. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								31. Disconnect all members of piconet using DisconnectAll() function. Return KErrNone if successful
+//!								32. Return callback HandleDisconnectAllCompleteL() function
+//!								33. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								34. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrNone Returned from HandleDisconnectAllCompleteL() callback
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0003-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetSecurity		BT-USER-PhysicalLinks-PublicApi-Active-0003-0001command7SetSecurity
+			COMMAND		TL2CAPSockAddr1	SetBTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0003-0001command8SetBTAddr
+			COMMAND		TL2CAPSockAddr1	BTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0003-0001command9BTAddr
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Active-0003-0001command10SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TBTDevAddrRemote	
+			STORE	TL2CAPSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	DELAY 5000
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY 5000
+	START_TEST_BLOCK	1000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command6Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command7CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command9Enumerate
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command11Connect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command13Enumerate
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command15Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command20Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	DisconnectAll		BT-USER-PhysicalLinks-PublicApi-Active-0003-0002command21DisconnectAll
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			STORE	TBTDevAddrRemote	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0003
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0004
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0004
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSocket, 
+//!								MBluetoothSocketNotifier, TBTServiceSecurity
+//! @SYMTestCaseDesc			Disconnect a single member (invalid bluetooth address) of piconet
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection(), Enumerate(), Disconnect() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() and HandleDisconnectCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL()1, Connect()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleConnectCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TL2CAPSockAddr(), SetSecurity(), SetBTAddr(), BTAddr() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				1. Order slave to set up connection
+//!								2. Get result from slave to wait for it to be ready
+//!								3. Create a connection to the RSocket server
+//!								4. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								5. Create an empty TBTServiceSecurity object
+//!								6. Create a TL2CAPSockAddr object
+//!								7. Set the Security of the TL2CAPSockAddr (Use default/empty as on server)
+//!								8. Set the BT address of the TL2CAPSockAddr to the one of the Casira pod of the slave that we connect to
+//!								9. Verify the set BT Address
+//!								10. Set the port to the specific one of the protocol we use
+//!								11. Create and start a session on the socket server
+//!								12. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								13. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								14. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								15. Bring in a new member to the piconet with the slave device address using 
+//!								    CreateConnection() function. Return KErrNone if successful
+//!								16. Return callback HandleCreateConnectionCompleteL() function
+//!								17. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								18. Waiting for 10000000 micro secs
+//!								19. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								20. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								21. Use the TL2CAPSockAddr in the connect of the CBluetooth object
+//!								22. HandleConnectCompleteL gets called indicating that connecting the BT connection completed
+//!								23. Get result from slave
+//!								24. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								25. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								26. Do socket cleanup by calling Shutdown()1
+//!								27. HandleShutdownCompleteL gets called verify error code
+//!								28. delete CBluetoothSocket object
+//!								29. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								30. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								31. Disconnect a single member of piconet with an invalid device address using CreateConnection() 
+//!								    function. Return KErrNone if successful
+//!								32. Return callback HandleDisconnectCompleteL() function
+//!								33. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								34. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Returned KErrNone from HandleDisconnectCompleteL() callback
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0004-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetSecurity		BT-USER-PhysicalLinks-PublicApi-Active-0004-0001command7SetSecurity
+			COMMAND		TL2CAPSockAddr1	SetBTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0004-0001command8SetBTAddr
+			COMMAND		TL2CAPSockAddr1	BTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0004-0001command9BTAddr
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Active-0004-0001command10SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TBTDevAddrRemote	
+			STORE	TL2CAPSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	DELAY 5000
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY 5000
+	START_TEST_BLOCK	1000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			COMMAND		TBTDevAddrData	Construct		
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command7NewL
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command8Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command9CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command11Enumerate
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command13Connect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command15Enumerate
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command17Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command22Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	Disconnect		BT-USER-PhysicalLinks-PublicApi-Active-0004-0002command23Disconnect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			STORE	TBTDevAddrRemote	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0004
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0005
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0005
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSocket, 
+//!								MBluetoothSocketNotifier, TBTServiceSecurity
+//! @SYMTestCaseDesc			Enumerate connected members of the piconet while defining the upper limit on numbers of members to be returned as 0
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection(), Enumerate() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL()1, Connect()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleConnectCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TL2CAPSockAddr(), SetSecurity(), SetBTAddr(), BTAddr() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				1. Order slave to set up connection
+//!								2. Get result from slave to wait for it to be ready
+//!								3. Create a connection to the RSocket server
+//!								4. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								5. Create an empty TBTServiceSecurity object
+//!								6. Create a TL2CAPSockAddr object
+//!								7. Set the Security of the TL2CAPSockAddr (Use default/empty as on server)
+//!								8. Set the BT address of the TL2CAPSockAddr to the one of the Casira pod of the slave that we connect to
+//!								9. Verify the set BT Address
+//!								10. Set the port to the specific one of the protocol we use
+//!								11. Create and start a session on the socket server
+//!								12. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								13. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								14. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								15. Bring in a new member to the piconet with the slave device address using 
+//!								    CreateConnection() function. Return KErrNone if successful
+//!								16. Return callback HandleCreateConnectionCompleteL() function
+//!								17. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								18. Waiting for 1 micro secs
+//!								19. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								20. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								21. Use the TL2CAPSockAddr in the connect of the CBluetooth object
+//!								22. HandleConnectCompleteL gets called indicating that connecting the BT connection completed
+//!								23. Get result from slave
+//!								24. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								25. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								26. Do socket cleanup by calling Shutdown()1
+//!								27. HandleShutdownCompleteL gets called verify error code
+//!								28. delete CBluetoothSocket object
+//!								29. Enumerate connected members of the piconet with given maximum number of members (decimal 0) to be returned.
+//!								    Return KErrNone if successful
+//!								30. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								31. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		KErrArgument returned
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0005-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetSecurity		BT-USER-PhysicalLinks-PublicApi-Active-0005-0001command7SetSecurity
+			COMMAND		TL2CAPSockAddr1	SetBTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0005-0001command8SetBTAddr
+			COMMAND		TL2CAPSockAddr1	BTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0005-0001command9BTAddr
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Active-0005-0001command10SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TBTDevAddrRemote	
+			STORE	TL2CAPSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	DELAY 5000
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY 5000
+	START_TEST_BLOCK	1000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command6Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command7CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command9Enumerate
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command11Connect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command13Enumerate
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command15Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+			COMMAND	!Error=-6		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0005-0002command20Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			STORE	TBTDevAddrRemote	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0005
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0006
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0006
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, CBluetoothSocket, 
+//!								MBluetoothSocketNotifier, TBTServiceSecurity
+//! @SYMTestCaseDesc			Bring a new member to a piconet with waiting for 1 micro secs
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection(), Enumerate() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													NewL()1, Connect()1, Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleConnectCompleteL() and HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//!													TBTServiceSecurity() from TBTServiceSecurity
+//!													TL2CAPSockAddr(), SetSecurity(), SetBTAddr(), BTAddr() and SetPort() from TL2CAPSockAddr
+//! @SYMTestActions				1. Order slave to set up connection
+//!								2. Get result from slave to wait for it to be ready
+//!								3. Create a connection to the RSocket server
+//!								4. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								5. Create an empty TBTServiceSecurity object
+//!								6. Create a TL2CAPSockAddr object
+//!								7. Set the Security of the TL2CAPSockAddr (Use default/empty as on server)
+//!								8. Set the BT address of the TL2CAPSockAddr to the one of the Casira pod of the slave that we connect to
+//!								9. Verify the set BT Address
+//!								10. Set the port to the specific one of the protocol we use
+//!								11. Create and start a session on the socket server
+//!								12. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								13. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								14. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								15. Bring in a new member to the piconet with the slave device address using 
+//!								    CreateConnection() function. Return KErrNone if successful
+//!								16. Return callback HandleCreateConnectionCompleteL() function
+//!								17. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								18. Waiting for 1 micro secs
+//!								19. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								20. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								21. Use the TL2CAPSockAddr in the connect of the CBluetooth object
+//!								22. HandleConnectCompleteL gets called indicating that connecting the BT connection completed
+//!								23. Get result from slave
+//!								24. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								25. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								26. Do socket cleanup by calling Shutdown()1
+//!								27. HandleShutdownCompleteL gets called verify error code
+//!								28. delete CBluetoothSocket object
+//!								29. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								    Return KErrNone if successful
+//!								30. Verify that if return RBTDevAddrArray size (decimal 1) is as expected (decimal 1)
+//!								31. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Returned KErrNone from HandleCreateConnectionCompleteL() callback
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0006-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetSecurity		BT-USER-PhysicalLinks-PublicApi-Active-0006-0001command7SetSecurity
+			COMMAND		TL2CAPSockAddr1	SetBTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0006-0001command8SetBTAddr
+			COMMAND		TL2CAPSockAddr1	BTAddr		BT-USER-PhysicalLinks-PublicApi-Active-0006-0001command9BTAddr
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PhysicalLinks-PublicApi-Active-0006-0001command10SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TBTDevAddrRemote	
+			STORE	TL2CAPSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	DELAY 5000
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY 5000
+	START_TEST_BLOCK	1000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command6Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command7CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command9Enumerate
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command11Connect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command13Enumerate
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command15Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose		
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0006-0002command20Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0006
+
+DELAY 5000
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0007
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0007
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier
+//! @SYMTestCaseDesc			Cancel bringing a new member to a piconet
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection(), CancelCreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								3. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								   Return KErrNone if successful
+//!								4. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								5. Bring in a new member to the piconet with the slave device address using 
+//!								   CreateConnection() function. Return KErrNone if successful
+//!								6. Return callback HandleCreateConnectionCompleteL() function
+//!								7. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								8. Waiting for 10000000 micro secs
+//!								9. Cancel bringing in a new member to the piconet with the slave device address using 
+//!								   CancelCreateConnection() function
+//!								10. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Cancel succeeded
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	1000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0007-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	Enumerate		BT-USER-PhysicalLinks-PublicApi-Active-0007-0001command6Enumerate
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0007-0001command7CreateConnection
+			COMMAND		CBluetoothPhysicalLinksData	CancelCreateConnection		
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			STORE	TBTDevAddrRemote	
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0007
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0008
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0008
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier
+//! @SYMTestCaseDesc			Bring in a new member to the piconet with a invalid device address
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), CreateConnection() and destructor from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								3. Bring in a new member to the piconet with a invalid device address using 
+//!								   CreateConnection() function. Return KErrNone if successful
+//!								4. Return callback HandleCreateConnectionCompleteL() function
+//!								5. Verify that if return result (Error -6004) from callback function is as expected (Error -6004)
+//!								6. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		EPageTimedOut (-6004) returned as expected at step 4
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0008-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinks-PublicApi-Active-0008-0001command6CreateConnection
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0008
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0009
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0009
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks
+//! @SYMTestCaseDesc			Cancel brining a new member to piconet without bring in a new member to the piconet
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewLC(), CancelCreateConnection(), and destructor from CBluetoothPhysicalLinks
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								2. Open a Bluetooth socket using NewLC() function. Return KErrNone if successful
+//!								3. Cancel bringing in a new member to the piconet with a device address using 
+//!								   CancelCreateConnection() function
+//!								4. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Cancel succeeded
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	1000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewLC		BT-USER-PhysicalLinks-PublicApi-Active-0009-0001command5NewLC
+			COMMAND		CBluetoothPhysicalLinksData	CancelCreateConnection		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0009
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0010
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0010
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier
+//! @SYMTestCaseDesc			Disconnect all members of piconet without bringing in a new member to the piconet
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), DisconnectAll(), and destructor from CBluetoothPhysicalLinks
+//!													HandleDisconnectAllCompleteL() from MBluetoothPhysicalLinksNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								3. Disconnect all members of piconet using DisconnectAll() function. Return KErrNone if successful
+//!								4. Return callback HandleDisconnectAllCompleteL() function
+//!								5. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								6. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Returned KErrNone from HandleDisconnectAllCompleteL() callback
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0010-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	DisconnectAll		BT-USER-PhysicalLinks-PublicApi-Active-0010-0001command6DisconnectAll
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0010
+
+
+START_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0011
+//! @SYMTestCaseID				BT-USER-PhysicalLinks-PublicApi-Active-Master-0011
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier
+//! @SYMTestCaseDesc			Disconnect a single member of piconet without bringing in a new member to the piconet
+//!								Uses API elements: 	RSocketServ(), Connect() and Close() from RSocketServ
+//!													NewL(), Disconnect(), Enumerate() and destructor from CBluetoothPhysicalLinks
+//!													HandleDisconnectCompleteL() from MBluetoothPhysicalLinksNotifier
+//! @SYMTestActions				1. Create and start a session on the socket server
+//!								2. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								3. Disconnect a single member of piconet using Disconnect() function. Return KErrNone if successful
+//!								4. Return callback HandleDisconnectCompleteL() function
+//!								5. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								6. Enumerate connected members of the piconet with given maximum number of members (decimal 7) to be returned.
+//!								   Return KErrNone if successful
+//!								7. Verify that if return RBTDevAddrArray size (decimal 0) is as expected (decimal 0)
+//!								8. Delete the Bluetooth socket using destructor
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Returned KErrNone from HandleDisconnectCompleteL() callback
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinks-PublicApi-Active-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinks-PublicApi-Active-0011-0001command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	Disconnect		BT-USER-PhysicalLinks-PublicApi-Active-0011-0001command6Disconnect
+			OUTSTANDING	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+	END_TEST_BLOCK
+
+END_TESTCASE BT-USER-PhysicalLinks-PublicApi-Active-Master-0011
+
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveExecutionResultPhysicalLinksPassiveSlave
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StopTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StopSyncService
+

@@ -1,0 +1,85 @@
+﻿//! @File
+//! @SYMTestSuiteName	lbsclient_ignore_accuracy_absent.script
+//! @SYMScriptTestEnvironment
+
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+// Select the test A-GPS hybrid integration module and register onto the home network.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+	CopyFile c:\private\10202be9\1028224b.cre c:\private\10202be9\1028224b.bak
+	CopyFile c:\testdata\configs\1028224b_ignacc_absent.cre c:\private\10202be9\1028224b.cre
+  	CopyFile c:\testdata\configs\1028224b_ignacc_absent.cre c:\private\10202be9\persists\1028224b.cre
+  	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+// Reset the admin to ensure we are preferred terminal mode.
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+// Now start LBS. 
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+
+START_TESTCASE LBS-IGNORE-ACC-IgnoreAccuracyAbsent-0001
+
+//!@SYMTestCaseID			LBS-Client-IgnoreAccuracyAbsent-0001
+//!@SYMTestCaseDesc			The setting for ignore accuracy is missing, the sub-system should not ignore accuracy
+//!					
+//!@SYMTestActions			1. The Ignore Accuracy Setting is missing
+//!					2. The LBS sub-system is started
+//!					3. Client generates request through TInt RPositioner::Open(RPositionServer& aPosServer);
+//!					4. The module doesn�t produce any accurate position
+//!					
+//!@SYMTestExpectedResults		The system reports the ignore accuracy setting is disabled and the request completes with KPositionQualityLoss
+//!
+//!@SYMPREQ				CR1185
+//!@SYMREQ				REQ8231
+//!					
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientignoreaccuracysetting.ini  LBS-IGNORE-ACC
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-SETTING-INACCURATE
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_IgnoreAccuracySetting c:\testdata\configs\lbsclientignoreaccuracysetting.ini LBS-IGNORE-ACCURACY-ABSENT-001
+
+END_TESTCASE LBS-IGNORE-ACC-IgnoreAccuracyAbsent-0001
+
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+  
+// Restore the original CenRep file
+RUN_UTILS CopyFile c:\private\10202be9\1028224b.bak c:\private\10202be9\1028224b.cre
+RUN_UTILS CopyFile c:\private\10202be9\1028224b.bak c:\private\10202be9\persists\1028224b.cre

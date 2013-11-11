@@ -1,0 +1,161 @@
+@file tsi_mvs_videoagent_apr.script
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Video Agent APR Integration tests for MVS Video Controller and XviD Codec
+// 
+//
+
+LOAD_SUITE tsi_mvs_agents.dll
+
+/////////////////////////////// POSITIVE TESTS /////////////////////////////////////
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-2001
+//!@SYMTestCaseDesc           One-time registration for same event by a player.
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent - Medium Priority iMvsAudioPlayAgent - High Priority 1. Create one video agent and one audio agent 2.
+//! Open and play iMvsVideoPlayAgent 3. Open and play iMvsAudioPlayAgent 4. Register iMvsVideoPlayAgent for notification 5. Check if registration is successful
+//! 6. iMvsAudioPlayAgent completes playing 7. Check if iMvsVideoPlayAgent receives the notification. 8.  iMvsVideoPlayAgent starts playing again. 9.  Play
+//! iMvsAudioPlayAgent. iMvsVideoPlayAgent should receive play error 10.iMvsAudioPlayAgent completes play 11. Check if iMvsVideoPlayAgent receives the no
+//!tification.
+//!@SYMTestExpectedResults    For first time 1.Registration of video agent should be successful . 2.video agent should receive error(KErrInUse) when Audio
+//! agent is still playing. 3.Video agent should receive notification when Audio agent completes playing.  During second time 1.iMvsVideoPlayagent should
+//! receive notification.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-2001 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-2002
+//!@SYMTestCaseDesc           Register before opening Video play Agent and receive notification of a resource available event (when resource is currently
+//! unavailable and then available).
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent - Low Priority iMvsAudioPlayAgent - High Priority 1. Create One video agent and one audio Agent 2.Register
+//! iMvsVideoPlayAgent for notification 3.Check if registration is successful. 4.Open iMvsVideoPlayAgent   5. Open and play iMvsAudioPlayAgent 6. Play iMvsVideoPlayAgent
+//! (get Play Error as iMvsAudioPlayAgent is still playing) 7. iMvsAudioPlayAgent completes playing 8. Check if iMvsVideoPlayAgent is notified.
+//!@SYMTestExpectedResults    1.Registration of video play Agent should be successful. 2.video play Agent should receive error(KErrInUse) when Audio Play
+//! Agent starts playing. 3.Video play Agent should receive notification when Audio play Agent completes playing.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-2002 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-2003
+//!@SYMTestCaseDesc           Register (after Open and before Play of video) , receive notification of a resource available event (when video resource
+//! is currently unavailable and then available) and position checking of video play Agent.
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent - Low Priority iMvsAudioPlayAgent - High Priority 1. Create one video agent and one audio agent. 2. Open
+//! iMvsVideoPlayAgent 3. Register iMvsVideoPlayAgent for notification 4. Check if registration is successful, and notification is not received immediately.
+//! 5. Play iMvsVideoPlayAgent 6. Open and play iMvsAudioPlayAgent 7. iVideoPlayAgent gets PlayError. 8. Note the position when iMvsVideoPlayAgent got play
+//! error (paused. PositionL will get the paused position). 9. iAudioPlayAgent completes playing. 10. Check if iMvsVideoPlayAgent is notified (and check
+//! the notification position, should be equal to one at 8. SetPositionL should return the paused position ). 11. Play iMvsVideoPlayAgent from the notified
+//! position.
+//!@SYMTestExpectedResults    1.Registration of video play agent should be successful. 2.video play agent should receive error(KErrInUse) when Audio Play
+//! Agent starts playing. 3.Video play agent should receive notification when Audio play agent completes playing. 4. The video play agent should start playing
+//! from the position where it had got play error.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-2003 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-2004
+//!@SYMTestCaseDesc           Register after the highest priority agent (Audio) completes playing and receive the notification of a resource availalble
+//! event.
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent - Low Priority iMvsAudioPlayAgent - High Priority 1. Create One video agent and one audio agent 2. Open
+//! and play iMvsVideoPlayAgent 3. Open and play iMvsAudioPlayAgent 4. iMvsAudioPlayAgent completes playing 5. Register iMvsVideoPlayAgent for notification
+//! 6. Check if registration is successful 7. Check if iMvsVideoPlayAgent doesnot receive the notification. 8. Play iMvsVideoPlayAgent 9. Play iMvsAudioPlayAgent
+//! 10. iMvsVideoPlayAgent will get play error. 11. iMvsAudioPlayAgent Completes playing. 12. iMvsVideoPlayAgent receives notification.
+//!@SYMTestExpectedResults    1.Registration of video player should be successful. 2.Video player should receive notification when Audio player completes
+//! playing.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-2004 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-2005
+//!@SYMTestCaseDesc           Receive notification by first registered client [In case of same priority players notification is received in the order
+//! of registration]
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent[1] - Medium priority  iMvsAudioPlayAgent - High Priority  iMvsVideoPlayAgent[2] - Low Priority 1. Create
+//! two video agents and one audio agent. 2. Open and play iMvsVideoPlayAgent[1] 3. Open and play iMvsAudioPlayAgent 4. iMvsVideoPlayAgent[1] gets play error
+//! as iMvsAudioPlayAgent has started playing. 5. Register iMvsVideoPlayAgent[1] for notification. 6. Open and Play iMvsVideoPlayAgent[2] (gets Play Error)
+//! 7. Register iMvsVideoPlayAgent[2] for notification. 8. iMvsAudioPlayAgent completes playing. 9. Check if  iMvsVideoPlayAgent[1] receives the notifica
+//!tion.
+//!@SYMTestExpectedResults    1.Registration of the video & audio play agents should be successful. 2.video play agent should receive error(KErrInUse)
+//! when Audio Play agent is still playing. 3.video Play agent should receive notification when Audio play agent[1] completes playing, as it has registered
+//! first for notification.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-2005 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-2006
+//!@SYMTestCaseDesc           Cancellation of the notification request. (with main use case)
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent - Low Priority  iMvsAudioPlayAgent - High Priority 1. Create one video client and one audio Client 2.
+//! Open and play iMvsVideoPlayAgent 3. Open and play  iMvsAudioPlayAgent 4. Register  iMvsVideoPlayAgent for notification. 5. Check if registration is successful.
+//! 6.Cancel the notification request for   iMvsVideoPlayAgent. 7. iMvsAudioPlayAgent completes playing 8. Check if  iMvsVideoPlayAgent is NOT notified.
+//!@SYMTestExpectedResults    1.Registration of video player should be successful. 2.video player should receive error(KErrInUse) when Audio Player is
+//! still playing. 3.Video player should not receive notification when Audio player completes playing.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-2006 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-2007
+//!@SYMTestCaseDesc           Test for WillResumePlay() using 3 clients. (with main use case)
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent[0] -  Low Priority  iMvsAudioPlayAgent - High Priority  iMvsVideoPlayAgent[1] -Medium Priority 1. Create
+//! 2 video agents and one audio agent. 2. Open and play iMvsVideoPlayAgent[0]. 3. Open and play iMvsVideoPlayAgent[1] 4. Register iMvsVideoPlayAgnet[0]
+//! for notification 5. Open and play iMvsAudioPlayAgent 6. Register  iMvsVideoPlayAgent[1] for notification 7. iMvsAudioPlayAgent completes playing 8. 
+//! iMvsVideoPlayAgent[1] is notified. 9.  iMvsVideoPlayAgent[1] calls WillResumePlay() 10. Check after 5 seconds,  iMvsVideoPlayAgent[0] does not get the
+//! notification. 11.  iMvsVideoPlayAgent[1] starts playing. 12.  iMvsVideoPlayAgent[1] completes playing. 13. Check if  iMvsVideoPlayAgent[0] gets the notification
+//! now.
+//!@SYMTestExpectedResults    The low priority Client should NOT receive notification if the medium priority client calls WillResumePlay() .
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-2007 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+
+/////////////////////////////// NEGATIVE TESTS /////////////////////////////////////
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-3001
+//!@SYMTestCaseDesc           Cancel when no resource Notification is requested.
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent - Medium Priority 1. Create One video agent. 2. Open & play iMvsVideoPlayAgent 3. Cancel the (without
+//! registering) notification request for iMvsVideoPlayAgent.
+//!@SYMTestExpectedResults    iVideoPlayer should not be notified . KErrCancel should be returned by the video player.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-3001 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-3004
+//!@SYMTestCaseDesc           Test WillResumePlay() after cancellation of notification
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMvsVideoPlayAgent[0] -  Low Priority  iMvsAudioPlayAgent - High Priority  iMvsVideoPlayAgent[1] -Medium Priority 1. Create
+//! 2 video agents and one audio agent. 2. Open and play iMvsVideoPlayAgent[0]. 3. Open and play iMvsVideoPlayAgent[1] 4. Register iMvsVideoPlayAgnet[0]
+//! for notification 5. Open and play iMvsAudioPlayAgent 6. Register  iMvsVideoPlayAgent[1] for notification 7. iMvsAudioPlayAgent completes playing 8. 
+//! Cancel the notification for iMvsVideoPlayAgent[1]. 9.  iMvsVideoPlayAgent[1] calls WillResumePlay() 10. Check after 5 seconds,  iMvsVideoPlayAgent[0]
+//! does not play. 11. Check if  iMvsVideoPlayAgent[0] gets the notification now.
+//!@SYMTestExpectedResults    KErrNotSupported should be returned by the video player.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-3004 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID             MM-MVS-VIDEOAGENT-I-3005
+//!@SYMTestCaseDesc           Register Multiple times for notification
+//!@SYMREQ                    REQ6996
+//!@SYMTestPriority           4
+//!@SYMTestActions            iMVSVideoPlayAgent - Medium Priority                          iMVSAudioPlayAgent -High Priority 1. Create one video Agent
+//! and one Audio play agent 2. Open  and play iMvsVideoPlayAgent 3. Register iMvsVideoPlayAgent for notification  4. Check if registration is successful
+//! .                                   5. Open and Play iMVS AudioPlayAgent                 6.Register iMvsVideoPlayAgent for notification
+//!@SYMTestExpectedResults    KErrAlreadyExists should be returned by the video player.
+RUN_TEST_STEP 120000 TSI_MVS_AGENTS MM-MVS-VIDEOAGENT-I-3005 \mvs\tsi_mvs_agents.ini
+TEST_COMPLETE

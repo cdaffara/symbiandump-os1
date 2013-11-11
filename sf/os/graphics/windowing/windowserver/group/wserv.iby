@@ -1,0 +1,69 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description: 
+*
+*/
+#ifndef __WSERV_IBY__
+#define __WSERV_IBY__
+
+REM Window Server - defaults to exporting the non-GCE based build
+
+#ifdef SYMBIAN_GRAPHICS_USE_GCE
+file=ABI_DIR\BUILD_DIR\wserv_nga.exe 	System\Libs\EwSrv.exe
+file=ABI_DIR\BUILD_DIR\ws32_nga.dll 	System\Libs\Ws32.dll
+file=ABI_DIR\BUILD_DIR\remotegc_nga.dll	System\Libs\remotegc.dll 
+file=ABI_DIR\BUILD_DIR\wsgraphicdrawer_nga.dll	System\Libs\WsGraphicDrawer.dll
+
+#if defined(SYMBIAN_GRAPHICS_USE_OPENWF) && !defined(SYMBIAN_GRAPHICS_USE_OPENWF_MIGRATION)
+REM Pure OpenWF implementation, so skipping proprietary compositor
+#else
+#include <gce.iby>
+#endif
+
+#include <wserv_std_plugins.iby>
+//wserv calls eglReleaseThread() on exit
+#include <egl.iby>
+
+#include <graphics_adaptation.hby>
+#if defined(INCLUDE_GRAPHICSRESOURCEADAPTER)
+#	include <graphicsresource.iby>
+	file=ABI_DIR\BUILD_DIR\graphicsresourcewrapper.dll	System\Libs\graphicsresourcewrapper.dll 
+#else
+	file=ABI_DIR\BUILD_DIR\graphicsresourcewrapper_stub.dll	System\Libs\graphicsresourcewrapper.dll 
+#endif
+
+#else
+file=ABI_DIR\BUILD_DIR\wserv_nonnga.exe 		System\Libs\EwSrv.exe
+file=ABI_DIR\BUILD_DIR\ws32_nonnga.dll 			System\Libs\Ws32.dll
+file=ABI_DIR\BUILD_DIR\remotegc_nonnga.dll		System\Libs\remotegc.dll 
+file=ABI_DIR\BUILD_DIR\wsgraphicdrawer_nonnga.dll	System\Libs\WsGraphicDrawer.dll 
+
+#ifdef _DEBUG
+ECOM_PLUGIN_UDEB(2001B70B.dll,2001B70B.rsc)
+#else
+ECOM_PLUGIN(2001B70B.dll,2001B70B.rsc)
+#endif
+
+#endif
+file=ABI_DIR\BUILD_DIR\w32stdgraphic.dll	System\Libs\W32StdGraphic.dll
+
+#ifdef _DEBUG
+ECOM_PLUGIN_UDEB(10281922.dll,10281922.rsc)
+#else
+ECOM_PLUGIN(10281922.dll,10281922.rsc)
+#endif
+
+
+
+#endif

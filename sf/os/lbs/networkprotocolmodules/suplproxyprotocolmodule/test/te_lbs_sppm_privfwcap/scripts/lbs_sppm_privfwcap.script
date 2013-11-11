@@ -1,0 +1,110 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName         lbsprivfwcap.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE LbsPrivFwTestServer -SharedData
+PRINT Run LbsPrivFwTestServer
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+//DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_UTILS DeleteFile c:\private\10202be9\persists\10282266.cre
+
+START_TESTCASE                LBS-PRIVACYFW-CAP-0001
+//! @SYMTestCaseID              LBS-PRIVACYFW-CAP-0001
+//! @SYMTestCaseDesc            Based on the cap check testing tool found at P4 branch //EPOC/development/Master/common/testtools/CapTestFramework/...  This test makes direct IPC calls (SendReceive) to the Privacy Protocol Module.  The process making the calls is modified to give it numerous sets of capabilities to ensure that each specific call is policed by the correct set of capabilites.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set TestServer with appropriate capabilites
+//!                             2. Make a specific numbered IPC call if that call requires exactly all the given capabilities or all + 1 extra capability
+//!                             3. Monitor return code and/or panic reason
+//!                             4. Fail test if result from step 3 does not reflect the allocated capabilites
+//!                             5. Repeat above steps for all appropriate capabilites
+//! @SYMTestExpectedResults     If given capabilites are not sufficient for the specific IPC call, the server should return KerrPermissionDenied
+//! @SYMTestType                UT
+//! @SYMCreationDate            21/1/2008
+//! @SYMAuthor                  alans
+
+
+
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini QNN-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupSPPMPrivacyMode
+
+
+// --------------------
+
+// Use Setcap to change capabilities of harness (MASK = 00000010)
+RUN_PROGRAM -1 setcap c:\sys\bin\Cap_lbssppmprivfwcap.exe 00000010 C:\sys\bin\Cap_lbsprivfwcap_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [ReadDeviceData] (MASK = 00000010) ----
+
+RUN_SCRIPT  c:\testdata\scripts\cap_00000010_lbs_sppm_privfwcapsub.script
+// --------------------
+
+// Use Setcap to change capabilities of harness (MASK = 00020000)
+RUN_PROGRAM -1 setcap c:\sys\bin\Cap_lbssppmprivfwcap.exe 00020000 C:\sys\bin\Cap_lbsprivfwcap_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [Location] (MASK = 00020000) ----
+
+RUN_SCRIPT  c:\testdata\scripts\cap_00020000_lbs_sppm_privfwcapsub.script
+// --------------------
+
+// Use Setcap to change capabilities of harness (MASK = 00020010)
+RUN_PROGRAM -1 setcap c:\sys\bin\Cap_lbssppmprivfwcap.exe 00020010 C:\sys\bin\Cap_lbsprivfwcap_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [ReadDeviceData Location] (MASK = 00020010) ----
+
+RUN_SCRIPT  c:\testdata\scripts\cap_00020010_lbs_sppm_privfwcapsub.script
+// --------------------
+
+// Use Setcap to change capabilities of harness (MASK = 00002010)
+RUN_PROGRAM -1 setcap c:\sys\bin\Cap_lbssppmprivfwcap.exe 00002010 C:\sys\bin\Cap_lbsprivfwcap_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [ReadDeviceData NetworkServices] (MASK = 00002010) ----
+
+RUN_SCRIPT  c:\testdata\scripts\cap_00002010_lbs_sppm_privfwcapsub.script
+// --------------------
+
+// Use Setcap to change capabilities of harness (MASK = 00022000)
+RUN_PROGRAM -1 setcap c:\sys\bin\Cap_lbssppmprivfwcap.exe 00022000 C:\sys\bin\Cap_lbsprivfwcap_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [Location NetworkServices] (MASK = 00022000) ----
+
+RUN_SCRIPT  c:\testdata\scripts\cap_00022000_lbs_sppm_privfwcapsub.script
+// --------------------
+
+// Use Setcap to change capabilities of harness (MASK = 00022010)
+RUN_PROGRAM -1 setcap c:\sys\bin\Cap_lbssppmprivfwcap.exe 00022010 C:\sys\bin\Cap_lbsprivfwcap_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [ReadDeviceData Location NetworkServices] (MASK = 00022010) ----
+
+RUN_SCRIPT  c:\testdata\scripts\cap_00022010_lbs_sppm_privfwcapsub.script
+// --------------------
+
+// Use Setcap to change capabilities of harness (MASK = 00000002)
+RUN_PROGRAM -1 setcap c:\sys\bin\Cap_lbssppmprivfwcap.exe 00000002 C:\sys\bin\Cap_lbsprivfwcap_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [CommDD] (MASK = 00000002) ----
+
+RUN_SCRIPT  c:\testdata\scripts\cap_00000002_lbs_sppm_privfwcapsub.script
+// --------------------
+
+END_TESTCASE                  LBS-PRIVACYFW-CAP-0001
+

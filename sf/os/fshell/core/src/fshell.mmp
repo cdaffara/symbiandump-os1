@@ -1,0 +1,112 @@
+// fshell.mmp
+// 
+// Copyright (c) 2007 - 2010 Accenture. All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+// 
+// Initial Contributors:
+// Accenture - Initial contribution
+//
+
+#include <fshell/common.mmh>
+
+target          fshell.exe
+targettype      exe
+uid             0x100039CE FSHELL_UID_FSHELL
+capability      FSHELL_CAP_MMP_MAX
+
+userinclude     .
+userinclude     ..\builtins
+#include <fshell/fsh_system_include.mmh>
+
+sourcepath      .
+
+#ifdef FSHELL_CORE_SUPPORT_LOCAL_ICON
+
+START RESOURCE	fshell_reg.rss
+    TARGETPATH  \private\10003a3f\apps
+END
+
+START RESOURCE  fshell_loc.rss
+    TARGETPATH  \resource\apps
+    LANG        SC
+END
+
+#ifdef FSHELL_PLATFORM_UIQ
+START BITMAP	fshellAppIcon.mbm
+TARGETPATH		\resource\apps
+SOURCEPATH		.\AppIcon
+SOURCE	c24		fshell_Small.bmp
+SOURCE	8		fshell_Small_mask.bmp
+SOURCE	c24		fshell_Large.bmp
+SOURCE	8		fshell_Large_mask.bmp
+SOURCE	c24		fshell_xLarge.bmp
+SOURCE	8		fshell_xLarge_mask.bmp
+SOURCE	c24		48x48.bmp
+SOURCE	8		48x48.bmp
+END
+#endif
+
+#endif // FSHELL_CORE_SUPPORT_LOCAL_ICON
+
+source          fshell.cpp
+source          job.cpp
+source          parser.cpp
+source          console.cpp
+source          commands.cpp
+source          pipe_line.cpp
+source          command_factory.cpp
+source          command_constructors.cpp
+source          command_wrappers.cpp
+source          line_completer.cpp
+source          string_utils.cpp
+source          lexer.cpp
+source          file_reader.cpp
+source          script_command.cpp
+source          worker_thread.cpp
+
+sourcepath      ..\builtins
+source          hello.cpp
+source          kill.cpp
+source          ps.cpp
+source          undertaker.cpp
+source          fuser.cpp
+source          gobble.cpp
+source          xmodem.cpp
+source          ymodem.cpp
+source          version.cpp
+source          ciftest.cpp
+
+// There doesn't seem to be a nice way of turning the platform into a string, like you have $(PLATFORM) in extension makefiles, sigh.
+#if defined(WINSCW)
+#define PLAT platform_WINSCW
+#elif defined(GCCE)
+#define PLAT platform_GCCE
+#elif defined(MARM_ARM4)
+#define PLAT platform_ARM4
+#elif defined(MARM_ARMV5)
+#define PLAT platform_ARMV5
+#else
+#error "Platform not understood in fshell.mmp!"
+#endif
+
+#ifdef SBSV2
+sourcepath      /epoc32/build/fshell/core/generated/PLAT
+#else
+sourcepath      \epoc32\build\fshell\core\generated\PLAT
+#endif
+source          fshell_version.cpp
+
+#ifdef FSHELL_CORE_SUPPORT_LICENSE
+sourcepath      \epoc32\build\fshell\core\generated
+source          license.cpp
+#endif
+
+library         euser.lib
+library         efsrv.lib
+library         hal.lib
+library         iocli.lib
+library			lineeditor.lib
+library			ltkutils-tcb.lib

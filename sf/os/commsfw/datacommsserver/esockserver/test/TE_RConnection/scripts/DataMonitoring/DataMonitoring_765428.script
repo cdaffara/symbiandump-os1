@@ -1,0 +1,114 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-DATAMON
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i  z:\testdata\configs\DataMonitoring\DataMonitoring.ced.cfg c:\DataMonitoring.ced.cfg
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-1401
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-DataMonitoring-1401
+//!@SYMTestCaseDesc           	Confirm data transferred stats on connections on independent bearers
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RCommsDataMonitoringApiExt::Open()
+//RCommsDataMonitoringApiExt::RequestDataTransferred()
+//RCommsDataMonitoringApiExt::Close()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+//Create and open a connection (Conn1) explicitly.
+//Create and open a second connection (Conn2) explicitly but on a different IAP.
+//Confirm number of independent connections established with RConnection::EnumerateConnections.
+//Create and open an socket (Socket1) on Conn1.	
+//Create and open a second socket (Socket2) on Conn2.
+//Send and receive on Socket1.
+//Create and open data monitors (DataMonitor1 and DataMonitor2) on Conn1 and Conn2 respectively.
+//Confirm the expected number of bytes transferred on Conn1 with DataMonitor1.RequestDataTransferred().
+//Confirm no data transferred on Conn2 with DataMonitor2.RequestDataTransferred().
+//Send and receive on Socket2.
+//Confirm again with ::RequestDataTransferred() on each data monitor that there has been no extra data transferred on Conn1 and the expected number of bytes now transferred on Conn2.
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	Expect at least the number of bytes sent to be returned by the calls to ::RequestDataTransferred() but only for given bearer.
+
+// Create and connect the socket server required
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\DataMonitoring\765428.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\DataMonitoring\765428.ini ConnectSockSvr1
+
+// Create and explicitly start two connections on independent IAPs
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\DataMonitoring\765428.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openRConnectionStep z:\testdata\configs\DataMonitoring\765428.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite StartRConnectionStep z:\testdata\configs\DataMonitoring\765428.ini StartConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\DataMonitoring\765428.ini CreateConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite openRConnectionStep z:\testdata\configs\DataMonitoring\765428.ini OpenConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite StartRConnectionStep z:\testdata\configs\DataMonitoring\765428.ini StartConn2
+
+// Enumerate the connections so we are sure we have what we expected
+RUN_TEST_STEP 100 te_esockteststepsSuite EnumerateConnectionsStep z:\testdata\configs\DataMonitoring\765428.ini EnumerateConnections
+
+// Open separate UDP sockets on each of our 2 established connections
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765428.ini CreateSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765428.ini OpenSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765428.ini ConnectSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765428.ini CreateSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765428.ini OpenSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765428.ini ConnectSocket2
+
+// Send and receive data on connection 1 only
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765428.ini SendReceiveSocket1
+
+// Create data monitoring APIs for each of our connections
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765428.ini OpenDataMonitor1
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765428.ini OpenDataMonitor2
+
+// Request the amount of data transferred on each connection and confirm
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataTransferredStep z:\testdata\configs\DataMonitoring\765428.ini ReqDataTransferredMonitor1
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataTransferredStep z:\testdata\configs\DataMonitoring\765428.ini ReqDataTransferredMonitor2
+
+// Send and receive data on connection 2 only
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765428.ini SendReceiveSocket2
+
+// Request the amount of data transferred on each connection and confirm
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataTransferredStep z:\testdata\configs\DataMonitoring\765428.ini ReqDataTransferredMonitor1Phase2
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataTransferredStep z:\testdata\configs\DataMonitoring\765428.ini ReqDataTransferredMonitor2Phase2
+
+// Close the networking entities we used
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765428.ini CloseDataMonitor1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765428.ini CloseDataMonitor2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765428.ini CloseSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765428.ini CloseSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\DataMonitoring\765428.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\DataMonitoring\765428.ini CloseConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\DataMonitoring\765428.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-1401
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+PRINT Completed NET-DATAMON-0428
+
+
+

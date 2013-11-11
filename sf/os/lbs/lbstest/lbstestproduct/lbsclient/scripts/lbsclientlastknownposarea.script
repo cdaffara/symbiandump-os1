@@ -1,0 +1,340 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName lbsclientlastknownpositionarea
+//! @SYMScriptTestEnvironment TestExecute
+// Copyright (c) Symbian Software Ltd 2009.
+
+RUN_UTILS DeleteFile c:\private\101f401d\Logdbu.dat
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+DeleteFile c:\private\10202be9\1028224b.cre
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+
+
+
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0001
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0001
+//! @SYMTestCaseDesc            Ensure correct match levels are returned
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Move to cell 234.15.1911.364646
+//!                             2. NPUD
+//!                             3. LastKnown Pos Area
+//!                             4. Move to Cell 234.15.1911.747622
+//!                             5. LastKnown Pos Area
+//!                             6. Move to Cell 234.15.2020.973541
+//!                             7. Lastknown Pos Area
+//!                             8. Move to Cell 234.30.4321.523452
+//!                             9. Lastknown Pos Area
+//!                            10. Move to Cell 262.06.5323.745232
+//!                            11. Lastknown Pos Area
+//!                            12. Clear Database
+//! @SYMTestExpectedResults     All five calls to Last Known Pos Area will complete with appropriate match level:
+//!                             3: City
+//!                             5: Region
+//!                             7: Country
+//!                             9: Country
+//!                            11: Unknown
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/2/2009
+//! @SymTestReq	REQ10790 REQ10792 REQ10793
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposarea0001.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0001
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0001
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0002
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0002
+//! @SYMTestCaseDesc            Ensure that the database is wiped out properly
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Move to cell 234.15.1911.36464
+//!                             2. NPUD
+//!                             3. LastKnown Pos Area
+//!                             4. Clear Database
+//!                             5. LastKnown Pos Area
+//! @SYMTestExpectedResults     Match City for first call, KErrNotFound for second
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/2/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0002
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0002
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0003
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0003
+//! @SYMTestCaseDesc            verify that the last position is returned if current network position is unavailable
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Set up SIM TSY so that the cell area is unknown
+//!                             2. NPUD
+//!                             3. LastKnown Pos Area, to check position with invalid area params didn't go into database
+//!                             4. Move to GSM cell 234.15.1911.36463 (all valid) and do a NPUD
+//!								5. Do LastKnownPosArea and check match level
+//!                             6. Move to 'invalid' WCDMA cell 234.15.1911.36463 and do lastknown pos area
+//!                             7. Move to invalid GSM cell of 234.15.1911.90000 and do lastknown pos area
+//!                             8. Move to valid GSM cell of 234.15.1911.36000 and do lastknown pos area 
+//!                             9. Clear Database
+//! @SYMTestExpectedResults     Generally all methods should return KErrNone unless stated otherwise. Note the following:
+//!								Step 3: Lastknown Pos Area should return KErrUnknown
+//!                             Step 5: Lastknown Pos Area should return position from 4, with match level EAreaCity
+//!                             Step 6: Lastknown Pos Area should return position from 4, with match level EAreaCountry (match country and network)
+//!                             Step 7: Lastknown Pos Area should return position from 4, with match level EAreaUknown
+//!								Step 8: LastKnown Pos Area shoulr return position from 4, with match level EAreaRegion (match on all except cell)
+
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/2/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposarea0003.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0003
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0003
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0003
+
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0004
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0004
+//! @SYMTestCaseDesc            verify that the last position is returned if requested by two clients sequentially
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Move to cell 234.15.1911.36464
+//!                             2. NPUD
+//!                             3. LastKnown Pos Area from client 1
+//!                             4. LastKnown Pos Area from client 2
+//!                             5. Clear Database
+//! @SYMTestExpectedResults     Step 3 & 4: Lastknown Pos Area should return position from 1, with match level city
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/2/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0004
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0004
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0004
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0005
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0005
+//! @SYMTestCaseDesc            verify that Last Known Position area can be cancelled
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Move to cell 234.15.1911.36464
+//!                             2. NPUD
+//!                             3. LastKnown Pos Area 
+//!				4. Cancel LastKnown Pos Area 
+//!				5. Clear Database
+//! @SYMTestExpectedResults     Cancel returns either KErrNotFound and LKPA completes with KErrNone, 
+//!				or Cancel returns KErrNone and LK{A completes with KErrCancel
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/2/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0005
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0005
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0005
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0006
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0006
+//! @SYMTestCaseDesc            verify that clear last known position area database can be cancelled
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Move to cell 234.15.1911.3646
+//!                             2. NPUD
+//!                             3. LastKnown Pos Area 
+//!				4. Clear Database
+//!				5. Cancel Clear Database 
+//! @SYMTestExpectedResults     Cancel returns either KErrNotFound and database is cleared, 
+//!				or KErrNone and database is not cleared. 
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/2/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0006
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0006
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0006
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0007
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0007
+//! @SYMTestCaseDesc            Simultaneous NPUD and GLNPA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Move to cell 234.15.1911.3646
+//!                             2. NPUD
+//!				3. NPUD (with no waiting for completion)
+//!                             4. LastKnown Pos Area 
+//!				5. Clear Database
+//! @SYMTestExpectedResults     NPUD and LastKnown Pos Area complete with no errors 
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/3/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0007
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0007
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0007
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0008
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0008
+//! @SYMTestCaseDesc            Simultaneous NPUD and GLNPA
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Move to cell 234.15.1911.3646
+//!                             2. NPUD
+//!				3. NPUD (with no waiting for completion)
+//!                             4. LastKnown Pos Area 
+//!				5. Cancel NPUD
+//!				6. Cancel LastKnown Pos Area
+//!				5. Clear Database
+//! @SYMTestExpectedResults     NPUD and LastKnown Pos Area cancel with no other errors 
+//! @SYMTestType                CIT
+//! @SYMCreationDate            13/3/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  oad
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0008
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0008
+// As second NPUD is cancelled the positions placed in the array do not match those in the ini file
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0008
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-LastKnownPosArea-0009
+//! @SYMTestCaseID              LBS-Client-LastKnownPosArea-0009
+//! @SYMTestCaseDesc            With both GSM and WCDMA positions in the database, we check that GetLastKnownPosArea returns the correct 
+//!                             position and match level as we switch between GSM and WCDMA cells.
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1.  NPUD at 234.15.1911.65535 (GSM)
+//!                             2.  NPUD at 234.15.1913.65536 (WCDMA)
+//!                             3.  LastKnownPosInfo without change of cell
+//!                             4.  LastknownPosArea at 234.15.1913.32121
+//!                             5.  LastKnownPosArea at 234.15.1911.88880
+//!                             6.  LastKnownPosArea at 234.15.1913.76554
+//!                             7.  LastKnownPosArea at 234.15.1911.19980
+//!                             8.  LastKnownPosArea at 234.30.1511.66003
+//!                             9.  NPUD at 234.15.1911.100
+//!                             10. LastKnownPosArea at 234.15.1911.88880
+//!                             11. Clear Database
+//!
+//! @SYMTestExpectedResults     for LbsClientStep_LastKnownPosArea step
+//!                             1.  Completes successfully
+//!                             2.  Completes successfully
+//!								3.  WCDMA position with EAreaCity (all area fields match)
+//!                             4.  Get WCDMA position, accuracy EAreaCountry
+//!                             5.  Get WCDMA position, accuracy EAreaCountry
+//!                             6.  Get WCDMA position, accuracy EAreaRegion
+//!								7.  Get GSM position, accuracy EAreaRegion
+//!								8.  Get WCDMA position, accuracy EAreaCountry
+//!                             9.  Completes Sucessfully
+//!                             10. Gets GSM position with EAreaCountry.
+//!                             11. Completes successfully 
+//!
+//! @SYMTestType                CIT
+//! @SYMCreationDate            12/10/2010
+//! @SYMAuthor                  ajw
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposarea0009.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0009
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosArea c:\testdata\configs\lbsclientlastknownposarea.ini LBS-Client-LastKnownPosArea-0009
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-LastKnownPosArea-0009
+
+
+
+
+
+PREFIX RUN_UTILS
+	DeleteFile c:\config.txt
+REMOVE_PREFIX
+

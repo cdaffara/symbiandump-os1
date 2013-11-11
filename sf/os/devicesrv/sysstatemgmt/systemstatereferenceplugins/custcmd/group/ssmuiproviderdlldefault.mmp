@@ -1,0 +1,67 @@
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// ssmuiproviderdlldefault.dll It is a replacable dll. It is 
+// replaced if ssmcustomcmduid_customised.dll exists.
+// 
+//
+
+/**
+ @file
+*/
+
+TARGET		ssmuiproviderdlldefault.dll
+CAPABILITY	All -Tcb
+TARGETTYPE	dll
+UID			0x1000008d 0x2000E665
+VENDORID	0x70000001
+
+#ifdef WINS
+DEFFILE /epoc32/include/def/bwins/ssmuiproviderdll.def
+#else
+DEFFILE /epoc32/include/def/eabi/ssmuiproviderdll.def
+#endif
+
+NOEXPORTLIBRARY
+
+SOURCEPATH		../src
+// This is a temporary fix for fixing the build issues arising out of XSymbian code
+// getting compiled before xS60 code is in the mainline. This will be removed after
+// the merged package issues are resolved
+#ifdef FF_SIMLESS_OFFLINE_SUPPORT
+SOURCE			ssmuiproviderdlldefault.cpp
+#else //FF_SIMLESS_OFFLINE_SUPPORT
+SOURCE			ssmuiproviderdllref.cpp
+#endif //FF_SIMLESS_OFFLINE_SUPPORT
+
+USERINCLUDE 	../inc
+USERINCLUDE		../../localinc
+USERINCLUDE		../../clayer/inc
+
+#ifdef FF_SIMLESS_OFFLINE_SUPPORT
+USERINCLUDE		../../../ssmmapperutility/inc
+USERINCLUDE		../../../ssmmapperutility/pubsub
+USERINCLUDE		../../../ssmpolicyplugins/inc
+#endif //FF_SIMLESS_OFFLINE_SUPPORT
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY			euser.lib
+LIBRARY			efsrv.lib
+#ifdef FF_SIMLESS_OFFLINE_SUPPORT
+LIBRARY         platformenv.lib
+LIBRARY         ssmcmn.lib
+LIBRARY         ssmmapperutility.lib
+#endif //FF_SIMLESS_OFFLINE_SUPPORT
+
+SMPSAFE

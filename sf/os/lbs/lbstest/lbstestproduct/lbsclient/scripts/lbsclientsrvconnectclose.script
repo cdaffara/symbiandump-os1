@@ -1,0 +1,84 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_SetAutonomousMode
+
+
+START_TESTCASE                  LBS-Client-SrvConnectClose-0010
+//! @SYMTestCaseID              LBS-Client-SrvConnectClose-0010
+//! @SYMTestCaseDesc            Connect to position server before lbsroot started
+//! @SYMTestPriority            Low
+//! @SYMTestActions             1. Attempt to Connect to server
+//!				
+//! @SYMTestExpectedResults     Connect returns an error (KErrAccessDenied). 
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/3/2009
+//! @SYMAuthor                  lornam
+//! @SYMTESTSTATUS              Implemented
+//! @SYMPREQ                    PREQ786
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler	
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_SrvConnectClose c:\testdata\configs\LbsClientSrvConnectClose.ini LBS-ConnectClose-0010
+
+END_TESTCASE LBS-Client-SrvConnectClose-0010
+
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-Client-SrvConnectClose-0001
+//! @SYMTestCaseID              LBS-Client-SrvConnectClose-0001
+//! @SYMTestCaseDesc            Connect to position server
+//! @SYMTestPriority            Low
+//! @SYMTestActions             1. Connect to server
+//!								2. Disconnect from server
+//! @SYMTestExpectedResults     Connect and Close are both successful. (Run this test several times in sequence via script)
+//! @SYMTestType                CIT
+//! @SYMCreationDate            26/2/2008
+//! @SYMAuthor                  alans
+//! @SYMTESTSTATUS              Implemented
+//! @SYMPREQ                    PREQ786
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler	
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_SrvConnectClose c:\testdata\configs\LbsClientSrvConnectClose.ini LBS-ConnectClose-0001
+
+END_TESTCASE LBS-Client-SrvConnectClose-0001
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+
+
+
+

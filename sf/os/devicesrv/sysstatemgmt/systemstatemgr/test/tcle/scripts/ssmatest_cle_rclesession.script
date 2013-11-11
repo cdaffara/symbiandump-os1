@@ -1,0 +1,69 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run CleRCleSessionStep tests
+
+LOAD_SUITE tcle_server
+
+START_TESTCASE 			DEVSRVS-SSMA-CLE-0001
+//! @SYMTestCaseID 		DEVSRVS-SSMA-CLE-0001
+//! @SYMTestCaseDesc		Verify the behaviour of the CLE client interface
+//! @SYMPREQ 			PREQ1871
+//! @SYMREQ			REQ9136 REQ9162
+//! @SYMTestType		UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestActions		The test will perform calls to the different methods of the RCleSession class in different scenarios.
+//! 				1.  Check OOM conditions for all leaving functions
+//! 				2.  Execute a simple command list
+//! 				3.  Execute a simple command list that contains an erroneous command
+//! 				4.  Cancel an ongoing command list
+//! 				5.  Cancel a completed command list
+//! 				6.  Execute 2 consecutive command lists in 2 different sessions
+//! 				7.  Execute 2 consecutive command lists in the same session
+//! 				8.  Commence list execution and immediately close the session handle.
+//! 				9.  Exercise the registration and deregistration logic within the server.
+//! 				10. Exercise various erroneous conditions: connect twice close twice cancel list execution on non-open / non-executing handle
+//! 				11. Execute command list with inter-command delays
+//! @SYMTestExpectedResults 	1.  All allocated memory should be cleaned up either by the CleanupStack or by a destructor.
+//! 				2.  KErrNone
+//! 				3.  List execution stops after erroneous one and the error is reported. 
+//! 				4.  KErrCancel
+//! 				5.  KErrNone
+//! 				6.  KErrNone
+//! 				7.  KErrServerBusy
+//! 				8.  Ensure tidy completion on handle closure. KErrNone
+//! 				9.  The array of open handles is updated accordingly.
+//! 				10. All error conditions are handled gracefully. No panic is raised.
+//! 				11. 200 ms inter-cmd delays are performed.
+RUN_TEST_STEP 100 tcle_server CleRCleSessionStep
+END_TESTCASE 			DEVSRVS-SSMA-CLE-0001
+
+PRINT INFO: Removing SSM SID from tcle_server
+RUN_PROGRAM -1 setcap tcle_server.exe 00000104 -SID 1028359B tcle_server_bad_sid.exe
+
+LOAD_SUITE tcle_server_bad_sid
+
+START_TESTCASE 			DEVSRVS-SSMA-CLE-0010
+//! @SYMTestCaseID 		DEVSRVS-SSMA-CLE-0010
+//! @SYMTestCaseDesc		Verify the security failure behaviour of the CLE client interface
+//! @SYMPREQ 			PREQ1871
+//! @SYMTestType		UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestActions		The test will attempt to connect to CLE with an SID which is not the same as the SSM
+//! @SYMTestExpectedResults 	CLE should refuse the connection with KErrPermissionDenied
+RUN_TEST_STEP 100 tcle_server_bad_sid CleRCleSessionFailStep
+END_TESTCASE 			DEVSRVS-SSMA-CLE-0010

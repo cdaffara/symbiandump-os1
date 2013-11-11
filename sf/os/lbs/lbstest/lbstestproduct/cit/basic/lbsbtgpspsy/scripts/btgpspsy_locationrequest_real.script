@@ -1,0 +1,189 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         btgpspsy_locationrequest_real.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE ctlbsbtgpspsytestserver
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile z:\testdata\configs\sirfdatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+REMOVE_PREFIX
+
+START_TESTCASE                LBS-BTGPSPSY-RealLocationRequest-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-RealLocationRequest-0001
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY maintains the old behaviour of being able to retrieve stored information about an active and available BT GPS device from the new BT GPS Configuration API.  The PSY should be able to connect to the device and receive a location update.  The test also tests the standard BT pairing process as it is connecting to an unknown BT device.
+//!                             NOTE: Test requires a real BT GPS device (standard or PNOK) to run the test
+//! @SYMTestActions             1. Test should add one BT GPS device to the list.  This device should be an available real BT device with the device type of unknown.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list still only contains the one valid BT GPS device and that the device type of this device has changed to a valid GPS device.
+//! @SYMTestExpectedResults     Test should receive location update and should update the device list to indicate the type of BT GPS device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            17/11/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10796, REQ10805
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test1Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Default
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test1Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-RealLocationRequest-0001
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-RealLocationRequest-0002
+//! @SYMTestCaseID              LBS-BTGPSPSY-RealLocationRequest-0002
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains a number of devices.  The PSY should be able to connect to and receive a location request from the only available BT device at the top of the list.  The PSY should not need to edit the device list or look at the unavailable devices at the end of the list.  The device in the list is listed as a known device so the PSY should be able to connect directly to the device.
+//!                             NOTE: Test requires a real BT GPS device (standard or PNOK) to run the test
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  One available BT device should be added to the top of the list.  This device should be an available real BT device with the device type of valid.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list to ensure no changes have been made.
+//! @SYMTestExpectedResults     Test should receive location update and should not make changes to the device list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10796, REQ10805
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test2Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Default
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test2Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-RealLocationRequest-0002
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-RealLocationRequest-0003
+//! @SYMTestCaseID              LBS-BTGPSPSY-RealLocationRequest-0003
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains a number of devices.  The only available device in the list should be at the end of the list.  The PSY should move through the list attempting to and failing to connect to the unavailable devices.  The PSY should then arrive at the end of the list and connect to and receive a location update from this device.  The PSY should edit the device list to move this valid device to the top of the list.
+//!                             NOTE: Test requires a real BT GPS device (standard or PNOK) to run the test
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  One available BT device should be added to the end of the list.  This device should be an available real BT device with the device type of unknown.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list to ensure that the valid BT device has been moved to the top of the list.
+//! @SYMTestExpectedResults     Test should receive location update and should move the available BT device to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10803, REQ10805
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test3Pre
+RUN_TEST_STEP 300 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Default
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test3Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-RealLocationRequest-0003
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-RealLocationRequest-0004
+//! @SYMTestCaseID              LBS-BTGPSPSY-RealLocationRequest-0004
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains a number of devices.  The only available device in the list should in the middle of the list.  The PSY should move through the list attempting to and failing to connect to the unavailable devices.  The PSY should then arrive at the available device and should be able to connect to and receive a location update from this device.  The PSY should edit the device list to move this valid device to the top of the list.
+//!                             NOTE: Test requires a real BT GPS device (standard or PNOK) to run the test
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  One available BT device should be added to the middle of the list.  This device should be an available real BT device with the device type of valid.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list to ensure that the valid BT device has been moved to the top of the list.
+//! @SYMTestExpectedResults     Test should receive location update and should move the available BT device to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10803
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test4Pre
+RUN_TEST_STEP 300 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Default
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test4Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-RealLocationRequest-0004
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-RealLocationRequest-0005
+//! @SYMTestCaseID              LBS-BTGPSPSY-RealLocationRequest-0005
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains no available devices.  It ensures that the PSY is able to load the standard BT selection dialog to get the user entered device.  It should be able to connect to and receive a location update from this device and should add it to the top of the device list.
+//!                             NOTE: Test requires a real BT GPS device (standard or PNOK) to run the test
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  All of the devices should be unavailable.
+//!                             2. Test makes a location request and the PSY should attempt to connect to all the devices in the list, failing to connect to any.
+//!                             3. The PSY should launch the standard BT Device Selection dialog to allow the user to enter the available BT device (done automatically via a notifier)
+//!                             4. The PSY should be able to connect to the newly added device and should receive a location update.  This device should have been added to the top of the device list.
+//! @SYMTestExpectedResults     Test should receive location update and should contain the new device added to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10804
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test5Pre
+RUN_TEST_STEP 300 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Default
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test5Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-RealLocationRequest-0005
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-RealLocationRequest-0006
+//! @SYMTestCaseID              LBS-BTGPSPSY-RealLocationRequest-0006
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with an empty device list.  It ensures that the PSY is able to load the standard BT selection dialog to get the user entered device.  It should be able to connect to and receive a location update from this device and should add it to the top of the device list.
+//!                             NOTE: Test requires a real BT GPS device (standard or PNOK) to run the test
+//! @SYMTestActions             1. Test should ensure there are no devices in the list (list is empty)
+//!                             2. Test makes a location request and the PSY should load the standard BT Device Selection dialog to allow the user to enter the available BT device (done automatically via a notifier)
+//!                             3. The PSY should be able to connect to the newly added device and should receive a location update.  This device should have been added to the top of the device list.
+//! @SYMTestExpectedResults     Test should receive location update and should contain the new device added to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10804
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test6Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Default
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test6Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-RealLocationRequest-0006
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-RealLocationRequest-0007
+//! @SYMTestCaseID              LBS-BTGPSPSY-RealLocationRequest-0007
+//! @SYMTestCaseDesc            Test ensures that the BT PSY responds correctly after trying to add a new device to the list when the list is actually already full.  The test should still be able to receive a location update from the PSY, but the device should not be added to the list.
+//!                             NOTE: Test requires a real BT GPS device (standard or PNOK) to run the test
+//! @SYMTestActions             1. Test should fill up the device list with unavailable devices.
+//!                             2. Test makes a location request and the PSY should start to attempt to and fail to connect to the devices in the list.
+//!                             3. The PSY should load the BT device selection dialog and get the user entered available device.
+//!                             4. The PSY should attempt to add this device to the top of the list, but this action will fail.  The PSY should continue in its operation and should return a location to the test.
+//!                             5. The test should check to ensure the device has not been added to the device list.
+//! @SYMTestExpectedResults     Test should receive location update but the list should not contain the valid BT device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/11/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10804
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test7Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Default
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_real.ini Test7Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-RealLocationRequest-0007
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+
+

@@ -1,0 +1,84 @@
+# lab_restricted_miniboot.flm
+#
+# Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+
+ifeq ($(lab_restricted_miniboot_flm),)
+lab_restricted_miniboot_flm := 1
+
+# Set the directories
+SRCDIR := $(EXTENSION_ROOT)/../../lab_restricted/unistore2/nandboot/miniboot_largeblk
+
+# Build directory
+BUILDLOC := $(EPOCBLD)/lab_restricted_miniboot_flm/$(PLATFORM_PATH)
+
+# Set the target name
+TARGETDIR := $(EPOCROOT)/epoc32/release/$(PLATFORM_PATH)
+BINTARGET := $(TARGETDIR)/lab_miniboot.bin
+TMPTARGET := $(BUILDLOC)/lab_miniboot.elf
+TMPTARGET2 := $(BUILDLOC)/lab_miniboot.bin
+
+# Set the Load Address for the miniboot
+# This is currently set to the beginning of SRAM
+LINKBASE := 0x40200000
+
+# Rules
+vpath %.s . $(SRCDIR)
+
+ASMSOURCE := miniboot_largeblk.s
+
+
+# Arm RVCT tools
+ASM_TRUE_MACROS := USE_CXSF
+
+OBJEXT := o
+
+ASM_TRUE_MACRO_CMD := $(foreach macro,$(ASM_TRUE_MACROS),--predefine "$(macro) SETL {TRUE}")
+ASM_FALSE_MACRO_CMD := $(foreach macro,$(ASM_FALSE_MACROS),--predefine "$(macro) SETL {FALSE}")
+
+AFLAGS := -g --keep $(ASM_TRUE_MACRO_CMD) $(ASM_FALSE_MACRO_CMD) -I$(BUILDLOC)
+LFLAGS := --ro-base $(LINKBASE) --entry BootEntry --FIRST BootEntry --map
+SYMOPT := --symdefs
+ASMTYP := ARMASM
+
+# Include base commonly used functions
+include $(EPOCROOT)/epoc32/tools/makefile_templates/base/base_rvct_common.mk
+
+
+ASMOBJECTS := $(foreach f,$(ASMSOURCE),$(basename $(f)).$(OBJEXT))
+FULLASMOBJECTS := $(addprefix $(BUILDLOC)/,$(ASMOBJECTS))
+
+FULLOBJECTS := $(FULLASMOBJECTS)
+
+# Link
+$(eval $(call base__link,$(TMPTARGET),$(FULLOBJECTS)))
+# Strip
+$(eval $(call base__strip,$(TMPTARGET2),$(TMPTARGET)))
+# Omapsig
+$(eval $(call base__omapsig,$(BINTARGET),$(TMPTARGET2)))
+
+# Asm objects
+$(eval $(call base__asm,$(FULLASMOBJECTS),$(BUILDLOC)/%.$(OBJEXT),$(SRCDIR)/$(ASMSOURCE) $(FULLINCLUDES) $(FULLBUILTINCLUDES) $(FULLBUILTINCLUDES2) $(FULLBLDINCLUDES) $(FULLGENINCLUDES) $(FULLPLATINCLUDES)))
+
+#
+TARGET :: $(BINTARGET) $(TARGETDIR) $(BUILDLOC) 
+
+# --what to show releasables
+$(eval $(call whatmacro,$(BINTARGET),USERFLM))
+# Create directory
+CREATABLEPATHS := $(TARGETDIR) $(BUILDLOC)
+$(call makepath,$(CREATABLEPATHS))
+# Clean up
+$(eval $(call GenerateStandardCleanTarget,$(CLEANTARGETS),$(BUILDLOC)))
+
+endif

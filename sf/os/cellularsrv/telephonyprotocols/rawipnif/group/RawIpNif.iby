@@ -1,0 +1,69 @@
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// RawIp.iby
+// 
+//
+
+#ifndef __RAWIP_IBY__
+#define __RAWIP_IBY__
+
+#include <packetlogger.iby>
+
+// The default BCA is C32, but may be replaced by another BCA if desired
+#include <c32bca.iby>
+
+#ifdef _DEBUG
+
+#ifdef _ZERO_COPY_NETWORKING
+ECOM_PLUGIN_UDEB(rawip2.dll,10286AF7.rss)
+#else
+ECOM_PLUGIN_UDEB(rawip.dll,10281C4E.rss)
+#endif //_ZERO_COPY_NETWORKING
+
+#else
+
+#ifdef _ZERO_COPY_NETWORKING
+ECOM_PLUGIN(rawip2.dll,10286AF7.rss)
+#else
+ECOM_PLUGIN(rawip.dll,10281C4E.rss)
+#endif //_ZERO_COPY_NETWORKING
+
+#endif // _DEBUG
+
+#ifdef _ZERO_COPY_NETWORKING
+// patch data for CBcaController::BaseConstructL API
+patchdata rawip2.dll@KMaxSendQueueLen 0x5
+patchdata rawip2.dll@KMaxTxIPPacketSize 0x57a
+patchdata rawip2.dll@KMaxRxIPPacketSize 0x57a
+// patch data for IPv4Binder
+patchdata rawip2.dll@KMtuIPv4 0x578		// KMaxTxIPPacketSize - 2, where IP tag header = 2
+patchdata rawip2.dll@KRMtuIPv4 0x578	// KMaxRxIPPacketSize - 2
+// patch data for IPv6Binder
+patchdata rawip2.dll@KMtuIPv6 0x578		// KMaxTxIPPacketSize - 2
+patchdata rawip2.dll@KRMtuIPv6 0x578	// KMaxRxIPPacketSize - 2
+#else
+// patch data for CBcaController::BaseConstructL API
+patchdata rawip.dll@RawIPConst::KMaxSendQueueLen 0x5
+patchdata rawip.dll@RawIPConst::KMaxTxIPPacketSize 0x57a
+patchdata rawip.dll@RawIPConst::KMaxRxIPPacketSize 0x57a
+// patch data for IPv4Binder
+patchdata rawip.dll@RawIPConst::KMtuIPv4 0x578     	// KMaxTxIPPacketSize - 2, where IP tag header = 2
+patchdata rawip.dll@RawIPConst::KRMtuIPv4 0x578		// KMaxRxIPPacketSize - 2
+// patch data for IPv6Binder
+patchdata rawip.dll@RawIPConst::KMtuIPv6 0x578		// KMaxTxIPPacketSize - 2
+patchdata rawip.dll@RawIPConst::KRMtuIPv6 0x578		// KMaxRxIPPacketSize - 2
+#endif //_ZERO_COPY_NETWORKING
+
+#endif // __RAWIP_IBY__
+

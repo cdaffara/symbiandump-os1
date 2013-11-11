@@ -1,0 +1,110 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: Integration testing of PREQ2632-SSM offline substate and SIP graceful de-registration
+//
+
+//!		@file			
+//!		@SYMTestSuiteName		DEVSRVS-SSMA-CMN
+//!		@SYMScriptTestEnvironment   Details as in below:-
+//!								1. testexecute framework(TEF3.0).
+//!								Test is valid only when patchable constant KSsmGracefulOffline is enabled. For the testing purpose define macro TEST_SSM_GRACEFUL_OFFLINE  
+//!								and TEST_SSM_GRACEFUL_SHUTDOWN(For power off request feature).
+//!								Note: The system is going to be in fail state after executing test(DEVSRVS-SSMA-CMN-0007) and can not be restored to normal for executing other tests.
+//!								So this test has to be executed at the end on overnite build machines.  
+//!		@SYMScriptPurpose		Integration testing for PREQ2632-SSM offline substate and SIP graceful de-registration
+//!		@SYMScriptCreationDate	09/09/2009
+
+LOAD_SUITE  tcmn_gracefulnotify
+
+START_TESTCASE			DEVSRVS-SSMA-CMN-0008
+//! @SYMTestCaseID		DEVSRVS-SSMA-CMN-0008
+//! @SYMPREQ 			PREQ2632
+//! @SYMTestType		CIT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc	Test the behaviour of the applications which are requesting for offline substate aware and graceful offline notification. Create 2 threads to demonstate the two application 
+//!						requesting the state aware with different domain id.
+//! @SYMTestActions		1.Create a thread and connect to the server with a domain Id and request for offline state  change notification  
+//!						2.Create a 2nd thread and connect to the server with a different domain Id and request for state change notification	
+//!				  		3.Request substate change to ESsmNormalRfOffSubstate
+//!						4.Acknowledge with KErrNone upon receiving the Offline substate change notification
+//!						5.Perform state transition to Normal inorder to keep the system back to Normal State
+//! @SYMTestExpectedResults 	Acknowledgement will be sent in the reverse order of the subscribed notification.
+		
+START_TEST_BLOCK  100	tcmn_gracefulnotify		z:\ssmatest\ssmatest_cmn_gracefulofflinestatenotify.ini
+	CREATE_OBJECT	RSsmStateAwareSession  RSsmStateAwareSession1	
+	CREATE_OBJECT	RSsmStateAwareSession  RSsmStateAwareSession2
+	CREATE_OBJECT   RSsmStateManager	   RSsmStateManager
+	COMMAND		RSsmStateAwareSession1		NewL
+	COMMAND		RSsmStateAwareSession2		NewL	
+	COMMAND		RSsmStateManager			NewL
+	COMMAND		RSsmStateAwareSession1		Connect		stateawaresession_connect_0001_0001
+	COMMAND		RSsmStateAwareSession2		Connect		stateawaresession_connect_0001_0002
+	COMMAND		RSsmStateManager			Connect
+	COMMAND		RSsmStateAwareSession1		RequestStateNotification	
+	COMMAND		RSsmStateAwareSession2		RequestStateNotification
+	COMMAND		RSsmStateManager			RequestStateTransition  ssmStateManager_RequestStateTransition_0001_0001
+	OUTSTANDING
+	COMMAND		RSsmStateManager			RequestStateTransition  ssmStateManager_RequestStateTransition_0001_0002
+	COMMAND		RSsmStateAwareSession1		Close
+	COMMAND		RSsmStateAwareSession2		Close
+	COMMAND		RSsmStateManager			Close
+	COMMAND		RSsmStateAwareSession1		~
+	COMMAND		RSsmStateAwareSession2		~
+	COMMAND		RSsmStateManager			~
+END_TEST_BLOCK	
+END_TESTCASE			DEVSRVS-SSMA-CMN-0008
+
+START_TESTCASE			DEVSRVS-SSMA-CMN-0009
+//! @SYMTestCaseID		DEVSRVS-SSMA-CMN-0009
+//! @SYMPREQ 			PREQ2632
+//! @SYMTestType		CIT
+//! @SYMTestPriority	Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc		Test the behaviour of the applications which are requesting offline substate aware. The System moves to fail state upon 
+//!							not receiving aknowledgement with in specified time.
+//!						Create 2 threads to demonstate the two application requesting the state aware with different domain id.
+//! @SYMTestActions		1.Create a thread and connect to the server with a domain Id and request for state change notification  
+//!						2.Create a 2nd thread and connect to the server with a domain Id and request for state change notification
+//!				  		3.Request state change to ESsmNormalRfOffSubstate
+//!						4.Do not acknowledge
+//!						5.Wait for 40seconds
+//!						5.Get the state of the System and compare it with the fail state 
+//! @SYMTestExpectedResults 	The System moves to Fail state upon not receiving acknowledgement from the client registered for state notification with in specified time.
+		
+START_TEST_BLOCK  100	tcmn_gracefulnotify	z:\ssmatest\ssmatest_cmn_gracefulofflinestatenotify.ini
+	CREATE_OBJECT	RSsmStateAwareSession  RSsmStateAwareSession1	
+	CREATE_OBJECT	RSsmStateAwareSession  RSsmStateAwareSession2
+	CREATE_OBJECT   RSsmStateManager	   RSsmStateManager
+	COMMAND		RSsmStateAwareSession1		NewL
+	COMMAND		RSsmStateAwareSession2		NewL	
+	COMMAND		RSsmStateManager			NewL
+	COMMAND		RSsmStateAwareSession1		Connect		stateawaresession_connect_0001_0001
+	COMMAND		RSsmStateAwareSession2		Connect		stateawaresession_connect_0001_0002
+	COMMAND		RSsmStateManager			Connect
+	COMMAND		RSsmStateAwareSession1		RequestStateNotification	
+	COMMAND		RSsmStateAwareSession2		RequestStateNotification
+	COMMAND		RSsmStateManager			RequestStateTransition  ssmStateManager_RequestStateTransition_0001_0001
+	OUTSTANDING
+//  Delaying for 40 seconds for the system to enter in to fail state
+	DELAY 40000000
+	COMMAND		RSsmStateAwareSession2		State	stateawaresession_state_0001_0001
+	COMMAND		RSsmStateAwareSession1		Close
+	COMMAND		RSsmStateAwareSession2		Close
+	COMMAND		RSsmStateManager			Close
+	COMMAND		RSsmStateAwareSession1		~
+	COMMAND		RSsmStateAwareSession2		~
+	COMMAND		RSsmStateManager			~
+END_TEST_BLOCK	
+END_TESTCASE			DEVSRVS-SSMA-CMN-0009
+

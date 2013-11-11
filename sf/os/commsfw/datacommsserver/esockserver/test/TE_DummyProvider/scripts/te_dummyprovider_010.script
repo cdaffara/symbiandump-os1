@@ -1,0 +1,48 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Running CASE010
+PRINT Two dummy layers able to start successfully
+PRINT Execute the crazy start/wait/stop loop increasing wait with every iteration.
+PRINT See how the stack manages cancelations at distinct stages.
+
+
+//
+LOAD_SUITE te_esockteststepsSuite -SharedData
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-DummyProviders-010
+//! @SYMTestCaseID COMINF-ESOCK-DummyProviders-010
+//! @SYMTestCaseDesc  Tests the resiliance of the RConnection::Start to cancelations (induced by RConnection::Stop).
+//! @SYMTestActions   Execute the crazy start/wait/stop loop increasing wait with every iteration.
+//! @SYMTestExpectedResults    No crashes, all operations complete (typically with KErrCancel, but that's not cared for)
+//! @SYMTestPriority  Critical 
+//! @SYMTestType CT
+//! @SYMComponent   comms-infras_esock
+
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\te_dummyprovider_010.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\te_dummyprovider_010.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\te_dummyprovider_010.ini ConnectSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\te_dummyprovider_010.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite StartStopCrazyLoopRConnectionStep z:\testdata\configs\te_dummyprovider_010.ini StartConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\te_dummyprovider_010.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\te_dummyprovider_010.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE COMINF-ESOCK-DummyProviders-010
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed CASE010

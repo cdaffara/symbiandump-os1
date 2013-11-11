@@ -1,0 +1,190 @@
+#ifndef __MINIGUI_OBY__
+#define __MINIGUI_OBY__
+
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// This OBY File is used to build Mini-Gui ROM Images.
+// 
+// Use the following buildrom command line, or similar:
+//	buildrom -orombld.img -DUSE_SDIO_SD_MMC -DWITH_TVOUT -DUSE_24UBPP_DISPLAY_VARIANT_TV -D_INTERNAL_MMC -DUSE_DATA_PAGING h4hrp minigui pagedrom platsec
+// Note there is no need to specify -D_NAND2 
+
+define OBEYFILE minigui
+define ROMDATE	##TODAY##
+
+// We used to define _NAND2 on the commandline to buildrom.  However, it
+// does not make rombuild create a rofs image.  Instead it needs to be
+// specified in the oby file itself.
+//#define _NAND2
+
+// Undefine things in global System Include that stops the NCP rom from working.
+#undef USE_CUSTOM_MMC_PARTITION
+#undef SYMBIAN_EXCLUDE_SCDV
+#undef SYMBIAN_GRAPHICS_USE_GCE 
+#undef SYMBIAN_GRAPHICS_ADAPTATION
+#undef SGA_SW_NO_GRAPHICSRESOURCE 
+#undef SYMBIAN_EXCLUDE_KEYMAP  
+
+
+
+#define NO_METROTRK_APP // don't want metrotrk application
+#define HAS_ETHERNET	// include etherDrv, ether802, DHCP
+#define SYMBIAN_EXCLUDE_FAX
+#undef __IPSEC
+#define SYMBIAN_EXCLUDE_OBEX
+
+#ifdef SYMBIAN_SYSTEM_STATE_MANAGEMENT
+#define _SSMSTARTUPMODE 8	//for ssma boot up.
+#else
+#define _STARTUPMODE8		// for sysstart.iby
+#endif
+
+// Various workarounds to avoid dependencies on UIKON
+
+#define __TLS_IBY__			// exclude TLS
+#define __TLSPROVIDER_IBY__		// exclude TLSPROVIDER 
+#define __OBEXPROTOCOL_IBY__	// exclude obex.dll etc
+#define __WLANEAPMETHODS_IBY__	// exclude eap_tls.msy & friends
+// 
+
+#ifndef SYMBIAN_BASE_USE_GCE
+#define SYMBIAN_BASE_USE_GCE
+#endif
+#ifndef SYMBIAN_GRAPHICS_USE_GCE
+#define SYMBIAN_GRAPHICS_USE_GCE
+#endif
+#include <header.iby>				/* ROM header definitions */
+#include <base.iby>					/* The lowest-level of the operating system */
+
+#include <core/os/platformenv.iby>
+#include <core/os/ssmmapperutility.iby>
+
+#include <graphics_adaptation.hby>
+
+#ifdef SYMBIAN_SYSTEM_STATE_MANAGEMENT
+
+#include <ssma.iby>			/*System State Management Architecture*/
+#include <ssplugins.iby>		/*System State Management Plugins*/
+
+//Include SSM optional components to enable teams to build a plain textshell rom (on the lines of DEF128306), 
+//following removal of h4_textshell_rom.oby.
+#include <amastart.iby>
+
+#include <shma.iby>
+#include <ssrefplugins.iby>
+#else
+#include <sysstart.iby>
+#include <sysstartconfig.iby>
+#endif // SYMBIAN_SYSTEM_STATE_MANAGEMENT
+
+#include <debug.iby>
+
+#include <eshell.iby>
+
+#include <centralrepository.iby>
+	file=ABI_DIR\BUILD_DIR\abclient.dll			sys\bin\abclient.dll
+
+#include <crypto.iby>
+
+#include <c32.iby>
+#include <ecuart.iby>
+#include <irda.iby>
+#include <stdlib.iby>
+#include <gdi.iby>
+#include <fntstore.iby>
+#include <fbserv.iby>
+#include <bitgdi.iby>
+#include <iculayoutengine.iby>
+#include <freetype.iby>
+#include <directgdi.iby>
+#include <wserv.iby>
+#include <econs_wserv.iby>
+//data=DATAZ_\wsini_minigui.ini	\system\data\wsini.ini
+
+#include <printers.iby>
+
+
+
+#include <traces.iby>
+
+#include <inetprotutil.iby>		/* needed for mmfcontrollerframework.dll */
+#include <sysagent.iby>
+#include <network.iby>	
+#include <dial.iby>		// needed by commsdat
+#include <etel.iby>
+#include <smsstack.iby>
+#include <etelmm.iby>
+#include <etelpckt.iby>
+#include <mmtsy.iby>
+#include <etelsat.iby>
+#include <sysawatcher.iby>
+#include <bafl.iby>
+#include <ecom.iby>
+#include <store.iby>
+#include <dbms.iby>
+#include <pwrcli.iby>
+#include <xml.iby>
+#include <ups.iby>
+#include <securitycommonutils.iby>
+
+/* Feature Management run-time */
+#ifdef SYMBIAN_FEATURE_MANAGER
+
+// Include both old and new components when Feature Manager enabled
+#include <featmgr.iby>
+#include <featreg.iby>
+
+#else 
+
+// Include only the original Feature Registry otherwise
+#include <featreg.iby>
+#ifndef ROM_FEATURE_MANAGEMENT
+/* Provide a default configuration file for the feature registry */ 
+data=EPOCROOT##epoc32\data\config\featreg_default.cfg    private\102744CA\featreg.cfg
+#endif
+#endif
+
+// The following section are all indirect dependencies arising from TEF testexecute depending
+// on apparc
+#include <mmcommon.iby>
+#include <ezlib.iby>
+file=ABI_DIR\BUILD_DIR\Http.dll                 System\Libs\Http.dll
+file=ABI_DIR\BUILD_DIR\httputils.dll			System\Libs\httputils.dll
+#include <asnpkcs.iby>
+#include <filetokens.iby>
+#include <imageconversion.iby>
+#include <ocsp.iby>
+#include <certman.iby>
+#include <swi.iby>
+#include <bluetooth.iby>
+#include <openenv.iby>
+#ifdef SYMBIAN_UNIVERSAL_INSTALL_FRAMEWORK
+#include <scr.iby>
+#include <sts.iby>
+#include <sif.iby>
+#endif
+#ifdef SYMBIAN_UNIVERSAL_INSTALL_FRAMEWORK
+#include <scr.iby>
+#include <sts.iby>
+#include <sif.iby>
+#endif
+#include <caf.iby>
+#include <apparc.iby>		/* Application architecture DLLs */
+#include <emime.iby>		/* Mime recognition */
+// This is the end of the indirect dependencies arising from TEF testexecute
+// depending on apparc
+
+#include <testexecute.iby>		// TEF
+
+#endif /* __MINIGUI_OBY__ */

@@ -1,0 +1,90 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         btgpspsy_invalid.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE ctlbsbtgpspsytestserver
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+START_TESTCASE                LBS-BTGPSPSY-Invalid-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-Invalid-0001
+//! @SYMTestCaseDesc            Test ensures that the BT PSY is able to handle devices listed as invalid in the BT device list.  The available BT device will be marked as invalid in the device list.  The PSY should ignore this device and should not be able to return a location.
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list with the valid standard BT device being marked as an invalid device in the list.
+//!                             2. Test makes a location request and the PSY should start to attempt to and fail to connect to the devices in the list.
+//!                             3. The PSY should load the BT device selection dialog which is then cancelled by the test.
+//!                             4. The PSY should exit from the connecting state and return an error to the test, no position should be returned.
+//! @SYMTestExpectedResults     Test should not receive a location response and no changes should be made to the device list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ11526
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_invalid.ini Invalid01Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Invalid
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_invalid.ini Invalid01Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Invalid-0001
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Invalid-0002
+//! @SYMTestCaseID              LBS-BTGPSPSY-Invalid-0002
+//! @SYMTestCaseDesc            Test to ensure that the BT PSY is able to deal with an invalid BT GPS device.  A client adds a BT device to the list which is not a valid device but which is marked as unknown.  The GPS PSY should attempt to connect to the device and, upon receiving invalid NMEA messages, should have the device type changed to invalid.
+//! @SYMTestActions             1. Test should add a few BT GPS devices to the list.  The device on to the top of the list should be an invalid BT device with the device type set to unknown.
+//!                             2. Test makes a location request and should receive invalid nmea messages.  The PSY should set this device as an invalid non-gps device.
+//!                             3. Test checks the list to ensure no changes have been made to the list and that no location update was received.
+//! @SYMTestExpectedResults     Test should not receive a location response and no changes should be made to the device list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            10/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ11526
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_invalid.ini Invalid02Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Invalid
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_invalid.ini Invalid02Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Invalid-0002
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Invalid-0003
+//! @SYMTestCaseID              LBS-BTGPSPSY-Invalid-0003
+//! @SYMTestCaseDesc            Test to ensure the PSY can deal with an invalid device being entered in the device selection state.
+//! @SYMTestActions             1. Test should ensure the lsit is empty and should make a location request.
+//!                             2. The PSY should load the standard BT Selection dialog and the test should provide an invalid device to the PSY.
+//!                             3. PSY should add the device to the list and attempt to connect to it.  It should receive invalid nmea messages, so the PSY should update the list to mark the device as invalid.  The test should then cancel the location request and no position should be received.
+//! @SYMTestExpectedResults     Test should not receive a location response.  The user entered device should be added to the list and marked as an invalid device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            11/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ11526
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_invalid.ini Invalid03Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep c:\testdata\configs\btgpspsy_locationrequest.ini Invalid
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_invalid.ini Invalid03Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Invalid-0003
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+
+

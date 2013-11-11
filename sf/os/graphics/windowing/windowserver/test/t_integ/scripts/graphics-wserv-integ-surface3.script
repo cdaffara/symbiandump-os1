@@ -1,0 +1,696 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: 
+//
+/////////////////////////////////////////////////////////////////////
+// graphics-wserv-integ-surface1.script
+//
+// Tests elements of the classes associated with RWindow,
+// as a means of confidence that the APIs work as expected.
+//
+// This test grouping are broardly categorised as opaque UI, 
+// with multiple windows per screen
+// 
+// The purpose is to provide a regression test suite of Public
+// APIs for RWindow. Negative testing is performed to confirm that correct 
+// errors are returned when incorrect parameters are given.
+//
+// The tests are fully automated.
+/////////////////////////////////////////////////////////////////////
+
+//! @file
+//! @SYMTestSuiteName			graphics-wserv-integ-surface
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM.
+LOAD_SUITE	t_wservintegserver
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0031-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0031-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components				
+//! @SYMTestActions				Environment settings:
+//! 								Simulated Load: 0%
+//! 								Colour Depth: 16MAP 
+//! 								Execution Time: 30s 
+//! 								Screen Number: 0 
+//! 								Pixel Format: YUV 
+//! 								Rotation: 0
+//! 							Window 1 (DevVideo):
+//! 								Window Size: Full screen
+//! 								Image Size: Full screen
+//! 								Frame Rate: 30fps 
+//! 								Buffer Format: Multiple  [exact details unknown at this point]
+//! 								Window 2 (Ecam):
+//!									Window Size: Eighth Screen
+//!									Image Size : Eighth Screen
+//!									Buffer Format: Single 
+//!									Frame Rate: 15fps 
+//!									Screen Location: (64,0)
+//!								Start SimLoadApp
+//!								Start pseudo video playback application:
+//!								Create RWindow (simulate DevVideo usage) 
+//!								Create RsurfaceHandle with ‘first frame of video’ 
+//!								Use Surface data APIs to generate content. Since this is licensee replaceable, the test code implementation must allow for this to be replaceable, e.g. library dll. [exact details of data APIs unknown at this point]
+//!								Content is to be simple but quickly indicative of failure to the human eye, e.g. a clock sweep with large numerals indicating the frame number.
+//!								Number of buffers per surface set to two.
+//!								Call RWindow::SetBackgroundImage()
+//!								
+//!								Create RWindow (simulate Ecam usage) 
+//!								Create RsurfaceHandle with ‘first frame of viewfinder’ 
+//!								Use Surface data APIs to generate content. Since this is licensee replaceable, the test code implementation must allow for this to be replaceable, e.g. library dll. 
+//!								Content is to be simple but quickly indicative of failure to the human eye, e.g. a clock sweep with large numerals indicating the frame number (different colour to used for video window above).
+//! 							Call RWindow::SetBackgroundImage()
+//!								
+//!								Create simulated UI Components
+//!								Draw components using CwindowGC::BitBlt() with preloaded images of UI components (button, menu bar). 
+//!								Activate Window.
+//!								
+//!								Update Images with next frame
+//!								Utilise RsurfaceHandle notification to indicate when surface has been consumed by GCE. Use Surface data APIs to update contents. Invalidate window to cause redraw.
+//!								
+//!								Continuously perform Image updates to simulate video and viewfinder playback.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps/15fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! @SYMTestType				IT
+ 
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0031-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0031-0001
+ 
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0032-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with 10% simulated load 				
+//! @SYMTestActions				graphics-wserv-integ-surface-0041-001 as a base, modify the SimLoadApp to load the CPU to 10% before executing the video playback.
+//!								Measure the frame rate at which the display is updated when under a simulated load.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults			Frame rate is reduced with increased static load
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	2000	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0032-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0002
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0032-0002
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with 20% simulated load 				
+//! @SYMTestActions				graphics-wserv-integ-surface-0041-001 as a base, modify the SimLoadApp to load the CPU to 20% before executing the video playback.
+//!								Measure the frame rate at which the display is updated when under a simulated load.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults			Frame rate is reduced with increased static load
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	2000	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0032-002
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0002
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0003
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0032-0003
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with 30% simulated load 				
+//! @SYMTestActions				graphics-wserv-integ-surface-0041-001 as a base, modify the SimLoadApp to load the CPU to 30% before executing the video playback.
+//!								Measure the frame rate at which the display is updated when under a simulated load.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults			Frame rate is reduced with increased static load
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	2000	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0032-003
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0003
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0004
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0032-0004
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with 40% simulated load 				
+//! @SYMTestActions				graphics-wserv-integ-surface-0041-001 as a base, modify the SimLoadApp to load the CPU to 40% before executing the video playback.
+//!								Measure the frame rate at which the display is updated when under a simulated load.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults			Frame rate is reduced with increased static load
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	2000	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0032-004
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0004
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0005
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0032-0005
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with 50% simulated load 				
+//! @SYMTestActions				graphics-wserv-integ-surface-0041-001 as a base, modify the SimLoadApp to load the CPU to 50% before executing the video playback.
+//!								Measure the frame rate at which the display is updated when under a simulated load.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults			Frame rate is reduced with increased static load
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	2000	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0032-005
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0032-0005
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0033-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0033-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size > image size				
+//! @SYMTestActions						Info - Image stretched to fit window
+//! 								Measure frame rate achieved whilst image size is changed
+//! 								With window size to full screen.
+//! 								Image size to Half Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0033-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0033-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0033-0002
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0033-0002
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size > image size				
+//! @SYMTestActions						Info - Image stretched to fit window
+//!								Measure frame rate achieved whilst image size is changed
+//!								With window size to full screen.
+//!								Image size to Quarter Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0033-002
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0033-0002
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0033-0003
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0033-0003
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size > image size				
+//! @SYMTestActions					Info - Image stretched to fit window
+//! 							Measure frame rate achieved whilst image size is changed
+//! 							With window size to full screen.
+//! 							Image size to Eigth Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0033-003
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0033-0003
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0034-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size == image size, no overlap between ui and ecam windows				
+//! @SYMTestActions				Measure frame rate achieved whilst image size is changed
+//!								With window size to half screen.
+//!								Image size to Half Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0034-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0002
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0034-0002
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size == image size, no overlap between ui and ecam windows				
+//! @SYMTestActions				Measure frame rate achieved whilst image size is changed
+//! 							With window size to quarter screen.
+//! 							Image size to Quarter Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0034-002
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0002
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0003
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0034-0003
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size == image size, no overlap between ui and ecam windows				
+//! @SYMTestActions				Measure frame rate achieved whilst image size is changed
+//! 								With window size to eigth screen.
+//! 								Image size to Eigth Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0034-003
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0003
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0004
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0034-0004
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size == image size, ecam window within ui window				
+//! @SYMTestActions				Measure frame rate achieved whilst image size is changed
+//!								With window size to half screen.
+//!								Image size to Half Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0034-004
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0004
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0005
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0034-0005
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size == image size, ecam window within ui window				
+//! @SYMTestActions				Measure frame rate achieved whilst image size is changed
+//! 							With window size to quarter screen.
+//! 							Image size to Quarter Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0034-005
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0005
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0006
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0034-0006
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size == image size, ecam window within ui window				
+//! @SYMTestActions				Measure frame rate achieved whilst image size is changed
+//! 								With window size to eigth screen.
+//! 								Image size to Eigth Screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0034-006
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0034-0006
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0035-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size < image size, no overlap between ui and ecam windows		
+//! @SYMTestActions					Info - Image compressed to fit window
+//! 							Measure frame rate achieved whilst image size is changed
+//! 							With window size to half screen.
+//! 							Image size to full screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0035-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0002
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0035-0002
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size < image size, no overlap between ui and ecam windows
+//! @SYMTestActions					Info - Image compressed to fit window
+//! 							Measure frame rate achieved whilst image size is changed
+//! 							With window size to quarter screen.
+//! 							Image size to full screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0035-002
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0002
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0003
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0035-0003
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size < image size, no overlap between ui and ecam windows			
+//! @SYMTestActions					Info - Image compressed to fit window
+//! 							Measure frame rate achieved whilst image size is changed
+//! 							With window size to eigth screen.
+//! 							Image size to full screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0035-003
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0003
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0004
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0035-0004
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size < image size, ecam window within ui window			
+//! @SYMTestActions					Info - Image compressed to fit window
+//! 							Measure frame rate achieved whilst image size is changed
+//! 							With window size to half screen.
+//! 							Image size to full screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0035-004
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0004
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0005
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0035-0005
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size < image size, ecam window within ui window		
+//! @SYMTestActions					Info - Image compressed to fit window
+//! 							Measure frame rate achieved whilst image size is changed
+//! 							With window size to quarter screen.
+//! 							Image size to full screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0035-005
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0005
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0006
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0035-0006
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, with window size < image size, ecam window within ui window		
+//! @SYMTestActions					Info - Image compressed to fit window
+//! 							Measure frame rate achieved whilst image size is changed
+//! 							With window size to eigth screen.
+//! 							Image size to full screen
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Results may well differ between emulator and hardware depending on filtering technique used in stretching the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0035-006
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0035-0006
+
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0036-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0036-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, changing window size during playback				
+//! @SYMTestActions				With graphics-0041 as a base.
+//! 							Use Rwindow::SetSize() to incrementally decrease window size to 0, and then increase again to full screen. 
+//! 							Rate of change: once per frame
+//! 							Measure frame rate achieved whilst window size is changed.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! 							NOTE: Results may well differ between emulator and hardware depending on filtering technique used in compressing the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0036-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0036-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0037-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0037-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, changing window position during playback		
+//! @SYMTestActions				With graphics-0004 as a base.
+//! 							Window Size: 25% of screen size
+//! 							Image Size: 25% of screen size
+//! 							Rate of change: once per frame
+//! 							Use Rwindow::SetPosition() to incrementally change the window position, to move around the screen, in a counter clockwise direction, and then change direction after 1 revolution.
+//! 							Measure frame rate achieved whilst window position is changed.
+//! @SYMTestStatus				Implemented
+//!	@SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0037-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0037-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0038-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0038-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, changing window position and size during playback
+//! @SYMTestActions				With graphics-0004 as a base.
+//! 							Use Rwindow::SetExtent() to incrementally change the window position, to move around the screen, in a counter clockwise direction, and then change direction after 1 revolution, and size from full screen down to 0, and back again.
+//! 							Rate of change: once per frame
+//! 							Measure frame rate achieved whilst window size is changed.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//!	@SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! 							NOTE: Results may well differ between emulator and hardware depending on filtering technique used in compressing the image to the window size.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0038-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0038-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0042-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0042-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, image off screen 1
+//! @SYMTestActions				With graphics-0001 as a base.
+//! 							Position window to be partially off screen
+//! 							Measure frame rate.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//! 							NOTE: Part of the image is off screen.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0042-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0042-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0043-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0043-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, image off screen 2
+//! @SYMTestActions				With graphics-0041 as a base.
+//! 							Position window to be partially off screen.
+//! 							Use Rwindow::SetExtent() to incrementally change the window position and size, to move further off screen. At least one call must be to keep same position but to change size in the off screen portion.
+//! 							Measure frame rate.
+//! @SYMTestStatus				Implemented
+//!	@SYMTestPriority			1
+//! @SYMTestExpectedResults		Composition time improves as more of window moves off screen.
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								NOTE: Window moves further off screen.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0043-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0043-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0044-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0044-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, popup opaque dialog
+//! @SYMTestActions				With graphics-0041 as a base.
+//! 							During playback create opaque popup dialog box in its own window and then remove. Repeat once  (BitBlt of prepared image of dialog box)
+//! 							Close dialog.
+//! 							Repeat.
+//! 							Measure frame rate
+//! @SYMTestStatus				Implemented
+//!	@SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								Opaque dialog appears and disappears on top of scene.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0044-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0044-0001
+
+START_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0045-0001
+//! @SYMTestCaseID				GRAPHICS-WSERV-INTEG-SURFACE-0045-0001
+//! @SYMPREQ					1007 1019
+//! @SYMREQ						8222 8223 8227
+//! @SYMAPI						RWindow
+//! @SYMAuthor					John Mercer
+//! @SYMCreationDate			24/08/2007
+//! @SYMTestCaseDependencies	graphics-wserv-integ-surface.script
+//! @SYMTestCaseDesc			Multiple Moving Images with opaque UI Components, popup semi-transparent dialog
+//! @SYMTestActions				With graphics-0041 as a base.
+//! 							During playback create semi-transparent popup dialog box in its own window and then remove. Repeat once  (BitBlt of prepared image of dialog box)
+//! 							Close dialog.
+//! 							Repeat.
+//! 							Measure frame rate.
+//! @SYMTestStatus				Implemented
+//!	@SYMTestPriority			1
+//! @SYMTestExpectedResults		Frame Rate: 30fps
+//!								Display is composed of 2 moving images in background, with opaque UI components in foreground. The moving images are that of a clock sweep with large numerals indicating the frame number (red on blue background for video, and yellow on green background for viewfinder).
+//!								Semi-transparent dialog is composed on top of scene.
+//! @SYMTestType				CIT
+
+RUN_TEST_STEP !Heap=0x200000	500	t_wservintegserver	WServIntegSurface	c:\graphics\graphics-wserv-integ-surface.ini	graphics-wserv-integ-surface-0045-001
+END_TESTCASE 	GRAPHICS-WSERV-INTEG-SURFACE-0045-0001

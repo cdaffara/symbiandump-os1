@@ -1,0 +1,80 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsHybridX3PTestServer -SharedData
+
+PRINT Run LbsHybridX3PTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+//	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_x3p.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_SetupProtocolStub
+
+RUN_TEST_STEP 030 LbsHybridX3PTestServer LbsStep_StartLbs
+
+
+
+START_TESTCASE LBS-HybridX3P-UEAssistedX3P-AccurateGpsTimeout-0001
+//!@SYMTestCaseID LBS-HybridX3P-UEAssistedX3P-AccurateGpsTimeout-0001
+
+//!@SYMTestCaseDesc	Client generates X3P request
+//!			GPS Module generates an accurate position
+//!			Timeout in waiting for receive Facility 
+//!			See: lbshybridx3p/documentation/X3P.htm#x3pAssistAccFacilityTimeout
+//!
+//!
+//!@SYMTestActions	
+//!			See test step Sequence inline comments
+//!
+//!
+//!@SYMTestExpectedResults	Sequence as per specified by FSM and UML Seq diagram is Followed
+//!@SYMPREQ					PREQ1624
+//!@SYMREQ					REQ1624.xyz
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsHybridX3PTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsHybridX3PTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_x3p.ini LBS-X3P
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 600 LbsHybridX3PTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_x3p.ini HybridUEAssistedX3PAccurateGPS
+
+RUN_TEST_STEP 600 LbsHybridX3PTestServer LbsHybridUEAssistedX3PAccurateGPSTimeout
+
+END_TESTCASE LBS-HybridX3P-UEAssistedX3P-AccurateGpsTimeout-0001
+
+
+
+RUN_TEST_STEP 100 LbsHybridX3PTestServer LbsStep_StopLbs
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini

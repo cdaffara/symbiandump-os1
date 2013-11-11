@@ -1,0 +1,98 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         lbsclientmultireq_real.script
+//! @SYMScriptTestEnvironment Testexecute
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+//Before we start LBS, select the network reg status txt file to use.
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+PRINT Set Autonomous Mode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+
+START_TESTCASE                LBS-Client-MultiReqReal-0001
+//! @SYMTestCaseID              LBS-Client-MultiReqReal-0001
+//! @SYMTestCaseDesc            Make multiple requests of different types on same subsession
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set Requestor details. (unecessary)
+//!                             2. Open a subsession
+//!                             3. Request and wait for a location update to populate cache
+//!                             4. Request a last known position
+//!                             5. Request a location update
+//!                             6. Verify that both requests succeed and that location info are returned as expected.
+//!                             (7. Verify that the location requests are logged.) not yet supported
+//! @SYMTestExpectedResults     Location requests will both complete with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientmultireq_real.ini LBS-MultiReq
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmultireq_real.ini LBS-MultiReq-0001
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_MultiReq c:\testdata\configs\lbsclientmultireq_real.ini LBS-MultiReq-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-MultiReqReal-0001
+
+
+
+START_TESTCASE                LBS-Client-MultiReqReal-0002
+//! @SYMTestCaseID              LBS-Client-MultiReqReal-0002
+//! @SYMTestCaseDesc            Cancel one of two outstanding requests
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set Requestor details. (unecessary)
+//!                             2. Open a subsession
+//!                             3. Request a location update
+//!                             4. Request a last known position
+//!                             5. Cancel the last known position
+//!                             6. Verify that the location update request succeeds and the last known position request is cancelled.
+//!                             7. Verify that location update info is as expected
+//!                             (8. Verify that the location requests are logged.) not yet supported
+//! @SYMTestExpectedResults     Location requests will both complete with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientmultireq_real.ini LBS-MultiReq
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmultireq_real.ini LBS-MultiReq-0002
+RUN_TEST_STEP 600 LbsClientTestServer LbsClientStep_MultiReq c:\testdata\configs\lbsclientmultireq_real.ini LBS-MultiReq-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyRoughPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-MultiReqReal-0002
+
+
+PRINT Reset Default Admin
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+

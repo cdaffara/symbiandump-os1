@@ -1,0 +1,364 @@
+# Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+# All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Nokia Corporation - initial contribution.
+#
+# Contributors:
+#
+# Description:
+#
+
+use strict;
+
+## Used as global variables, probably need to change and pass variables through as parameters.
+my %globalValues=();
+##initialise filenames
+$globalValues{'inputFile'} = 'mglyphs.txt';
+$globalValues{'outputFileName'} = 'mglyphs.inl';
+$globalValues{'htmlFileName'} = 'mglyphs.html';
+$globalValues{'lgtablesize'} = 9; # Default tablesize value is 512
+$globalValues{'tablesize'} = 1 << $globalValues{'lgtablesize'};
+$globalValues{'storeashex'} = 0;
+$globalValues{'stepOffset'} = 72;
+$globalValues{'stepShift'} = 0;
+
+## die if the correct number of argumements have not been entered
+&extractFlags(\@ARGV, \%globalValues);
+&printDebug("Remainder:$globalValues{'tablesize'}\n");
+&printDebug("StoreAsHex:$globalValues{'storeashex'}\n");
+
+if ($globalValues{"information"})
+	{
+	&dieShowingUsage();
+	}
+
+&printDebug("Creating HashTable....\n");
+my %hashTable = &createHashTable($globalValues{'inputFile'});
+if (!defined(%hashTable))
+	{
+	die("ERROR: Hash table was not created\n");
+	}
+if ($globalValues{"outputtohtml"})
+	{
+	my $htmlFileName = $globalValues{'htmlFileName'};
+	&printDebug("Creating HTML output to file: $htmlFileName\n");	
+	&createHTMLOfMappings($htmlFileName, %hashTable);
+	}
+my $outputFileName = $globalValues{'outputFileName'};
+&printDebug("Writing Hash table to file: $outputFileName\n");
+&writeHashTableToFile($outputFileName, %hashTable);
+&printDebug("$outputFileName created.");
+
+##################### end of main section 
+sub extractFlags
+	{
+	my $aArgumentArray=shift;
+	my $aArguments=shift;
+	my $expectedArg = 'lgtablesize';
+	my $expectedExtension;
+	foreach my $argument (@$aArgumentArray)
+		{
+		if ($argument =~ m!^[-/]([a-zA-Z].*)$!)
+			{
+			my $switch = $1;
+			$expectedArg = 'lgtablesize';
+			$expectedExtension = undef;
+			if ($switch=~/^(x|hexoutput)$/i)
+				{
+				$$aArguments{'storeashex'}=1;
+				}
+			elsif ($switch=~/^(\?|help)$/i)
+				{
+				$$aArguments{'information'}=1;
+				}
+			elsif ($switch=~/^(v|verbose)$/i)
+				{
+				$$aArguments{'verbose'}=1;
+				}
+			elsif ($switch=~/^(h|outputtohtml)$/i)
+				{
+				$$aArguments{'outputtohtml'}=1;
+				$expectedArg = 'htmlFileName';
+				$expectedExtension = '.html';
+				}
+			elsif ($switch=~/^(i|input)$/i)
+				{
+				$expectedArg = 'inputFile';
+				}
+			elsif ($switch=~/^(o|output)$/i)
+				{
+				$expectedArg = 'outputFileName';
+				$expectedExtension = '.inl';
+				}
+			elsif ($switch=~/^(offset)$/i)
+				{
+				$expectedArg = 'stepOffset';
+				}
+			elsif ($switch=~/^(shift)$/i)
+				{
+				$expectedArg = 'stepShift';
+				}
+			}
+		else
+			{
+			if (defined $expectedExtension && $argument !~ m!\.[^/\\]*$!)
+				{
+				$argument .= $expectedExtension;
+				}
+			$$aArguments{$expectedArg} = $argument;
+			$expectedArg = 'lgtablesize';
+			}
+		}
+	$globalValues{'tablesize'} = 1 << $globalValues{'lgtablesize'};
+	$globalValues{'stepOffset'} &= 0xFFFFFE;
+	}
+#####################
+sub dieShowingUsage
+	{
+	print <<USAGE_EOF;
+
+Usage:
+
+perl -w mglyphtool.pl [-?] [<lg-table-size>] [-x] [-i <input-file-name>]
+		[-o <output-file-name>] [-h [<output-html-file-name]]
+		[-offset <value-for-offset>] [-shift <value-for-shift>]
+
+<lg-table-size> the default log(base 2) table size is 9. This gives a table
+size of 512 entries (2 to the power 9). So 7 gives a size of 128, 8 gives
+256, 9 gives 512, 10 gives 1024 and so on.
+
+options: -x -o -i -h
+
+	-? Shows help
+
+	The -x flag stores values into the .inl file in hex format: 
+		hex(OriginalKeyCodeMirrorGlyphCode), 
+	By default the values are stored in string hex format i.e 0x220C2209
+
+	The -h flag generates a html file displaying hash table information.
+	This may be followed by the filename to be output.
+	Default is 'mglyphs.html'
+
+	The -i file specifies input file name. Default is 'mglyphs.txt'.
+
+	The -o file specifies output file name. Default is 'mglyphs.inl'.
+
+	-shift and -offset alter the "step" hash algorithm.
+	
+USAGE_EOF
+	exit 0;
+	}
+######### 
+#
+# Writes a hash table to file.
+# Current format:
+# 	Hex mode: 		"hex number created"
+#	Hex string mode:	"Original keyMapped key"
+#####################
+sub writeHashTableToFile
+	{
+	&printDebug("Writing to .inl file");
+	my ($aOutputFileName, %aHashTable) = @_;
+	open(OUTPUT_FILE, '> ' . $aOutputFileName) or die('Error: could not open $aOutputFileName to write to\n');
+	## Print comments at top of .inl file
+	printf(OUTPUT_FILE "\/\/ mGlyphs.inl\n");
+	printf(OUTPUT_FILE "\/\/\n");
+	printf(OUTPUT_FILE "\/\/ Generated by mglyphtool.pl from '$globalValues{'inputFile'}'\n");
+	printf(OUTPUT_FILE "\/\/\n\n");
+	## Declare array and fill in values
+	printf(OUTPUT_FILE "const unsigned long mGlyphArray[] = {\n\t");
+	for (my $counter = 0; $counter < $globalValues{'tablesize'}; $counter++)
+		{
+		my $storeValue = "00000000";
+		if (defined($aHashTable{$counter}))
+			{
+			$storeValue = $aHashTable{$counter};
+			}
+		$storeValue = ($globalValues{'storeashex'}) ? hex($storeValue) : "0x$storeValue";
+		print OUTPUT_FILE $storeValue;
+		if (($counter+1) < $globalValues{'tablesize'})
+			{
+			print OUTPUT_FILE (($counter + 1) % 8 == 0? ",\n\t" : ', ');
+			}
+		}
+	print(OUTPUT_FILE "};\n");
+	print(OUTPUT_FILE "\nconst int KLgMirrorTableSize=$globalValues{'lgtablesize'};\n");
+	print(OUTPUT_FILE "const int KMirrorTableSize=$globalValues{'tablesize'};\n");
+	# Inline functions
+	# Get a Hash value from a given key	
+	print(OUTPUT_FILE "\n// Returns the first index to probe for character aKey.\n");
+	print(OUTPUT_FILE "inline long MirrorStart(long aKey)\n");
+	print(OUTPUT_FILE "\t{ return aKey \& (KMirrorTableSize-1); }\n");
+	print(OUTPUT_FILE "\n// Returns the offset for further probes for character aKey.\n");
+	print(OUTPUT_FILE "inline long MirrorStep(long aKey)\n");
+	my $stepShift = $globalValues{'stepShift'};
+	print(OUTPUT_FILE "\t{ return (");
+	if ($stepShift == 0)
+		{
+		print(OUTPUT_FILE "aKey");
+		}
+	elsif (0 < $stepShift)
+		{
+		print(OUTPUT_FILE "(aKey >> $stepShift)");
+		}
+	else
+		{
+		$stepShift = -$stepShift;
+		print(OUTPUT_FILE "(aKey << $stepShift)");
+		}
+	print(OUTPUT_FILE " | 1) + $globalValues{'stepOffset'}; }\n\n");
+
+	close(OUTPUT_FILE);
+	}	
+##################### listing of hash indexes values for original and mirrored glyphs
+sub createHTMLOfMappings
+	{
+	my ($aOutputFileName, %aHashTable )= @_;
+	open(OUTPUT_FILE, '> ' . $aOutputFileName) or die('Error: could not open $aOutputFileName to create HTML output');
+	printf(OUTPUT_FILE "<HTML><HEAD><TITLE>MirrorGlyph Hash Output<\/TITLE><\/HEAD><BODY>");
+## print hash table details
+	printf(OUTPUT_FILE "<P>Values in hash Table - <B>(Hash Function: Key mod $globalValues{'tablesize'})<\/B><\/P><TABLE border=1>");
+	printf(OUTPUT_FILE "<TR><TD><B>---<\/B><\/TD><TD BGCOLOR=\#8888FF><B>Character code:<\/B><\/TD><TD><B>Hash Index:<\/B><\/TD><TD BGCOLOR=\#8888FF><B>Mirror Glyph Value:<\/B><\/TD><TD><b>Search Jump Count<\/b>");	
+	my %keySet;
+	foreach my $value (values %aHashTable)
+		{
+		$keySet{&getLower(hex $value)} = 1;
+		}
+	foreach my $key (32..127)
+		{
+		$keySet{$key} = 1;
+		}
+	my @keys = sort {$a <=> $b} (keys %keySet);
+	foreach my $key (@keys)
+		{
+		my $counter = 0;
+		my $HKey = &findHashTableIndex($key, \$counter, \%aHashTable);
+		my $stored = $aHashTable{$HKey};
+		my $storedValue = 'no change';
+		my $storedKey = $key;
+		if (defined $stored)
+			{
+			$storedValue = sprintf('%02x', &getLower(hex $stored));
+			$storedKey = &getUpper(hex $stored);
+			}
+		if ($storedKey)
+			{
+			die('incorrect key found in hash table') unless ($storedKey == $key);
+			printf(OUTPUT_FILE "<TR><TD>---<\/TD><TD BGCOLOR=\#8888FF><B>%02x<\/B><\/TD><TD>%02x<\/TD><TD BGCOLOR=\#8888FF><B>%s<\/B><\/TD><TD>%d<\/TD><\/TR>", $key, $HKey, $storedValue, $counter);
+			}
+		}
+	printf(OUTPUT_FILE "<\/TABLE>");
+	printf(OUTPUT_FILE "<\/BODY><\/HTML>");
+	close(OUTPUT_FILE);
+	}
+#####################
+# Hash Table functions	
+##################### 
+
+#####################
+#Returns a new Hash Table 
+#####################
+sub createHashTable
+	{	
+	my $aInputFileName = shift;	
+	my $lineNumber = 1;
+	my %newHashTable = ();
+	open(INPUT_FILE, '< ' . $aInputFileName) or die('ERROR: Could not open $aInputFileName to read from');
+	while (my $line=<INPUT_FILE>)
+		{
+		if ($line=~/^(.*);\s(.*\w)\s\W.*$/) ## Grab Original glyph value and mirrored glyph value
+			{		
+			&updateHashTable($1, $2, \%newHashTable);
+			}
+		$lineNumber++;
+		}		
+	close(INPUT_FILE);
+	return %newHashTable;
+	}
+##################### 
+#
+# Retrieves a HashKey which is not currently being used in a given HashTable
+#
+#####################
+sub findHashTableIndex
+	{
+	my ($aHashKey, $aCounter, $aHashTable) = @_;	
+	my $current = &hashFunction($aHashKey);
+	my $step = &hashStepFunction($aHashKey);
+	my $tableSize = $globalValues{'tablesize'};
+	while (defined($$aHashTable{$current}) && &getUpper(hex($$aHashTable{$current})) != $aHashKey)
+		{
+		++$$aCounter;
+		$current += $step;
+		$current &= $tableSize - 1;
+		}
+	if (2 < $$aCounter)
+		{
+		printf STDERR ("WARNING: Jumped $$aCounter times, inefficient hash for %02x ($current, $step)\n", $aHashKey);
+		}
+	return $current;
+	}
+
+#####################
+sub updateHashTable
+{
+	my ($aKey, $aValueToStore, $aHashTable) = @_;
+	my $counter = 0;
+	my $key = hex($aKey);
+	my $hashKey = &findHashTableIndex($key, \$counter, $aHashTable);
+	$$aHashTable{$hashKey} = "$aKey$aValueToStore";
+	return $hashKey;
+}
+##################### 
+# Returns a hash key for a given key
+# Currently using a simple hash function 
+#####################
+sub hashFunction
+	{
+	my $aKey = shift;
+	return $aKey & ($globalValues{'tablesize'}-1);
+	}
+
+# Returns second hash value: used for the step size
+sub hashStepFunction
+	{
+	my $aKey = shift;
+	my $stepShift = $globalValues{'stepShift'};
+	if ($stepShift < 0)
+		{
+		$aKey <<= -$stepShift;
+		}
+	elsif (0 < $stepShift)
+		{
+		$aKey >>= $stepShift;
+		}
+	return ($aKey | 1) + $globalValues{'stepOffset'};
+	}
+	
+#####################
+# Utility functions 
+#####################
+sub getLower
+	{
+	my $aValue = shift;
+	return $aValue & hex("0000FFFF");
+	}
+sub getUpper
+	{
+	my $aValue = shift;
+	return ($aValue & hex("FFFF0000")) >> 16;				
+	}
+sub printDebug
+	{
+	my $string = shift;
+	if ($globalValues{'verbose'})
+		{
+		print $string;
+		}
+	}
+

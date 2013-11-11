@@ -1,0 +1,131 @@
+//! @File
+//! @SYMTestSuiteName	lbsclientmodstatus.script
+//! @SYMScriptTestEnvironment
+
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-Client-ModStatus-0001
+
+//!@SYMTestCaseID			LBS-Client-ModStatus-0001
+//!@SYMTestCaseDesc			Get module device status
+//!
+//!@SYMTestActions			1. Connect to the location server.
+//!					2. Request the module device status - use GetModuleStatus()
+//!					   with a valid id and TPositionModuleStatus:DeviceStatus().
+//!					3. Verify as below. 
+//!					4. Repeat steps 2 and 3 for each of the device states:
+//!								EDeviceError
+//!
+//!@SYMTestExpectedResults	        Verify the correct device status enumeration is returned.
+//!				
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 				REQ786.18
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented, test a-gps module required.
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientModStatus.ini LBS-CLIENT-MODSTATUS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\LbsClientModStatus.ini LBS-Mod-Status-0001
+RUN_TEST_STEP 020 LbsClientTestServer LbsClientStep_ModStatus c:\testdata\configs\LbsClientModStatus.ini LBS-Mod-Status-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyModuleStatus
+
+END_TESTCASE LBS-Client-ModStatus-0001
+
+
+START_TESTCASE LBS-Client-ModStatus-0005
+
+//!@SYMTestCaseID			LBS-Client-ModStatus-0005
+//!@SYMTestCaseDesc			Module status with a in-valid module id
+//!
+//!@SYMTestActions			1. Connect to the location server.
+//!					2. Request the module status using an in-valid id - use
+//!					   GetModuleStatus().
+//!
+//!@SYMTestExpectedResults	        Verify the correct not found error is returned (KErrNotFound).
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMREQ 				REQ786.17
+//!@SYMREQ				REQ786.18
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientModStatus.ini LBS-CLIENT-MODSTATUS
+RUN_TEST_STEP 20 LbsClientTestServer LbsClientStep_ModStatus c:\testdata\configs\LbsClientModStatus.ini LBS-Mod-Status-0005
+
+END_TESTCASE LBS-Client-ModStatus-0005
+
+START_TESTCASE LBS-Mod-Status-0101
+
+//!@SYMTestCaseID			LBS-Mod-Status-0101
+//!@SYMTestCaseDesc			Test Network Location Manager Status changes correctly.
+//!
+//!@SYMTestActions			1. Connect to the location server.
+//!							2. Request the network location managers module device status
+//!							3. Verify that the initial status is EDeviceReady
+//!							4. Do a notifypositionupdate(); using the Network location manager 
+//!							5. Wait a small amount of time and verify Network Location Manager is EDeviceActive.
+//!							6. Verify that the Network Location Manager is returned to EDeviceReady.
+//!					
+//!							
+//!
+//!@SYMTestExpectedResults	        Network Location Manager goes through states EDeviceReady, EDeviceActive, EDeviceReady
+//!				
+//!
+//!@SYMPREQ				
+//!@SYMREQ 				
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientModStatus.ini LBS-CLIENT-MODSTATUS-NETWORK
+RUN_TEST_STEP 020 LbsClientTestServer LbsClientStep_ModStatus c:\testdata\configs\LbsClientModStatus.ini LBS-Mod-Status-0101
+
+END_TESTCASE LBS-Mod-Status-0101
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

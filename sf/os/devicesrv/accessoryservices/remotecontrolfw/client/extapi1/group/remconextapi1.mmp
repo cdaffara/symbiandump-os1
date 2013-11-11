@@ -1,0 +1,77 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// remconextapi1.dll An outer layer client side library facilitating 
+// Remote Control Track Info and Absolute Volume messages.
+// 
+//
+
+/**
+ @file
+ @internalComponent
+*/
+
+
+
+TARGET			remconextapi1.dll //Recommended unpaged
+TARGETPATH		/system/libs
+// We need all these caps because we don't know anything about the process 
+// we'll be running in.
+CAPABILITY		All -Tcb
+TARGETTYPE		dll
+// UID2 = 0x1000008d for static interface DLLs.
+// UID3 = unique for RemCon system
+UID 			0x1000008d 0x101f9067
+VENDORID		0x70000001
+
+USERINCLUDE 	../inc
+
+
+// As part of DEF102064 extra exports and functionality were added to the
+// Track Info extension API to enable two copies of the Symbian stack to
+// be tested back to back.  This functionality is not included in built code
+// by default as it is not needed for the API's use cases.
+//
+// To enable this:
+//
+// 1. Uncomment the following MACRO definition.
+// 2. Rebuild the Track Info API.
+// 3. Refreeze the .def files for remconextapi1.dll (8 new exports should be appended).
+// 4. Update any test code that derives from the two M-class observers - 
+// MRemConTrackInfoControllerObserver and MRemConTrackInfoTargetObserver to handle the
+// four new virtual functions that this adds.
+// 5. Rebuild the test code.
+//MACRO			SYMBIAN_ENABLE_TRACKINFO_BACKTOBACK_TEST_FUNCT
+
+
+SOURCEPATH		../src
+SOURCE			trackinfocontroller.cpp
+SOURCE			trackinfotarget.cpp
+SOURCE			absvolutils.cpp
+SOURCE			absvolcontroller.cpp
+SOURCE			absvoltarget.cpp
+SOURCE			trackinfocontrollerobserver.cpp
+SOURCE			trackinfotargetobserver.cpp
+SOURCE			absvolcontrollerobserver.cpp
+SOURCE			absvoltargetobserver.cpp
+
+
+USERINCLUDE 	../../../common
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+LIBRARY 		euser.lib
+LIBRARY 		remconinterfacebase.lib
+
+#include <bluetooth/btlogger.mmh>
+
+SMPSAFE

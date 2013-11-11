@@ -1,0 +1,79 @@
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// ROM include file for Remote Control system.
+// 
+//
+
+/**
+ @file
+ @publishedPartner
+ @released
+*/
+
+#ifndef __REMCON_IBY__
+#define __REMCON_IBY__
+
+REM *** The following iby files are always included, whether bluetooth is
+REM *** supported by the device or not.
+
+#include <ecom.iby>
+
+// If __BT_DEBUG__ is defined pull in debug versions of the
+// RemCon DLLs regardless of the ROM type
+#ifdef __BT_DEBUG__
+define BT_DIR UDEB
+#else
+define BT_DIR BUILD_DIR
+#endif
+
+REM *** The following dlls are client side dlls. They are always included
+REM *** in the ROM, whether bluetooth is supported by the device or not, so
+REM *** that client applications can link against them regardless.
+
+// Client side
+file=ABI_DIR\BT_DIR\remconcoreapi.dll					System\Libs\remconcoreapi.dll
+file=ABI_DIR\BT_DIR\remconinterfacebase.dll				System\Libs\remconinterfacebase.dll
+file=ABI_DIR\BT_DIR\remconclient.dll 					System\Libs\remconclient.dll
+
+// An extension API (outer client side) supporting track name and absolute 
+// volume APIs.
+file=ABI_DIR\BT_DIR\remconextapi1.dll					System\Libs\remconextapi1.dll
+
+// DLL containing types used by more than one server-side subcomponent.
+file=ABI_DIR\BT_DIR\remcontypes.dll						System\Libs\remcontypes.dll
+
+REM *** Now for things which should only be included if the device
+REM *** supports bluetooth, to save ROM space...
+
+#ifndef __BT
+REM Feature BLUETOOTH is not in this ROM (remotecontrol.iby)
+#else
+// Server
+file=ABI_DIR\BT_DIR\remconserver.exe 					System\Programs\remconserver.exe
+
+// Base DLL for bearer plugins
+file=ABI_DIR\BT_DIR\remconbearerplugin.dll				System\Libs\remconbearerplugin.dll
+
+// Base DLL for target selector plugins
+file=ABI_DIR\BT_DIR\remcontargetselectorplugin.dll		System\Libs\remcontargetselectorplugin.dll
+
+// Base DLL for converter plugins
+file=ABI_DIR\BT_DIR\remconconverterplugin.dll			System\Libs\remconconverterplugin.dll
+
+// The concrete Target Selector Plugin.
+#include <tsp.iby>
+
+#endif // __BT
+
+#endif // __REMCON_IBY__

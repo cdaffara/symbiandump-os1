@@ -1,0 +1,117 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file CM_GT0429_3_3.script
+//! @SYMTestSuiteName COMINF-ESOCK-RConnection-ContentionManagement
+//! @SYMScriptTestEnvironment  networking
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			COMINF-ESOCK-RConnection-contention-management
+
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-contention-management
+//!@SYMPREQ PREQ1927
+//!@SYMTestCaseDesc Ensure the more prioritized connection can pre-empt the less prioritized one and less prioritized connection can not pre-empt the more prioritized connection. The test environment should support only one active primary PDP context at the particular moment.
+//!@SYMTestPriority Critical
+//!@SYMTestActions 1.Start first connection C1 for the SNAP #5 (to point to particular SNAP use TConnSnapPref parameter) - 2.Start second connection C2 for the SNAP #4 - 3.Start third connection for C3 the SNAP #3 - 4.Restart connection C2 for the SNAP #4 - 5.Start fourth connection for C4 the SNAP #2 - 6.Start fifth connection C5 for the SNAP #1
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        28-11-2008
+//!@SYMTestStatus 3. Released
+
+// Make sure that more prioritized connection pre-empts the less prioritized one.
+// The CommsDat should be configured agreed the table below
+// SNAP	PDP Link Layer Priority (final value, after inheritance)
+// 1	0 highest priority value, will be changed to 1 after EC120
+// 2	1
+// 3	1
+// 4	7
+// 5	KMaxTUInt lowest / default priority value
+//
+// 1. Start first connection C1 for the SNAP #5 (to point to particular SNAP use TConnSnapPref parameter)
+// 2. Start second connection C2 for the SNAP #4
+// 3. Start third connection for C3 the SNAP #3
+// 4. Restart connection C2 for the SNAP #4
+// 5. Start fourth connection for C4 the SNAP #2
+// 6. Start fifth connection C5 for the SNAP #1
+//
+// Expected Result:	Step 2: The connection C1 should be stopped and the connection C2 should be started with no errors.
+// Step 3: The connection C3 should be started with no errors.
+// Step 4: The connection C2::Start(...) should return context activation error code.
+// Step 5: The connection C4::Start(...) should return context activation error code.
+// Step 6:. The connection C5 should be started with no errors.
+
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateConn4
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateConn5
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateUdpSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateUdpSock2
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CreateUdpSock3
+
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini ConnectSockSvr1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini StartConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenUdpSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini ConnectUdpSock1
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini StartConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenUdpSock2
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini ConnectUdpSock2
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini StartConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenUdpSock3
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini ConnectUdpSock3
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini StartConn2_1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenConn4
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini StartConn4
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini OpenConn5
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini StartConn5
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseUdpSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseUdpSock2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseUdpSock3
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseConn4
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseConn5
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_3.ini CloseSockSvr1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+END_TESTCASE			COMINF-ESOCK-RConnection-contention-management
+
+PRINT Completed COMINF-ESOCK-RConnection-contention-management
+
+
+

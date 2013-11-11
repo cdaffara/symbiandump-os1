@@ -1,0 +1,146 @@
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+/**
+ @file
+ @test
+ @internalComponent - Internal Symbian test code 
+*/
+
+
+TARGET			tssm_server.exe
+TARGETTYPE		exe
+TARGETPATH		/sys/bin
+UID				0x1000007A 0xA0002E9F
+VENDORID		0x70000001
+
+// Use KSsmServerName SID on this test server to allow swp keys to be defined and updated
+SECUREID		0x2000D75B
+
+CAPABILITY 		ProtServ PowerMgmt SwEvent
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+MW_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+
+// Used for making the production code changes in the server available only for test code.
+macro			TEST_SSM_SERVER
+
+// production code
+USERINCLUDE		../../../ssm/inc
+USERINCLUDE		../../../localinc
+USERINCLUDE		../../../cle/inc
+USERINCLUDE		../../../cmn/inc
+USERINCLUDE		../../../cmd/inc
+
+SOURCEPATH		../../../ssm/src
+SOURCE			ssmserver.cpp
+SOURCE			ssmsession.cpp
+SOURCE			ssmstatepolicyframe.cpp
+SOURCE			ssmstatepolicyresolver.cpp
+SOURCE			ssmstatetransitionengine.cpp
+SOURCE			ssmstatetransitionrequest.cpp
+SOURCE			ssmswppolicyframe.cpp
+SOURCE			ssmswppolicyresolver.cpp
+SOURCE			ssmswppolicymap.cpp
+SOURCE			ssmswptransitionengine.cpp
+SOURCE			ssmswptransitionscheduler.cpp	
+SOURCE			ssmswpindividualtransitionscheduler.cpp
+SOURCE			ssmswprequesthandler.cpp
+SOURCE			ssmswppolicycli.cpp 
+SOURCE			ssmswppolicysrv.cpp
+SOURCE			ssmswppolicysess.cpp
+
+SOURCEPATH		../../../localsrc
+SOURCE			ssmpanic.cpp
+
+// Instead of using clesessionproxy.cpp as follows:
+// SOURCE			clesessionproxy.cpp
+// The tests instead use tclesessionproxy.cpp
+// This allows the tests to use a test CLE server, isolating the test
+// entirely from the SSM (and its CLE session) running since start-up. 
+SOURCEPATH		../src
+SOURCE			tclesessionproxy.cpp
+
+// Instead of using ssmswppolicyproxy.cpp as follows:
+// SOURCE			ssmswppolicyproxy.cpp
+// The tests instead use tssmswppolicyproxy.cpp
+// This allows the tests to use a test SsmSwpPolicy server, isolating the test
+// entirely from the SSM (and its SsmSwpPolicy session) running since start-up. 
+SOURCEPATH		../src
+SOURCE			tssmswppolicyproxy.cpp
+
+// testcode
+USERINCLUDE		../inc
+USERINCLUDE		../../testapps/inc
+USERINCLUDE		../../testutils/inc
+USERINCLUDE		../../tcle/inc
+
+SOURCEPATH		../../testutils/src
+SOURCE			ssmatest_utils.cpp
+
+SOURCEPATH		../../tcle/src
+SOURCE			tcle_cleclient.cpp
+
+SOURCEPATH		../src
+SOURCE			tssm_server.cpp
+SOURCE			tssm_startserver.cpp
+SOURCE			tssm_step_platsec.cpp
+SOURCE			tssm_step_paniccle.cpp
+SOURCE			tssm_step_server.cpp
+SOURCE			tssm_step_conditionalcommands.cpp
+SOURCE			tssm_step_ssmcledeadlock.cpp
+SOURCE			tssm_step_repeatedpublishstate.cpp
+SOURCE			tssm_step_statepolicyresolver.cpp
+SOURCE			tssm_step_statetransitionengine.cpp
+SOURCE			tssm_step_statefurthertransition.cpp
+SOURCE			tssm_step_swpcommonplugin.cpp
+SOURCE			tssm_step_swpdependencies.cpp
+SOURCE			tssm_step_swphandlecleret.cpp
+SOURCE			tssm_step_swppolicymap.cpp
+SOURCE			tssm_step_swppolicyresolver.cpp
+SOURCE			tssm_step_swptransitionengine.cpp
+SOURCE			tssm_step_swptransitionscheduler.cpp
+SOURCE			tssm_step_swprequesthandler.cpp
+SOURCE			tssm_step_validstatelist.cpp
+SOURCE			tssm_step_validswplist.cpp
+SOURCE			tssm_step_notifypropertychange.cpp
+SOURCE			tssmswppolicy_swppolicycli.cpp
+SOURCE			tssmswppolicy_step_rswppolicysess.cpp
+SOURCE			tssm_step_cmdexecutionoom.cpp
+
+SOURCEPATH		../resource
+START RESOURCE	tssm_cmdlist_state_oomtestforcmdexecution.rss
+TARGETPATH	/resource/ssmatest/cmdexecutionoomtest
+END
+
+LIBRARY			euser.lib
+LIBRARY			efsrv.lib
+LIBRARY			ws32.lib 
+LIBRARY			testexecuteutils.lib 
+LIBRARY			testexecutelogclient.lib
+LIBRARY			estor.lib		//used by ssmclecli.lib
+LIBRARY			ssmcmd.lib 		//used by ssmclecli.lib
+LIBRARY			ssmcmn.lib
+LIBRARY			tssm_ssmclient.lib	// test version of ssmcmn.lib
+LIBRARY			featmgr.lib
+LIBRARY			centralrepository.lib 
+LIBRARY			conditionevaluator.lib
+LIBRARY			ssmuiproviderdll.lib
+
+STATICLIBRARY	ssmclecli.lib
+STATICLIBRARY	ssmclesrv.lib	//used by ssmclecli.lib
+
+SMPSAFE

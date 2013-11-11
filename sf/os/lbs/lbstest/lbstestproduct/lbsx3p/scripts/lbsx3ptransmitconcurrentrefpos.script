@@ -1,0 +1,75 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsX3PTestServer
+
+PRINT Run LbsX3PTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 030 LbsX3PTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-X3P-TransmitConcurrentRefPos-0001
+
+//!@SYMTestCaseID			LBS-X3P-TransmitConcurrentRefPos-0001
+//!@SYMTestCaseDesc		Request transmit current position from multiple clients.
+//!					
+//!@SYMTestActions		1. Create multiple clients (RlbsTransnitPositionServer objects) in separate processes (concurrent test steps in TEF).
+//!					2. Open a sub-session on each client
+//!					3. Request X3P on each sub-session (priorities can be the same on each)
+//!					4. Wait for requests to complete
+//!					
+//!@SYMTestExpectedResults	-All requests complete successfully (KErrNone).
+//!					-Locations reported and received match what gps-test-module sent.
+//!					-Details (timestamp, sending app, recipient, position) of all requests are logged
+//!					
+//!@SYMPREQ				PREQ 163
+//!					PREQ 89
+//!@SYMREQ				REQ163.01
+//!					REQ 89.05
+//!@SYMCR				CR 0947
+//!					
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2
+//!@SYMTestStatus			Implemented
+
+CONCURRENT
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Transmit_Concurrent c:\testdata\configs\lbsx3ptransmitrefpos.ini LBS-X3P-Transmit-0002
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Transmit_Concurrent c:\testdata\configs\lbsx3ptransmitrefpos.ini LBS-X3P-Transmit-0002
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_Transmit_Concurrent c:\testdata\configs\lbsx3ptransmitrefpos.ini LBS-X3P-Transmit-0002
+CONSECUTIVE
+
+END_TESTCASE LBS-X3P-TransmitConcurrentRefPos-0001
+
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

@@ -1,0 +1,112 @@
+
+#####################################
+#                                   #
+# Update Content And Filenames tool #
+#                                   #
+#####################################
+
+The Update Content And Filenames tool allows you to clone this component to a new implementation.
+It does the boring housekeeping to rename the source, change target DLL name,
+update the UIDs etc. etc.
+It does this by performing recursive search and replace on file names and content.
+
+
+How to clone this component to a new implementation:
+
+-	Ensure this component builds as is:
+        cd group
+        sbs -c winscw_udeb
+        sbs -c winscw_udeb.test
+	If you're feeling conscientious you could test it too :-)
+
+-	Nominate an appropriate name for the new component.
+		e.g. Test123
+	If there's any chance the new component will end up
+	in a deliverable, please choose the name more carefully
+	than I just did
+
+-	Copy this folder (the one containing this README file),
+	naming the new folder as something appropriate,
+	relating to the component name you have chosen
+	(and keep it lower case to keep linux builds happy)
+		e.g. "Copy Of mbufgobblerlayer" => "test123layer"
+
+-	Ensure the new folder and all its contents are writable.
+	(if you got mbufgobblerlayer from a version control system it might be read-only)
+	
+Then, in the *new* folder:
+
+-	Modify the file UpdateContentsAndFilenames.ini accordingly,
+	to reflect the values required by your new component.
+	Obviously you'll need to obtain new UIds rather than just making them up :-)
+	 (Ask your architect where new UIds should come from these days)
+	The "Search" fields specify the current values which will be replaced.
+	The "Replace" fields must be changed from CHANGEME to the desired values.
+		e.g. [Name].Replace=CHANGEME => [Name].Replace=Test123
+		e.g. [DllUid].Replace=CHANGEME => [DllUid].Replace=01234567
+		etc..
+
+-	Ensure Python 2.6.2 or greater is installed. This should come down automatically
+  with SymSEE or whatever you used to put together your development environment.
+	
+-	Open a command window in the *new* folder, and run:
+		updatecontentandfilenames.py
+
+-	Before you make further modifications, ensure the script updated
+	everything correctly:
+        cd group
+        sbs -c winscw_udeb
+        sbs -c winscw_udeb.test
+	(and run any regression tests over the new copy of the component)
+
+
+
+Notes and caveats:
+
+1.
+Remember you're taking a copy, so if you're cloning something feature-rich,
+please think carefully about whether either..
+	- you really do want 2 copies of the same feature code knocking about, which is
+	  totally ok if you're just trying something out and/or you want to isolate the new
+	  component from changes in the cloned component
+.. or ..
+	- you should be considering cloning a more basic implementation,
+	  then applying techniques such as inheritance to reuse the existing features
+
+
+So it's more suited for cloning basic ("feature-impoverished?") implementations as a
+starting point for developing more functional implementations.
+
+e.g. mbufgobbler Layer	-> some new layer
+
+
+2.
+Correct functioning of the script of course assumes some reasonably pragmatic
+correlation between class names, folder names, dll names etc.
+
+It's easy for you to add extra search and replace pairs as needed to address
+more complicated renaming tasks. Just add more sections to the
+UpdateContentsAndFilenames.ini file. The [Header Names] are not used for anything, they're
+just for your reference and should probably be unique across the file.
+The really important bit is the Search/Replace pairs.
+
+
+3.
+Each search/replace pair is applied in turn. So don't expect to be able to do anything
+sneaky like swapping strings in a single run.
+
+
+4.
+Reusing this script elsewhere should be easy,
+because there is no special significance to the .ini file section names-
+they are just there to assist the user in populating the fields.
+i.e. .ini file sections purely exist to group together each Search/Replace pair.
+
+Just copy the updatecontentandfilenames.* files into the root folder of a new
+copy of the component that you want to clone, edit the ini file, and run the python script.
+
+
+5.
+Have fun..
+
+

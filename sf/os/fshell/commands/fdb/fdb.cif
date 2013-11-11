@@ -1,0 +1,146 @@
+# fdb.cif
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+==name fdb
+
+==argument uint threadid optional
+
+Thread id to attach to. If not specified, tries to attach to the first available crashed thread.
+
+==option bool a all
+
+Monitor all thread exits, not just abnormal ones.
+
+==option filename s symbols ROM_SYMBOLS
+
+Specify a .bsym symbol file to use.
+
+==option filename m mapfiles MAP_FILES
+
+Specify a directory that contains .map files.
+
+==short-description
+
+A run-mode debugger for Symbian OS.
+
+==long-description
+
+Fdb is a simple run-mode debugger capable of debugging user threads and non-system critical crashes. It allows you to attach to running or crashed threads, and examine their stacks, registers and address space using an interactive command shell similar to gdb. If a suitable BSYM file or .map file is available (eg on the memory card) stacktraces will be decoded. Breakpoints are supported on user-side threads. You can examine kernel threads, but you cannot set breakpoints on them or debug them if they crash.
+
+Hardcoded breakpoints via a call to C<LtkUtils::Breakpoint()> will also be picked up.
+
+A device driver is used to monitor thread exits, and once it has been installed (by running fdb the first time) it will continue to monitor even after fdb has quit. This is useful if for example you find that you don't have the right map files for the thread you are debugging: you can close fdb, copy the appropriate files around, then relaunch fdb, reattach to the same thread as before and carry on where you left off. To close the debugger completely and uninstall the thread monitor, launch fdb and use the 'uninstall' command.
+
+Typing 'fdb' with no arguments will enter interactive mode and try to attach to the first available crashed thread.
+
+If you attach to a running thread you can set a breakpoint on it using the C<break> command. There are 2 types of breakpoint:
+
+=over 4
+
+=item Hardware breakpoints
+
+On platforms that support it (currently, ARM11xx and ARM11 MPCore only) a limited number of hardware breakpoints can be specified. These are efficient and only affect the specified thread. In the breakpoints listing these are marked with "(HARDWARE)". You can have a maximum of 4 hardware breakpoints in up to 2 different threads.
+
+=item Software breakpoints
+
+On platforms that don't support hardware breakpoints, or if the maximum number of hardware breakpoints has been reached, the fallback behaviour is to set a software breakpoint. These have a number of disadvantages, chief of which is that they affect all threads, so any thread that hits the breakpointed address will suffer a performance penalty while the code to emulate thread-specific breakpoints runs. Their implementation in the kernel is also fraught with corner cases and strange implementation quirks. Setting a software breakpoint on a non-code address will have undesirable behaviour (whereas with a hardware breakpoint it would just have no effect).
+
+=back
+
+=head1 SUPPORTED COMMANDS
+
+=over 4
+
+=item a | attach [<id>]
+
+Attach to the given thread and set it focussed, or if no id is given use the first available crashed or breakpointed thread.
+
+=item d | detach [<id>]
+
+Detaches the given thread, or the focussed one if no argument given. Detaching a thread unblocks it, meaning it is allowed to continue (or exit) normally. Once a thread has fully exited it can no longer be examined in the debugger. If the thread is on a breakpoint, an implicit continue is performed first before detaching.
+
+=item f | focus [<id>]
+
+Set the given thread to be the currently focussed one. If no argument given, shows info about the currently focussed thread. Thread must have already been attached.
+
+=item r | registers
+
+List the valid registers for the currently focussed thread. Not all registers will be available, depending on whether the thread is running or the reason for its exit.
+
+=item t | stack [all]
+
+Dumps the user-mode stack, from R13 (if available, otherwise from limit) down to base. If 'all' is specified, show every byte rather than skipping memory that doesn't look like code addresses.
+
+=item k | kstack [all]
+
+Like 'stack' but for the thread's kernel-mode stack.
+
+=item l | list
+
+Show all zombied and attached threads. Ones already attached to by fdb are marked with an 'a', the currently focussed thread is marked with a '*'. Threads that have been suspended by fdb have a 's', threads on breakpoints have a 'b'.
+
+=item ? | lookup <addr>
+
+Attempts to decode the given address. Uses the loaded BSYM or map files if present, otherwise just looks at the codesegments currently loaded in the kernel.
+
+=item m | mem <addr> <len>
+
+Dumps the memory at the given (user) address range.
+
+=item browse [<addr>|heap|stack]
+
+Enter the interactive memory browser I<(UNDER CONSTRUCTION)>. The keywords 'heap' and 'stack' are also allowed, instead of an address. If no address specified, assumes 'heap'.
+
+=item b | break
+
+Z<>
+
+=item b | break <addr> [<cond>]
+
+Z<>
+
+=item b | break <codeseg> <symbol> [<cond>]
+
+Sets a breakpoint in the currently focussed thread at the given code addess. If no arguments given, lists the currently installed breakpoints. Hardware breakpoints are marked with "(HARDWARE)", otherwise they are software breakpoints. If suitable symbolics are available you can specify a codesegment and symbol name instead of an address, eg C<break euser.dll User::LeaveIfError(int)>. Tab completion is supported on symbol names. Note that pending breakpoints (either due to a codesegment unloading or by setting a breakpoint on a codesegment that isn't loaded yet) are I<UNDER CONSTRUCTION> (and don't work yet).
+
+Breakpoints can be conditional based on what the registers are when the breakpoint is hit, by specifying the <cond> argument. For example, to set a breakpoint when the thread Leaves with KErrNoMemory, you could say C<break euser.dll User::LeaveIfError(int) r0=-4>. The first argument to a (static) function goes in register r0, the second in r1 etc. For C++ member functions the first argument goes in r1, the second in r2 etc. You can specify up to 4 conditions separated by commas, eg C<r0=3,r1E<gt>=3>. All the conditions must match in order for the breakpoint to be hit. These conditions are not supported in hardware so there will be a slight performance impact when the condition isn't met (the same as if the wrong thread hits a software breakpoint). The supported operators are: = != < <= > >=. When using the comparison operators < > <= >= the comparison is assumed to be signed unless there is a 'U' following the value, eg C<r0E<gt>0x80000000u>.
+
+=item c | continue
+
+Continues execution of the current thread, if it was stopped on a breakpoint. Does nothing if the current thread is not on a breakpoint.
+
+=item clear [<id>]
+
+Clears the breakpoint with the specified id, or if not specified clears all breakpoints. Clearing a breakpoint removes it completely but does not automatically resume any thread that has already paused on it. (To do that use the 'list' command to find the threads stuck on breakpoints and attach to them one by one and use 'continue'.)
+
+=item u | uninstall
+
+Detaches all threads, clears all breakpoints, uninstalls the thread monitor and exits fdb.
+
+=item load <path>
+
+If <path> ends with .bsym, adds the BSYM file to the currently loaded symbols. Otherwise sets <path> as the default .MAP file directory.
+
+=item h | help
+
+Print the supported commands (this help text).
+
+=item x | exit
+
+Exit fdb.
+
+=back
+
+==copyright
+
+Copyright (c) 2009-2010 Accenture. All rights reserved.
+

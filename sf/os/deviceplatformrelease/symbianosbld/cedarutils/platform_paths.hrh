@@ -1,0 +1,743 @@
+/*
+* Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Predefined include paths to be used in the mmp-files for the 
+*                components in the layered model. There is one definition for
+*                each layer. The mmp-file should use the statement that is 
+*                intended for the same layer as where the mmp-file resides.
+*
+*                There is also macros to be used in the bld.inf-files to 
+*                export of Public  and Platform headers into 
+*                correct locations. 
+*
+* Usage examples:
+*     ---------------------------------------------
+*      How to include this file in bld.inf and mmp-files.
+*       Reasoning: The build system is such that at the time the 
+*                  bld.inf and mmp-files are "compiled" the available
+*                  include paths are limited. Only the /epoc32/include
+*                  can be guaranteed. Thus to get this file available
+*                  you need to make include relative to the mentioned
+*                  directory. 
+*     ---------------------------------------------
+*
+*      #include <platform_paths.hrh>
+*    
+*     *************************************************************
+*     * MMP file related macro usages to add the system include paths
+*     * 
+*     * The include paths has to be related to the layer in which your SW 
+*     * resides. Thus as an example: a component residing in middleware
+*     * layer should use the MW specific macro.
+*     * Keep this as a separate line in the mmp-files. If you need to
+*     * add your own SYSTEMINCLUDE paths, please defined them as
+*     * separate statement.
+*     *************************************************************
+*         APP_LAYER_SYSTEMINCLUDE
+*         MW_LAYER_SYSTEMINCLUDE
+*         OS_LAYER_SYSTEMINCLUDE
+**
+*     *************************************************************
+*     * Macros related to using various parts of stdapis
+*     *************************************************************
+*       To use STLLIB you need to have this in your mmp-file
+*         STLLIB_USAGE_DEFINITIONS
+*
+*       Depending on what module you are using from stdapis you need to have
+*       one or more of the following macros in your mmp-file (every one in 
+*       separate line !)
+*
+*          OS_LAYER_LIBC_SYSTEMINCLUDE
+*          OS_LAYER_GLIB_SYSTEMINCLUDE
+*          OS_LAYER_SSL_SYSTEMINCLUDE
+*          OS_LAYER_STDCPP_SYSTEMINCLUDE
+*          OS_LAYER_BOOST_SYSTEMINCLUDE
+*          OS_LAYER_DBUS_SYSTEMINCLUDE
+*          OS_LAYER_LIBUTILITY_SYSTEMINCLUDE
+*
+*     *************************************************************
+*     * Macros related to exporting Public and Platform APIs into 
+*     * correct place in the new system. 
+*     *
+*     * The macro that you should use depends on 2 things:
+*     *  - in which layer your package, which exports the APIs resides
+*     *  - what is the visibility of the API (public or platform)
+*     *************************************************************
+*      // the exporting of public APIs should use one of below macros
+*      // depending on which layer the API belogs to
+*      APP_LAYER_PUBLIC_EXPORT_PATH
+*      MW_LAYER_PUBLIC_EXPORT_PATH
+*      OS_LAYER_PUBLIC_EXPORT_PATH
+*
+*      // the exporting of platform APIs should use one of below macros
+*      // depending on which layer the API belogs to
+*      APP_LAYER_PLATFORM_EXPORT_PATH
+*      MW_LAYER_PLATFORM_EXPORT_PATH
+*      OS_LAYER_PLATFORM_EXPORT_PATH
+*
+*      The hierarchy how APIs should reside in foundation has been specified
+*      in developer documentation. See further details from documentation.
+*      Below is example case relying on the structure
+*        my_own_api/group/bld.inf
+*        my_own_api/inc/header1.h
+*        my_own_api/inc/subdir/header2.h
+*  
+*      Assuming that the API is in middleware layer and a public API. 
+*      Then the bld.inf should have the following      
+*        ../inc/header1.h  APP_LAYER_PUBLIC_EXPORT_PATH(header1.h)
+*        ../inc/subdir/header2.h  APP_LAYER_PUBLIC_EXPORT_PATH(subdir/header2.h)
+*  
+*      In the above case the locations are as follow (with current MACRO settings):
+*        header1.h in /epoc32/include/app
+*        header2.h in /epoc32/include/app/subdir
+*
+*
+*     *************************************************************
+*     * Macros related to IBY file exporting
+*     *************************************************************
+*			
+*	    Component bld.inf files need to include platform_paths.hrh, see
+*           beginning of this file on how to do this correctly. Component bld.inf 
+*           files need to use these macros in PRJ_EXPORTS to get their IBY files 
+*           to ROM image.
+*
+*     ---------------------------------------------
+*     Usage for Core image (ROM+ROFS1):
+*     ---------------------------------------------
+*	 // Layer specific specific macros. Use the macro, which is specified
+*        // for the layer, in which your component resides
+*        <somepath>/<file1.iby>  CORE_APP_LAYER_IBY_EXPORT_PATH(<file1.iby>)
+*	 <somepath>/<file2.iby>  CORE_MW_LAYER_IBY_EXPORT_PATH(<file2.iby>)
+*	 <somepath>/<file3.iby>  CORE_OS_LAYER_IBY_EXPORT_PATH(<file3.iby>)
+*
+*	 //stub iby files
+*	 <somepath>/<file4.iby>  CORE_IBY_EXPORT_PATH(stubs,<file4.iby>)
+*	 //tool iby files
+*	 <somepath>/<file5.iby>  CORE_IBY_EXPORT_PATH(tools,<file5.iby>)
+*		
+*     ---------------------------------------------
+*     Usage for Variant image, Language part (ROFS2):
+*     ---------------------------------------------
+*	 // Layer specific specific macros. Use the macro, which is specified
+*        // for the layer, in which your component resides
+*        <somepath>/<file1.iby>  LANGUAGE_APP_LAYER_IBY_EXPORT_PATH(<file1.iby>)
+*	 <somepath>/<file2.iby>  LANGUAGE_MW_LAYER_IBY_EXPORT_PATH(<file2.iby>)
+*	 <somepath>/<file3.iby>  LANGUAGE_OS_LAYER_IBY_EXPORT_PATH(<file3.iby>)			
+*
+*     ---------------------------------------------
+*     Usage for Variant image, Language part  (ROFS2):
+*     ---------------------------------------------
+*	 // Layer specific specific macros. Use the macro, which is specified
+*        // for the layer, in which your component resides
+*        <somepath>/<file1.iby>  CUSTOMER_APP_LAYER_IBY_EXPORT_PATH(<file1.iby>)
+*	 <somepath>/<file2.iby>  CUSTOMER_MW_LAYER_IBY_EXPORT_PATH(<file2.iby>)
+*	 <somepath>/<file3.iby>  CUSTOMER_OS_LAYER_IBY_EXPORT_PATH(<file3.iby>)			
+*
+*     ---------------------------------------------
+*     Usage for Customer Variant image, (ROFS3):
+*     ---------------------------------------------
+*	 // Layer specific specific macros. Use the macro, which is specified
+*        // for the layer, in which your component resides
+*        <somepath>/<f1.iby> CUSTOMER_VARIANT_APP_LAYER_IBY_EXPORT_PATH(<f1.iby>)
+*	 <somepath>/<f2.iby> CUSTOMER_VARIANT_MW_LAYER_IBY_EXPORT_PATH(<f2.iby>)
+*	 <somepath>/<f3.iby> CUSTOMER_VARIANT_OS_LAYER_IBY_EXPORT_PATH(<f3.iby>)			
+*	
+*
+*     *************************************************************
+*     * Macro related to Exporting localization .loc files into 
+*     * correct place in the system. 
+*     *************************************************************
+*
+*     ---------------------------------------------
+*     Usage for components:
+*     ---------------------------------------------
+*	    Component bld.inf files need to include platform_paths.hrh, see
+*           beginning of this file on how to do this correctly. Component bld.inf 
+*           files need to use these macros in PRJ_EXPORTS to get their loc files 
+*           for localization.
+*     loc files that should be localized by localisation team should be in 
+*     loc-folder in the source tree (see developer guidelines)
+*
+*	 // Layer specific specific macros. Use the macro, which is specified
+*        // for the layer, in which your component resides
+*	 <somepath>/loc/<file>.loc  APP_LAYER_LOC_EXPORT_PATH(<file>.loc)
+*	 <somepath>/loc/<file>.loc  MW_LAYER_LOC_EXPORT_PATH(<file>.loc)
+*	 <somepath>/loc/<file>.loc  OS_LAYER_LOC_EXPORT_PATH(<file>.loc)
+*
+* 
+*
+*
+*/
+
+
+#ifndef PLATFORM_PATHS_HRH
+#define PLATFORM_PATHS_HRH
+
+/**
+**************************************************************************
+* General comments about the exporting of headers macros
+*  1) The definitions point currently to the old locations. (which makes some 
+*     macros to have same values. The idea is that you can already start using
+*     them now and those will be later on changed => change affects everybody.
+***************************************************************************
+*/
+
+/**
+* ---------------------------------------
+* Location, where the applications layer specific public headers should be exported
+* See usage on top of this hrh-file.
+* ---------------------------------------
+*/
+
+#if __GNUC__ >= 3
+#define APP_LAYER_SDK_EXPORT_PATH(exported) do not use intentionally generates error
+#define APP_LAYER_PUBLIC_EXPORT_PATH(exported) /epoc32/include/app/exported
+#else
+#define APP_LAYER_SDK_EXPORT_PATH(exported) do not use intentionally generates error
+#define APP_LAYER_PUBLIC_EXPORT_PATH(exported) /epoc32/include/app/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Location, where the applications layer specific platform headers should be exported
+* See usage on top of this hrh-file.
+* ---------------------------------------
+*/
+#if __GNUC__ >= 3
+#define APP_LAYER_DOMAIN_EXPORT_PATH(exported) do not use intentionally generates error
+#define APP_LAYER_PLATFORM_EXPORT_PATH(exported) /epoc32/include/platform/app/exported
+#else
+#define APP_LAYER_DOMAIN_EXPORT_PATH(exported) do not use intentionally generates error
+#define APP_LAYER_PLATFORM_EXPORT_PATH(exported) /epoc32/include/platform/app/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Location, where the middleware layer specific public headers should be exported
+* See usage on top of this hrh-file.
+* ---------------------------------------
+*/
+#if __GNUC__ >= 3
+#define MW_LAYER_SDK_EXPORT_PATH(exported) do not use intentionally generates error
+#define MW_LAYER_PUBLIC_EXPORT_PATH(exported) /epoc32/include/mw/exported
+#else
+#define MW_LAYER_SDK_EXPORT_PATH(exported) do not use intentionally generates error
+#define MW_LAYER_PUBLIC_EXPORT_PATH(exported) /epoc32/include/mw/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Location, where the middleware layer specific platform headers should be exported
+* ---------------------------------------
+*/
+#if __GNUC__ >= 3
+#define MW_LAYER_DOMAIN_EXPORT_PATH(exported) do not use intentionally generates error
+#define MW_LAYER_PLATFORM_EXPORT_PATH(exported) /epoc32/include/platform/mw/exported
+#else
+#define MW_LAYER_DOMAIN_EXPORT_PATH(exported) do not use intentionally generates error
+#define MW_LAYER_PLATFORM_EXPORT_PATH(exported) /epoc32/include/platform/mw/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Location, where the os layer specific public headers should be exported
+* ---------------------------------------
+*/
+#if __GNUC__ >= 3
+#define  OSEXT_LAYER_SDK_EXPORT_PATH(exported) do not use intentionally generates error
+#define  OS_LAYER_PUBLIC_EXPORT_PATH(exported) /epoc32/include/exported
+#else
+#define  OSEXT_LAYER_SDK_EXPORT_PATH(exported) do not use intentionally generates error
+#define  OS_LAYER_PUBLIC_EXPORT_PATH(exported) /epoc32/include/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Location, where the os specific platform headers should be exported
+* ---------------------------------------
+*/
+#if __GNUC__ >= 3
+#define OSEXT_LAYER_DOMAIN_EXPORT_PATH(exported) do not use intentionally generates error
+#define OS_LAYER_PLATFORM_EXPORT_PATH(exported) /epoc32/include/platform/exported
+#else
+#define OSEXT_LAYER_DOMAIN_EXPORT_PATH(exported) do not use intentionally generates error
+#define OS_LAYER_PLATFORM_EXPORT_PATH(exported) /epoc32/include/platform/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Location, where the  cenrep excel sheets should be exported
+* Deprecated: should no longer be used. Kept for compability.
+* ---------------------------------------
+*/
+#if __GNUC__ >= 3
+#define CENREP_XLS_EXPORT_PATH(exported) /epoc32/tools/cenrep/data/src/exported
+#else
+#define CENREP_XLS_EXPORT_PATH(exported) /epoc32/tools/cenrep/data/src/##exported
+#endif
+
+/**
+**************************************************************************
+*  General comments about the 3 define statements related to include paths:
+*  1) the /epoc32/include/oem is now defined there for backward compability.
+*     Once the directory is empty, the directory will be removed. However this 
+*     enables us to ensure that if you use these define statements => you do 
+*     not have to remove the statements later on, when the directory no longer 
+*     exists.
+*  2) These statements should be enough in normal cases. For certain specific 
+*     cases you migth need to add some specific directory from /epoc32/include
+*     (for instance /epoc32/include/ecom).
+*     In normal cases the include staments in code should be relative to one of 
+*     the system include paths, but in certain cases, the included files requires
+*     that the subdirectory is also part of the system include paths.
+****************************************************************************
+*/
+
+/**
+* Delete or comment out this macro definition to turn on header relocation.
+*/
+//#define SYMBIAN_OLD_EXPORT_LOCATION
+
+
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be 
+* used in the mmp-files that are part of the applications-layer. It includes all 
+* the needed directories from the /epoc32/include, that are valid ones for the 
+* application-layer components. 
+*
+* Applications layer is the last one in the list, since most likely the most of 
+* the headers come from middleware or os-layer  => thus they are first.
+*/
+#define APP_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/mw \
+ /epoc32/include/platform/mw \
+ /epoc32/include/platform \
+ /epoc32/include/app \
+ /epoc32/include/platform/app \
+ /epoc32/include/platform/loc \
+ /epoc32/include/platform/mw/loc \
+ /epoc32/include/platform/app/loc \
+ /epoc32/include/platform/loc/sc \
+ /epoc32/include/platform/mw/loc/sc \
+ /epoc32/include/platform/app/loc/sc
+
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+#define APP_LAYER_SYSTEMINCLUDE_SYMBIAN SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/platform 
+#else
+#define APP_LAYER_SYSTEMINCLUDE_SYMBIAN SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/mw \
+ /epoc32/include/platform/mw \
+ /epoc32/include/platform \
+ /epoc32/include/app \
+ /epoc32/include/platform/app
+#endif
+/*
+ /epoc32/include/platform/loc \
+ /epoc32/include/platform/mw/loc \
+ /epoc32/include/platform/app/loc \
+ /epoc32/include/platform/loc/sc \
+ /epoc32/include/platform/mw/loc/sc \
+ /epoc32/include/platform/app/loc/sc
+*/
+ 
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be
+* used in the mmp-files that are part of the middleware-layer. It includes all 
+* the needed directories from the /epoc32/include, that are valid ones for the 
+* middleware-layer components. 
+*/
+#define MW_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/mw \
+ /epoc32/include/platform/mw \
+ /epoc32/include/platform \
+ /epoc32/include/platform/loc \
+ /epoc32/include/platform/mw/loc \
+ /epoc32/include/platform/loc/sc \
+ /epoc32/include/platform/mw/loc/sc
+
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+#define MW_LAYER_SYSTEMINCLUDE_SYMBIAN SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/platform 
+#else
+#define MW_LAYER_SYSTEMINCLUDE_SYMBIAN SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/mw \
+ /epoc32/include/platform/mw \
+ /epoc32/include/platform 
+#endif
+/*
+ /epoc32/include/platform/loc \
+ /epoc32/include/platform/mw/loc \
+ /epoc32/include/platform/loc/sc \
+ /epoc32/include/platform/mw/loc/sc
+*/
+
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be
+* used in the mmp-files that are part of the  osextensions-layer. It includes all
+* the needed directories from the /epoc32/include, that are valid ones for the
+* os-layer components. 
+*/
+#define OS_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/platform \
+ /epoc32/include/platform/loc \
+ /epoc32/include/platform/loc/sc
+
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+#define OS_LAYER_SYSTEMINCLUDE_SYMBIAN SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/platform
+#else
+#define OS_LAYER_SYSTEMINCLUDE_SYMBIAN SYSTEMINCLUDE \
+ /epoc32/include \
+ /epoc32/include/platform 
+#endif
+/*
+ /epoc32/include/platform/loc \
+ /epoc32/include/platform/loc/sc
+*/
+
+// Below statement is Deprecated and the OS_LAYER_SYSTEMINCLUDE-macro has to be
+// used.
+// Removed, use teh OS_LAYER_SYSTEMINCLUDE instead.
+// #define OSEXT_LAYER_SYSTEMINCLUDE OS_LAYER_SYSTEMINCLUDE
+
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be
+* used in the mmp-files that are part of the os-layer. This is intended 
+* to be only used by those components which need to use in their mmp-file either
+* kern_ext.mmh or nkern_ext.mmh. Reason is that those
+* 2 files already contain the /epoc32/include  as system include path.
+* 
+*/
+#define OS_LAYER_KERNEL_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include/platform
+
+// Below statement is Deprecated and the OS_LAYER_KERNEL_SYSTEMINCLUDE-macro 
+// has to be used.
+// Removed, use the OS_LAYER_KERNER_SYSTEMINCLUDE instead.
+// #define OSEXT_LAYER_KERNEL_SYSTEMINCLUDE OS_LAYER_KERNEL_SYSTEMINCLUDE
+
+/**
+****************************************************************************
+* Definitions that also define the systeminclude paths for various
+* part of stdapis. Each statement has to be in its own line in the using
+* mmp-file. There are be more than 1 statement in single mmp-file.
+****************************************************************************
+*/
+#define OS_LAYER_LIBC_SYSTEMINCLUDE SYSTEMINCLUDE  OS_LAYER_PUBLIC_EXPORT_PATH(stdapis)
+
+#define OS_LAYER_GLIB_SYSTEMINCLUDE SYSTEMINCLUDE  OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/glib-2.0) \
+                                                   OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/glib-2.0/glib) \
+                                                   OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/glib-2.0/gobject)
+
+
+#define OS_LAYER_SSL_SYSTEMINCLUDE SYSTEMINCLUDE   OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/openssl)
+                  
+#define OS_LAYER_STDCPP_SYSTEMINCLUDE SYSTEMINCLUDE  OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/stlport) 
+
+#define OS_LAYER_BOOST_SYSTEMINCLUDE SYSTEMINCLUDE   OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/boost)
+
+#define OS_LAYER_DBUS_SYSTEMINCLUDE SYSTEMINCLUDE    OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/dbus-1.0) \
+                                                     OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/dbus-1.0/dbus)
+#define OS_LAYER_LIBUTILITY_SYSTEMINCLUDE SYSTEMINCLUDE OS_LAYER_PLATFORM_EXPORT_PATH(stdapis/utility)
+
+#define OS_LAYER_LIBOIL_SYSTEMINCLUDE SYSTEMINCLUDE OS_LAYER_PLATFORM_EXPORT_PATH(stdapis/liboil)
+
+#define MW_LAYER_KHRONOS_SYSTEMINCLUDE SYSTEMINCLUDE MW_LAYER_PLATFORM_EXPORT_PATH(khronos)
+
+#define MW_LAYER_GSTREAMER_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include/platform/mw/gstreamer 
+
+
+// You need to add STLLIB_USAGE_DEFINITIONS as a separate line into your mmp-file, if you are using
+// the stllib. 
+#define STLLIB_USAGE_DEFINITIONS OPTION CW -wchar_t on\
+        MACRO _WCHAR_T_DECLARED
+
+
+/**
+ *  Symbian systeminclude macros for standard APIs.
+*/
+#define OS_LAYER_ESTLIB_SYSTEMINCLUDE SYSTEMINCLUDE  OS_LAYER_PUBLIC_EXPORT_PATH(libc)
+
+#define OS_LAYER_STLPORTV5_SYSTEMINCLUDE SYSTEMINCLUDE    OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/stlportv5)
+
+#define OS_LAYER_LIBXML2_SYSTEMINCLUDE SYSTEMINCLUDE  OS_LAYER_PUBLIC_EXPORT_PATH(stdapis/libxml2)
+
+
+/**
+****************************************************************************
+* Definitions that also define the paths to the layer specific source directories.
+****************************************************************************
+*/
+/**
+* The below 3 macros define the paths to the layer-specific source dirs.
+* See usage on top of this hrh-file, these are used the same way as 
+* for instance the OS_LAYER_DOMAIN_EXPORT_PATH
+* Deprecated: is not allowed to be using in Symbian Foundation
+*/
+#if __GNUC__ >= 3
+#define APP_LAYER_SOURCE_PATH(rest)    do not use intentionally generates error in export
+#define MW_LAYER_SOURCE_PATH(rest)     do not use intentionally generates error in export
+#define OSEXT_LAYER_SOURCE_PATH(rest)  do not use intentionally generates error in export
+#else
+#define APP_LAYER_SOURCE_PATH(rest)    do not use intentionally generates error in export
+#define MW_LAYER_SOURCE_PATH(rest)     do not use intentionally generates error in export
+#define OSEXT_LAYER_SOURCE_PATH(rest)  do not use intentionally generates error in export
+#endif
+
+/**
+****************************************************************************
+* Definitions to export IBY files to different folders where they will be taken 
+* to ROM image
+****************************************************************************
+*/
+
+// Following three definitions are used for exporting IBY files to 
+// Core image (ROM+ROFS1). IBY files are exported according to their layer.
+#if __GNUC__ >= 3
+#define CORE_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/core/app/exported
+#define CORE_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/core/mw/exported
+#define CORE_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define CORE_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/core/os/exported
+#define CORE_ADAPT_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/exported
+#else
+#define CORE_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/core/app/##exported
+#define CORE_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/core/mw/##exported
+#define CORE_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define CORE_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/core/os/##exported
+#define CORE_ADAPT_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/##exported
+#endif
+
+// Following three definitions are used for exporting IBY files to Variant image, 
+// Language part (ROFS2). IBY files are exported according to their layer.
+#if __GNUC__ >= 3
+#define LANGUAGE_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/language/app/exported
+#define LANGUAGE_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/language/mw/exported
+#define LANGUAGE_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define LANGUAGE_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/language/os/exported
+#else
+#define LANGUAGE_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/language/app/##exported
+#define LANGUAGE_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/language/mw/##exported
+#define LANGUAGE_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define LANGUAGE_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/language/os/##exported
+#endif
+
+// Following three definitions are used for exporting IBY files to Variant image, (ROFS2). 
+// BY files are exported according to their layer.
+#if __GNUC__ >= 3
+#define CUSTOMER_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customer/app/exported
+#define CUSTOMER_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customer/mw/exported
+#define CUSTOMER_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define CUSTOMER_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customer/os/exported
+#else
+#define CUSTOMER_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customer/app/##exported
+#define CUSTOMER_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customer/mw/##exported
+#define CUSTOMER_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define CUSTOMER_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customer/os/##exported
+#endif
+
+// Following three definitions are used for exporting IBY files to 
+// Variant Customer part, (ROFS3). IBY files are exported according to 
+// their layer.
+#if __GNUC__ >= 3
+#define CUSTOMER_VARIANT_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customervariant/app/exported
+#define CUSTOMER_VARIANT_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customervariant/mw/exported
+#define CUSTOMER_VARIANT_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define CUSTOMER_VARIANT_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customervariant/os/exported
+#else
+#define CUSTOMER_VARIANT_APP_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customervariant/app/##exported
+#define CUSTOMER_VARIANT_MW_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customervariant/mw/##exported
+#define CUSTOMER_VARIANT_OSEXT_LAYER_IBY_EXPORT_PATH(exported) do not use intentionally generates error
+#define CUSTOMER_VARIANT_OS_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/customervariant/os/##exported
+#endif
+
+
+// Following definition is used for exporting tools and stubs IBY files to 
+// Core image.
+#if __GNUC__ >= 3
+#define CORE_IBY_EXPORT_PATH(path,exported)  /epoc32/rom/include/core/path/exported
+#else
+#define CORE_IBY_EXPORT_PATH(path,exported)  /epoc32/rom/include/core/##path##/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Location, where the localization .loc file should be exported
+* ---------------------------------------
+*/
+// Location, where the os layer localization .loc file should be 
+// exported
+#if __GNUC__ >= 3
+// Deprecated: use the OS_LAYER_LOC_EXPORT_PATH instead
+#define OSEXT_LAYER_LOC_EXPORT_PATH(exported) do not use intentionally generates error
+#define OS_LAYER_LOC_EXPORT_PATH(exported) /epoc32/include/platform/loc/sc/exported
+
+// Location, where the middleware layer localization .loc file should be 
+// exported
+#define MW_LAYER_LOC_EXPORT_PATH(exported) /epoc32/include/platform/mw/loc/sc/exported
+
+// Location, where the application layer localization .loc file should be 
+// exported
+#define APP_LAYER_LOC_EXPORT_PATH(exported) /epoc32/include/platform/app/loc/sc/exported
+
+#else
+
+// Deprecated: use the OS_LAYER_LOC_EXPORT_PATH instead
+#define OSEXT_LAYER_LOC_EXPORT_PATH(exported) do not use intentionally generates error
+#define OS_LAYER_LOC_EXPORT_PATH(exported) /epoc32/include/platform/loc/sc/##exported
+
+// Location, where the middleware layer localization .loc file should be exported
+#define MW_LAYER_LOC_EXPORT_PATH(exported) /epoc32/include/platform/mw/loc/sc/##exported
+
+// Location, where the application layer localization .loc file should be exported
+#define APP_LAYER_LOC_EXPORT_PATH(exported) /epoc32/include/platform/app/loc/sc/##exported
+#endif
+
+/**
+* ---------------------------------------
+* Macros for Configuration tool migration. 
+* The below macros define the location under epoc32, where the confml 
+* (Configuration Markup Language) and crml (Central Repository Markup Language) 
+* files should be exported.
+* ---------------------------------------
+*/
+#if __GNUC__ >= 3
+#define CONFML_EXPORT_PATH(file,category)           /epoc32/rom/config/assets/category/confml/file
+#define CRML_EXPORT_PATH(file,category)             /epoc32/rom/config/assets/category/implml/file
+#define GCFML_EXPORT_PATH(file,category)            /epoc32/rom/config/assets/category/implml/file
+#define CONFML_CONFIG_EXPORT_PATH(file,category)    /epoc32/rom/config/assets/category/confml/file
+#else
+#define CONFML_EXPORT_PATH(file,category)           /epoc32/rom/config/assets/##category##/confml/##file
+#define CRML_EXPORT_PATH(file,category)             /epoc32/rom/config/assets/##category##/implml/##file
+#define GCFML_EXPORT_PATH(file,category)            /epoc32/rom/config/assets/##category##/implml/##file
+#define CONFML_CONFIG_EXPORT_PATH(file,category)    /epoc32/rom/config/assets/##category##/confml/##file
+#endif
+
+#define APP_LAYER_CONFML(exported)                  CONFML_EXPORT_PATH(exported,s60)
+#define APP_LAYER_CRML(exported)                    CRML_EXPORT_PATH(exported,s60)
+#define APP_LAYER_GCFML(exported)                   GCFML_EXPORT_PATH(exported,s60)
+#define APP_LAYER_CONFML_CONFIG(exported)           CONFML_CONFIG_EXPORT_PATH(exported,s60)
+                                                    
+#define MW_LAYER_CONFML(exported)                   CONFML_EXPORT_PATH(exported,s60)
+#define MW_LAYER_CRML(exported)                     CRML_EXPORT_PATH(exported,s60)
+#define MW_LAYER_GCFML(exported)                    GCFML_EXPORT_PATH(exported,s60)
+#define MW_LAYER_CONFML_CONFIG(exported)            CONFML_CONFIG_EXPORT_PATH(exported,s60)
+       
+// Deprecate: Use the OS_LAYER_* macros instead of OSEXT_LAYER_*                                             
+#define OSEXT_LAYER_CONFML(exported)                do not use intentionally generates error
+#define OSEXT_LAYER_CRML(exported)                  do not use intentionally generates error
+#define OSEXT_LAYER_GCFML(exported)                 do not use intentionally generates error
+#define OSEXT_LAYER_CONFML_CONFIG(exported)         do not use intentionally generates error
+#define OS_LAYER_CONFML(exported)                   CONFML_EXPORT_PATH(exported,s60)
+#define OS_LAYER_CRML(exported)                     CRML_EXPORT_PATH(exported,s60)
+#define OS_LAYER_GCFML(exported)                    GCFML_EXPORT_PATH(exported,s60)
+#define OS_LAYER_CONFML_CONFIG(exported)            CONFML_CONFIG_EXPORT_PATH(exported,s60)
+
+#define APP_LAYER_EXPORTS_CONFML(exported)           CONFML_EXPORT_PATH(exported,symbianos)
+#define APP_LAYER_EXPORTS_CRML(exported)             CRML_EXPORT_PATH(exported,symbianos)
+#define APP_LAYER_EXPORTS_GCFML(exported)            GCFML_EXPORT_PATH(exported,symbianos)
+
+#define MW_LAYER_EXPORTS_CONFML(exported)            CONFML_EXPORT_PATH(exported,symbianos)
+#define MW_LAYER_EXPORTS_CRML(exported)              CRML_EXPORT_PATH(exported,symbianos)
+#define MW_LAYER_EXPORTS_GCFML(exported)             GCFML_EXPORT_PATH(exported,symbianos)
+       
+// Deprecate: Use the OS_LAYER_* macros instead of OSEXT_LAYER_*                                             
+#define OSEXT_LAYER_CONFML(exported)                do not use intentionally generates error
+#define OSEXT_LAYER_CRML(exported)                  do not use intentionally generates error
+#define OSEXT_LAYER_GCFML(exported)                 do not use intentionally generates error
+#define OSEXT_LAYER_CONFML_CONFIG(exported)         do not use intentionally generates error
+#define OS_LAYER_EXPORTS_CONFML(exported)            CONFML_EXPORT_PATH(exported,symbianos)
+#define OS_LAYER_EXPORTS_CRML(exported)              CRML_EXPORT_PATH(exported,symbianos)
+#define OS_LAYER_EXPORTS_GCFML(exported)             GCFML_EXPORT_PATH(exported,symbianos)
+
+/**
+ * Macros to be used in kernel and BSP files to specify systeminclude locations. These macros are necessary
+ * because in some case, the systeminclude location changes based on, e.g., hardware platform.
+ */
+#if __GNUC__ >= 3
+#define SYMBIAN_BASE_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(included)
+#define SYMBIAN_NE1_TB_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(ne1_tb/included)
+#define SYMBIAN_TIOMAP3_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(tiomap3/included)
+#define SYMBIAN_H2_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(h2/included)
+#define SYMBIAN_ASSP_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(assp/included)
+#define SYMBIAN_OMAP_HRP_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(omap_hrp/included)
+#define SYMBIAN_WINS_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(wins/included)
+#define SYMBIAN_8500ED_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(included)
+#define SYMBIAN_8500_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(included)
+#define SYMBIAN_INTERNAL_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(internal/included)
+#define SYMBIAN_CONFIG_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(included)
+#define SYMBIAN_NDKX_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(included)
+#else
+#define SYMBIAN_BASE_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(##included)
+#define SYMBIAN_NE1_TB_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(ne1_tb/##included)
+#define SYMBIAN_TIOMAP3_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(tiomap3/##included)
+#define SYMBIAN_H2_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(h2/##included)
+#define SYMBIAN_ASSP_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(assp/##included)
+#define SYMBIAN_OMAP_HRP_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(omap_hrp/##included)
+#define SYMBIAN_WINS_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(wins/##included)
+#define SYMBIAN_8500ED_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(##included)
+#define SYMBIAN_8500_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(##included)
+#define SYMBIAN_INTERNAL_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(internal/##included)
+#define SYMBIAN_CONFIG_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(##included)
+#define SYMBIAN_NDKX_SYSTEMINCLUDE(included) SYSTEMINCLUDE SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(##included)
+#endif
+   
+
+/**
+* Temporary macros for Symbian exports.
+*/
+#ifdef SYMBIAN_OLD_EXPORT_LOCATION
+#if __GNUC__ >= 3
+#define SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_MW_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_MW_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_APP_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_APP_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(exported)
+#else
+#define SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_MW_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_MW_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_APP_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_APP_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#endif
+#else // not SYMBIAN_OLD_EXPORT_LOCATION
+#if __GNUC__ >= 3
+#define SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PLATFORM_EXPORT_PATH(exported)
+#define SYMBIAN_MW_LAYER_PUBLIC_EXPORT_PATH(exported) MW_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_MW_LAYER_PLATFORM_EXPORT_PATH(exported) MW_LAYER_PLATFORM_EXPORT_PATH(exported)
+#define SYMBIAN_APP_LAYER_PUBLIC_EXPORT_PATH(exported) APP_LAYER_PUBLIC_EXPORT_PATH(exported)
+#define SYMBIAN_APP_LAYER_PLATFORM_EXPORT_PATH(exported) APP_LAYER_PLATFORM_EXPORT_PATH(exported)
+#else
+#define SYMBIAN_OS_LAYER_PUBLIC_EXPORT_PATH(exported) OS_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_OS_LAYER_PLATFORM_EXPORT_PATH(exported) OS_LAYER_PLATFORM_EXPORT_PATH(##exported)
+#define SYMBIAN_MW_LAYER_PUBLIC_EXPORT_PATH(exported) MW_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_MW_LAYER_PLATFORM_EXPORT_PATH(exported) MW_LAYER_PLATFORM_EXPORT_PATH(##exported)
+#define SYMBIAN_APP_LAYER_PUBLIC_EXPORT_PATH(exported) APP_LAYER_PUBLIC_EXPORT_PATH(##exported)
+#define SYMBIAN_APP_LAYER_PLATFORM_EXPORT_PATH(exported) APP_LAYER_PLATFORM_EXPORT_PATH(##exported)
+#endif
+#endif
+
+#endif  // end of PLATFORM_PATHS_HRH
+

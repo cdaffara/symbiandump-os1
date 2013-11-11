@@ -1,0 +1,154 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         te_lbsbtgpsconfig_cap_all.script
+//! @SYMScriptTestEnvironment
+
+// Copy the test server exe onto the C drive (if its on the Z drive)
+RUN_UTILS CopyFile z:\sys\bin\te_lbsbtgpsconfig.exe c:\sys\bin\te_lbsbtgpsconfig.exe
+
+
+// LOCALSERVICES + WRITEDEVICEDATA CAPABILITIES
+
+// Use Setcap to change capabilities of harness (MASK = 00004020)
+RUN_PROGRAM -1 setcap c:\sys\bin\te_lbsbtgpsconfig.exe 00004020 te_lbsbtgpsconfig_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [WriteDeviceData LocalServices] (MASK = 00004020) ----
+
+
+LOAD_SUITE te_lbsbtgpsconfig_sc -SharedData
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+PRINT Run te_lbsbtgpsconfig_cap_all
+
+START_TESTCASE                LBS-GPSPSYCONFIG-ADD-0001
+//! @SYMTestCaseID              LBS-GPSPSYCONFIG-ADD-0001
+//! @SYMTestCaseDesc            This tests that devices can be added to the device list via the publishedPartner Bluetooth GPS PSY configuration API.
+//! @SYMTestActions             The test is split into several stages, each stage consists of the following:
+//!                             
+//!                             1. The device list is cleared, and then checked to make sure it is empty.
+//!                             2. A number of devices are added to the list, at various positions.
+//!                             3. After adding each device, the error return value is checked, and the returned device key is checked to ensure it is both valid and unique.
+//!                             4. The device count is retrieved and checked to ensure it corresponds to the number of devices expected to have been added.
+//!                             5. The device list is retrieved and checked to ensure all devices are present in the expected order.
+//!                             6. Check that an update notification was received if the device list was changed.
+//!                             
+//!                             The following methods of adding devices to the list are tested:
+//!                             * Adding a single device.
+//!                             * Adding many devices (checks that at least 10 devices can be added).
+//!                             * Adding many devices with the same address (checks that no duplicate addresses are permitted).
+//!                             * Adding many devices to the end of the list.
+//!                             * Adding many devices to the start of the list.
+//!                             * Adding many devices at random points in the list.
+//! @SYMTestExpectedResults     At the end of each stage, the device list should contain the expected number of devices in the expected order.
+//! @SYMCreationDate            22/1/2009
+//! @SYMAuthor                  AndrewWedgbury
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 100 te_lbsbtgpsconfig_sc LbsBtGpsConfigStepAdd
+END_TESTCASE                  LBS-GPSPSYCONFIG-ADD-0001
+
+
+START_TESTCASE                LBS-GPSPSYCONFIG-REMOVE-0001
+//! @SYMTestCaseID              LBS-GPSPSYCONFIG-REMOVE-0001
+//! @SYMTestCaseDesc            This tests that devices can be removed from the device list via the publishedPartner Bluetooth GPS PSY configuration API.
+//! @SYMTestActions             The test is split into several stages, each stage consists of the following:
+//!                             
+//!                             1. The device list is cleared, and then checked to make sure it is empty.
+//!                             2. A number of devices are added to the list, at various positions.
+//!                             3. After adding each device, the error return value is checked, and the returned device key is checked to ensure it is both valid and unique.
+//!                             4. The device count is retrieved and checked to ensure it corresponds to the number of devices expected to have been added.
+//!                             5. A number of devices are removed from the list.
+//!                             6. The device list is retrieved and checked to ensure that the removed devices are no longer present in the list, and any other devices are present in the expected order.
+//!                             7. Check that an update notification was received if the device list was changed.
+//!                             
+//!                             The following methods of adding and then removing devices are tested:
+//!                             * Adding a single device then removing it.
+//!                             * Adding many devices at random points in the list, then removing some randomly.
+//!                             * Removing a device from an empty list, and from a list that does not contain the device (should fail).
+//! @SYMTestExpectedResults     At the end of each stage, the device list should contain the expected number of devices in the expected order.
+//! @SYMCreationDate            22/1/2009
+//! @SYMAuthor                  AndrewWedgbury
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 100 te_lbsbtgpsconfig_sc LbsBtGpsConfigStepRemove
+END_TESTCASE                  LBS-GPSPSYCONFIG-REMOVE-0001
+
+
+START_TESTCASE                LBS-GPSPSYCONFIG-REORDER-0001
+//! @SYMTestCaseID              LBS-GPSPSYCONFIG-REORDER-0001
+//! @SYMTestCaseDesc            This tests that devices can be reordered within the device list via the publishedPartner Bluetooth GPS PSY configuration API.
+//! @SYMTestActions             The test is split into several stages, each stage consists of the following:
+//!                             
+//!                             1. The device list is cleared, and then checked to make sure it is empty.
+//!                             2. A number of devices are added to the list, at various positions.
+//!                             3. After adding each device, the error return value is checked, and the returned device key is checked to ensure it is both valid and unique.
+//!                             4. The device count is retrieved and checked to ensure it corresponds to the number of devices expected to have been added.
+//!                             5. A number of devices are reordered within the list.
+//!                             6. The device list is retrieved and checked to ensure that the devices are present and in the expected order.
+//!                             7. Check that an update notification was received if the device list was changed.
+//!                             
+//!                             The following methods of adding then reordering devices are tested:
+//!                             * Adding many devices at random points in the list, and reordering some randomly.
+//!                             * Reordering a non-existant device within an empty list, and within a list that does not contain the device (should fail).
+//! @SYMTestExpectedResults     At the end of each stage, the device list should contain the expected number of devices in the expected order.
+//! @SYMCreationDate            22/1/2009
+//! @SYMAuthor                  AndrewWedgbury
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 100 te_lbsbtgpsconfig_sc LbsBtGpsConfigStepReorder
+END_TESTCASE                  LBS-GPSPSYCONFIG-REORDER-0001
+
+
+START_TESTCASE                LBS-GPSPSYCONFIG-MULTIPLECLIENT-0001
+//! @SYMTestCaseID              LBS-GPSPSYCONFIG-MULTIPLECLIENT-0001
+//! @SYMTestCaseDesc            This tests that the Bluetooth GPS PSY configuration API can be used simultaneously by multiple clients, without any ill effects.
+//! @SYMTestActions             The test is split into several stages, each stage consists of the following:
+//!                             
+//!                             1. Workers in a number of threads are each tasked to perform a BT GPS Config API call with specified parameters.
+//!                             2. The main thread waits until all worked threads tasks are finished, checking that no errors are reported.
+//!                             3. The device list is retrieved and checked to ensure that the expected devices are present and in the expected order.
+//!                             4. Check that an update notification was received if the device list was changed.
+//!                             
+//!                             The following calls are tested:
+//!                             * Adding a device and checking each thread has received an update notification to indicate the device list was changed.
+//!                             * Adding many devices.
+//!                             * Reordering devices randomly.
+//!                             * Removing some devices.
+//! @SYMTestExpectedResults     At the end of each stage, the device list should contain the expected number of devices in the expected order.
+//! @SYMCreationDate            22/1/2009
+//! @SYMAuthor                  AndrewWedgbury
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 10000 te_lbsbtgpsconfig_sc LbsBtGpsConfigStepMultipleClient
+END_TESTCASE                  LBS-GPSPSYCONFIG-MULTIPLECLIENT-0001
+
+
+START_TESTCASE                LBS-GPSPSYCONFIG-INTERNALAPI-0001
+//! @SYMTestCaseID              LBS-GPSPSYCONFIG-INTERNALAPI-0001
+//! @SYMTestCaseDesc            This tests the extended functionality available through the internal version of the Bluetooth GPS PSY configuration API.
+//! @SYMTestActions             1. A number of devices are added to the list, checking to see if the call succeeds.
+//!                             2. Device types are modified randomly and addresses updated for devices in the list, using the internal API.
+//!                             3. The device records are retrieved using the internal API, and checked to ensure they correspond to the expected list.
+//!                             4. Check that an update notification was received if the device list was changed.
+//! @SYMTestExpectedResults     The device records should be as expected, and in the expected order.
+//! @SYMCreationDate            22/1/2009
+//! @SYMAuthor                  AndrewWedgbury
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 100 te_lbsbtgpsconfig_sc LbsBtGpsConfigStepInternalApi
+END_TESTCASE                  LBS-GPSPSYCONFIG-INTERNALAPI-0001
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+

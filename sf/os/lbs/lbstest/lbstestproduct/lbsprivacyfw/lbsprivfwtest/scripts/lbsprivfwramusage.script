@@ -1,0 +1,62 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName lbsprivfwramusage.script
+//! @SYMScriptTestEnvironment Testexecute
+
+LOAD_SUITE LbsPrivFwTestServer -SharedData
+
+PRINT Run LbsPrivFwTestServer
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini QNN-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_InitializeTestChannel
+
+
+
+START_TESTCASE                LBS-PRIVACY-PERF-RAMUSAGE-0001
+//! @SYMTestCaseID              LBS-PRIVACY-PERF-RAMUSAGE-0001
+//! @SYMTestCaseDesc            Test of RAM usage for the standalone LBS privacy configuration.This test will require specific build/ROM configuration to include the memory monitoring tool as well as the standalone LBS privacy components
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set Admin setting to use the Privacy Controller.
+//!                             2. Clear any residual RAM usage files/artifacts
+//!                             3. Set Controller to return 'accept' for verification requests and to reply after 1 sec.
+//!                             4. Issue 3 separate VerificationLocationRequestL() each from a separate client
+//!                             5. Verify the responses sent to the network.
+//!                             6. Analyse RAM usage files for worst case usage.
+//!                             Notes: May have to increase the reply delay period to ensure that we meet the exact wording of the REQ ie '...3 connected clients of the Network privacy API, each with one outstanding request ...'
+//! @SYMTestExpectedResults     1. Verification 'accept' response is sent to the network
+//!                             2 Heap size requirements of the LBS components should be as follows
+//!                             - target = 12K
+//!                             - Failure > 16K
+//! @SYMTestType                CIT
+//! @SYMCreationDate            29/8/2007
+//! @SYMAuthor                  alans
+//! @SYMREQ                     REQ8003
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsPrivFwTestServer KLbsPrivFwStep_RamUsage  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFW-RAMUSAGE-0001
+END_TESTCASE                  LBS-PRIVACY-PERF-RAMUSAGE-0001
+
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_CloseTestChannel
+

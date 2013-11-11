@@ -1,0 +1,96 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//Tests for startersession setstate(only EOffline,ENormal,EBTSap) 
+//RequestResetNetwork
+//IsRTCTimeValid
+//which requires SSM SID for testing actual behaviour of the functionality
+
+PRINT Run CCLayerTestWithSsm tests
+
+LOAD_SUITE tclayer_serverwithssm
+LOAD_Server tclayer_serverwithssm -SharedData
+
+//! @file			
+//! @SYMTestSuiteName			APPFWK-CLAYERSTARTERSESSION
+//! @SYMScriptTestEnvironment  	testexecute framework(TEF3.0)
+//! @SYMScriptPurpose			Integration testing of Clayer startersession funtionality
+//! @SYMScriptCreationDate		11/08/2009
+
+START_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-29
+//! @SYMTestCaseID		DEVSRVS-SSREFPLUGINS-CLAYER-29
+//! @SYMDEF				DEF139137
+//! @SYMTestType		CIT
+//! @SYMTestPriority	Critical
+//! @SYMTestStatus		Implemented
+//! @SYMTestCaseDesc	Check set state functionality for ENormal,EBTSap,EOffline,InvalidState of RStarterSession class.
+//! 					Check request for rfstatus SwP change.
+//! 					Check reset network behaviour of RStarterSession class.
+//! 					Check rfstatusswp TransitionAllowed passes when process have WriteDeviceData and PowerMgmt Capabilities.
+//! 					Check IsRTCTimeValid 
+
+//Adding capabilty(00001134) and SID(2000d75b) of ssm serevr to define and change SwP
+//PowerMgmt (000000004) + ProtServ (000000100) + SwEvent (000001000) + WriteDeviceData (000000020) + ReadDeviceData (000000010)
+RUN_PROGRAM -1 setcap tclayer_serverwithssm.exe  00001134  -SID 2000d75b c:\sys\bin\tclayer_serverwithssmcap
+LOAD_SUITE tclayer_serverwithssmcap -SharedData 
+
+START_TEST_BLOCK  100	tclayer_serverwithssmcap	z:\ssrefpluginstest\testdata\ssrefpluginstest_clayer_startersessionwithssm.ini
+	CREATE_OBJECT	CLayerTestWrapper  	clayerObject
+//! Command to define SwP
+	COMMAND	!Error=0			clayerObject		DefineSwpCmd				ssrefpluginstest_clayer_startersessionwithssm_DefineSwpCmd
+
+//! Command to set state EOffline
+	COMMAND	!Error=0			clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd01
+
+//! Command for set state ENormal
+	COMMAND	!Error=0			clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd02
+
+//! Command for set state EBTSap
+	COMMAND	!Error=0			clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd03
+
+//! Command for set state InvalidState
+	COMMAND	!Error=-6			clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd04
+
+//! Command for resetting the normal state because testexecute starts from normal state
+	COMMAND	!Error=0			clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd02
+	COMMAND	!Error=0			clayerObject		RequestResetNetworkCmd		ssrefpluginstest_clayer_startersessionwithssm_RequestResetNetworkCmd
+	COMMAND	!Error=0			clayerObject		IsRTCTimeValidCmd			ssrefpluginstest_clayer_startersessionwithssm_IsRTCTimeValidCmd01
+	COMMAND	!Error=0			clayerObject		IsRTCTimeValidCmd			ssrefpluginstest_clayer_startersessionwithssm_IsRTCTimeValidCmd02
+END_TEST_BLOCK	
+END_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-29
+
+PRINT Run CCLayerTestWithSsm test with less capabilty to Request SwP change
+START_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-30
+LOAD_SUITE tclayer_serverwithssm
+//changing capabilty to 01130 which does not have PowerMgmt capabilty
+//01130 = ProtServ (000000100) + SwEvent (000001000) + WriteDeviceData (000000020) + ReadDeviceData (000000010)  
+RUN_PROGRAM -1 setcap tclayer_serverwithssm.exe  01130 c:\sys\bin\tserverwithoutpwrmgmtcap 
+LOAD_SUITE tserverwithoutpwrmgmtcap -SharedData
+
+//! @SYMTestCaseID		DEVSRVS-SSREFPLUGINS-CLAYER-30
+//! @SYMDEF				DEF139137
+//! @SYMTestType		CIT
+//! @SYMTestPriority	Critical
+//! @SYMTestStatus		Implemented
+//! @SYMTestCaseDesc	Check RF status SwP change request fails when the process doesnt have PowerMgmt capability.
+//!						In EOffline, change request for SwP will be KErrNotSupported because of RF Swp policy transition rule.
+//!						In ENormal, expected result will be KErrArgument because SwP is already ENormal and no change request for SwP is called.
+
+START_TEST_BLOCK  100	tserverwithoutpwrmgmtcap	 z:\ssrefpluginstest\testdata\ssrefpluginstest_clayer_startersessionwithssm.ini
+	CREATE_OBJECT	CLayerTestWrapper  clayerObject
+//! Command to set state EOffline
+	COMMAND	!Error=-5	clayerObject		RFSwpTransitionNotAllowCmd		ssrefpluginstest_clayer_startersessionwithoutssm_RFSwpTransitionNotAllowedCmd01
+//! Command for set state ENormal	
+	COMMAND	!Error=-6	clayerObject		RFSwpTransitionNotAllowCmd		ssrefpluginstest_clayer_startersessionwithoutssm_RFSwpTransitionNotAllowedCmd02
+END_TEST_BLOCK	
+END_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-30

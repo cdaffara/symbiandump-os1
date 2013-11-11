@@ -1,0 +1,405 @@
+# fshell.cif
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+==name fshell
+
+==short-description
+
+A UNIX-like shell for Symbian OS.
+
+==long-description
+
+=head2 Introduction
+
+F<fshell> is a console based executable for Symbian OS that behaves somewhat like typical UNIX shells (e.g. Bash, http://www.gnu.org/software/bash/ ). It can be used via a remote console implementation on hardware that doesn't have a full keyboard, giving an experience similar to telnet. F<fshell> contains a set of built-in commands and is also able to launch arbitrary Symbian OS executables. This document describes how to install F<fshell>, how to use its built-in commands and how to use the set of external commands that are also provided.
+
+=head2 Getting Started
+
+See L<Getting Started|getting_started> for a description of how to get console based tools like F<fshell> up and running on the platform you are using. Alternatively, if you would like to configure things yourself, see L<Console Options|console_options> for a description of the technology that's available for hosting consoles.
+
+F<fshell> is more like a UNIX shell than a DOS one, so it supports commands like C<cd Z:\>, C<ls>, C<mkdir> and C<rm>. It does also support the DOS-style equivalents C<z:> C<dir>, C<md>, and C<del> via internal fshell aliases. However, you still can't execute eshell *.bat files directly, although you can launch eshell from within fshell by typing 'eshell' so it is possible to run them indirectly if you need to. In practice, many simple bat files can run as fshell scripts due to fshell providing broadly-compatible commands.
+
+=head2 General fshell Functionality
+
+=over 5
+
+=item * Tab Completion
+
+At any point through entering a command, pressing the C<tab> key will cause F<fshell> to attempt to complete the part of the line currently being entered. Completion is performed on command names, directory and file names, and environment variables. If a command has been typed, and that command uses a L<CIF file|cif_syntax>, completion will additionally be performed on option names. Where the completion choice is ambiguous, a list of choices will be displayed above the line being edited. DOS-style F8 line completion is also supported, this looks in the command history for the first command that matches what has been typed so far. Pressing F8 repeatedly cycles through all the matching commands. For VT100 compatibility (F8 technically only became supported in VT220) F4 has the same effect.
+
+For example:
+
+  Input:   c:\>under<TAB>
+  Outputs: c:\>undertaker
+
+  Input:   c:\>kill --<TAB>
+  Outputs: c:\>kill --
+           --reason  --terminate --panic --thread --match --all
+
+  Input:   c:\>ls $P<TAB>
+  Outputs: c:\>ls $PWD
+
+=item * Command History
+
+The 'up arrow' and 'down arrow' keys can be used to review previously entered commands. The commands entered in a particular session are persisted to disk when fshell is idle or when it is exited.
+
+=item * Standard Input / Output
+
+F<fshell> supports the notion of standard input / ouput. Each command has access to the following IO handles:
+
+=over 5
+
+=item * STDIN
+
+By default, keyboard input.
+
+=item * STDOUT
+
+By default, the console screen.
+
+=item * STDERR
+
+By default, the console screen.
+
+=back
+
+=item * Console Sharing
+
+F<fshell> arranges for all commands (including external ones run in separate processes) to share its console. This may not seem like a big deal as it's the behaviour you'd expect from using UNIX or DOS, but Symbian OS's default console implementation (F<econs.dll>) and shell implementation (F<eshell.exe>) run external commands in a separate console windows, making it difficult to see any output they may produce because their windows disappear when the command finishes.
+
+With the right configuration tweaks, fshell is capable of 'hooking up' existing CConsoleBase-based command line tools to share fshell's console. In other words fshell can transparently support running legacy command line tools as if they were native fshell tools. The same support is available for PIPS-based tools.
+
+=item * Pipelines
+
+The output of one command to be sent as input to another command. For example:
+
+  cat text.txt | match *hello*
+
+This command-line causes the C<cat> command to print the contents of the file C<text.txt>. This output is directed into the L<match|match> command, which filters out any lines that don't contain the text C<hello>.
+
+=item * Redirection
+
+The output of commands can be redirected to files. For example:
+
+  ls > ls.txt
+
+This causes the output of a directory listing (produced by the C<ls> command) to be redirected to the file C<ls.txt> in the current directory, replacing its current contents. The following command...
+
+  ls >> ls.txt
+
+...causes the directory listing to be appended to the current contents of F<ls.txt>.
+
+So far, all the examples have shown how C<STDOUT> can be redirected. It is however also possible to redirect C<STDERR>. For example...
+
+  ls 2> stderr.txt > stdout.txt
+
+...redirects C<STDERR> to the file F<stderr.txt> and C<STDOUT> to the file F<stdout.txt>. It is also possible to redirect C<STDERR> to C<STDOUT> (and vice versa), for example:
+
+  ls 2>&1 > stderr_and_stdout.txt
+
+Lastly, it is also possible to redirect C<STDIN> to be read from a file rather than from the keyboard. For example...
+
+  match *hello* < text.txt
+
+...is equivalent to the first example but avoids using the C<cat> command.
+
+=item * Job Control
+
+Each command line is treated as a separate job within F<fshell>. Ordinarily, when F<fshell> is executing a job, any characters you enter using the keyboard are directed to the job. The presence of a 'C<&>' character at the end a of command line causes it to be run in the background. While such a job is running, F<fshell> will allow you to create and run other command lines. Whilst a job is running in the background, it will not receive any keyboard input.
+
+The following key combinations are intercepted by F<fshell>:
+
+=over 5
+
+=item * Ctrl-C
+
+Causes the foreground job to be terminated.
+
+=item * Ctrl-Z
+
+Causes the foreground job to be stopped (in the case of pre-platform security versions of Symbian OS) or sent to the background whilst still running (in the case of platform security versions of Symbian OS).
+
+=back
+
+See also the commands L<fg|fg>, L<bg|bg> and L<jobs|jobs>.
+
+=item * Conditional Execution
+
+Commands can conditionally execute using the logical 'and' operator C<&&>, the logical 'or' operator C<||> or the (somewhat strange) 'andor' operator C<&|>. For example...
+
+  command_1 && command_2
+
+...C<command_2> is only run if C<command_1> ran successfully (i.e. returned KErrNone). Or...
+
+  command_1 || command_2
+
+...C<command_2> is only run if C<command_1> did not run sucessfully (i.e. returned something other than KErrNone).
+
+The 'andor' operator is effectively an alternative for proper block support. It allows a script to contain conditional elements and then execute a block of commands regardless of whether previous ones have returned an error. This might sound like a strange thing to want to do, but it can be useful. For example...
+
+  exist some_dir || do_something &| do_something_else
+
+In this example, "do_something" is only executed if "some_dir" does not already exist. However, if "do_something" is run, then "do_something_else" is also guaranteed to also run.
+
+=item * Environment variables
+
+Environment variables can be defined (and undefined) using the L<export|export> command. Once defined, variables can be used in fshell command lines (or scripts) by prefixing them with a C<$> sign as follows:
+
+  c:\>export MYVAL 'some value'
+  c:\>echo $MYVAL
+  some value
+
+Fshell defines some variables at all times. C<PWD> is set to the current directory, and C<?> is set to the return code of the last command that ran. For example:
+
+  c:\somewhere\>echo "Current dir is: $PWD"
+  Current dir is: c:\somewhere\
+  c:\somewhere\>error -3
+  Error: Command "error" failed : KErrCancel (-3)
+  c:\somewhere\>echo "Last command returned $?"
+  Last command returned -3
+
+See the section on scripting for some further uses of environment variables. 
+
+=item * Escaping and Quoting
+
+F<fshell> treats the value of the variable C<ESCAPE> (which defaults to C<^>) as the beginning of an escape sequence. One or more characters following an escape are ignored by F<fshell's> usual string processing. The DOS-style '^' escape is used in preference for the more usual unix '\', because backslash is used as the path separator, and being forced to write C<cat C:\\dir\\file.txt> is considered more inconvenient. It is not recommended to change the escape character, particularly not to '\'.
+
+For example, to get list the contents of a directory whose name contains a space character:
+
+  c:\>ls test^ dir
+  test.txt
+
+The following escape sequences have special meanings:
+
+  ^a          (bell)
+  ^b          (back space)
+  ^f          (form feed)
+  ^n          (new line)
+  ^r          (carriage return)
+  ^t          (horizontal tab)
+  ^v          (vertical tab)
+  ^xnn        (numeric escape where 'n' is a hex digit)
+  ^Xnn        (same as ^x)
+  ^unnnn      (numeric escape for a UTF-16 character, where nnnn is a sequence of 4 hex digits)
+  ^Unnnnnnnn  (same as ^u but for a UTF-32 character)
+  ^^          (to represent the escape character itself.
+               if $ESCAPE was a backslash, the sequence would be \\ etc.)
+
+For example:
+
+  c:\>echo hello^r^x0aworld
+  hello
+  world
+
+Note, the hex value 0x0a corresponds to a new line character, which could have been represented by C<^n>.
+
+F<fshell> also supports use of single and double quotes around strings. With single quotes environment variables are not expanded and the only supported escape sequence is C<^'> to produce a literal single quote character. With double quotes, environment variables B<are> expanded and all the above escape sequences are supported. For example:
+
+  c:\>export TEST "hello world"
+  c:\>echo '^'$TEST^' will not be expanded'
+  '$TEST' will not be expanded
+  c:\>echo "TEST contains:^r^n$TEST"
+  TEST contains:
+  hello world
+
+=item * PIPS Integration
+
+If F<fshell> detects that it is launching a PIPS based executable (because it has a UID2 of 0x20004c45, the UID used by the makmake target C<stdexe>), it takes steps to ensure that F<fshell's> native implementations of pipes and environment variables are mapped onto those provided by PIPS. This is done using a helper executable named F<pipsrun.exe> that is responsible for providing the necessary translations. The end result is that the executables that use PIPS can share F<fshell's> console, take part in pipelines and also inherit environment variables.
+
+=back
+
+=head2 Commands
+
+All commands support the C<-h> (or C<--help>) option, which causes them to display text describing what they do and the syntax they support.
+
+A list of all the supported commands is available L<here|commands>.
+
+=head2 Scripting Support
+
+F<fshell> supports simple scripting to allow more than one command to be run in succession. Scripts can be invoked in two ways:
+
+=over 5
+
+=item *
+
+By running fshell with the script file name as an argument. If a path isn't given, the location F<\system\console\scripts> is searched on all drives if the script isn't found in the current working directory. For example:
+
+  c:\>fshell myscript.script # checks for c:\myscript.script and ?:\system\console\scripts\myscript.script
+  c:\>fshell e:\scripts\something # tries to run e:\scripts\something
+  c:\>fshell myscript # checks for c:\myscript, ?:\system\console\scripts\myscript and finally ?:\system\console\scripts\myscript.script
+
+=item *
+
+By 'executing' the script file itself (this is normally done by selecting the file in the handset's file manager). To support this F<fshell> provides a recognizer plug-in that recognizes files that begin with 'C<#!fshell>'. For example:
+
+  #!fshell
+  echo 'An example script'
+
+Note, the text following 'C<#!>' doesn't need to be 'C<fshell>' - the recognizer will attempt to launch any executable you care to name, providing the script file name in its command line.
+
+=back
+
+Scripts may contain any number of valid F<fshell> command lines. Separate script files may be run in the context of a single F<fshell> instance by using the L<source|source> command. Note, when F<fshell> runs a script, it defines the following environment variables within itself before doing so:
+
+=over 5
+
+=item * C<SCRIPT_PATH>
+
+Contains the absolute path (with trailing slash) to the directory that contains the script being executed. This may be used by the script to, for example, load other source files (using L<source|source>) that exist in the same directory as itself.
+
+=item * C<SCRIPT_NAME>
+
+Contains the name of the script file being executed.
+
+=item * C<SCRIPT_LINE>
+
+Contains the line number of the script that is currently being executed.
+
+=item * C<$0> ("dollar zero")
+
+The absolute path of the script. Equivalent to C<$SCRIPT_PATH$SCRIPT_NAME>.
+
+=item * C<$1, $2, etc>
+
+If any command line arguments to the script were specified, they are set in the environment. The first argument goes in $1, the second (if present) in $2 etc. For example, a script called envtest.script that just consisted of a call to C<env> would print out something like:
+
+  c:\>fshell envtest.script AnArgument "Another argument" Something Else
+  0=c:\envtest.script
+  1=AnArgument
+  2=Another argument
+  3=Something
+  4=Else
+  ?=0
+  ARG_COUNT=4
+  PWD=c:\
+  SCRIPT_LINE=1
+  SCRIPT_NAME=envtest.script
+  SCRIPT_PATH=c:\
+
+=item * C<ARG_COUNT>
+
+The number of arguments to the script. If $ARG_COUNT is 2, there are 2 arguments (in addition to $0), which are named $1 and $2.
+
+=back
+
+=head2 Global Command Line Options
+
+All commands, including fshell itself, have the following common set of command line options which control where/how the command runs. These global options are not generally listed when you run C<command --help>. There are no short alternatives for these options.
+
+=over 5
+
+=item * --console <console_implementation>
+
+This allows the console implementation F<.dll> to be overridden. Ordinarily, commands share the console of the F<fshell> instance that launched them. By explicitly specifying a console implementation, a different kind of console may be used to that of the parent F<fshell> instance. Another use of this option is to force the console provider to create a new console window for the command to run in. Note however that not all console implementations support multiple windows. See the L<consoles documentation|consoles> for more information.
+
+=item * --console-title <text>
+
+Only has an effect when used in conjunction with C<--console>. Allows the title of the overridden console window to be specified. Some consoles use this parameter to pass in additional configuration options.
+
+=item * --console-size <width>, <height>
+
+Only has an effect when used in conjunction with C<--console>. Allows the character width and height of the overridden console window to be specified. Note, some console implementations impose restrictions on the minimum and maximum size of their console windows. Generally this option isn't needed any more because in most configurations fshell or the console is capable of auto-detecting the size.
+
+=item * --persistent-console <name>
+
+Creates a new L<persistent console|persistent_consoles> to be used as the console for the command. Cannot be used in conjunction with C<--console>.
+
+=back
+
+=head2 Advanced command-line syntax
+
+Short options may be run together in one block, the only restriction being that only the last option in the block may take an argument. For example the following are equivalent:
+
+    kill --all --thread --match *undertaker
+    kill -a -T -m *undertaker
+    kill -aTm *undertaker
+
+Commands that have options that can be specified multiple times can be called in a number of different ways, partly depending on the type of the option. In the most basic case, you can specify the long or the short option repeatedly:
+
+    echo --attributes bold --attributes underscore "hello!"
+    echo -a bold -a underscore "hello!"
+
+For integer options, you can use the above or you can use commas. All of the below are valid fshell syntax and mean exactly the same:
+
+    btrace --filter 1 --filter 3
+    btrace --filter 1,3
+    btrace -f 1,3
+    btrace -f1,3
+
+For boolean options, you can additionally specify the short option multiple times in the same block. All of the below mean the same:
+
+    fcontacts -v -v list
+    fcontacts --verbose -v list
+    fcontacts -vv list
+
+For most commands, it doesn't matter where you put the options - they can go before, after or mixed in with the arguments. The following are all equivalent:
+
+    cat --binary file1 file2
+    cat -b file1 file2
+    cat file1 file2 -b
+    cat file1 -b file2
+
+The only exception to this is commands that are designed to take other command-lines as their arguments. These will not parse options themselves if they appear as part of the arguments. For example the C<repeat> command will not parse C<-k> if it appears during the C<command> argument, even though C<-k> is a valid option for L<repeat|fshell::commands::repeat>. Therefore:
+
+    repeat -k 3 ps
+
+is different to:
+
+    repeat 3 ps -k
+
+The former means "repeat C<ps> three times, and specify the C<-k> repeat option". The latter means "repeat C<ps -k> three times". Commands that parse in this way can be identified by the phrase "Any further arguments or options will be coalesced into this one." which appears in their documentation. They are specifed in CIF files using the C<last> keyword. The precise rule for how C<last> behaves can be stated as: If the command line following the C<last> argument would need quoting or escaping to make it a single string argument, the string is taken literally as-is. Otherwise, the normal expansions take place:
+
+    c:\>echo This^ gets^ expanded^ as^ expected
+    This gets expanded as expected
+    c:\>echo "Quoting the entire argument works as normal as well"
+    Quoting the entire argument works as normal as well
+
+But a command line that has unescaped spaces or quotes will cause the entire thing to be taken literally:
+
+    c:\>echo This is taken as one string even though it has spaces and 'unbalanced quotes"
+    This is taken as one string even though it has spaces and 'unbalanced quotes"
+    c:\>echo Note how escapes like ^r^n aren't expanded
+    Note how escapes like ^r^n aren't expanded
+    c:\>echo "But if it's all in quotes, escapes like ^r^n are expanded"
+    But if it's all in quotes, escapes like 
+     are expanded
+
+Environment variables are always expanded unless the entire argument is enclosed in 'single quotes'.
+
+==see-also
+
+L<fshell commands|commands>
+
+L<consoles|consoles>
+
+L<CIF file syntax|cif_syntax>
+
+==argument filename script_name optional
+
+The name of a script file to be executed. If a path isn't specified, and C<script_name> is not a file in the current working directory, the directory F<\system\console\scripts> is searched on all drives.
+
+==argument string script_args optional last
+
+Arguments to be send to the script.
+
+==option string e exec
+
+Execute the specified one line script.
+
+==option bool k keep-going
+
+When running in script mode, keep processing the script even if a previous command has returned an error. Without this option set, an error would cause the processing to abort (and fshell to exit with the error code) unless either C<&&>, C<||> or C<&|> was used to handle the error. For the convenience of scripts that may wish to pass on the flag to sub-instances of fshell, if this flag is specified the environment variable C<KEEP_GOING> is defined.
+
+==copyright
+
+Copyright (c) 2006-2010 Accenture. All rights reserved.
+

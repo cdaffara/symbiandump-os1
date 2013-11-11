@@ -1,0 +1,115 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName COMINF-ESOCK-RConnection-ContentionManagement
+//! @SYMScriptTestEnvironment  networking
+//
+//Load the test suite and esock
+
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-AccessPointPriorityInheritance
+//! @SYMTestCaseID              COMINF-ESOCK-RConnection-AccessPointPriorityInheritance
+//! @SYMTestCaseDesc            Check the priority inheritance implicitly by the pre-emption the lower priority connection with the higher priority one. The test environment should support only one active primary PDP context at the particular moment.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1.Start first connection for the SNAP #4 (to point to particular SNAP use TConnSnapPref parameter) - 2.Start second connection for the SNAP #1 - 3.Close second connections - 4.Restart first connection  - 5.Start third connection for the SNAP #2 - 6.Close third connections - 7.Restart first connection - 8.Start fourth connection for the SNAP #3 - 9.Close fourth connections
+//! @SYMTestExpectedResults     Pass
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/11/2008
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ1927
+
+// Special CommsDat configuration to implicitly test the priority inheritance.
+// To ensure the right priority inheritance will be enough to ensure the value propagation
+// from every stack layer to the lower one. For the PREQ 1927 the only interested is the final
+// priority value of the PDP Link layer of the stack. Thus to perform this test the CommsDat 
+// should be configured basing on the configuration information from the table below .
+//
+//
+//	SNAP #	Stack layers priority values
+//		Network		IP Proto	PDP Link	PDP Link Final
+//	1	max*		average		min*		max
+//	2	average*	max		min		max
+//	3	min		average		max		max
+//	4	average		average		average		average
+//
+// *the max priority value is 0
+// *the min priority value is KmaxTUInt
+// *the average is any positive numeric value in between 0 and KMaxTUInt
+// Actions:
+//	1.	Start first connection for the SNAP #4 (to point to particular SNAP use TConnSnapPref parameter)
+//	2.	Start second connection for the SNAP #1
+//	3.	Close second connections
+//	4.	Restart first connection 
+//	5.	Start third connection for the SNAP #2
+//	6.	Close third connections
+//	7.	Restart first connection 
+//	8.	Start fourth connection for the SNAP #3
+//	9.	Close fourth connections
+// Expected Result:
+//	The second, third and fourth connections should be started with no errors because of their priorities.
+//
+// The sockets are used to prevent connection to be closed because of timeout
+
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CreateConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CreateConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CreateConn4
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CreateUdpSock1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini ConnectSockSvr1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini StartConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini OpenUdpSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini ConnectUdpSock1
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini OpenConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini StartConn2
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CloseConn2
+
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini StartConn1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini OpenConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini StartConn3
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CloseConn3
+
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini StartConn1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini OpenConn4
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini StartConn4
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CloseUdpSock1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CloseConn4
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\ContentionManagement\CM_GT0429_3_2.ini CloseSockSvr1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			COMINF-ESOCK-RConnection-AccessPointPriorityInheritance
+PRINT Completed COMINF-ESOCK-RConnection-AccessPointPriorityInheritance
+
+

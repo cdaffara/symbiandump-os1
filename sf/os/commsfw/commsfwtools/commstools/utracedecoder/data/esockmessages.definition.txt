@@ -1,0 +1,1284 @@
+//
+// ESock messages and message signature definitions
+//
+
+ENUM ActivityId : UINT8
+	ActivityNull						= 0
+	ActivityNoBearer				    = 1
+	ActivitySelect				    = 2
+	BinderRequest			= 3
+	ActivityBindTo       			= 4
+	ClientJoin	    		= 5
+	ClientLeave			    = 6
+	ActivityStart				    = 7
+	StartDataClient          = 8
+	ActivityStop			            = 9
+	StopDataClient			= 10
+	ActivityGoneDown      			= 11
+	ActivityDataClientGoneDown		= 12
+	ActivityDestroy				    = 13
+	ActivityAvailabilityNotification	= 14
+	ActivityTierNotification			= 15
+	MonitorProviderStatus	= 16
+	ReportProviderStatus		= 17
+	ActivityTierGetDataCollectors	= 18
+	StoreProvision			= 19 
+	ActivityDataClientActive      	= 20 
+	ActivityDataClientIdle		    = 21 
+	ForwardStateChange		= 22 
+	ActivityError					= 23 	
+	ErrorRecovery            = 24	
+	GoneUp						= 25
+	ActivityAny					= 26
+	Notification				= 32
+	ActivityRejoin				= 33
+	ParamRequest             = 34
+	ApplyChanges             = 35
+	ConnectionStateChangeRequest = 36
+	ActivityStateChange					= 37	
+	ConnectionStartRecovery   	= 38
+	ConnectionGoneDownRecovery 	= 39
+	AvailabilityStart		= 40
+	AvailabilityStop			= 41
+	PolicyCheckRequest			= 42
+	ActivityBuildStack				= 96
+	ActivityProviderStatusChange 	= 97
+	ActivityDataClientStatusChange	= 98
+	ConnectionAttach             = 99
+	ConnectionWaitForIncoming    = 100
+	ConnSubConnEvents			= 101
+	ConnectionAllInterfaceNotification 	= 102
+	ActivityLegacyConnEnumResponse		= 103
+	ConnectionEnumerateConnections		= 104
+	ActivityStopSCPR 					= 105
+	ActivityLegacyRMessage2Handler		= 106
+	ConnectionLegacyRMessage2Handler		= 107
+	SubConnectionLegacyRMessage2Handler		= 108
+	ReportProviderStatusDeactivationWatcher = 109
+	ImplicitFlow				= 112
+	ConnectionFlow				= 113
+	SubConnectionFlow			= 114
+	ActivityDestroyOrphans           		= 115
+	GetParamLength				= 116
+	GetParam					= 117
+	ActivitySubConnectionCreate = 118
+	DataClientJoin				= 122 
+	ActivityBuildLowerLayer     = 123 
+	ActivityReBindLayer         = 124 
+	ActivityReConnect			= 125 
+END ENUM
+
+ENUM DECIMAL TStateChangeStage : UINT32
+    KConnectionUninitialised  = 0
+    KStartingSelection        = 1000
+    KFinishedSelection        = 2000
+    KConnectionFailure        = 2001
+
+    KMinAgtProgress           = 2500
+    KConnectionOpen           = 3500
+    KConnectionClosed         = 4500
+    KMaxAgtProgress           = 5500
+
+    KMinNifProgress           = 6000
+    KLinkLayerOpen            = 7000
+    KLinkLayerClosed          = 8000
+    KMaxNifProgress           = 9000
+    
+    // CSD Specific
+    KCsdFinishedDialling = 2600
+    KCsdScanningScript   = 2650
+    KCsdScannedScript    = 2750
+    KCsdGettingLoginInfo = 2800
+    KCsdGotLoginInfo     = 2900
+    KCsdFinishedConnect  = 3100
+    KCsdStartingLogIn    = 3200
+    KCsdFinishedLogIn    = 3250
+END ENUM
+
+INCLUDE "nodemessages.definition.txt"
+
+CONST KESockInternalMessagesImplementationUid = 0x10285A57
+
+ENUM ESock_SignatureId : UINT32
+	ESignatureCommsBinder			=1
+	ESignatureCommsBinderNumber		=2
+	ESignatureSigAddrUpdate			=3
+	ESignatureConnectionInfo		=4
+	ESignatureProvisionConfig1		=5
+	ESignatureSelectionPrefs		=6
+	ESignatureSelectComplete		=7
+	ESignaturePlaneNotification		=8
+	ESignatureSubConnNotification	=9
+	ESignatureSubConnOpenedEvent	=10
+	ESignatureSubConnClosedEvent	=11
+	ESignatureStateChange			=12
+	ESignatureFactoryObjectParams   =13
+	ESignatureBundleRMessage2		=14
+	ESignatureBundle				=15
+	ESignatureAvailabilitySubscriptionOptions = 16
+	ESignatureAvailabilityStatus              = 17
+	ESignatureNodeIdClientTypeNumber=18
+	ESignatureFlowParams			=45
+	ESignatureConnPrefList			=46
+	ESignatureUpsParameters 		=47
+	ESignatureFamilyBundle			=48
+	ESignatureNumberFamilyBundle	=49
+	ESignatureUpsStatusChange 		=50
+	ESignatureMetaExtContainer      =51
+	ESignatureConnectionInfoPtr     =52
+	EFlowRequestBase				=1000
+	EImplicitFlowRequest			=1001
+	EConnFlowRequest				=1002
+	ESubConnFlowRequest				=1003
+	EReBindLayerRequest				=1004
+	EDataClientJoiningRequest       =1005
+	EGetOrSetParameters				=1006
+END ENUM
+
+ENUM TSubConnectionEventType : UINT32
+	ESubConnectionOpened = 0
+	ESubConnectionClosed = 1
+	ESubConnectionQoSChanged = 1000
+END ENUM
+
+STRUCT TSubConnectionEvent
+	UINT32 iSubConnectionUniqueId
+	TSubConnectionEventType iEventType
+	UINT32 iLength
+END STRUCT
+
+STRUCT TSubConnectionClosedEvent
+	UINT32 iTotalUplinkDataVolume
+	UINT32 iTotalDownlinkDataVolume
+	UINT32 iTimeClosed_Low	 // low 32 bits universal time
+	UINT32 iTimeClosed_High  // high 32 bits universal time
+END STRUCT
+
+STRUCT TCommsBinder
+    Context_NodeId iCommsId
+    INT32 iValue
+END STRUCT
+
+STRUCT TFactoryObjectParams
+    UINT32 iUid
+    Context_NodeId iControlProvider
+    TMessageId iMessageId
+    INT32 iDataClientType
+END STRUCT
+
+STRUCT TSockAddr
+//    UINT8 iAddress[0x20] // TODO: Add support for arrays
+	PAD 8			// descriptor length and maxlength
+    PAD 0x20			// descriptor contents
+END STRUCT
+
+STRUCT TAddrUpdate
+    TSockAddr iSrcSockAddr
+    TSockAddr iDestSockAddr
+    INT32 iProtocolId
+    INT32 iIapId
+END STRUCT
+
+STRUCT TConnectionInfo
+	UINT8 iVersion
+	PAD 3
+	UINT32 iIapId
+	UINT32 iNetId
+END STRUCT
+
+STRUCT TConnPref	// TBuf<64>
+//    UINT8 iAddress[0x40] // TODO: Add support for arrays
+	PAD 8		// descriptor length and maxlength
+	PAD 64		// descriptor contents
+END STRUCT
+
+STRUCT TSelectionPrefs
+    PAD 12		// STypeId and length
+    TConnPref iPrefs
+    UINT32 iSelectionParams
+    UINT32 iSubSessionUniqueId
+END STRUCT
+
+STRUCT TProviderInfo
+    UINT32 iAPId
+	UINT32 iTierId 
+	UINT32 iInstance
+END STRUCT
+
+STRUCT TAvailabilityStatus
+    INT32 iScore
+END STRUCT
+
+STRUCT TAvailabilitySubscriptionOptions
+    UINT32 iAvailabilityFlags
+END STRUCT
+
+STRUCT RCFParameterFamilyBundle_const
+	TCommsId iBundleId
+END STRUCT
+
+ENUM TFlowRequestType : UINT32
+	EImplicit = 0
+	EExplicitSubConnection = 1
+	EExplicitConnection = 2
+END ENUM
+
+STRUCT TFlowParams
+	UINT32 iAddrFamily
+	UINT32 iProtocol
+	UINT32 iSocketType
+	TFlowRequestType iFlowRequestType
+	UINT32 iSessionProxy
+	UINT32 iFlowLoadsProtocol
+END STRUCT
+
+STRUCT TConnArgBase			// es_enum.h
+	PAD 4
+END STRUCT
+
+STRUCT TTime
+	UINT32 iTime_Lo			// TInt64 iTime
+	UINT32 iTime_Hi
+END STRUCT
+
+STRUCT TSubConnectionInfo	// es_enum.h
+	TConnArgBase iBase		// (base class)
+	UINT32 iSubConnectionUniqueId
+	UINT32 iConnectionType
+	TTime iTimeStarted
+END STRUCT
+
+SIGNATURE TCFSigRMessage2Ext : TSignalBase
+    TYPEID = 0:0 //has no id because it MUST to be derived from
+	RMessage2 iMessage
+END SIGNATURE
+
+SIGNATURE TSigSubConNotification : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureSubConnNotification
+	UINT32 iRefCountOwnedSubConNotification
+END SIGNATURE
+
+SIGNATURE TSigPlaneNotification : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignaturePlaneNotification
+	UINT32 iRefCountOwnedNotification
+END SIGNATURE
+
+SIGNATURE TSigSubConnOpenedEvent : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureSubConnOpenedEvent
+	TSubConnectionEvent iSubConnectionOpenedEvent
+END SIGNATURE
+
+SIGNATURE TSigSubConnClosedEvent : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureSubConnClosedEvent
+    TSubConnectionClosedEvent iSubConnectionClosedEvent
+END SIGNATURE
+
+SIGNATURE TSigCommsBinder : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureCommsBinder
+    TCommsBinder iCommsBinder
+END SIGNATURE
+
+SIGNATURE TSigFactoryObjectParams : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureFactoryObjectParams
+	TFactoryObjectParams iFactoryObjectParams
+END SIGNATURE
+
+SIGNATURE TSigCommsBinderNumber : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureCommsBinderNumber
+    TCommsBinder iCommsBinder
+	UINT32 iValue
+END SIGNATURE
+
+SIGNATURE TSigAddrUpdate : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureSigAddrUpdate
+	TAddrUpdate iAddrUpdate
+END SIGNATURE
+
+SIGNATURE TSigConnectionInfo : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureConnectionInfo
+    TConnectionInfo iConnectionInfo
+END SIGNATURE
+
+SIGNATURE TSigSelectionPrefs : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureSelectionPrefs
+    TSelectionPrefs iSelectionPrefs
+END SIGNATURE
+
+SIGNATURE TSigSelectComplete : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureSelectComplete
+	Context_NodeId iNodeId
+	TProviderInfo iProviderInfo
+END SIGNATURE
+
+SIGNATURE TSigBundle : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureBundle
+	UINT32 iBundle
+END SIGNATURE
+
+SIGNATURE TSigFlowParams : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureFlowParams
+	TFlowParams iFlowParams
+END SIGNATURE
+
+SIGNATURE TSigStateChange : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureStateChange
+	TStateChange iStateChange
+END SIGNATURE
+
+SIGNATURE TSigBundleRMessage2 : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureBundleRMessage2
+	UINT32 iBundle
+	UINT32 iMessage
+END SIGNATURE
+
+SIGNATURE TSigFamilyBundle : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureFamilyBundle
+	RCFParameterFamilyBundle_const iFamilyBundle
+END SIGNATURE
+
+SIGNATURE TSigNumberFamilyBundle : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureNumberFamilyBundle
+	UINT32 iValue
+	TCommsId iFamilyBundle
+END SIGNATURE
+
+SIGNATURE TSigMetaExtContainer : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureMetaExtContainer
+	// RMetaExtensionContainerC iConfig
+	UINT32 iConfig
+END SIGNATURE
+
+SIGNATURE TSigAvailabilitySubscriptionOptions : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureAvailabilitySubscriptionOptions
+	TAvailabilitySubscriptionOptions iAvailabilitySubscriptionOptions
+END SIGNATURE
+
+SIGNATURE TSigAvailabilityStatus : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureAvailabilityStatus
+	TAvailabilityStatus iAvailabilityStatus
+END SIGNATURE
+
+SIGNATURE TSigNodeIdClientTypeNumber : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureNodeIdClientTypeNumber
+	Context_NodeId iNodeId
+	TClientType iClientType
+	UINT32 iValue
+END SIGNATURE
+
+SIGNATURE TCFFlowRequestBase : TSignalBase
+    TYPEID = KESockInternalMessagesImplementationUid:EFlowRequestBase
+	UINT32 iSubSessionUniqueId
+	TFlowParams iFlowParams
+END SIGNATURE
+
+SIGNATURE TImplicitFlowRequest : TCFFlowRequestBase
+    TYPEID = KESockInternalMessagesImplementationUid:EImplicitFlowRequest
+END SIGNATURE
+
+SIGNATURE TConnFlowRequest : TCFFlowRequestBase
+    TYPEID = KESockInternalMessagesImplementationUid:EConnFlowRequest
+	UINT32 iSession
+	UINT32 iHandle
+END SIGNATURE
+
+SIGNATURE TSubConnFlowRequest : TCFFlowRequestBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESubConnFlowRequest
+	UINT32 iSession
+	UINT32 iHandle
+END SIGNATURE
+
+SIGNATURE TDataClientJoiningRequest : TNodeSignal
+    TYPEID = KESockInternalMessagesImplementationUid:EDataClientJoiningRequest
+	Context_NodeId iDataClient
+	TClientType iDataClientType
+END SIGNATURE
+
+SIGNATURE TGetOrSetParameters : TCFSigRMessage2Ext
+    TYPEID = KESockInternalMessagesImplementationUid:EGetOrSetParameters
+	UINT32 iDataObject
+END SIGNATURE
+
+// ss_nodemessages_legacy_internal.h
+
+CONST KTCFLegacyMessageRealmId = 0x1028712F
+
+ENUM EMessageTypeInternal : UINT32
+//	EGetOrSetParameters				= 100
+	EMCprGetConnectionSetting       = 101
+
+	ECprRetrieveProgress			= 201
+	ECprRetrieveLastProgressError	= 202
+//	ECprRequestServiceNotification	= 203
+
+//	ECprSendIoctl					= 204
+//	ECprAllSubConnectionNotificationEnable		= 205
+//	ECprEnumerateConnections		= 206
+
+	ELegacyDataMonitoringTransferredRequest		= 207
+	ELegacyDataMonitoringNotificationRequest	= 208
+
+    ELegacySubConnectionActiveRequest			= 209
+
+	ELegacyEnumerateSubConnections				= 210
+
+	ELegacyControlMessage           = 211
+	ELegacyConnEnumMessage          = 212
+
+	ESignatureRMessage2Response     = 213
+
+	ELegacyGetSubConnectionInfo     = 214
+	
+END ENUM
+
+ENUM TDataMonitoringDirection : UINT32
+        EReceived = 0
+        ESent = 1
+END ENUM
+
+SIGNATURE TCFSigLegacyRMessage2Ext : TSignatureBase
+	TYPEID = 0:0			// derived from
+	RMessage2 iMessage
+END SIGNATURE
+
+SIGNATURE TLegacyDataMonitoringTransferredRequest : TCFSigLegacyRMessage2Ext
+    TYPEID = KTCFLegacyMessageRealmId:ELegacyDataMonitoringTransferredRequest
+	UINT32 iClientId
+END SIGNATURE
+
+MESSAGE LegacyDataMonitoringTransferredRequest
+    SIGNATURE = TLegacyDataMonitoringTransferredRequest
+    MESSAGEID = KTCFLegacyMessageRealmId:ELegacyDataMonitoringTransferredRequest
+END MESSAGE
+
+SIGNATURE TLegacyDataMonitoringNotificationRequest : TCFSigLegacyRMessage2Ext
+	TYPEID = KTCFLegacyMessageRealmId:ELegacyDataMonitoringNotificationRequest
+	TDataMonitoringDirection iDirection
+	UINT32 iClientId
+END SIGNATURE
+
+ENUM TResponseType : UINT32
+	ENormal = 0
+	EPanic = 1
+END ENUM
+
+SIGNATURE TSigLegacyRMessage2Response : TSignatureBase
+	TYPEID = KTCFLegacyMessageRealmId:ESignatureRMessage2Response
+	TResponseType iType
+	INT32 iCode
+	PAD 48				// TBuf<20> iCatagory [sic] - 8 + 20 * 2
+END SIGNATURE
+
+SIGNATURE TLegacySubConnectionActiveRequest : TCFSigLegacyRMessage2Ext
+	TYPEID = KTCFLegacyMessageRealmId:ELegacySubConnectionActiveRequest
+	UINT32 iClientId					// TSubSessionUniqueId
+END SIGNATURE
+
+// ss_nodemessages_legacy.h
+
+SIGNATURE TCprRetrieveProgress : TCFSigLegacyRMessage2Ext
+	TYPEID = KTCFLegacyMessageRealmId:ECprRetrieveProgress
+	TStateChange iLastProgress
+END SIGNATURE
+
+MESSAGE CprRetrieveProgress
+    SIGNATURE = TCprRetrieveProgress
+    MESSAGEID = KTCFLegacyMessageRealmId:ECprRetrieveProgress
+END MESSAGE
+
+SIGNATURE TCprRetrieveLastProgressError : TCFSigLegacyRMessage2Ext
+	TYPEID = KTCFLegacyMessageRealmId:ECprRetrieveLastProgressError
+	TStateChange iLastProgressError
+END SIGNATURE
+
+MESSAGE CprRetrieveLastProgressError
+    SIGNATURE = TCprRetrieveLastProgressError
+    MESSAGEID = KTCFLegacyMessageRealmId:ECprRetrieveLastProgressError
+END MESSAGE
+
+SIGNATURE TLegacyEnumerateSubConnections : TCFSigLegacyRMessage2Ext
+    TYPEID = KTCFLegacyMessageRealmId:ELegacyEnumerateSubConnections
+END SIGNATURE
+
+MESSAGE LegacyEnumerateSubConnections
+    SIGNATURE = TLegacyEnumerateSubConnections
+    MESSAGEID = KTCFLegacyMessageRealmId:ELegacyEnumerateSubConnections
+END MESSAGE
+
+ENUM TCFLegacyMessageEnum : UINT32
+	ECFLegacyRMessage2Processed     = 1
+END ENUM
+
+MESSAGE TLegacyRMessage2Processed
+	SIGNATURE = TSigLegacyRMessage2Response
+	MESSAGEID = KTCFLegacyMessageRealmId:ECFLegacyRMessage2Processed
+END MESSAGE
+
+ENUM TConnectionSettingType : UINT32		//  within TMCprGetConnectionSetting scope
+	EIntSetting		= 0
+	EBoolSetting	= 1
+	EDes8Setting	= 2
+	EDes16Setting	= 3
+	ELongDesSetting	= 4
+END ENUM
+
+SIGNATURE TMCprGetConnectionSetting : TCFSigLegacyRMessage2Ext
+	TYPEID = KTCFLegacyMessageRealmId:EMCprGetConnectionSetting
+	TConnectionSettingType iSettingType
+END SIGNATURE
+
+MESSAGE MCprGetConnectionSetting
+    SIGNATURE = TMCprGetConnectionSetting
+    MESSAGEID = KTCFLegacyMessageRealmId:EMCprGetConnectionSetting
+END MESSAGE
+
+SIGNATURE TLegacyConnectionEnumRequest : TSignalBase
+	TYPEID = KTCFLegacyMessageRealmId:ELegacyConnEnumMessage
+	UINT32 iSCPRCandidates
+	UINT32 iClientType
+END SIGNATURE
+
+MESSAGE LegacyConnectionEnumRequest
+    SIGNATURE = TLegacyConnectionEnumRequest
+    MESSAGEID = KTCFLegacyMessageRealmId:ELegacyConnEnumMessage
+END MESSAGE
+
+SIGNATURE TLegacyControlMessage : TCFSigLegacyRMessage2Ext
+	TYPEID = KTCFLegacyMessageRealmId:ELegacyControlMessage
+END SIGNATURE
+
+MESSAGE LegacyControlMessage
+    SIGNATURE = TLegacyControlMessage
+    MESSAGEID = KTCFLegacyMessageRealmId:ELegacyControlMessage
+END MESSAGE
+
+SIGNATURE TLegacyGetSubConnectionInfo : TCFSigLegacyRMessage2Ext
+	TYPEID = KTCFLegacyMessageRealmId:ELegacyGetSubConnectionInfo
+	UINT32 iClientId					// TSubSessionUniqueId
+	TSubConnectionInfo iSubConnectionInfo
+END SIGNATURE
+
+MESSAGE LegacyGetSubConnectionInfo
+    SIGNATURE = TLegacyGetSubConnectionInfo
+    MESSAGEID = KTCFLegacyMessageRealmId:ELegacyGetSubConnectionInfo
+END MESSAGE
+
+// ss_nodemessages.h
+CONST KTCFMessageRealmId = 0x10285A57
+ENUM TCF_MessageId : UINT16
+     	ECFSubConnDataTransferred		= 94
+		EStateChange = 95
+		ECFTransportNotification		= 100
+		ECFDestroyOrphans               = 102
+END ENUM
+
+MESSAGE SubConnDataTransferred 
+	SIGNATURE = TSigNumberNumberNumber
+	MESSAGEID = KTCFMessageRealmId:ECFSubConnDataTransferred
+END MESSAGE
+
+MESSAGE StateChange 
+	SIGNATURE = TSigStateChange
+	MESSAGEID = KTCFMessageRealmId:EStateChange
+END MESSAGE
+
+MESSAGE TransportNotification 
+	SIGNATURE = TSigVoid
+	MESSAGEID = KTCFMessageRealmId:ECFTransportNotification
+END MESSAGE
+
+MESSAGE DestroyOrphans
+	SIGNATURE = TSigVoid
+	MESSAGEID = KTCFMessageRealmId:ECFDestroyOrphans
+END MESSAGE
+
+// ss_nodemessages_availability_control_client.h
+CONST KAvailablityControlClientRealmId = 0x10285F3D
+ENUM AvailCC_MessageId : UINT16
+     ECFAvailabilityNotification = 1
+END ENUM
+
+MESSAGE AvailabilityNotification
+	SIGNATURE = TSigAvailabilityStatus
+	MESSAGEID = KAvailablityControlClientRealmId:ECFAvailabilityNotification
+END MESSAGE
+
+// ss_nodemessages_availability_provider.h
+CONST KAvailablityProviderRealmId = 0x10285F3E
+ENUM AvailProv_MessageID : UINT16
+     ECFAvailabilityNotificationRegistration = 1
+END ENUM
+
+MESSAGE AvailabilityNotificationRegistration
+	SIGNATURE = TSigAvailabilitySubscriptionOptions
+     	MESSAGEID = KAvailablityProviderRealmId:ECFAvailabilityNotificationRegistration
+END MESSAGE
+
+// ss_nodemessages_peer.h
+CONST KCFPeerRealmId = 0x102864BB
+ENUM CFPeer_MessageID : UINT16
+     ECFJoinRequest = 1
+     ECFJoinComplete = 2
+END ENUM
+
+MESSAGE JoinRequest
+	SIGNATURE = TSigNodeIdClientType
+	MESSAGEID = KCFPeerRealmId:ECFJoinRequest
+END MESSAGE
+
+MESSAGE JoinComplete
+	SIGNATURE = TSignatureBase
+	MESSAGEID = KCFPeerRealmId:ECFJoinComplete
+END MESSAGE
+
+// ss_nodemessages_controlclient.h
+CONST KControlClientRealmId = 0x10285F3F
+ENUM ControlClient_MessageID : UINT16
+     ECFGoneDown = 1
+     ECFGoneUp = 2
+END ENUM
+
+MESSAGE GoneDown
+     SIGNATURE = TSigNumberNumber     // TSigNumberDefaultNumberDefault
+     MESSAGEID = KControlClientRealmId:ECFGoneDown
+END MESSAGE
+
+MESSAGE TGoneUp
+	SIGNATURE = TSigVoid
+	MESSAGEID = KControlClientRealmId:ECFGoneUp
+END MESSAGE
+
+// ss_nodemessages_controlprovider.h
+CONST KControlProviderRealmId = 0x10285F40
+ENUM ControlProvider_MessageID : UINT16
+   	ECFNoBearer            = 1
+   	ECFBearer              = 2
+   	ECFDataClientGoneDown  = 3
+	ECFDataClientStatusChange = 4
+   	ECFIdle                = 5
+   	ECFActive              = 6
+END ENUM
+
+MESSAGE NoBearer 
+     SIGNATURE = TSigFamilyBundle
+     MESSAGEID = KControlProviderRealmId:ECFNoBearer
+END MESSAGE     
+
+MESSAGE Bearer
+     SIGNATURE = TSigVoid
+     MESSAGEID = KControlProviderRealmId:ECFBearer
+END MESSAGE
+
+MESSAGE DataClientStatusChange
+     SIGNATURE = TSigNumber
+     MESSAGEID = KControlProviderRealmId:ECFDataClientStatusChange
+END MESSAGE
+
+MESSAGE DataClientGoneDown
+     SIGNATURE = TSigNumberNumber
+     MESSAGEID = KControlProviderRealmId:ECFDataClientGoneDown
+END MESSAGE
+
+MESSAGE Idle
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KControlProviderRealmId:ECFIdle
+END MESSAGE
+
+MESSAGE Active
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KControlProviderRealmId:ECFActive
+END MESSAGE
+
+
+// ss_nodemessages_dataclient.h
+CONST KDataClientRealmId = 0x10285F42
+ENUM DataClient_MessageID : UINT16
+	ECFStart                        = 1
+	ECFStarted                      = 2
+	ECFStop		                = 3
+	ECFStopped                      = 4
+	ECFBindTo		        = 5
+	ECFBindToComplete	        = 6
+	ECFProvisionConfig		= 7
+	ECFCommitBindTo                 = 8
+END ENUM
+
+MESSAGE DataClientStart
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KDataClientRealmId:ECFStart
+END MESSAGE
+
+MESSAGE DataClientStarted
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KDataClientRealmId:ECFStarted
+END MESSAGE
+
+MESSAGE DataClientStop
+     SIGNATURE = TSigNumber
+     MESSAGEID = KDataClientRealmId:ECFStop
+END MESSAGE
+
+MESSAGE DataClientStopped
+     SIGNATURE = TSigNumber
+     MESSAGEID = KDataClientRealmId:ECFStopped
+END MESSAGE
+
+MESSAGE BindTo
+     SIGNATURE = TSigCommsBinder
+     MESSAGEID = KDataClientRealmId:ECFBindTo
+END MESSAGE
+
+MESSAGE BindToComplete
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KDataClientRealmId:ECFBindToComplete
+END MESSAGE
+
+MESSAGE BindToCommit
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KDataClientRealmId:ECFCommitBindTo
+END MESSAGE
+
+MESSAGE ProvisionConfig
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KDataClientRealmId:ECFProvisionConfig
+END MESSAGE
+
+// ss_nodemessages_datacollectors.h
+CONST KDataCollectorsRealmId = 0x10285F43
+ENUM DataCollectors_MessageID : UINT16
+	ECFTierGetDataCollectors		= 1
+	ECFTierDataCollectors			= 2
+END ENUM
+
+MESSAGE TierGetDataCollectors
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KDataCollectorsRealmId:ECFTierGetDataCollectors
+END MESSAGE
+
+MESSAGE TierDataCollectors
+     SIGNATURE = TSigAny
+     MESSAGEID = KDataCollectorsRealmId:ECFTierDataCollectors
+END MESSAGE
+
+// ss_nodemessages_factory.h
+CONST KFactoryRealmId = 0x10285F44
+ENUM Factory_MessageID : UINT16
+ 	ECFFindOrCreateFactoryObject    = 1
+ 	ECFFoundOrCreated         = 2
+END ENUM
+
+MESSAGE FindOrCreateFactoryObject
+     SIGNATURE = TSigFactoryObjectParams
+     MESSAGEID = KFactoryRealmId:ECFFindOrCreateFactoryObject
+END MESSAGE
+
+MESSAGE FoundOrCreated
+     SIGNATURE = TSigNodeIdNumber
+     MESSAGEID = KFactoryRealmId:ECFFoundOrCreated
+END MESSAGE
+
+// ss_nodemessages_flow.h
+CONST KFlowRealmId = 0x10285F45
+ENUM Flow_MessageID : UINT16
+	ECFRejoin                       = 1
+ 	ECFBlock                        = 2
+ 	ECFUnBlock                      = 3
+END ENUM
+
+MESSAGE Rejoin
+    SIGNATURE = TSigCommsBinder
+    MESSAGEID = KFlowRealmId:ECFRejoin
+END MESSAGE
+
+MESSAGE Block
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KFlowRealmId:ECFBlock
+END MESSAGE
+
+MESSAGE UnBlock
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KFlowRealmId:ECFUnBlock
+END MESSAGE
+
+// ss_nodemessages_internal_esock.h
+CONST KESockInternalRealmId = 0x10285F46
+ENUM InternalESock_MessageID : UINT16
+	ECFCreateCSR                    = 1
+	ECFCSRCreated                   = 2
+	ECFFlowRequest                  = 3
+	ECFSubSess                      = 4
+	ECFSubConnectionOpenedEvent	= 5
+	ECFSubConnectionClosedEvent	= 6
+	ECFLegacyConnectionEnumResponse	= 7
+	ECFBuildStackRequest            = 8
+	ECFBuildStackResponse           = 9
+	ECFFlowProvision                = 10
+END ENUM
+
+MESSAGE CreateCSR
+    SIGNATURE = TSigUid
+    MESSAGEID = KESockInternalRealmId:ECFCreateCSR
+END MESSAGE
+
+MESSAGE CSRCreated
+    SIGNATURE = TSigNodeId
+    MESSAGEID = KESockInternalRealmId:ECFCSRCreated
+END MESSAGE
+
+MESSAGE FlowRequest
+    SIGNATURE = TSigNumber
+    MESSAGEID = KESockInternalRealmId:ECFFlowRequest
+END MESSAGE
+
+MESSAGE SubSess
+    SIGNATURE = TSigNumberRMessage2
+    MESSAGEID = KESockInternalRealmId:ECFSubSess
+END MESSAGE
+
+MESSAGE SubConnectionOpenedEvent
+    SIGNATURE = TSigSubConnOpenedEvent
+    MESSAGEID = KESockInternalRealmId:ECFSubConnectionOpenedEvent
+END MESSAGE
+
+MESSAGE SubConnectionClosedEvent
+    SIGNATURE = TSigSubConnClosedEvent
+    MESSAGEID = KESockInternalRealmId:ECFSubConnectionClosedEvent
+END MESSAGE
+
+MESSAGE LegacyConnEnumResponse
+    SIGNATURE = TSigNumberNumberNumber
+    MESSAGEID = KESockInternalRealmId:ECFLegacyConnectionEnumResponse
+END MESSAGE
+
+MESSAGE BuildStackRequest
+    SIGNATURE = TSigFamilyBundle
+    MESSAGEID = KESockInternalRealmId:ECFBuildStackRequest
+END MESSAGE
+
+MESSAGE BuildStackResponse
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KESockInternalRealmId:ECFBuildStackResponse
+END MESSAGE
+
+MESSAGE FlowProvision
+    SIGNATURE = TSigFlowParams
+    MESSAGEID = KESockInternalRealmId:ECFFlowProvision
+END MESSAGE
+
+
+// ss_nodemessages_parameters.h
+CONST KInternalParamProviderRealmId = 0x10285F4B
+ENUM InternalParamProvider_MessageID : UINT16
+	ECFApplyRequest			= 1
+	ECFApplyResponse		= 2
+	ECFSetParamsRequest		= 3
+	ECFSetParamsResponse	= 4
+	ECFGetParamsRequest		= 5
+	ECFGetParamsResponse	= 6
+END ENUM
+
+
+MESSAGE ApplyRequest
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KInternalParamProviderRealmId:ECFApplyRequest
+END MESSAGE
+
+MESSAGE ApplyResponse
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KInternalParamProviderRealmId:ECFApplyResponse
+END MESSAGE
+
+MESSAGE SetParamsRequest
+    SIGNATURE = TSigFamilyBundle
+    MESSAGEID = KInternalParamProviderRealmId:ECFSetParamsRequest
+END MESSAGE
+
+MESSAGE SetParamsResponse
+    SIGNATURE = TSigFamilyBundle
+    MESSAGEID = KInternalParamProviderRealmId:ECFSetParamsResponse
+END MESSAGE
+
+MESSAGE GetParamsRequest
+    SIGNATURE = TSigFamilyBundle
+    MESSAGEID = KInternalParamProviderRealmId:ECFGetParamsRequest
+END MESSAGE
+
+MESSAGE GetParamsResponse
+    SIGNATURE = TSigFamilyBundle
+    MESSAGEID = KInternalParamProviderRealmId:ECFGetParamsResponse
+END MESSAGE
+
+// ss_nodemessages_ipmessages.h
+CONST KIpRealmId = 0x10285F47
+ENUM Ip_MessageID : UINT16
+	ECFDataClientRouted             = 1
+END ENUM
+
+MESSAGE DataClientRouted
+    SIGNATURE = TSigAddrUpdate
+    MESSAGEID = KIpRealmId:ECFDataClientRouted
+END MESSAGE
+
+// ss_nodemessages_mcpr.h
+CONST KMCprRealmId = 0x10285F48
+ENUM MCpr_MessageID : UINT16
+	ECFReConnect                        = 1
+	ECFReConnectComplete                = 2
+	ECFProviderStatusChangeRegistration = 3
+	ECFProviderStatusChange             = 4
+END ENUM
+
+MESSAGE ProviderStatusChangeRegistration
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KMCprRealmId:ECFProviderStatusChangeRegistration
+END MESSAGE
+
+MESSAGE ProviderStatusChange
+    SIGNATURE = TSigNumber
+    MESSAGEID = KMCprRealmId:ECFProviderStatusChange
+END MESSAGE
+
+MESSAGE ReConnect
+    SIGNATURE = TSigNodeIdNodeId
+    MESSAGEID = KMCprRealmId:ECFReConnect
+END MESSAGE
+
+MESSAGE ReConnectComplete
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KMCprRealmId:ECFReConnectComplete
+END MESSAGE
+
+// ss_nodemessages_mobility_control_client.h
+CONST KMobilityCCRealmId = 0x10285F49
+ENUM MobilityCC_MessageID : UINT16
+  	ECFMigrationNotification        = 1
+END ENUM
+
+MESSAGE MigrationNotification
+     SIGNATURE = TSigNumberNumberNumberNumber
+     MESSAGEID = KMobilityCCRealmId:ECFMigrationNotification
+END MESSAGE
+
+// ss_nodemessages_mobility_control_client.h
+CONST KMobilityProvRealmId = 0x10285F4A
+ENUM MobilityProv_MessageID : UINT16
+	ECFStartMobility		= 1
+	ECFMobilityStarted		= 2
+	ECFMigrationRequested           = 3
+	ECFMigrationComplete            = 4
+	ECFMigrationAccepted            = 5
+	ECFMigrationRejected            = 6
+END ENUM
+
+MESSAGE StartMobility
+    SIGNATURE = TSigAnyNumber            // TSigAnyNumberDefault
+    MESSAGEID = KMobilityProvRealmId:ECFStartMobility
+END MESSAGE
+
+MESSAGE MobilityStarted
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KMobilityProvRealmId:ECFMobilityStarted
+END MESSAGE
+
+MESSAGE MigrationRequested
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KMobilityProvRealmId:ECFMigrationRequested
+END MESSAGE
+
+MESSAGE MigrationAccepted
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KMobilityProvRealmId:ECFMigrationAccepted
+END MESSAGE
+
+MESSAGE MigrationRejected
+    SIGNATURE = TSigNumber
+    MESSAGEID = KMobilityProvRealmId:ECFMigrationAccepted
+END MESSAGE
+
+MESSAGE MigrationComplete
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KMobilityProvRealmId:ECFMigrationComplete
+END MESSAGE
+
+// ss_nodemessages_rejoiningprovider.h
+CONST KRejoiningProvRealmId = 0x10285F4C
+ENUM RejoiningProv_MessageID : UINT16
+	ECFRejoinDataClientRequest      = 1
+	ECFReJoinComplete               = 2
+END ENUM
+
+MESSAGE ReJoinDataClientRequest
+    SIGNATURE = TSigNodeIdNodeId
+    MESSAGEID = KRejoiningProvRealmId:ECFRejoinDataClientRequest
+END MESSAGE
+
+MESSAGE ReJoinComplete
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KRejoiningProvRealmId:ECFReJoinComplete
+END MESSAGE
+
+// ss_nodemessages_selector.h
+CONST KSelectorRealmId = 0x10285F4E
+ENUM Selector_MessageID : UINT16
+     	ECFSimpleSelect		= 1
+ 	ECFSelect		= 2
+ 	ECFSelectComplete	= 3
+END ENUM
+
+MESSAGE SimpleSelect
+    SIGNATURE = TSigSelectionPrefs
+    MESSAGEID = KSelectorRealmId:ECFSimpleSelect
+END MESSAGE
+
+MESSAGE SelectComplete
+    SIGNATURE = TSigSelectComplete
+    MESSAGEID = KSelectorRealmId:ECFSelectComplete
+END MESSAGE
+
+// ss_nodemessages_service_provider.h
+CONST KServiceProviderRealmId = 0x10285F4F
+ENUM ServiceProvider_MessageID : UINT16
+	ECFDCStart                        = 1
+	ECFDCStop				= 2
+	ECFDCStarted                      = 3
+	ECFDCStopped               	= 4
+	ECFCommsBinderRequest		= 5
+	ECFCommsBinderResponse		= 6
+	ECFCommsBindToComplete		= 7
+	
+END ENUM
+
+MESSAGE Start
+     SIGNATURE = TSignatureBase
+     MESSAGEID = KServiceProviderRealmId:ECFDCStart
+END MESSAGE
+
+MESSAGE Stop
+    SIGNATURE = TSigNumber
+    MESSAGEID = KServiceProviderRealmId:ECFDCStop
+END MESSAGE
+
+MESSAGE Started
+    SIGNATURE = TSignatureBase
+    MESSAGEID = KServiceProviderRealmId:ECFDCStarted
+END MESSAGE
+
+MESSAGE Stopped
+    SIGNATURE = TSigNumber
+    MESSAGEID = KServiceProviderRealmId:ECFDCStopped
+END MESSAGE
+
+MESSAGE CommsBinderRequest
+    SIGNATURE = TSigNumberFamilyBundle
+    MESSAGEID = KServiceProviderRealmId:ECFCommsBinderRequest
+END MESSAGE
+
+MESSAGE CommsBinderResponse
+    SIGNATURE = TSigCommsBinder
+    MESSAGEID = KServiceProviderRealmId:ECFCommsBinderResponse
+END MESSAGE
+
+MESSAGE CommsBindToComplete
+     SIGNATURE = TSigNumber
+     MESSAGEID = KServiceProviderRealmId:ECFCommsBindToComplete
+END MESSAGE
+
+// ss_nodemessages_subconn_controlclient.h
+CONST KSubConnCCRealmId = 0x10285F50
+ENUM SubConnCC_MessageID : UINT16
+	ECFSubConnNotification     	    = 1
+	ECFPlaneNotification     	    = 2
+END ENUM
+
+MESSAGE SubConnNotification
+     SIGNATURE = TSigSubConNotification
+     MESSAGEID = KSubConnCCRealmId:ECFSubConnNotification
+END MESSAGE
+
+MESSAGE PlaneNotification
+     SIGNATURE = TSigPlaneNotification
+     MESSAGEID = KSubConnCCRealmId:ECFPlaneNotification
+END MESSAGE
+
+// ss_nodemessages_subconn_controlclient.h
+CONST KTierStatusRealmId = 0x10285F51
+ENUM TierStatus_MessageID : UINT16
+	ECFTierStatusQuery			= 1
+	ECFTierStatus				= 2
+ 	ECFTierNotificationRegistration		= 3
+ 	ECFTierNotification			= 4
+END ENUM
+
+MESSAGE TierStatusQuery
+    SIGNATURE = TSigBundleRMessage2
+    MESSAGEID = KTierStatusRealmId:ECFTierStatusQuery
+END MESSAGE
+
+MESSAGE TierStatus
+    SIGNATURE = TSigBundle
+    MESSAGEID = KTierStatusRealmId:ECFTierStatus
+END MESSAGE
+
+MESSAGE TierNotificationRegistration
+    SIGNATURE = TSigBundleRMessage2
+    MESSAGEID = KTierStatusRealmId:ECFTierNotificationRegistration
+END MESSAGE
+
+MESSAGE TierNotification
+    SIGNATURE = TSigBundle
+    MESSAGEID = KTierStatusRealmId:ECFTierNotification
+END MESSAGE
+
+CONST KTierMgrFactRealmId = 0x10285F53
+ENUM TierMgrFact_MessageID : UINT16
+	ECFFindOrCreateTM               = 1
+END ENUM
+
+MESSAGE FindOrCreateTM
+     SIGNATURE = TSigUid
+     MESSAGEID = KTierMgrFactRealmId:ECFFindOrCreateTM
+END MESSAGE
+
+//MESSAGE Joined
+//     SIGNATURE = TSignatureBase
+//     MESSAGEID = KESockInternalRealmId:ECFJoined
+//END MESSAGE
+
+// MESSAGE DataMonitoringNotification
+//     SIGNATURE = TSigNumberNumber
+//     MESSAGEID = KESockInternalRealmId:ECFDataMonitoringNotification
+// END MESSAGE
+
+
+
+// MESSAGE ImplicitFlowRequest
+//     SIGNATURE = TImplicitFlowRequest
+//     MESSAGEID = KESockInternalRealmId:ECFImplicitFlowRequest
+// END MESSAGE
+
+// MESSAGE ConnFlowRequest
+//     SIGNATURE = TConnFlowRequest
+//     MESSAGEID = KESockInternalRealmId:ECFConnFlowRequest
+// END MESSAGE
+
+// MESSAGE SubConnFlowRequest
+//     SIGNATURE = TSubConnFlowRequest
+//     MESSAGEID = KESockInternalRealmId:ECFSubConnFlowRequest
+// END MESSAGE
+
+// MESSAGE DataClientJoiningRequest
+//     SIGNATURE = TDataClientJoiningRequest
+//     MESSAGEID = KESockInternalRealmId:ECFDataClientJoiningRequest
+// END MESSAGE
+
+// MESSAGE LegacyConnEnumRequest
+//     SIGNATURE = TSigNumberNumber
+//     MESSAGEID = KESockInternalRealmId:ECFLegacyConnEnumRequest
+// END MESSAGE
+
+// ss_mcprnodemessages.h
+
+CONST KESockInternalMetaPlaneMessagesImplementationUid = 0x1028300E
+
+ENUM MetaPlaneMessages_MessageID : UINT16
+	ESafeMessageCarrierBase				=0
+	ESafeMessageCarrierEast				=1
+	ESafeMessageCarrierWest				=2
+END ENUM
+
+STRUCT TSafeMessageBuf
+	PAD 8				// TBuf8<KMaxCarriedMessageSize> iMessageBuf;
+	PAD 100
+END STRUCT
+
+SIGNATURE TSafeMessageCarrierBase : TSignatureBase
+    TYPEID = KESockInternalMetaPlaneMessagesImplementationUid:ESafeMessageCarrierBase
+	TSafeMessageBuf iMessageBuf
+END SIGNATURE
+
+SIGNATURE TSafeMessageCarrierEast : TSafeMessageCarrierBase
+    TYPEID = KESockInternalMetaPlaneMessagesImplementationUid:ESafeMessageCarrierEast
+END SIGNATURE
+
+SIGNATURE TSafeMessageCarrierWest : TSafeMessageCarrierBase
+    TYPEID = KESockInternalMetaPlaneMessagesImplementationUid:ESafeMessageCarrierWest
+	TCommsId iRecipient
+END SIGNATURE
+
+// ss_nodemessages_internal.h
+
+STRUCT TPolicyCheckRequestParams
+	UINT32 iProcessId_Lo
+	UINT32 iProcessId_Hi
+	UINT32 iThreadId_Lo
+	UINT32 iThreadId_Hi
+	UINT32 iPlatSecResult
+	TSockAddr iDestinationAddr
+	UINT32 iDestinationAddrType
+	Context_NodeId iCommsId
+END STRUCT
+
+SIGNATURE TMessageSigUpsParameters : TSignatureBase
+    TYPEID = KESockInternalMessagesImplementationUid:ESignatureUpsParameters
+	TPolicyCheckRequestParams iParams
+END SIGNATURE
+
+// upsmessages.h
+
+CONST KUpsMessageRealmId = 0x10285AE8
+
+ENUM UpsMessages_MessageID : UINT16
+	EPolicyCheckRequest  = 1
+	EPolicyCheckResponse = 2
+END ENUM
+
+MESSAGE TPolicyCheckRequest
+	SIGNATURE = TMessageSigUpsParameters
+	MESSAGEID = KUpsMessageRealmId:EPolicyCheckRequest
+END MESSAGE
+
+MESSAGE TPolicyCheckResponse 
+	SIGNATURE = TSigNumber
+	MESSAGEID = KUpsMessageRealmId:EPolicyCheckResponse
+END MESSAGE
+
+// ss_DataMonitoringProvider.h
+
+CONST TCFDataMonitoringNotificationRealmId = 0x10285A78
+
+ENUM TCFDataMonitoringNotificationEnum : UINT16
+    ECFDataMonitoringNotification = 1
+END ENUM
+
+MESSAGE TDataMonitoringNotification
+	SIGNATURE = TSigNumberNumber
+	MESSAGEID = TCFDataMonitoringNotificationRealmId:ECFDataMonitoringNotification
+END MESSAGE
+
+// ss_apiext_messages.h
+
+CONST KExtItfMsgImplementationUid = 0x102822F7
+
+ENUM EExtItfMessageId : UINT32
+	EApiExtMsgDispatcher				= 0
+	EOpenExtensionInterface				= 1
+	ECloseExtensionInterface			= 2
+	ECancelAndCloseAllClientExtItf		= 3
+END ENUM
+
+SIGNATURE TApiExtMsgDispatcher : TSignalBase
+	TYPEID = KExtItfMsgImplementationUid:EApiExtMsgDispatcher
+	UINT32 iClientId
+	RResponseMsg iResponseMsg
+END SIGNATURE
+
+SIGNATURE TOpenExtensionInterface : TCFSigRMessage2Ext
+    TYPEID = KExtItfMsgImplementationUid:EOpenExtensionInterface
+	UINT32 iClientId
+    UINT32 iInterfaceId
+END SIGNATURE
+
+SIGNATURE TCancelAndCloseAllClientExtItf : TSignalBase
+	TYPEID = KExtItfMsgImplementationUid:ECancelAndCloseAllClientExtItf
+	UINT32 iClientId
+END SIGNATURE
+

@@ -1,0 +1,563 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Secondary PDP-context UMTS Driver integration tests of network-initiated conditions.
+//
+
+//! @file TE_spudNetworkSide.script
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MkDir c:\private\
+RUN_UTILS  MkDir c:\private\101F7989\
+RUN_UTILS  MkDir c:\private\101F7989\esock\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_config_r4_and_r5.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_config_r4_and_r5.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSideLoopbackCSY.ini c:\loopback.ini
+
+// Configure CommDB for the tests
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\TestData\Configs\TE_SpudNetworkSide_r4_and_r5.xml
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+LOAD_SUITE TE_SpudNetworkSide
+
+// TestSection suffix numbers correspond to SIM TSY's test section numbers. i.e. PrimaryActivationFails201 uses SIM TSYs test201 
+
+//
+// Sanity check tests: before testing the error cases, we test the success cases to make sure the system is OK.
+//
+
+START_TESTCASE          NET-Spud-NetworkSide-1301
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1301
+//! @SYMTestCaseDesc Sanity check: successfully activate Primary R4 context.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interface. SIM TSY, etc successfully activate the primary context.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SPUD is started: RConnection::Start on SPUD returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryActivationOk1301
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1301
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1302
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1302
+//! @SYMTestCaseDesc Sanity check: successfully activate Primary R5 context. 
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interface. SIM TSY, etc successfully activate the primary context.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SPUD is started: RConnection::Start on SPUD returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryActivationOk1302
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1302
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1303
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1303
+//! @SYMTestCaseDesc Sanity check: successfully activate Secondary R5 context. 
+//! @SYMFssID NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions Implicitly start the SPUD interface by opening a socket bound to its secondary context. Set QoS on the socket, prompting GUQoS to activate secondary context.
+//! @SYMTestExpectedResults Both the primary & secondary contexts are activated. EQoSEventAddPolicy and EQoSEventConfirm are received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryActivationOk1303
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1303
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+//
+// Operation errors: Creation, TFT, QoS, Activation, Deactivation, Deletion errors.
+//
+START_TESTCASE          NET-Spud-NetworkSide-1304
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1304
+//! @SYMTestCaseDesc Activation of Primary fails. 
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP R4 Context Creation
+//! @SYMTestActions Explicitly start Spud. SIM TSY returns an error on activation of the primary context. 
+//! @SYMTestExpectedResults Spud cannot be started: RConnection::Start returns an error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryActivationFails1304
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1304
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+//
+// Operation errors: Creation, TFT, QoS, Activation, Deactivation, Deletion errors.
+//
+START_TESTCASE          NET-Spud-NetworkSide-1305
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1305
+//! @SYMTestCaseDesc Activation of Primary fails.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP R5 Context Creation
+//! @SYMTestActions Explicitly start Spud. SIM TSY returns an error on activation of the primary context.
+//! @SYMTestExpectedResults Spud cannot be started: RConnection::Start returns an error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryActivationFails1305
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1305
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1306
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1306
+//! @SYMTestCaseDesc Activation of Secondary fails.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Secondary PDP R5 Context Creation
+//! @SYMTestActions Implicitly start SPUD by opening a socket bound to the secondary context. Set QoS on the socket, prompting GUQoS to activate secondary context. SIM TSY errors secondary context activation request.
+//! @SYMTestExpectedResults  EQoSEventAddPolicy and EQoSEventFailure are received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryActivationFails1306
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1306
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1307
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1307
+//! @SYMTestCaseDesc Network deletes Activated Primary.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP R4 Context Deactivation
+//! @SYMTestActions Activate the primary context only by explicitly starting Spud. After a pause, SIM.TSY deletes the primary context.
+//! @SYMTestExpectedResults Spud is started successfully - the RConnection is started with KErrNone. KLinkLayerClosed / KErrDisconnected notification is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimaryEvent z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryQoSEventDelete1307
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1307
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1308
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1308
+//! @SYMTestCaseDesc Network deletes Activated Primary.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP R5 Context Deactivation
+//! @SYMTestActions Activate the primary context only by explicitly starting Spud. After a pause, SIM.TSY deletes the primary context.
+//! @SYMTestExpectedResults Spud is started successfully - the RConnection is started with KErrNone. KLinkLayerClosed / KErrDisconnected notification is received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimaryEvent z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryQoSEventDelete1308
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1308
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1311
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1311
+//! @SYMTestCaseDesc  The QoS parameter changes on the Primary PDP R5 Context.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Network initiated PDP Context Modification
+//! @SYMTestActions Explicitly start the SPUD interface to activate the primary context, use sim.tsy to trigger the QoS parameter changes on the Primary PDP Context.
+//! @SYMTestExpectedResults SPUD starts successfully. SPUD receives the QoS parameter change event successfully. RConnection times out and returns the error code KErrTimedOut.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimaryEvent z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ENetworkQoSChangePrimary1311
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1311
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1312
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1312
+//! @SYMTestCaseDesc  The QoS parameter changes on the Primary PDP R5 Context.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Network initiated PDP Context Modification
+//! @SYMTestActions Explicitly start the SPUD interface to activate the primary context, use sim.tsy to trigger the QoS parameter changes on the Primary PDP Context.
+//! @SYMTestExpectedResults SPUD starts successfully. SPUD receives the QoS parameter change event successfully. RConnection times out and returns the error code KErrTimedOut.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimaryEvent z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ENetworkQoSChangePrimary1312
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1312
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			NET-Spud-NetworkSide-1315
+//! @SYMTestCaseID		NET-Spud-NetworkSide-1315
+//! @SYMTestCaseDesc Triggers the Primary PDP Context deletion before the lower NIF is up.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Explicitly start the SPUD interface to activate the primary context, it fails then deletes the Primary Context.
+//! @SYMTestExpectedResults Spud start fails. RConnection::Start returns the error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryDeleteBeforeLowerNif1315
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE			NET-Spud-NetworkSide-1315
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			NET-Spud-NetworkSide-1316
+//! @SYMTestCaseID		NET-Spud-NetworkSide-1316
+//! @SYMTestCaseDesc Triggers the Primary PDP Context deletion before the lower NIF is up.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Explicitly start the SPUD interface to activate the primary context, it fails then deletes the Primary Context.
+//! @SYMTestExpectedResults Spud start fails. RConnection::Start returns the error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryDeleteBeforeLowerNif1316
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE			NET-Spud-NetworkSide-1316
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1317
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1317
+//! @SYMTestCaseDesc Triggers the Secondary PDP Context deletion before the lower NIF is up.
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Activate the primary and the secondary contexts by opening a socket & setting QoS on it,fails to creat the secondary context.
+//! @SYMTestExpectedResults EQoSEventAddPolicy, EQoSEventFailure are received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryDeleteBeforeLowerNif1317
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1317
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1318
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1318
+//! @SYMTestCaseDesc Failure to Start a lower NIF for primary context (LinkLayerDown from lower NIF)
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start SPUD. Spud starts the lower NIF for the primary context. Lower NIF reports LinkLayerDown with an error.
+//! @SYMTestExpectedResults Spud start fails. RConnection::Start returns the error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryLowerNifStartFails1318
+DELAY 3000
+RUN_TEST_STEP 30 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1318
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1319
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1319
+//! @SYMTestCaseDesc Failure to Start a lower NIF for primary context (LinkLayerDown from lower NIF)
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start SPUD. Spud starts the lower NIF for the primary context. Lower NIF reports LinkLayerDown with an error.
+//! @SYMTestExpectedResults Spud start fails. RConnection::Start returns the error.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryLowerNifStartFails1319
+DELAY 3000
+RUN_TEST_STEP 30 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1319
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1320
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1320
+//! @SYMTestCaseDesc Failure to Start a lower NIF for secondary context (LinkLayerDown from lower NIF)
+//! @SYMFssID NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions Request activation of the secondary PDP context by opening a socket & setting QoS on it. Spud start the lower NIF for the secondary context. Lower NIF reports LinkLayerDown with error.
+//! @SYMTestExpectedResults The primary context is activated, secondary is not. EQoSEventAddPolicy and EQoSEventFailure with the error code are received by the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryLowerNifStartFails1320
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1320
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+// This test doesn't work here or in te_spudnetworkside, needs a fix
+START_TESTCASE          NET-Spud-NetworkSide-1321
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1321
+//! @SYMTestCaseDesc Test Etel suspension of primary context
+//! @SYMFssID NETWORKING/Spud/Control Plane/Network initiated PDP Context Modification
+//! @SYMTestActions Create/send data on a socket with no QoS parameters (therefore a primary context), and read from the opposite loopback port. Suspend the context. Send more data and attempt to read from the opposite port. Resume the context. Send more data and attempt to read from the opposite port.
+//! @SYMTestExpectedResults The read on the loopback comm port should work before the context is suspended, and after it is resumed. It should time-out when the context is suspended.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudSuspendContext z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryContextSuspendAndResume1321
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1321
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1322
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1322
+//! @SYMTestCaseDesc Test Etel suspension of secondary context
+//! @SYMFssID NETWORKING/Spud/Control Plane/Network initiated PDP Context Modification
+//! @SYMTestActions Create/send data on a socket with QoS parameters (therefore a secondary context), and read from the opposite loopback port. Suspend the context. Send more data and attempt to read from the opposite port. Resume the context. Send more data and attempt to read from the opposite port.
+//! @SYMTestExpectedResults The read on the loopback comm port should work before the context is suspended, and after it is resumed. It should time-out when the context is suspended.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudSuspendContext z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryContextSuspendAndResume1322
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1322
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1323
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1323
+//! @SYMTestCaseDesc Primary PDP context activation fails
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Primary PDP context activation fails by modifying the TFT values
+//! @SYMTestExpectedResults The SpudMan code should respond to this event correctly without Leave and Panic.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryActivationFails1323
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1323
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1324
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1324
+//! @SYMTestCaseDesc Primary PDP context activation fails
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Primary PDP context activation fails by modifying the TFT values
+//! @SYMTestExpectedResults The SpudMan code should respond to this event correctly without Leave and Panic.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryActivationFails1324
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1324
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1325
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1325
+//! @SYMTestCaseDesc Secondary PDP context: Setting TFT fails
+//! @SYMFssID NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions Setting TFT values on secondary PDP context fails due to using incorrect TFT values
+//! @SYMTestExpectedResults The SpudMan code should respond to this event correctly without Leave and Panic.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryActivationFails1325
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1325
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1326
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1326
+//! @SYMTestCaseDesc Secondary PDP context: Setting requested QoS parameters fails
+//! @SYMFssID NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions Setting QoS parameters on secondary PDP context fails due to using incorrect QoS parameter values
+//! @SYMTestExpectedResults The SpudMan code should respond to this event correctly without Leave and Panic.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryActivationFails1326
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1326
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1327
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1327
+//! @SYMTestCaseDesc Primary PDP context deletion fails
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Primary PDP context deletion fails by modifying the TFT values
+//! @SYMTestExpectedResults The SpudMan code should respond to this event correctly without Leave and Panic.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryDeletionFails1327
+DELAY 8000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1327
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1328
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1328
+//! @SYMTestCaseDesc Primary PDP context deletion fails
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Primary PDP context deletion fails by modifying the TFT values
+//! @SYMTestExpectedResults The SpudMan code should respond to this event correctly without Leave and Panic.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryDeletionFails1328
+DELAY 8000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1328
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1329
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1329
+//! @SYMTestCaseDesc Secondary PDP context deletion fails
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions Secondary PDP context deletion fails by modifying the TFT values
+//! @SYMTestExpectedResults The SpudMan code should respond to this event correctly without Leave and Panic.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini SecondaryDeletionFails1329
+DELAY 8000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1329
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1330
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1330
+//! @SYMTestCaseDesc  Network deletes a primary context
+//! @SYMFssID NETWORKING/Spud/Control Plane/ PDP Context Deactivation
+//! @SYMTestActions  Starts a secondary context by creating a socket with QoS, starts a rawipnif instance opposite the secondary context, deletes the primary context then sends data on the primary context's socket.
+//! @SYMTestExpectedResults   Since the primary context is down, the data is sent on the secondary context, and is received by the rawipnif instance opposite the secondary context.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 600 TE_SpudNetworkSide CSpudDeletePrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimaryQoSEventDeleteWithSecondary1330
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1330
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1331
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1331
+//! @SYMTestCaseDesc Call RConnection::Stop while SPUDFSM is initialising the phone
+//! @SYMFssId NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions  Cause RPhone::Initialise to take a very long time to complete, and call RConnection::Stop while it is running
+//! @SYMTestExpectedResults Connection stops successfully.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudPrimayStartingStop z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimarySlowInitialisePhone1331
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1331
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1332
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1332
+//! @SYMTestCaseDesc Call RConnection::Stop while SPUDFSM is initialising the phone
+//! @SYMFssId NETWORKING/Spud/Control Plane/Secondary PDP Context Creation
+//! @SYMTestActions  Cause RPhone::Initialise to take a very long time to complete, and call RConnection::Stop while it is running
+//! @SYMTestExpectedResults Connection stops successfully.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 120 TE_SpudNetworkSide CSpudPrimayStartingStop z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini PrimarySlowInitialisePhone1332
+DELAY 3000
+END_TESTCASE            NET-Spud-NetworkSide-1332
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1333
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1333
+//! @SYMTestCaseDesc Sanity check: successfully activate many primary contexts.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interfaces. SIM TSY, etc successfully activate the primary contexts.
+//! @SYMTestExpectedResults  The Primary PDP contexts are activated, SPUD started: RConnection::Start on the SPUDs returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 100 TE_SpudNetworkSide CSpudMultiPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini MultiPrimaryActivationOk1333
+DELAY 3000
+RUN_TEST_STEP 100 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1333
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-NetworkSide-1334
+//! @SYMTestCaseID      NET-Spud-NetworkSide-1334
+//! @SYMTestCaseDesc Sanity check: successfully activate many primary contexts.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Primary PDP Context Creation
+//! @SYMTestActions Explicitly start the SPUD interfaces. SIM TSY, etc successfully activate the primary contexts.
+//! @SYMTestExpectedResults  The Primary PDP contexts are activated, SPUD started: RConnection::Start on the SPUDs returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 100 TE_SpudNetworkSide CSpudMultiPrimary z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini MultiPrimaryActivationOk1334
+DELAY 3000
+RUN_TEST_STEP 100 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide_R4_and_R5.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-1334
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini

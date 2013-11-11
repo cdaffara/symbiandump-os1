@@ -1,0 +1,85 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Running BEARER_MOBILITY_760300
+PRINT Title: TODO
+PRINT Synopsis: TODO
+
+// Set up the commdb database the way it's needed
+CED -i z:\testdata\configs\BearerMobility\760300.ced.xml c:\BearerMobility.ced.log
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+// Start our test case
+START_TESTCASE			COMINF-ESOCK-RConnection-Availability-0401
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-Availability-0401
+
+
+
+// PHASE 1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\BearerMobility\760300_Phase1_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\BearerMobility\760300_Phase1_1.ini
+
+// Create the 2 RConnections we will need for testing
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\BearerMobility\760300_Phase1_1.ini
+
+// For each connection create an extension in order to test availability
+RUN_TEST_STEP 100 te_esockteststepsSuite SelectRConnectionStep z:\testdata\configs\BearerMobility\760300_Phase1_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite GetAvailabilityAPIStep z:\testdata\configs\BearerMobility\760300_Phase1_1.ini
+
+// PHASE 2
+// Confirm initial availability of each of our 2 bearers
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase2_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase2_2.ini
+
+// PHASE 3
+// Make bearer 1 available and confirm it has become so, confirm also bearer 2 still unavailable
+RUN_TEST_STEP 100 te_esockteststepsSuite ChangeBearerAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase3_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase3_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase3_2.ini
+
+// PHASE 4
+// Now make bearer 2 available and confirm both bearers are now available
+RUN_TEST_STEP 100 te_esockteststepsSuite ChangeBearerAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase4_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase4_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase4_2.ini
+
+// PHASE 5
+// Make bearer1 unavailable now and confirm it is so and that bearer2 is still available
+RUN_TEST_STEP 100 te_esockteststepsSuite ChangeBearerAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase5_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase5_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase5_2.ini
+
+// PHASE 6
+// Make bearer2 unavailable and confirm both bearers are now unavailable
+RUN_TEST_STEP 100 te_esockteststepsSuite ChangeBearerAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase6_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase6_1.ini
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckForAvailabilityStep z:\testdata\configs\BearerMobility\760300_Phase6_2.ini
+
+
+END_TESTCASE			COMINF-ESOCK-RConnection-Availability-0401
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed BEARER_MOBILITY_760300
+
+

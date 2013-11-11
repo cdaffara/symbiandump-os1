@@ -1,0 +1,43 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run ProcMonIgnore test 
+
+LOAD_SUITE tsysmon_server
+
+START_TESTCASE 			DEVSRVS-SHMA-SYSMON-0005
+//! @SYMTestCaseID 		DEVSRVS-SHMA-SYSMON-0005
+//! @SYMPREQ 			PREQ1089 PREQ1871
+//! @SYMREQ			REQ6595 REQ9457 REQ9266
+//! @SYMTestType		UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc		A process failure may be ignored.
+//! @SYMTestActions		1. Start  process from a test-execute test. 
+//! 				2. Call RSysMonSession::Monitor() using startproperties with EWaitForStart and time-out
+//! 				 	  value of 100ms and EIgnoreProcessFailure. 
+//! 				3. Configure the process via a commandline param to not rendevouz
+//! 				4. The test registers to be informed if a OS restart is initiated
+//! 				5. Kill the process
+//! 				6. After KThrottleTime, the process is restarted but fails to rendezvous. 
+//! 				7. So the System Monitor should once more restart the process, which fails again. 
+//! 				8. SysMon then execute the recover-policy which is EIgnoreFailure
+//! 				9. The test is waiting for a OS restart callback which is not expected because
+//! 					   the recovery policy is EIgnoreFailure. If a callback occures, the test fails.
+//! 				10. The test then assert the app isn't running
+//! 				11. Repeat steps 1-10 using ssmstartupproperties for calling RSysMonSession::Monitor().
+@SYMTestExpectedResults 	pass
+RUN_TEST_STEP 100 tsysmon_server ProcMonIgnore
+END_TESTCASE 			DEVSRVS-SHMA-SYSMON-0005

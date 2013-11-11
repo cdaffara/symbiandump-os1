@@ -1,0 +1,3176 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTSdpAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the CSdpAgent class
+//! 							as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT SDP related classes.
+//! 							Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Symbio
+//! @SYMCreationDate			16/01/2006
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\
+RUN_UTILS	MkDir	${SYSDRIVE}\bluetooth\sdp\
+
+LOAD_SUITE	UCCControlTE
+LOAD_SUITE	T_BTSdpAPI	-SharedData
+DELAY		2000
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini BuildRunListsActiveSlave
+
+DELAY		10000
+
+// ****************************************************************************
+// Set up BT Addresses
+// ****************************************************************************
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-SetBTAddresses
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect
+			COMMAND		CBluetoothSocket1	NewL		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0001command3NewL
+			COMMAND		TRfcommSockAddr1	Construct
+			COMMAND		TRfcommSockAddr1	SetFamily		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0001command6SetFamily
+			COMMAND		TRfcommSockAddr1	SetPort		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult	
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase		
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct
+			COMMAND		TBTDevAddrLocal	OpenHostResolver		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BTSDP-Lists-PublicApi-Passive-SetBTAddresses-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TBTDevAddrLocal	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult		
+END_TESTCASE BTSDP-Lists-PublicApi-Passive-SetBTAddresses
+
+
+// ****************************************************************************
+// Database Side - CSdpAttrVAlueString API tests
+// ****************************************************************************	
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1001
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1001
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueString
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewStringL() from CSdpAttrValueString
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueString object
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueString	NewStringL		BTSDP-Lists-PublicApi-Passive-1001-0001command2NewStringL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1001-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1001-0001command9CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1001-0001command10UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			ASYNC_DELAY	1000000
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1001
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1002
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1002
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueString
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewStringL() and DataSize() from CSdpAttrValueString
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueString object and verify its data size
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueString	NewStringL		BTSDP-Lists-PublicApi-Passive-1002-0001command2NewStringL
+			COMMAND		attrValueString	DataSize		BTSDP-Lists-PublicApi-Passive-1002-0001command3DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1002-0001command9Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1002-0001command10CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1002-0001command11UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1002
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1003
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1003
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueString
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewStringL() and Des() from CSdpAttrValueString
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueString object
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Create a new service record, CSdpAttrValueString and verify its data value.
+//!								7. Update the service record.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueString	NewStringL		BTSDP-Lists-PublicApi-Passive-1003-0001command2NewStringL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1003-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1003-0001command9CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1003-0001command10UpdateAttributeL
+			COMMAND		attrValueString	NewStringL		BTSDP-Lists-PublicApi-Passive-1003-0001command12NewStringL
+			COMMAND		attrValueString	Des		BTSDP-Lists-PublicApi-Passive-1003-0001command13Des
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1003-0001command15UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1003
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1004
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1004
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueString
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewStringL() and Type() from CSdpAttrValueString
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueString object
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Create a new service record, CSdpAttrValueString and verify its type and return KErrNone if successful.
+//!								7. Update the service record.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueString	NewStringL		BTSDP-Lists-PublicApi-Passive-1004-0001command2NewStringL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1004-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1004-0001command9CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1004-0001command10UpdateAttributeL
+			COMMAND		attrValueString	NewStringL		BTSDP-Lists-PublicApi-Passive-1004-0001command12NewStringL
+			COMMAND		attrValueString	Type		BTSDP-Lists-PublicApi-Passive-1004-0001command13Type
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1004-0001command15UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1004
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1005
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1005
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueString
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewStringL() and DoesIntFit() from CSdpAttrValueString
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueString object and verify if the attribute can be stored in an integer value.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueString	attrValueString	
+			COMMAND		attrValueString	NewStringL		BTSDP-Lists-PublicApi-Passive-1005-0001command2NewStringL
+			COMMAND		attrValueString	DoesIntFit		BTSDP-Lists-PublicApi-Passive-1005-0001command3DoesIntFit
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1005-0001command9Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1005-0001command10CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1005-0001command11UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1005
+
+
+// ****************************************************************************
+// Database side - CSdpAttrVAlueDES API tests
+// ****************************************************************************	
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1006
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1006
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL() and DataSize() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES list and verify its sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES1	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES2	
+			COMMAND		attrValueDES1	NewDESL
+			COMMAND		attrValueDES2	NewDESL		BTSDP-Lists-PublicApi-Passive-1006-0001command4NewDESL
+			COMMAND		attrValueDES2	DataSize		BTSDP-Lists-PublicApi-Passive-1006-0001command5DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1006-0001command11Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1006-0001command12CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1006-0001command13UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1006
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1007
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1007
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL() and DataSize() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES list and verify its sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	DataSize		BTSDP-Lists-PublicApi-Passive-1007-0001command3DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1007-0001command9Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1007-0001command10CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1007-0001command11UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1007
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1008
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1008
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), StartListL(), BuildDEAL(), BuildBooleanL(), EndListL() and BuildDESL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1008-0001command6BuildBooleanL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	BuildDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1008-0001command10BuildBooleanL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1008-0001command18Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1008-0001command19CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1008-0001command20UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1008
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1009
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1009
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), StartListL(), BuildDEAL(), BuildNilL(), BuildDESL(), BuildBooleanL(),
+//!													and EndListL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildNilL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	BuildDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1009-0001command10BuildBooleanL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1009-0001command18Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1009-0001command19CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1009-0001command20UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1009
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1010
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1010
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL() and StartListL(), BuildDEAL(), BuildBooleanL(), BuildNilL(), BuildStringL() 
+//!													and EndListL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Add some elements in the list and update the record in the database.
+//!								7. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1010-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1010-0001command9CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1010-0001command10UpdateAttributeL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1010-0001command15BuildBooleanL
+			COMMAND		attrValueDES	BuildNilL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	BuildDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildStringL		BTSDP-Lists-PublicApi-Passive-1010-0001command20BuildStringL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1010-0001command24UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1010
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1011
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1011
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), StartListL(), BuildDESL(), BuildBooleanL(), BuildUUIDL(), EndListL() and DataSize() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add some elements in the list. Verify the list sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1011-0001command6BuildBooleanL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1011-0001command11BuildUUIDL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	DataSize		BTSDP-Lists-PublicApi-Passive-1011-0001command14DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1011-0001command20Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1011-0001command21CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1011-0001command22UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1011
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1012
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1012
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueString and CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), StartListL(), BuildDEAL(), BuildIntL(), BuildBooleanL() and EndListL() from CSdpAttrValueDES
+//!													NewStringL() from CSdpAttrValueString
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueString list and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildIntL		BTSDP-Lists-PublicApi-Passive-1012-0001command6BuildIntL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	BuildDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1012-0001command10BuildBooleanL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1012-0001command18Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1012-0001command19CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1012-0001command20UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1012
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1013
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1013
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), BuildDEAL(), StartListL(), BuildUintL() and EndListL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1013-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1013-0001command9CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1013-0001command10UpdateAttributeL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildUintL		BTSDP-Lists-PublicApi-Passive-1013-0001command15BuildUintL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1013-0001command19UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1013
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1014
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1014
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES and CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), StartListL(), BuildDEAL(), BuildURLL() and EndListL() from CSdpAttrValueDES
+//!													NewDEAL() and BuildStringL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildURLL		BTSDP-Lists-PublicApi-Passive-1014-0001command6BuildURLL
+			COMMAND		attrValueDES	BuildURLL		BTSDP-Lists-PublicApi-Passive-1014-0001command7BuildURLL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1014-0001command15Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1014-0001command16CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1014-0001command17UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1014
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1015
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1015
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), StartListL(), BuildDESL(), BuildBooleanL(), BuildNilL(), BuildUUIDL(),
+//!													BuildStringL(), BuildIntL(), BuildURLL(), BuildIntL() and EndListL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1015-0001command6BuildBooleanL
+			COMMAND		attrValueDES	BuildNilL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1015-0001command8BuildUUIDL
+			COMMAND		attrValueDES	BuildStringL		BTSDP-Lists-PublicApi-Passive-1015-0001command9BuildStringL
+			COMMAND		attrValueDES	BuildIntL		BTSDP-Lists-PublicApi-Passive-1015-0001command10BuildIntL
+			COMMAND		attrValueDES	BuildURLL		BTSDP-Lists-PublicApi-Passive-1015-0001command11BuildURLL
+			COMMAND		attrValueDES	BuildUintL		BTSDP-Lists-PublicApi-Passive-1015-0001command12BuildUintL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1015-0001command20Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1015-0001command21CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1015-0001command22UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1015
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1016
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1016
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL() and BuildEncodedL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add an encoded element in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Create a CSdpAttrValueDES and add an unsigned integer element in the list.
+//!								7. Add the CSdpAttrValueDES to the database.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES1	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES2	
+			COMMAND		attrValueDES1	NewDESL
+			COMMAND		attrValueDES2	NewDESL		BTSDP-Lists-PublicApi-Passive-1016-0001command4NewDESL
+			COMMAND		attrValueDES2	BuildEncodedL		BTSDP-Lists-PublicApi-Passive-1016-0001command5BuildEncodedL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1016-0001command11Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1016-0001command12CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1016-0001command13UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1016
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1017
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1017
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), StartListL(), BuildDEAL(), BuildNilL(), BuildStringL(), BuildUUIDL(), BuildIntL() and EndListL() 
+//!													from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Create a CSdpAttrValueDES and add a signed integer element in the list.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildNilL
+			COMMAND		attrValueDES	BuildStringL		BTSDP-Lists-PublicApi-Passive-1017-0001command7BuildStringL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1017-0001command8BuildUUIDL
+			COMMAND		attrValueDES	BuildIntL		BTSDP-Lists-PublicApi-Passive-1017-0001command9BuildIntL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1017-0001command17Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1017-0001command18CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1017-0001command19UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1017
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1018
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1018
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL() and BuildUnknownL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and add a user-defined element in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES1	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES2	
+			COMMAND		attrValueDES1	NewDESL
+			COMMAND		attrValueDES2	NewDESL		BTSDP-Lists-PublicApi-Passive-1018-0001command4NewDESL
+			COMMAND		attrValueDES2	BuildUnknownL		BTSDP-Lists-PublicApi-Passive-1018-0001command5BuildUnknownL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1018-0001command11Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1018-0001command12CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1018-0001command13UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1018
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1019
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1019
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), DataSize(), Type() and AppendValueL() from CSdpAttrValueDES
+//!													NewUintL() from CSdpAttrValueUint
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES list and add some elements in the list. Verify the list type and sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES1	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES2	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrValueUint	NewUintL		BTSDP-Lists-PublicApi-Passive-1019-0001command2NewUintL
+			COMMAND		attrValueDES1	NewDESL
+			COMMAND		attrValueDES2	NewDESL		BTSDP-Lists-PublicApi-Passive-1019-0001command6NewDESL
+			COMMAND		attrValueDES2	AppendValueL		BTSDP-Lists-PublicApi-Passive-1019-0001command7AppendValueL
+			COMMAND		attrValueDES2	Type		BTSDP-Lists-PublicApi-Passive-1019-0001command8Type
+			COMMAND		attrValueDES2	DataSize		BTSDP-Lists-PublicApi-Passive-1019-0001command9DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1019-0001command15Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1019-0001command16CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1019-0001command17UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1019
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1020
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1020
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrVAlueDES
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDESL(), BuildDESL(), StartListL(), BuildBooleanL(), BuildStringL(), BuildURLL(), BuildNilL(),
+//!													BuildIntL(), BuildDEAL(), BuildUUIDL(), BuildUintL(), DataSize() and EndListL()from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDES and some elements in the list. Verify the list sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDESL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1020-0001command6BuildBooleanL
+			COMMAND		attrValueDES	BuildStringL		BTSDP-Lists-PublicApi-Passive-1020-0001command7BuildStringL
+			COMMAND		attrValueDES	BuildNilL
+			COMMAND		attrValueDES	BuildIntL		BTSDP-Lists-PublicApi-Passive-1020-0001command9BuildIntL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildDEAL
+			COMMAND		attrValueDES	StartListL
+			COMMAND		attrValueDES	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1020-0001command14BuildUUIDL
+			COMMAND		attrValueDES	BuildUintL		BTSDP-Lists-PublicApi-Passive-1020-0001command15BuildUintL
+			COMMAND		attrValueDES	BuildURLL		BTSDP-Lists-PublicApi-Passive-1020-0001command16BuildURLL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	EndListL
+			COMMAND		attrValueDES	DataSize		BTSDP-Lists-PublicApi-Passive-1020-0001command19DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1020-0001command25Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1020-0001command26CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1020-0001command27UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1020
+
+// ****************************************************************************
+// Database side - CSdpAttrVAlueDEA API tests
+// ****************************************************************************	
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1021
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1021
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL() and DataSize() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA list and verify its sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA1	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA2	
+			COMMAND		attrValueDEA1	NewDEAL
+			COMMAND		attrValueDEA2	NewDEAL		BTSDP-Lists-PublicApi-Passive-1021-0001command4NewDEAL
+			COMMAND		attrValueDEA2	DataSize		BTSDP-Lists-PublicApi-Passive-1021-0001command5DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1021-0001command11Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1021-0001command12CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1021-0001command13UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1021
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1022
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1022
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL() and DataSize() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA list and verify its sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	DataSize		BTSDP-Lists-PublicApi-Passive-1022-0001command3DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1022-0001command9Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1022-0001command10CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1022-0001command11UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1022
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1023
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1023
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMAuthor					Symbio
+//! @SYMCreationDate			05/12/2006
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), StartListL(), BuildDEAL(), BuildBooleanL(), EndListL() and BuildDESL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1023-0001command6BuildBooleanL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	BuildDESL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1023-0001command10BuildBooleanL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1023-0001command18Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1023-0001command19CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1023-0001command20UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1023
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1024
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1024
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), StartListL(), BuildDEAL(), BuildNilL(), BuildDESL(), BuildBooleanL(),
+//!													and EndListL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildNilL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	BuildDESL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1024-0001command10BuildBooleanL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1024-0001command18Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1024-0001command19CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1024-0001command20UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1024
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1025
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1025
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL() and StartListL(), BuildDEAL(), BuildBooleanL(), BuildNilL(), BuildStringL() 
+//!													and EndListL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Add some elements in the list and update the record in the database.
+//!								7. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1025-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1025-0001command9CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1025-0001command10UpdateAttributeL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1025-0001command15BuildBooleanL
+			COMMAND		attrValueDEA	BuildNilL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	BuildDESL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildStringL		BTSDP-Lists-PublicApi-Passive-1025-0001command20BuildStringL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1025-0001command24UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1025
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1026
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1026
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), StartListL(), BuildDESL(), BuildBooleanL(), BuildUUIDL(), EndListL() and DataSize() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list. Verify the list sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDESL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1026-0001command6BuildBooleanL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1026-0001command11BuildUUIDL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	DataSize		BTSDP-Lists-PublicApi-Passive-1026-0001command14DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1026-0001command20Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1026-0001command21CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1026-0001command22UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1026
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1027
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1027
+//! @SYMAPI						RSdp, RSdpDatabase and CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), StartListL(), BuildDEAL(), BuildIntL(), BuildBooleanL() and EndListL() from CSdpAttrValueDEA
+//!													NewStringL() from CSdpAttrValueString
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueString list and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildIntL		BTSDP-Lists-PublicApi-Passive-1027-0001command6BuildIntL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	BuildDESL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1027-0001command10BuildBooleanL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1027-0001command18Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1027-0001command19CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1027-0001command20UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1027
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1028
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1028
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), BuildDEAL(), StartListL(), BuildUintL() and EndListL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1028-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1028-0001command9CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1028-0001command10UpdateAttributeL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildUintL		BTSDP-Lists-PublicApi-Passive-1028-0001command15BuildUintL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1028-0001command19UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1028
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1029
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1029
+//! @SYMAPI						RSdp, RSdpDatabase and CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), StartListL(), BuildDEAL(), BuildURLL() and EndListL() from CSdpAttrValueDEA
+//!													NewDEAL() and BuildStringL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildURLL		BTSDP-Lists-PublicApi-Passive-1029-0001command6BuildURLL
+			COMMAND		attrValueDEA	BuildURLL		BTSDP-Lists-PublicApi-Passive-1029-0001command7BuildURLL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1029-0001command15Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1029-0001command16CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1029-0001command17UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1029
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1030
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1030
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), StartListL(), BuildDESL(), BuildBooleanL(), BuildNilL(), BuildUUIDL(),
+//!													BuildStringL(), BuildIntL(), BuildURLL(), BuildIntL() and EndListL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDESL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1030-0001command6BuildBooleanL
+			COMMAND		attrValueDEA	BuildNilL
+			COMMAND		attrValueDEA	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1030-0001command8BuildUUIDL
+			COMMAND		attrValueDEA	BuildStringL		BTSDP-Lists-PublicApi-Passive-1030-0001command9BuildStringL
+			COMMAND		attrValueDEA	BuildIntL		BTSDP-Lists-PublicApi-Passive-1030-0001command10BuildIntL
+			COMMAND		attrValueDEA	BuildURLL		BTSDP-Lists-PublicApi-Passive-1030-0001command11BuildURLL
+			COMMAND		attrValueDEA	BuildUintL		BTSDP-Lists-PublicApi-Passive-1030-0001command12BuildUintL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1030-0001command20Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1030-0001command21CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1030-0001command22UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1030
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1031
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1031
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL() and BuildEncodedL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add an encoded element in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Create a CSdpAttrValueDEA and add an unsigned integer element in the list.
+//!								7. Add the CSdpAttrValueDEA to the database.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA1	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA2	
+			COMMAND		attrValueDEA1	NewDEAL
+			COMMAND		attrValueDEA2	NewDEAL		BTSDP-Lists-PublicApi-Passive-1031-0001command4NewDEAL
+			COMMAND		attrValueDEA2	BuildEncodedL		BTSDP-Lists-PublicApi-Passive-1031-0001command5BuildEncodedL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1031-0001command11Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1031-0001command12CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1031-0001command13UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1031
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1032
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1032
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), StartListL(), BuildDEAL(), BuildNilL(), BuildStringL(), BuildUUIDL(), BuildIntL() and EndListL() 
+//!													from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add some elements in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Create a CSdpAttrValueDEA and add a signed integer element in the list.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildNilL
+			COMMAND		attrValueDEA	BuildStringL		BTSDP-Lists-PublicApi-Passive-1032-0001command7BuildStringL
+			COMMAND		attrValueDEA	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1032-0001command8BuildUUIDL
+			COMMAND		attrValueDEA	BuildIntL		BTSDP-Lists-PublicApi-Passive-1032-0001command9BuildIntL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1032-0001command17Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1032-0001command18CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1032-0001command19UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1032
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1033
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1033
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL() and BuildUnknownL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and add a user-defined element in the list.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA1	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA2	
+			COMMAND		attrValueDEA1	NewDEAL
+			COMMAND		attrValueDEA2	NewDEAL		BTSDP-Lists-PublicApi-Passive-1033-0001command4NewDEAL
+			COMMAND		attrValueDEA2	BuildUnknownL		BTSDP-Lists-PublicApi-Passive-1033-0001command5BuildUnknownL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1033-0001command11Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1033-0001command12CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1033-0001command13UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1033
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1034
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1034
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), DataSize(), Type() and AppendValueL() from CSdpAttrValueDEA
+//!													NewUintL() from CSdpAttrValueUint
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA list and add some elements in the list. Verify the list type and sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA1	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA2	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrValueUint	NewUintL		BTSDP-Lists-PublicApi-Passive-1034-0001command2NewUintL
+			COMMAND		attrValueDEA1	NewDEAL
+			COMMAND		attrValueDEA2	NewDEAL		BTSDP-Lists-PublicApi-Passive-1034-0001command6NewDEAL
+			COMMAND		attrValueDEA2	AppendValueL		BTSDP-Lists-PublicApi-Passive-1034-0001command7AppendValueL
+			COMMAND		attrValueDEA2	Type		BTSDP-Lists-PublicApi-Passive-1034-0001command8Type
+			COMMAND		attrValueDEA2	DataSize		BTSDP-Lists-PublicApi-Passive-1034-0001command9DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1034-0001command15Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1034-0001command16CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1034-0001command17UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1034
+
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1035
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1035
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewDEAL(), BuildDESL(), StartListL(), BuildBooleanL(), BuildStringL(), BuildURLL(), BuildNilL(),
+//!													BuildIntL(), BuildDEAL(), BuildUUIDL(), BuildUintL(), DataSize() and EndListL()from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a CSdpAttrValueDEA and some elements in the list. Verify the list sizes.
+//!								2. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								3. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								4. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								5. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDESL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildBooleanL		BTSDP-Lists-PublicApi-Passive-1035-0001command6BuildBooleanL
+			COMMAND		attrValueDEA	BuildStringL		BTSDP-Lists-PublicApi-Passive-1035-0001command7BuildStringL
+			COMMAND		attrValueDEA	BuildNilL
+			COMMAND		attrValueDEA	BuildIntL		BTSDP-Lists-PublicApi-Passive-1035-0001command9BuildIntL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildDEAL
+			COMMAND		attrValueDEA	StartListL
+			COMMAND		attrValueDEA	BuildUUIDL		BTSDP-Lists-PublicApi-Passive-1035-0001command14BuildUUIDL
+			COMMAND		attrValueDEA	BuildUintL		BTSDP-Lists-PublicApi-Passive-1035-0001command15BuildUintL
+			COMMAND		attrValueDEA	BuildURLL		BTSDP-Lists-PublicApi-Passive-1035-0001command16BuildURLL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	EndListL
+			COMMAND		attrValueDEA	DataSize		BTSDP-Lists-PublicApi-Passive-1035-0001command19DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1035-0001command25Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1035-0001command26CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1035-0001command27UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1035
+
+// ****************************************************************************
+// Database side - CSdpAttrVAlueUUID API Test
+// ****************************************************************************	
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1036
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1036
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL() and UUID() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a 32-bit CSdpAttrValueUUID object with the maximum UUID value using NewUUIDL() function.
+//!								2. Verify the object value using UUID() function. Test pass if expected value is as the input value
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Delete service record created in previous test case.
+//!								8. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT 
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase	
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1036-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	UUID		BTSDP-Lists-PublicApi-Passive-1036-0001command3UUID
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1036-0001command9Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1036-0001command10CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1036-0001command11UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			ASYNC_DELAY	5000000
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1036
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1037
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1037
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), UUID() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a 128-bit CSdpAttrValueUUID object with the UUID value using NewUUIDL() function.
+//!								2. Verify the object value using UUID() function. Test pass if expected value is as the input value
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Delete service record created in previous test case.
+//!								8. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase	
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1037-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	UUID		BTSDP-Lists-PublicApi-Passive-1037-0001command3UUID
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1037-0001command9Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1037-0001command10CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1037-0001command11UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1037
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1038
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1038
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), DataSize() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a 32-bit CSdpAttrValueUUID object with the maximum UUID value using NewUUIDL() function.
+//!								2. Verify the object size itself using DataSize() function
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Delete service record created in previous test case.
+//!								8. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1038-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	DataSize		BTSDP-Lists-PublicApi-Passive-1038-0001command3DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1038-0001command9Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1038-0001command10CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1038-0001command11UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1038
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1039
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1039
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), DataSize() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a 128-bit CSdpAttrValueUUID object with the UUID value using NewUUIDL() function.
+//!								2. Verify the object size itself using DataSize() function
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Delete service record created in previous test case.
+//!								8. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1039-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	DataSize		BTSDP-Lists-PublicApi-Passive-1039-0001command3DataSize
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1039-0001command9Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1039-0001command10CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1039-0001command11UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1039
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1040
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1040
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), Type() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a 32-bit CSdpAttrValueUUID object with the maximum UUID value using NewUUIDL() function.
+//!								2. Verify object type itself using Type()
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Delete service record created in previous test case.
+//!								8. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1040-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	Type		BTSDP-Lists-PublicApi-Passive-1040-0001command3Type
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1040-0001command9Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1040-0001command10CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1040-0001command11UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1040
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1041
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1041
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), Des() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a 32-bit CSdpAttrValueUUID object with the maximum UUID value using NewUUIDL() function.
+//!								2. Verify object data value using Des()
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Delete service record created in previous test case.
+//!								8. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1041-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	Des		BTSDP-Lists-PublicApi-Passive-1041-0001command3Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1041-0001command9Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1041-0001command10CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1041-0001command11UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1041
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1042
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1042
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), Des() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Create a 128-bit CSdpAttrValueUUID object with the UUID value using NewUUIDL() function.
+//!								2. Verify the object data value using Des() function.
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Delete service record created in previous test case.
+//!								8. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1042-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	Des		BTSDP-Lists-PublicApi-Passive-1042-0001command3Des
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1042-0001command9Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1042-0001command10CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1042-0001command11UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1042
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1043
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1043
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), Type(), DataSize(), DoesIntFit() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//!	@SYMTestActions				1. Create a 32-bit CSdpAttrValueUUID object with the maximum UUID value using NewUUIDL() function.
+//!								2. Verify object type itself using Type()
+//!								3. Verify object size using DataSize()
+//!								4. Verify object if fits integer using DoesIntFit()
+//!								5. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								6. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								7. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								10. Delete service record created in previous test case.
+//!								11. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1043-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	Type		BTSDP-Lists-PublicApi-Passive-1043-0001command3Type
+			COMMAND		attrValueUUID1	DataSize		BTSDP-Lists-PublicApi-Passive-1043-0001command4DataSize
+			COMMAND		attrValueUUID1	DoesIntFit		BTSDP-Lists-PublicApi-Passive-1043-0001command5DoesIntFit
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1043-0001command11Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1043-0001command12CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1043-0001command13UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1043
+
+START_TESTCASE BTSDP-Lists-PublicApi-Passive-Master-1044
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1044
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUUID
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewUUIDL(), Des(), DataSize(), Type() from CSdpAttrValueUUID
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//!	@SYMTestActions				1. Create a 128-bit CSdpAttrValueUUID object with the UUID value using NewUUIDL() function.
+//!								2. Verify object data value using Des()
+//!								3. Verify object data size using DataSize()
+//!								4. Verify object type itself using Type()
+//!								5. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								6. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								7. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								9. Delete service record created in previous test case.
+//!								10. Close the client process. Close the SDP database subsession.
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	RSdp and RSdpDatabase sessions successfully closed and objects destructed
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	CSdpAttrValueUUID	attrValueUUID1	
+			COMMAND		attrValueUUID1	NewUUIDL		BTSDP-Lists-PublicApi-Passive-1044-0001command2NewUUIDL
+			COMMAND		attrValueUUID1	Des		BTSDP-Lists-PublicApi-Passive-1044-0001command3Des
+			COMMAND		attrValueUUID1	DataSize		BTSDP-Lists-PublicApi-Passive-1044-0001command4DataSize
+			COMMAND		attrValueUUID1	Type		BTSDP-Lists-PublicApi-Passive-1044-0001command5Type
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database	Constructor
+			COMMAND		database	Open		BTSDP-Lists-PublicApi-Passive-1044-0001command11Open
+			COMMAND		database	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1044-0001command12CreateServiceRecordL
+			COMMAND		database	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1044-0001command13UpdateAttributeL
+			STORE	database	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database	DeleteRecordL
+			COMMAND		database	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1044
+
+
+// ****************************************************************************
+// Database Side - TSdpIntBuf<8, 16, 32> API Test
+// ****************************************************************************	
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1045
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1045
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDES, CSdpAttrValueInt, TSdpIntBuf<8>
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewIntBuf() from TSdpIntBuf<8>,
+//!													NewIntL() from CSdpAttrValueInt,
+//!													NewDESL() and AppendValueL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Convert an integer to a 8-bit unsigned integer using NewIntBuf() function
+//!								2. Construct a CSdpAttrValueInt object with the 8-bit unsigned integer
+//!								3. Add the CSdpAttrValueInt value to CSdpAttrValueDES list
+//!								4. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								5. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								6. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	TSdpIntBuf8	attrIntBuf8	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrIntBuf8	NewIntBuf		BTSDP-Lists-PublicApi-Passive-1045-0001command2NewIntBuf
+			COMMAND		attrValueInt	NewIntL		BTSDP-Lists-PublicApi-Passive-1045-0001command4NewIntL
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	AppendValueL		BTSDP-Lists-PublicApi-Passive-1045-0001command7AppendValueL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1045-0001command13Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1045-0001command14CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1045-0001command15UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			ASYNC_DELAY	1000000
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1045
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1046
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1046
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDES, CSdpAttrValueInt, TSdpIntBuf<16>
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewIntBuf() from TSdpIntBuf<16>,
+//!													NewIntL() from CSdpAttrValueInt,
+//!													NewDESL() and AppendValueL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Convert an integer to a 16-bit unsigned integer using NewIntBuf() function
+//!								2. Construct a CSdpAttrValueInt object with the 16-bit unsigned integer
+//!								3. Add the CSdpAttrValueInt value to CSdpAttrValueDES list
+//!								4. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								5. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								6. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase	
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	TSdpIntBuf16	attrIntBuf16	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			COMMAND		attrIntBuf16	NewIntBuf		BTSDP-Lists-PublicApi-Passive-1046-0001command2NewIntBuf
+			COMMAND		attrValueInt	NewIntL		BTSDP-Lists-PublicApi-Passive-1046-0001command4NewIntL
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	AppendValueL		BTSDP-Lists-PublicApi-Passive-1046-0001command7AppendValueL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1046-0001command13Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1046-0001command14CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1046-0001command15UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1046
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1047
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1047
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDES, CSdpAttrValueInt, TSdpIntBuf<32>
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewIntBuf() from TSdpIntBuf<32>,
+//!													NewIntL() from CSdpAttrValueInt,
+//!													NewDESL() and AppendValueL() from CSdpAttrValueDES
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Convert an integer to a 32-bit unsigned integer using NewIntBuf() function
+//!								2. Construct a CSdpAttrValueInt object with the 32-bit unsigned integer
+//!								3. Add the CSdpAttrValueInt value to CSdpAttrValueDES list
+//!								4. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								5. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								6. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	TSdpIntBuf32	attrIntBuf32	
+			CREATE_OBJECT	CSdpAttrValueInt	attrValueInt	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrIntBuf32	NewIntBuf		BTSDP-Lists-PublicApi-Passive-1047-0001command2NewIntBuf
+			COMMAND		attrValueInt	NewIntL		BTSDP-Lists-PublicApi-Passive-1047-0001command4NewIntL
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	AppendValueL		BTSDP-Lists-PublicApi-Passive-1047-0001command7AppendValueL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1047-0001command13Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1047-0001command14CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1047-0001command15UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1047
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1048
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1048
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDEA, CSdpAttrValueUint, TSdpIntBuf<8>
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewIntBuf() from TSdpIntBuf<8>,
+//!													NewUintL() from CSdpAttrValueUint,
+//!													NewDEAL() and AppendValueL() from CSdpAttrValueDEA
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Convert an integer to a 8-bit unsigned integer using NewIntBuf() function
+//!								2. Construct a CSdpAttrValueUint object with the 8-bit unsigned integer
+//!								3. Add the CSdpAttrValueUint value to CSdpAttrValueDES list
+//!								4. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								5. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								6. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	TSdpIntBuf8	attrIntBuf8	
+			CREATE_OBJECT	CSdpAttrValueDEA	attrValueDEA	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrIntBuf8	NewIntBuf		BTSDP-Lists-PublicApi-Passive-1048-0001command2NewIntBuf
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1048-0001command8Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1048-0001command9CreateServiceRecordL
+			COMMAND		attrValueUint	NewUintL		BTSDP-Lists-PublicApi-Passive-1048-0001command11NewUintL
+			COMMAND		attrValueDEA	NewDEAL
+			COMMAND		attrValueDEA	AppendValueL		BTSDP-Lists-PublicApi-Passive-1048-0001command14AppendValueL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1048-0001command16UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1048
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1049
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1049
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueUint, TSdpIntBuf<16>
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewIntBuf() from TSdpIntBuf<16>,
+//!													NewUintL() from CSdpAttrValueUint,
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Convert an integer to a 16-bit unsigned integer using NewIntBuf() function
+//!								2. Construct a CSdpAttrValueUint object with the 16-bit unsigned integer
+//!								3. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								4. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								5. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								6. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	TSdpIntBuf16	attrIntBuf16	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			COMMAND		attrIntBuf16	NewIntBuf		BTSDP-Lists-PublicApi-Passive-1049-0001command2NewIntBuf
+			COMMAND		attrValueUint	NewUintL		BTSDP-Lists-PublicApi-Passive-1049-0001command4NewUintL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1049-0001command10Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1049-0001command11CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1049-0001command12UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1049
+
+START_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1050
+//! @SYMTestCaseID				BTSDP-Lists-PublicApi-Passive-Master-1050
+//! @SYMAPI						RSdp, RSdpDatabase, CSdpAttrValueDES, CSdpAttrValueUint, TSdpIntBuf<32>
+//! @SYMTestCaseDesc			Prepare and set up the service record for the master device to retrieve
+//!								Uses API elements: 	NewIntBuf() from TSdpIntBuf<16>,
+//!													NewUintL() from CSdpAttrValueUint,
+//!													Constructor(), Connect(), CreateServiceRecordL(), UpdateAttributeL() and Close() from RSdp
+//!													Constructor(), Open(), DeleteRecord(), Close() from RSdpDatabase
+//! @SYMTestActions				1. Convert an integer to a 32-bit unsigned integer using NewIntBuf() function
+//!								2. Construct a CSdpAttrValueUint object with the 32-bit unsigned integer
+//!								3. Add the CSdpAttrValueUint object to CSdpAttrValueDES list
+//!								4. Connect a client process to the database. Verify the resulting err code is KErrNone.
+//!								5. Open a SDP database subsession. Verify the resulting err code is KErrNone.
+//!								6. Create a new service record, with a single service class, in the SDP database.
+//!								   Verify the resulting err code is KErrNone.
+//!								7. Update a service record attribute with a value encapsulated in a CSdpAttrValue.
+//!								   Verify the resulting err code is KErrNone.
+//!								8. Clean the database
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Low
+//! @SYMTestExpectedResults  	Updated a service record attribute with a value encapsulated in a CSdpAttrValue successfully.
+//! @SYMTestType				CIT
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase	
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RSdpDatabase	database1	
+			CREATE_OBJECT	RSdp	rsdp	
+			CREATE_OBJECT	TSdpIntBuf32	attrIntBuf32	
+			CREATE_OBJECT	CSdpAttrValueUint	attrValueUint	
+			CREATE_OBJECT	CSdpAttrValueDES	attrValueDES	
+			COMMAND		attrIntBuf32	NewIntBuf		BTSDP-Lists-PublicApi-Passive-1050-0001command2NewIntBuf
+			COMMAND		attrValueUint	NewUintL		BTSDP-Lists-PublicApi-Passive-1050-0001command4NewUintL
+			COMMAND		attrValueDES	NewDESL
+			COMMAND		attrValueDES	AppendValueL		BTSDP-Lists-PublicApi-Passive-1050-0001command7AppendValueL
+			COMMAND		rsdp	Constructor
+			COMMAND		rsdp	Connect
+			OUTSTANDING
+			COMMAND		database1	Constructor
+			COMMAND		database1	Open		BTSDP-Lists-PublicApi-Passive-1050-0001command13Open
+			COMMAND		database1	CreateServiceRecordL		BTSDP-Lists-PublicApi-Passive-1050-0001command14CreateServiceRecordL
+			COMMAND		database1	UpdateAttributeL		BTSDP-Lists-PublicApi-Passive-1050-0001command15UpdateAttributeL
+			STORE	database1	
+			STORE	rsdp	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StartSyncTestCase
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	START_TEST_BLOCK	100	T_BTSdpAPI	\bluetooth\sdp\BTSDP-Lists-PublicApi-Passive-Master.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RSdpDatabase	database1	
+			RESTORE_OBJECT	RSdp	rsdp	
+			COMMAND		database1	DeleteRecordL
+			COMMAND		database1	Close
+			COMMAND		rsdp	Close
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+END_TESTCASE	BTSDP-Lists-PublicApi-Passive-Master-1050
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini RetrieveExecutionResultListsActiveSlave
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StopTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\sdp\UccControlChannelConfig.ini StopSyncService

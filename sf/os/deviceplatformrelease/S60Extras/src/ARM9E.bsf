@@ -1,0 +1,35 @@
+#<bsf>#
+
+# NOTE Some options modified as originals obsolete e.g add double dash prefix
+# Example build specialization file 
+# 
+# NB currently specialization only applies to ARMV5 build using RVCT.
+
+# This file customizes the default ARMV5. It specifies a build that
+# always uses optimization level O1 rather than the default O2.
+CUSTOMIZES ARMV5
+
+# The following options that can be overridden by MMP files
+
+# Use these options when compiling user-side THUMB code
+thumb_options -O1
+
+# Use these options when compiling user-side ARM code
+arm_options	--arm -O1
+
+# Use these options when compiling Kernel code
+kernel_options	--arm -O1 
+
+# This just factors out common (contingent) options from the above.
+# These options can also be overridden by MMP files.
+common_options	--cpu ARM9E --diag_suppress 1,161,654,1135,1152,1300 --diag_error 1267 --exceptions --exceptions_unwind --export_all_vtbl
+
+# Fixed options for this build. These options should only be changed with great care since
+# they have the potential to introduce incompatible ABI (or machine) level effects.
+# -cpu 5T - this build just targets a generic 5T
+# -Ono_known_library - we use our own library so tell the compiler not to make assumptions about its implementation
+# -fpu softvfp - some system code explicitly assumes this variant of the EABI (softvfp+vfp could be used on say XScale)
+# --dll_vtbl - this switches on class exporting and is needed to support Symbian OS DLL model
+# -apcs /inter - redundant on 5T, but worth saying anyway
+# --enum_is_int - force all enum entries to be sizeof(int) which avoids problems when passing enums between 5T and 9E libs
+invariant_options	-Ono_known_library --enum_is_int --FPU softvfp --dll_vtbl --export_vtbl --export_all_vtbl --no_vfe --APCS=/interwork

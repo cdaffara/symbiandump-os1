@@ -1,0 +1,165 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         Lbs-LocationMonitor
+//! @SYMScriptTestEnvironment TestExecute Admin.script
+
+PRINT Run all te_lbslocationmonitordbsuite Suite Tests
+
+//
+LOAD_SUITE te_lbslocationmonitordbsuite
+
+
+START_TESTCASE                LBS-LocMonDBBasic-0001
+//! @SYMTestCaseID              LBS-LocMonDBBasic-0001
+//! @SYMTestCaseDesc            Checks that correct matches are returned, 
+//!				that performance is acceptable and that two instances of the DB can be used
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1) Add 1000 records to database (900 GSM and 100 WCDMA)
+//!				                2) Perform query that matches GSM CELL
+//!				                3) Perform query that matches LAC on GSM cell, 
+//!                             4) Perform query that matches Mobile Network Code on GSM cell
+//!                             5) Perform a query that matches on Mobile Country Code
+//!				                6) Perform query that matches on nothing
+//!				                7) Time taken to perform requests is measured
+//!				                8) Perform query that matches LAC on WCDMA cell
+//!				                9) Using a second instance of the db, perform a query that matches MCC
+//!
+//! @SYMTestExpectedResults     1) All records added with no errors
+//!				                2) CELL match returned, GSM cell
+//!				                3) LAC match returned, retrieves GSM rather than very similar WCDMA cell
+//!                             4) Mobile Network code match and GSM position retrieved
+//!                             5) Mobile country code match with GSM position
+//!				                6) No country code match, GSM position
+//!				                7) Time taken is less than X
+//!				                8) LAC match returned with WCDMA position
+//!				                9) MCC match returned
+//!
+//! @SYMTestType                UT
+//! @SYMCreationDate            19/01/2009 
+RUN_TEST_STEP 100 te_lbslocationmonitordbsuite DBStep
+END_TESTCASE		      LBS-LocMonDBBasic-0001
+
+
+START_TESTCASE                LBS-LocMonDBNegative-0001
+//! @SYMTestCaseID              LBS-LocMonDBNegative-0001
+//! @SYMTestCaseDesc            Verify that negative cases are handled
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1) Attempt to save a position to the DB before OpenL() has been called
+//!				2) Attempt to read a position from the db before OpenL() has been called
+//!				3) Attempt to ClearDatabase() before OpenL() has been called
+//!				4) Peform an exhaustive test of all CELL,LAC,MNC,MCC values around the negative boundary when saving (GSM and WCDMA)
+//!				4) Peform an exhaustive test of all CELL,LAC,MNC,MCC values around the negative boundary when reading (GSM and WCDMA)
+//!
+//! @SYMTestExpectedResults     1) Returns KErrNotFound
+//!				2) Returns KErrNotFound
+//!				3) Returns KErrNotFound
+//!				4) Returns KErrArgument where any of CELL,LAC,MNC,MCC are negative irrespective of network type
+//!				5) Returns KErrArgument where any of CELL,LAC,MNC,MCC are negative irrespective of network type
+//!			
+//! @SYMTestType                UT
+//! @SYMCreationDate            19/01/2009
+RUN_TEST_STEP 10 te_lbslocationmonitordbsuite NegativeStep
+END_TESTCASE		      LBS-LocMonDBNegative-0001
+
+
+START_TESTCASE                LBS-LocMonDBClear-0001
+//! @SYMTestCaseID              LBS-LocMonDBClear-0001
+//! @SYMTestCaseDesc            Verify that database dletion works
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1) Check DB Size
+//!				2) Save 100 records
+//!				3) Check DB Size
+//!				4) Clear database
+//!				5) Check DB size
+//!
+//! @SYMTestExpectedResults     1) Size returned
+//!				2) records saved
+//!				3) Size returned and is bigger than that in 1)
+//!				4) Method returns with no errors
+//!				5) Size returned and is exactly the same as in 1)
+//!
+//! @SYMTestType                UT
+//! @SYMCreationDate            19/01/2009
+RUN_TEST_STEP 5 te_lbslocationmonitordbsuite ClearStep
+END_TESTCASE		      LBS-LocMonDBClear-0001
+
+
+START_TESTCASE                LBS-LocMonDBReplace-0001
+//! @SYMTestCaseID              LBS-LocMonDBReplace-0001
+//! @SYMTestCaseDesc            Verify that positions with identical cell data overwrite each other
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1) Save GSM cell position
+//!				                2) Read GSM cell position
+//!				                3) Save GSM cell position with identical cell data but different position
+//!				                4) Read cell position
+//!								5) Save WCDMA cell similar to GSM cell
+//!								6) Retrieve GSM position (checking that not replaced by similar WCDMA)
+//!                             7) Retrieve WCDMA position
+//!                             8) Add a second WCDMA position with same network area as first
+//!                             9) Retrieve 2nd WCDMA position which has replaced the first 
+//!                             
+//!
+//! @SYMTestExpectedResults     1) Save returns with no errors
+//!				                2) Cell from 1) returned
+//!				                3) Save returns with no errors
+//!				                4) Cell from 3) returned
+//!                             5) WCDMA cell saved ok
+//!                             6) cell from 3) returned
+//!                             7) WCDMA position, cell from 5)
+//!                             8) Save returned without errors
+//!                             9) WCDMA cell and position from 8) returned
+//!                                
+//!
+//! @SYMTestType                UT
+//! @SYMCreationDate            19/01/2009
+RUN_TEST_STEP 5 te_lbslocationmonitordbsuite ReplaceStep
+END_TESTCASE		      LBS-LocMonDBReplace-0001
+
+// This test must be the last one executed in this test suite
+// as it creates the conditions for the next test
+// (te_lbslocationmonitordb2)
+//
+START_TESTCASE                  LBS-LocMonDBTimeStamp-0001
+//! @SYMTestCaseID              LBS-LocMonDBTimeStamp-0001
+//! @SYMTestCaseDesc            Verify that where a query matches multiple results, the most recent is returned
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1) Wait 1 micro second then save a GSM position
+//!				                2) Wait 1 micro second then save a GSM position
+//!				                3) Wait 1 micro second then save a GSM position
+//!                             4) Get last stored position
+//!                             5) wait one micro second and add a WCDMA position
+//! 				            6) Perform a query that matches both 1) and 2)
+//!				                7) Get last stored position
+//!
+//! @SYMTestExpectedResults     1) Save returns with no errors
+//!				                2) Save returns with no errors
+//!				                3) Save returns with no errors
+//!				                4) Position from 3) is returned
+//!				                5) save returns with no errors
+//!                             6) (GSM) position from 2) is returned
+//!                             7) WCDMA position from 5) is returned
+//!
+//! @SYMTestType                UT
+//! @SYMCreationDate            19/01/2009
+RUN_TEST_STEP 5 te_lbslocationmonitordbsuite TimeStampStep
+END_TESTCASE		      LBS-LocMonDBTimeStamp-0001
+
+// No other testcases to be added to this suite after this point.
+
+PRINT Complete_te_lbslocationmonitordbsuite_Tests
+
+

@@ -1,0 +1,147 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-BEARERMOBILITY
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+// Set up the comms database and start esock in preparation for the test
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\BearerMobility\BearerMobility_001.ced.cfg c:\BearerMobility_001.ced.cfg.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-Mobility-3901
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-Mobility-3901
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ1060
+//!@SYMAPI
+// TODO_CDG
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+// Create and connect socketserver and connectionserver instances
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CreateSockSvr
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\BearerMobility\Mobility_761406.ini ConnectSockSvr
+
+// Create and open a connection (conn1)
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CreateConn
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761406.ini OpenConn
+
+// Make most preferred available only
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini InitAvailability_1stPref
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini InitAvailability_2ndPref
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini InitAvailability_3rdPref
+
+// Start the connection which should connect on the most preferred only
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761406.ini StartConnOnSnap
+
+// Test data path
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CreateUDPSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini OpenSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini ConnectSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini SendReceiveSocket_1
+
+// Open mobility extension and register for events
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761406.ini OpenMobilityExtension
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+
+// Now make the other two bearers available and check that we are not offered any mobility
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini Make1stPrefAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini Make2ndPrefAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini Make3rdPrefAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckMobilityNotifs_1
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+
+// Now make the preferred become unavailable and check we are now offered mobility to the now most preferred
+// Perform the the migration and accept it
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini MakePreferredUnAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckMobilityNotif_1
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CloseSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite migratercommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761406.ini MigrateToPreferred
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckNewCarrierActive_1
+
+// Test data path again
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini OpenSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini ConnectSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini SendReceiveSocket_2
+
+RUN_TEST_STEP 100 te_esockteststepsSuite acceptcarrierrcommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761406.ini AcceptNewCarrier
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+
+// Now make the current carrier unavailable, expect preferred carrier available (the very least preferred) and migrate
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini Make2ndPrefUnavailable
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckMobilityNotif_2
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CloseSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite migratercommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761406.ini MigrateToPreferred
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckNewCarrierActive_3
+
+// Test data path again
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini OpenSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini ConnectSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini SendReceiveSocket_3
+
+RUN_TEST_STEP 100 te_esockteststepsSuite acceptcarrierrcommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761406.ini AcceptNewCarrier
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+
+// Now make the both the other bearers available (but make the 2nd pref available first) and ignore it
+// Now expect another preferred carrier available for our most preferred
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini Make2ndPrefAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761406.ini Make1stPrefAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckMobilityNotif_3
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini SendReceiveSocket_4
+RUN_TEST_STEP 100 te_esockteststepsSuite ignorercommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761406.ini IgnorePreferredCarrier
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini SendReceiveSocket_5
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckMobilityNotif_4
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CloseSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite migratercommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761406.ini MigrateToPreferred
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckNewCarrierActive_4
+
+// Test data path again (we should now be on the most preferred)
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini OpenSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini ConnectSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini SendReceiveSocket_6
+
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini RegisterForMobility
+RUN_TEST_STEP 100 te_esockteststepsSuite acceptcarrierrcommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761406.ini AcceptNewCarrier
+
+// Cancel outstanding notification after checking there are no outstanding notifs
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CheckMobilityNotif_5
+
+// Clean up what we used
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CloseSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CloseMobilityExtension
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CloseConn
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\BearerMobility\Mobility_761406.ini CloseSocketSvr
+END_TESTCASE			COMINF-ESOCK-RConnection-Mobility-3901
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed NET_BMOBILITY_761406
+
+
+

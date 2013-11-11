@@ -1,0 +1,119 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: 
+//
+//
+//! @file
+//! @SYMTestSuiteName multimedia-mmf-devsoundext-stress-automated-recording
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the CMMFDevSound
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: CMMFDevSound
+// The tests are fully automated.
+//
+
+
+
+LOAD_SUITE t_devsoundext
+
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-STRESS-AUTOMATED-RECORDING-0001
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-devsoundext-STRESS-AUTOMATED-RECORDING-0001
+//!@SYMAPI
+//!                CMMFDevSound::InitializeL(MDevSoundObserver{ref}, TFourCC, TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings{ref})
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities{ref})
+//!                CMMFDevSound::RecordInitL()
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::Stop()
+//!@SYMAuthor			myanez
+//!@SYMCreationDate		8/25/2008 
+//!@SYMTestCaseDesc		PoC call stress test
+//!@SYMTestActions
+//!                1. Create Devsound Instance1
+//!                2. Create Devsound Instance2 
+//!                3.Replace File1 ( Filename = {drive,mmc}\multimedia\mmf\devsound\Recording\PoCCallStressTest.amr)   
+//!                4. Initialize DevSound (Mode = EMMFStateRecording; FourCC = AMR)      
+//!                5. Set Priority (Priority = {Priority,PriorityPocCallUp} ; Preference = {PriorityPreference,PriorityPreferencePocCallUp} ; PriorityState=EMMFStateRecording) 
+//!                6. Capabilities1      
+//!                7. Set Configuration1 (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)          
+//!                8. Open File2 (Filename = {drive,mmc}\multimedia\mmf\devsound\amr-nb\AMRNB_8k_12.2kbps_mono_speech.amr)      
+//!                9. Initialize Devsound2 (InitializeMode = EInitializeFourCCMode; Mode = EMMFStatePlaying; FourCC = AMR)          
+//!                10. Set Priority2 (Priority = {Priority,PriorityPocCallDown} ; Preference = {PriorityPreference,PriorityPreferencePocCallDown} ;; PriorityState=EMMFStatePlaying)   
+//!                11. Capabilities2     
+//!                12. Set Configuration2 (Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)   
+//!                13. Start Record for 5 seconds         
+//!                14. Stop Record for 2 seconds       
+//!                15. Start Record for 3 seconds     
+//!                16. Stop Record for 4 seconds       
+//!                17. Start Play for 2 seconds         
+//!                18. Stop Play for 1 second      
+//!                19. Start Play for 5 seconds     
+//!                20. Stop Play           
+//!                21. Close File2       
+//!                22. Destroy Devsound Instance2       
+//!                23. Close File1           
+//!                24.Destroy Devsound Instance1
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Record one File with PocCallUp Priority and PocCallUp Preference.Play another File with PocCallDown Priority  and PocCallDown Preference. Stop , Record and Play both Files
+//!@SYMTestType			
+
+	START_TEST_BLOCK	60	t_devsoundext	\multimedia\mmf\devsound\multimedia-mmf-devsoundext-stress-automated-recording.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CMMFDevSound		devsound2
+		COMMAND		devsound1		NewL
+		COMMAND		devsound2		NewL
+		COMMAND		devsound1		ReplaceFile			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-ReplaceFile_command03
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-InitializeL_command04
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-SetPrioritySettings_command05
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-SetConfigL_command07
+		COMMAND		devsound2		OpenFile			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-OpenFile_command08
+		COMMAND		devsound2		InitializeL			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-InitializeL_command09
+        OUTSTANDING
+		COMMAND		devsound2		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-SetPrioritySettings_command10
+		COMMAND		devsound2		Capabilities
+		COMMAND		devsound2		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-Stress-Recording-0001-0001-SetConfigL_command12
+		COMMAND		devsound1		RecordInitL
+		ASYNC_DELAY  5000000 
+		COMMAND		devsound1		Stop
+		DELAY  2000000 
+		COMMAND		devsound1		RecordInitL
+		ASYNC_DELAY  3000000 
+		COMMAND		devsound1		Stop
+		DELAY  4000000 
+		COMMAND		devsound2		PlayInitL
+		ASYNC_DELAY  2000000 
+		COMMAND		devsound2		Stop
+		DELAY  1000000 
+		COMMAND		devsound2		PlayInitL
+		ASYNC_DELAY  5000000 
+		COMMAND		devsound2		Stop
+		COMMAND		devsound2		CloseFile
+		COMMAND		devsound2		~
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-STRESS-AUTOMATED-RECORDING-0001

@@ -1,0 +1,61 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         te_lbsbtgpsconfig_cap_localservices.script
+//! @SYMScriptTestEnvironment
+
+
+// Copy the test server exe onto the C drive (if its on the Z drive)
+RUN_UTILS CopyFile z:\sys\bin\te_lbsbtgpsconfig.exe c:\sys\bin\te_lbsbtgpsconfig.exe
+
+// LOCALSERVICES CAPABILITY
+
+// Use Setcap to change capabilities of harness (MASK = 00004000)
+RUN_PROGRAM -1 setcap c:\sys\bin\te_lbsbtgpsconfig.exe 00004000 te_lbsbtgpsconfig_sc.exe
+//Please don't ammend the following PRINT Line as it is used by CapToolSumm to generate its report
+PRINT ---- capabilities now set to [LocalServices] (MASK = 00004000) ----
+
+LOAD_SUITE te_lbsbtgpsconfig_sc -SharedData
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+PRINT Run te_lbsbtgpsconfig_cap_localservices
+
+START_TESTCASE                LBS-GPSPSYCONFIG-READONLY-0001
+//! @SYMTestCaseID              LBS-GPSPSYCONFIG-READONLY-0001
+//! @SYMTestCaseDesc            This tests that only the read-only functionality of the Bluetooth GPS PSY configuration API is available when the client has only the LocalServices capability.
+//! @SYMTestActions             (The device list should already be populated with some devices, from a previous test)
+//!                             1. Test that the number of devices can be retrieved, and is non zero.
+//!                             2. Test that the device list can be retrieved, and device information is present.
+//!                             3. Test that adding a device is not allowed.
+//!                             4. Test that removing a device is not allowed.
+//!                             5. Test that removing a non-existant device also returns KErrPermissionDenied, and not any other more specific error.
+//!                             6. Test that reordering a device within the list is not allowed.
+//!                             7. Test that reordering a non-existant device also returns KErrPermissionDenied, and not any other more specific error.
+//!                             8. Test that emptying the device list is not allowed.
+//!                             9. Test that the number of devices again and ensure it has remained the same.
+//!                             10. Check that no update notifications were received.
+//! @SYMTestExpectedResults     Only the read-only functionality of the API should be usable, all other calls should return KErrPermissionDenied.
+//! @SYMCreationDate            22/1/2009
+//! @SYMAuthor                  AndrewWedgbury
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 100 te_lbsbtgpsconfig_sc LbsBtGpsConfigStepReadOnly
+END_TESTCASE                  LBS-GPSPSYCONFIG-READONLY-0001
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+

@@ -1,0 +1,415 @@
+<?xml version="1.0"?>
+<!DOCTYPE SystemDefinition [
+ <!ELEMENT SystemDefinition (systemModel?, build?)>
+ <!ATTLIST SystemDefinition
+  name CDATA #REQUIRED
+  schema CDATA #REQUIRED>
+ <!ELEMENT systemModel (layer+)>
+ <!ELEMENT layer (logicalset* | module*)*>
+ <!ATTLIST layer
+  name CDATA #REQUIRED
+  levels CDATA #IMPLIED
+  span CDATA #IMPLIED>
+ <!ELEMENT logicalset (logicalsubset* | module* | unit* | package* | prebuilt*)*>
+ <!ATTLIST logicalset 
+  name CDATA #REQUIRED
+  levels CDATA #IMPLIED  
+  span CDATA #IMPLIED
+  level CDATA #IMPLIED>
+ <!ELEMENT logicalsubset (module* | unit* | package* | prebuilt*)*>
+ <!ATTLIST logicalsubset name CDATA #REQUIRED>
+ <!ELEMENT module (component* | unit* | package* | prebuilt*)*>
+ <!ATTLIST module
+  name CDATA #REQUIRED
+  level CDATA #IMPLIED>
+ <!ELEMENT component (unit* | package* | prebuilt*)*>
+ <!ATTLIST component name CDATA #REQUIRED>
+ <!ELEMENT unit EMPTY>
+ <!ATTLIST unit
+  unitID ID #REQUIRED
+  name CDATA #REQUIRED
+  mrp CDATA #REQUIRED
+  filter CDATA #IMPLIED
+  bldFile CDATA #REQUIRED
+  priority CDATA #IMPLIED
+  contract CDATA #IMPLIED>
+ <!ELEMENT package EMPTY>
+ <!ATTLIST package
+  name CDATA #REQUIRED
+  mrp CDATA #REQUIRED
+  filter CDATA #IMPLIED
+  contract CDATA #IMPLIED>
+ <!ELEMENT prebuilt EMPTY>
+ <!ATTLIST prebuilt
+  name CDATA #REQUIRED
+  version CDATA #REQUIRED
+  late (Y|N) #IMPLIED
+  filter CDATA #IMPLIED
+  contract CDATA #IMPLIED>
+ <!ELEMENT build (option* | target+ | targetList+ | unitList+ | configuration+)*>
+ <!ELEMENT unitList (unitRef+)>
+ <!ATTLIST unitList
+  name ID #REQUIRED
+  description CDATA #REQUIRED>
+ <!ELEMENT unitRef EMPTY>
+ <!ATTLIST unitRef unit IDREF #REQUIRED>
+ <!ELEMENT targetList EMPTY>
+ <!ATTLIST targetList
+  name ID #REQUIRED
+  description CDATA #REQUIRED
+  target IDREFS #REQUIRED>
+ <!ELEMENT target EMPTY>
+ <!ATTLIST target
+  name ID #REQUIRED
+  abldTarget CDATA #REQUIRED
+  description CDATA #REQUIRED>
+ <!ELEMENT option EMPTY>
+ <!ATTLIST option
+  name ID #REQUIRED
+  abldOption CDATA #REQUIRED
+  description CDATA #REQUIRED
+  enable (Y | N | y | n) #REQUIRED>
+ <!ELEMENT configuration (unitListRef+ | layerRef+ | task+)*>
+ <!ATTLIST configuration
+  name ID #REQUIRED
+  description CDATA #REQUIRED
+  filter CDATA #REQUIRED>
+ <!ELEMENT task ( unitListRef* , (buildLayer | specialInstructions))>
+ <!ELEMENT unitListRef EMPTY>
+ <!ATTLIST unitListRef unitList IDREF #REQUIRED>
+ <!ELEMENT layerRef EMPTY>
+ <!ATTLIST layerRef layerName CDATA #REQUIRED>
+ <!ELEMENT buildLayer EMPTY>
+ <!ATTLIST buildLayer
+  command CDATA #REQUIRED
+  targetList IDREFS #IMPLIED
+  unitParallel (Y | N | y | n) #REQUIRED
+  targetParallel (Y | N | y | n) #IMPLIED>
+ <!ELEMENT specialInstructions EMPTY>
+ <!ATTLIST specialInstructions
+  name CDATA #REQUIRED
+  cwd CDATA #REQUIRED
+  command CDATA #REQUIRED>
+ <!ENTITY layer_real_source_path "/sf/os/lbs" >
+]>
+<SystemDefinition name="LBS" schema="1.4.0">
+  <systemModel>
+		<layer name="os_layer">
+			<module name="Location Management">
+				<unit name="LocationMonitor" unitID="lsdo.locmonitor" bldFile="sf\os\lbs\locationmgmt\locmonitor\lbslocmonitorserver\group" mrp="sf\os\lbs\locationmgmt\locmonitor\lbslocmonitorserver\group\lbs_locationmonitor.mrp"/>
+				<unit name="A-GPS Location Manager" unitID="lsdo.agpslocationmgr" bldFile="sf\os\lbs\locationmgmt\agpslocationmgr\group" mrp="sf\os\lbs\locationmgmt\agpslocationmgr\group\lbs_agpslocationmanager.mrp"/>
+				<unit name="Network Location Manager" unitID="lsdo.networklocationmgr" bldFile="sf\os\lbs\locationmgmt\networklocationmgr\group" mrp="sf\os\lbs\locationmgmt\networklocationmgr\group\lbs_networklocationmanager.mrp"/>
+				<unit name="Location Core" unitID="lsdo.locationcore" bldFile="sf\os\lbs\locationmgmt\locationcore\group" mrp="sf\os\lbs\locationmgmt\locationcore\group\lbs_admin.mrp"/>
+				<unit name="Network Gateway" unitID="lsdo.networkgateway" bldFile="sf\os\lbs\locationmgmt\networkgateway\group" mrp="sf\os\lbs\locationmgmt\networkgateway\group\lbs_networkgateway.mrp"/>
+			</module>
+	
+			<module name="Generic Positioning Plugins">
+				<unit name="Default Positioning Module" unitID="lsdo.defaultpositioningmodule" bldFile="sf\os\lbs\datasourcemodules\defaultpositioningmodule\group" mrp="sf\os\lbs\datasourcemodules\defaultpositioningmodule\group\lbs_default_positioning_module.mrp"/>
+				<unit name="Bluetooth GPS Positioning Module" unitID="lsdo.bluetoothgpspositioningmodule" bldFile="sf\os\lbs\datasourcemodules\bluetoothgpspositioningmodule\group" mrp="sf\os\lbs\datasourcemodules\bluetoothgpspositioningmodule\group\lbs_bt_positioning_module.mrp"/>
+				<unit name="Simulation Positioning Module" unitID="lsdo.simulationpositioningmodule" bldFile="sf\os\lbs\datasourcemodules\simulationpositioningmodule\group" mrp="sf\os\lbs\datasourcemodules\simulationpositioningmodule\group\lbs_simulation_positioning_module.mrp"/>
+				<unit name="GPS/A-GPS Positioning Module" unitID="lsdo.gpspositioningmodule" bldFile="sf\os\lbs\datasourcemodules\gpspositioningmodule\group" mrp="sf\os\lbs\datasourcemodules\locationcore\group\lbs_agps_positioning_module.mrp"/>
+				<unit name="Network Positioning Module" unitID="lsdo.networkpositioningmodule" bldFile="sf\os\lbs\datasourcemodules\networkpositioningmodule\group" mrp="sf\os\lbs\datasourcemodules\networkpositioningmodule\group\lbs_network_positioning_module.mrp"/>
+				<unit name="APE SUPL Positioning Module" unitID="lsdo.locationapesuplpsy" bldFile="sf\os\lbs\datasourcemodules\locationapesuplpsy\group" mrp="sf\os\lbs\datasourcemodules\locationapesuplpsy\group\lbs_ape_supl_positioning_module.mrp"/>
+			</module>
+	
+			<module name="Data Source Adaptation">
+				<unit name="GPS Data Source Adaptation" unitID="lsdo.gpsdatasourceadaptation" bldFile="sf\os\lbs\datasourceadaptation\gpsdatasourceadaptation\group" mrp="sf\os\lbs\datasourceadaptation\gpsdatasourceadaptation\group\lbs_gps_data_source_adaptation.mrp"/>
+			</module>
+	
+			<module name="Location Request Management">
+				<unit name="Location Server" unitID="lsdo.locationserver" bldFile="sf\os\lbs\locationrequestmgmt\locationserver\group" mrp="sf\os\lbs\locationrequestmgmt\locationserver\group\lbs_locationserver.mrp"/>
+				<unit name="Network Request Handler" unitID="lsdo.networkrequesthandler" bldFile="sf\os\lbs\locationrequestmgmt\networkrequesthandler\group" mrp="sf\os\lbs\locationrequestmgmt\networkrequesthandler\group\lbs_networkrequesthandler.mrp"/>
+			</module>
+	
+			<module name="Network Protocol Modules">
+				<unit name="Privacy Protocol Module" unitID="lsdo.privacyprotocolmodule" bldFile="sf\os\lbs\networkprotocolmodules\privacyprotocolmodule\group" mrp="sf\os\lbs\networkprotocolmodules\privacyprotocolmodule\group\lbs_privacyprotocolmodule.mrp"/>
+				<unit name="SUPL Proxy Protocol Module" unitID="lsdo.suplproxyprotocolmodule" bldFile="sf\os\lbs\networkprotocolmodules\suplproxyprotocolmodule\group" mrp="sf\os\lbs\networkprotocolmodules\suplproxyprotocolmodule\group\lbs_suplproxyprotocolmodule.mrp"/>
+			</module>
+			
+			<module name="Locating Services Tests">
+				<unit name="Locating Services Tests" unitID="lsdo.locatingservicetests" bldFile="sf\os\lbs\lbstest\locationprotocoltest\group" mrp="sf\os\lbs\lbstest\locationprotocoltest\group\lbs_networktest.mrp"/>
+			</module>
+						
+			<module name="items NOT contained within package_definition.xml">
+				<!--	temp: can't build for now as lives in mw (sf\mw\locationsrv\genericpositioningplugins\locationnpppsy\group)
+				<unit name="NPP PSY" unitID="lsdo.npppsy" bldFile="sf\os\lbs\datasourcemodules\locationnpppsy\group" mrp=""/>
+				-->
+				<unit name="SUPL PSY" unitID="lsdo.suplpsy" bldFile="sf\os\lbs\datasourcemodules\locationapesuplpsy\group" mrp=""/>
+				<unit name="SUPL Protocol Module" unitID="lsdo.suplprotocolmodule" bldFile="sf\os\lbs\networkprotocolmodules\suplprotocolmodule\group" mrp="sf\os\lbs\networkprotocolmodules\suplprotocolmodule\group\lbs_suplprotocolmodule.mrp"/>
+				<!-- lrm: temp. Need to build this to export the hacked version that logs in urel -->
+				<unit name="SUPL DEV LOGGER" unitID="lsdo.supldevlogger" bldFile="sf\os\lbs\networkprotocolmodules\networkpmutils\supldevlogger\group" mrp=""/>					
+			</module>						
+								
+	 	</layer> <!-- os_layer-->
+
+
+	 	<layer name="api_test_layer">
+	 		
+			<!-- The following test components just need to be built (hence lbs_testhelpers build filter rather than a rom filter) -->
+			
+			<!-- test utilities -->	
+			<module name="LBS Test Utils">			
+				<unit name="lbstestutils" unitID="lsdo.testutils.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbstestutils\group" mrp="" filter="lbs_testhelpers" />
+			</module>
+			
+			<module name="LBS Test Channel"> <!-- lbstestutils needs this to be built -->		
+				<unit name="lbstestchannel" unitID="lsdo.testchannel.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbstestchannel\group" mrp="" filter="lbs_testhelpers" />
+			</module>							
+			
+			<module name="Location Protocol Test Components">		
+				<unit name="lbsnetworktest" unitID="lsdo.lbsnetworktest.test" bldFile="sf\os\lbs\lbstest\locationprotocoltest\group" mrp="" filter="lbs_testhelpers" />
+			</module>
+						
+			<module name="Test AGPS Module">		
+				<unit name="ctagpsmodule" unitID="lsdo.testagpsmod.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\agpsmodule\group" mrp="" filter="lbs_testhelpers" />
+			</module>			
+			
+			<module name="Test AGPS Hybrid Module">		
+				<unit name="ctagpshybridmodule" unitID="lsdo.testagpshybridmod.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\agpshybridmodule\group" mrp="" filter="lbs_testhelpers" />
+			</module>			
+			
+			<module name="Simple Assistance Provider">			
+				<unit name="ctsimpleprovider" unitID="lsdo.simpleprovider.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\agpsdataproviders\simpleprovider\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+			
+			<module name="Supl Assistance Provider">			
+				<unit name="suplprovider" unitID="lsdo.suplprovider.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\agpsdataproviders\suplprovider\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+			
+			<module name="LBS Test Server">			
+				<unit name="lbstestserver" unitID="lsdo.lbstestserver.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\internal\lbstestserver\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+				
+			<module name="Developer Log Control">		
+				<unit name="t_devlogcontrol" unitID="lsdo.devlogcontrol.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\internal\devlogcontrol\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+																						
+			<module name="BT GPS Simulator">		
+				<unit name="btgpssim" unitID="lsdo.btgpssim.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\internal\btgpssim\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+			
+			<module name="Internal Test Utils">		
+				<unit name="te_lbstestutils" unitID="lsdo.internaltestutils.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\internal\lbstestutils\group" mrp="" filter="lbs_testhelpers" />
+			</module>							
+					
+			<module name="Privacy FW Support">			
+				<unit name="lbsprivacyfwsupport" unitID="lsdo.lbsprivacyfw.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsprivacyfw\group" mrp="" filter="lbs_testhelpers" />
+			</module>							
+					
+			<module name="Network Simulator">	
+				<unit name="netsim" unitID="lsdo.netsim.test" bldFile="sf\os\lbs\networkprotocolmodules\networkprotocolmodule\LbsNetSim\group" mrp="" filter="lbs_testhelpers" />
+			</module>
+		
+			<module name="SUPL Utils">			
+				<unit name="suplutils" unitID="lsdo.suplutils.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\tools\suplutils\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+			
+			<module name="TMG (SUPL Message Generator)">			
+				<unit name="tmg" unitID="lsdo.tmg.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\tools\tmg\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+			
+			<module name="PSY Tester PSYs">			
+				<unit name="psytestertestpsys" unitID="lsdo.psytestertestpsys.test" bldFile="sf\os\lbs\datasourceadaptation\gpsdatasourceadaptation\psytester\test\testpsys\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+			
+			<module name="CenRep Stub Sis">	
+				<!-- allows .cre installation for test psys -->		
+				<unit name="cenrepstubsisrom" unitID="lsdo.cenrepstubsisrom.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\common\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+	
+			<module name="S60 Privacy FW">			
+				<unit name="nilelbsplugin" unitID="lsdo.nilelbsplugin.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\s60privacyfw\group" mrp="" filter="lbs_testhelpers" />
+			</module>	
+			
+			<!-- these seem to be needed by sppm integration test -->
+			<module name="GetAFixUtils"> 
+				<unit name="getafixutils" unitID="lsdo.getafixutils.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\hybridprotocolmodule\group" mrp="" filter="lbs_testhelpers" />
+			</module>		
+			
+			<!-- Needed for the GPS, AGPS & NET PSY unit tests-->
+			<module name="Generic PSY Test"> 
+				<unit name="te_lbsgenericpsytest" unitID="lsdo.lbsgenericpsytest.test" bldFile="sf\os\lbs\datasourceadaptation\gpsdatasourceadaptation\common\test\lbsgenericpsytest\group" mrp="" filter="lbs_testhelpers" />
+			</module>					
+			<!--Added for te_lbsnrhsuite2 -->
+			<module name="Test NRH"> 
+				<unit name="testNRH" unitID="lsdo.testNRH.test" bldFile="sf\os\lbs\locationrequestmgmt\networkrequesthandler\test\group" mrp="" filter="lbs_testhelpers" />
+			</module>					
+			
+			<!-- Tests -->
+	
+			<!-- General Unit Test ROM -->		
+			<module name="LBS Unit ROM Tests">		
+				<!-- Loc Monitor Unit Tests -->
+				<!-- moved below (need integ rom?) <unit name="locmontests" unitID="lsdo.locmontests" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\group" mrp="" filter="lbs_integtest_rom" /> 			 -->
+				
+				<!-- Misc1 Unit Tests -->
+				<unit name="te_lbsadminsuite" unitID="lsdo.adminsuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\test\group" mrp="" filter="lbs_integtest_rom"/>				
+				<unit name="te_lbsassistancedatasuite" unitID="lsdo.assistancedatasuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsassistancedata\test\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsapisuite" unitID="lsdo.clientapisuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsclient\lbsapi\test\te_lbsapi\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsdebugsuite" unitID="lsdo.debugtestsuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsdebug\test\te_lbsdebug\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsinternalapitestsuite" unitID="lsdo.internalapisuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsinternalapi\te_lbsinternalapitest\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbslogger" unitID="lsdo.loggersuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbslogging\te_lbslogging\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsnetinternaltestsuite" unitID="lsdo.netinternalapisuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsnetinternalapi\test\te_lbsnetinternaltest\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_defproxysuite" unitID="lsdo.defproxysuite.unit.test" bldFile="sf\os\lbs\datasourcemodules\defaultpositioningmodule\test\te_defproxy\group" mrp="" filter="lbs_integtest_rom" />	
+				<unit name="lbsnetgatewayprotocoltest" unitID="lsdo.netprotocol.test" bldFile="sf\os\lbs\locationmgmt\networkgateway\test\netprotocoltest\group" mrp="" filter="lbs_testhelpers" />				
+				<unit name="te_netgatewaysuite" unitID="lsdo.netgatewaysuite.unit.test" bldFile="sf\os\lbs\locationmgmt\networkgateway\test\te_lbsnetgateway\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_locindicatorlibsuite" unitID="lsdo.locindicatorlibsuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbslocindicatorlib\test\te_locindicatorlib\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_locsrvsuite" unitID="lsdo.locsrvsuite.unit.test" bldFile="sf\os\lbs\locationrequestmgmt\locationserver\test\te_locsrv\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_qualityprofilesuite" unitID="lsdo.qualityprofilesuite.unit.test" bldFile="sf\os\lbs\locationrequestmgmt\locationserver\LbsQualityProfileApi\test\te_QualityProfileApiSuite\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="examplelocationconverter" unitID="lsdo.examplelocationconverter.unit" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\examplelocationconverter\group" mrp="" filter="lbs_testhelpers" />				
+				<unit name="testlocationconverter" unitID="lsdo.testlocationconverter.unit" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\testlocationconverter\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="testlocationconverter2" unitID="lsdo.testlocationconverter2.unit" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\testlocationconverter2\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="testlocationconverter3" unitID="lsdo.testlocationconverter3.unit" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\testlocationconverter3\group" mrp="" filter="lbs_testhelpers" />				
+				<unit name="locinfoconversionunittest" unitID="lsdo.locinfoconversionunittest.unit" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\locinfoconversionunittest\group" mrp="" filter="lbs_testhelpers" />				
+				<unit name="te_geolocmonitorsuite" unitID="lsdo.geolocmonitorsuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\te_geolocmonitorsuite\group" mrp="" filter="lbs_integtest_rom" />				
+				<unit name="te_lbslocationinfoconverter" unitID="lsdo.lbslocationinfoconverter.unit.test" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\te_lbslocationinforconvertertef\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbspositioningstatus" unitID="lsdo.lbspositioningstatus.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbspositioningstatus\test\te_lbspositioningstatus\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_agpsmanagersuite" unitID="lsdo.agpsmanagersuite.unit.test" bldFile="sf\os\lbs\locationmgmt\agpslocationmgr\test\te_agpsmanagersuite\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsagpspsysuite" unitID="lsdo.lbsagpspsysuite.unit.test" bldFile="sf\os\lbs\datasourcemodules\gpspositioningmodule\lbsagpspsy\test\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsgpspsysuite" unitID="lsdo.lbsgpspsysuite.unit.test" bldFile="sf\os\lbs\datasourcemodules\gpspositioningmodule\lbsgpspsy\test\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsnetpsysuite" unitID="lsdo.lbsnetpsysuite.unit.test" bldFile="sf\os\lbs\datasourcemodules\networkpositioningmodule\test\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsnetworklocationmanager" unitID="lsdo.lbsnetworklocationmanager.unit.test" bldFile="sf\os\lbs\locationmgmt\networklocationmgr\te_LbsNetworkLocationManager\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsnrhsuite2" unitID="lsdo.lbsnrhsuite.unit.test" bldFile="sf\os\lbs\locationrequestmgmt\networkrequesthandler\test\te_lbsnrhsuite2\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- Misc2 Unit Tests -->
+				<unit name="te_lbsadatacachetestsuite" unitID="lsdo.datacachesuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsadatacache\test\te_lbsadatacachetest\group" mrp="" filter="lbs_integtest_rom" />								
+				<unit name="te_lbsnetregstatusinttestsuite" unitID="lsdo.netregstatusintsuite.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsnetregstatusint\test\te_lbsnetregstatusinttest\group" mrp="" filter="lbs_integtest_rom" />					
+				<unit name="te_lbsreffnpinttestsuite" unitID="lsdo.reffnpintsuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsreffnpint\test\te_lbsreffnpinttest\group" mrp="" filter="lbs_integtest_rom" />	
+				<unit name="te_lbsrootapitestsuite" unitID="lsdo.srootapisuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsrootapi\test\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbssimulationpsysuite" unitID="lsdo.simulationpsysuite.unit.test" bldFile="sf\os\lbs\datasourcemodules\simulationpositioningmodule\test\te_lbssimulationpsy\group" mrp="" filter="lbs_integtest_rom" />					
+				<unit name="te_settingsmanager" unitID="lsdo.settingsmanagersuite.unit.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\ut\lbsgpsdatasourcemodules\lbslocbtgpspsy\te_settingsmanager\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_protocolsuite" unitID="lsdo.protocolsuite.unit.test" bldFile="sf\os\lbs\datasourcemodules\agpsintegrationmodule\sirf\test\te_protocol\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_sirfgpsmainlogicsuite" unitID="lsdo.sirfgpsmainlogicsuite.unit.test" bldFile="sf\os\lbs\datasourcemodules\agpsintegrationmodule\sirf\test\te_sirfgpsmainlogic\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="test_lbsgpsmodule" unitID="lsdo.test_lbsgpsmodule.unit" bldFile="sf\os\lbs\locationmgmt\agpslocationmgr\test\test_lbsgpsmodule\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="test_lbsagpsmanager" unitID="lsdo.test_lbsagpsmanager.unit" bldFile="sf\os\lbs\locationmgmt\agpslocationmgr\test\test_lbsagpsmanager\group" mrp="" filter="lbs_testhelpers" />				
+				<unit name="te_mansuite" unitID="lsdo.mansuite.unit.test" bldFile="sf\os\lbs\locationmgmt\agpslocationmgr\test\te_man\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_testprotocolmodulesuite" unitID="lsdo.testprotocolmodulesuite.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\networkprotocolmodule\lbsprotocolmodule\test\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="tsuplasn1" unitID="lsdo.suplasn1.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\networkprotocolmodule\suplasn1\test\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- removing since not run on BATs: <unit name="te_processlaunchtestsuite" unitID="lsdo.processlaunchsuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locationcore\lbsloccommon\serverframework\te_processlaunchtest\group" mrp="" filter="lbs_integtest_rom" />	-->	
+				<!-- sppm_unit -->
+				<unit name="te_sppm_dummynetgateway" unitID="lsdo.sppm_dummynetgateway.unit" bldFile="sf\os\lbs\networkprotocolmodules\suplproxyprotocolmodule\test\te_sppm_dummynetgateway\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="te_terminalplugin" unitID="lsdo.terminalplugin.unit" bldFile="sf\os\lbs\networkprotocolmodules\suplproxyprotocolmodule\test\te_terminalplugin\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="te_sppm_reflocplugin" unitID="lsdo.sppm_reflocplugin.unit" bldFile="sf\os\lbs\networkprotocolmodules\suplproxyprotocolmodule\test\te_sppm_reflocplugin\group" mrp="" filter="lbs_testhelpers" />				
+				<unit name="te_suplproxypmsuite" unitID="lsdo.suplproxypmsuite.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\suplproxyprotocolmodule\test\te_suplproxyprotocolmodule\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- supl unit tests -->
+				<!-- temporarily removed since the packages no longer exist here (networkprotocolmodules was restructured), awaiting new packages
+				<unit name="suplspoofserver" unitID="lsdo.suplspoofserver.unit" bldFile="sf\os\lbs\networkprotocolmodules\common\test\suplspoofserver\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="t_lbshostsettingssupl" unitID="lsdo.lbshostsettingssupl.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\suplprotocolmodule\hostsettingsapi\test\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_suplrrlpasnsuite" unitID="lsdo.suplrrlpasnsuite.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\common\suplrrlpasn1\test\te_suplrrlpasn\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_suplconnectionmanagersuite" unitID="lsdo.suplconnectionmanagersuite.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\suplprotocolmodule\suplconnectionmanager\test\te_suplconnectionmanager\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_suplrrlpsuite" unitID="lsdo.suplrrlpsuite.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\suplcontrolplaneprotocols\common\suplrrlpprotocol\test\te_suplrrlp\group" mrp="" filter="lbs_integtest_rom" />
+				-->
+			</module>					
+				
+				
+			<!-- Privacy Test ROM -->
+			<module name="Privacy ROM Tests">	
+				<!-- privacy ut -->
+				<unit name="te_dummynetgateway" unitID="lsdo.dummynetgateway.test" bldFile="\sf\os\lbs\networkprotocolmodules\privacyprotocolmodule\test\te_dummynetgateway\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="te_networkprivacysuite" unitID="lsdo.networkprivacysuite.unit.test" bldFile="sf\os\lbs\networkprotocolmodules\privacyprotocolmodule\test\te_lbsnetworkprivacy\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- privacy cit -->
+				<unit name="lbsprivacyfwsupport" unitID="lsdo.lbsprivacyfwsupport.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsprivacyfw\group" mrp="" filter="lbs_testhelpers" />			
+				<unit name="ctlbsprivfwtestserver" unitID="lsdo.lbsprivfwtestserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsprivacyfw\lbsprivfwtest\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- <unit name="lbsprivacyfwsupport" unitID="lsdo.lbsprivacyfwsupport.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsprivacyfw\group" mrp="" filter="lbs_integtest_rom" />							 -->
+				<!-- standalone privacy cit removed -->
+				<!-- full rom suite -->
+				<unit name="ctlbsromsuitetestserver" unitID="lsdo.ctlbsromsuitetestserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsromspecificsuites\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- privacy_ut_in_cit -->
+				<unit name="lbsprivfwcap" unitID="lsdo.lbsprivfwcap.integ.test" bldFile="sf\os\lbs\networkprotocolmodules\privacyprotocolmodule\test\te_lbsprivfwcap\group" mrp="" filter="lbs_integtest_rom" />
+			</module>				
+			
+			<!-- 'Integ' ROM -->
+			<!--<module name="Integ ROM Tests">	temp: split integ tests into separate ATS drops to yield faster results while debugging -->
+				<!-- sppm cit -->
+				<module name="SPPM CIT">
+				<!-- <unit name="testqnnplugin" unitID="lsdo.testqnnplugin.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\suplproxy\testqnnplugin\group" mrp="" filter="lbs_testhelpers" /> -->
+				<unit name="ctlbssuplproxyserver" unitID="lsdo.ctlbssuplproxyserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\suplproxy\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+				<!-- client cit -->
+				<module name="client CIT">
+				<unit name="lbstestpsys" unitID="lsdo.lbstestpsys.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbstestpsys\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="ctlbsclientserver" unitID="lsdo.ctlbsclientserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsclient\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+				<!-- supl cit -->
+				<module name="supl CIT">
+				<unit name="supltools" unitID="lsdo.supltools.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="suplmolrtestserver" unitID="lsdo.suplmolrtestserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\molr\simulation\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="suplmtlrtestserver" unitID="lsdo.suplmtlrtestserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\mtlr\simulation\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="suplomatestserver" unitID="lsdo.suplomatestserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\omaconformance\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="suplrealmolrtestserver" unitID="lsdo.suplrealmolrtestserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\molr\real\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="suplrealmtlrtestserver" unitID="lsdo.suplrealmtlrtestserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\supl\mtlr\real\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+				<!-- hybrid cit -->
+				<module name="hybrid CIT">
+				<unit name="lbsnetextendedprotocolproxy" unitID="lsdo.lbsnetextendedprotocolproxy.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\extendedprotocolmodule\group" mrp="" filter="lbs_testhelpers" />
+				<unit name="ctlbshybridcombinedserver" unitID="lsdo.ctlbshybridcombinedserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbshybridcombined\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbshybridmolrserver" unitID="lsdo.ctlbshybridmolrserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbshybridmolr\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbshybridmtlrserver" unitID="lsdo.ctlbshybridmtlrserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbshybridmtlr\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbshybridmultipleserver" unitID="lsdo.ctlbshybridmultipleserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbshybridmultiple\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbshybridx3pserver" unitID="lsdo.ctlbshybridx3pserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbshybridx3p\group" mrp="" filter="lbs_integtest_rom" />	
+				</module>
+				<!-- misc cit -->
+				<module name="misc CIT">
+				<!-- backuprestore temporarily commented out while running all tests on NCP since it has MW component dependency (BURTestserver.exe)-->
+				<!-- <unit name="te_lbsbackuprestoresuite" unitID="lsdo.te_lbsbackuprestoresuite.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsbackuprestore\group" mrp="" filter="lbs_integtest_rom" /> -->
+				<unit name="lbscalculation" unitID="lsdo.lbscalculation.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbscalculation\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbsclockserver" unitID="lsdo.ctlbsclockserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsclock\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbsextendedmtlrserver" unitID="lsdo.ctlbsextendedmtlrserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsextendedmtlr\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbsmtlrserver" unitID="lsdo.ctlbsmtlrserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsmtlr\group" mrp="" filter="lbs_integtest_rom" />		
+				<unit name="ctlbsptbmtlrserver" unitID="lsdo.ctlbsptbmtlrserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsptbmtlr\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="simulationpsytests" unitID="lsdo.simulationpsytests.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbssimulationpsy\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbsx3pserver" unitID="lsdo.ctlbsx3pserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsx3p\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbsassdataserver" unitID="lsdo.ctlbsassdataserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsassdata\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+				<!-- bluetooth ut -->
+				<module name="bluetooth UT">
+				<!-- temp: te_lbsbtgpspsy removed until tests updated since there is a techview dependency (btuiutility.lib)-->
+				<unit name="te_lbsbtgpspsy" unitID="lsdo.lbsbtgpspsy.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\ut\lbsgpsdatasourcemodules\lbslocbtgpspsy\te_lbsbtgpspsy\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="te_lbsbtgpsconfig" unitID="lsdo.lbsbtgpsconfig.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\ut\lbsgpsdatasourcemodules\lbslocbtgpspsy\te_lbsbtgpsconfig\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+				<!-- Bluetooth "Casira" Tests -->		
+				<module name="Bluetooth 'Casira' Tests">			
+				<!-- removed since not expected to work on Vasco (no way to plug in a casira)-->
+				<unit name="ctlbsbtgpspsytestserver" unitID="lsdo.ctlbsbtgpspsytestserver.unit.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\cit\basic\lbsbtgpspsy\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+			    
+				<!-- agpshaivalidate cit -->
+				<module name="Agpshaivalidate CIT">
+				<unit name="ctlbsagpshaiassdata" unitID="lsdo.ctlbsagpshaiassdata.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\agpshaivalidate\lbsagpshaiassdata\group" mrp="" filter="lbs_integtest_rom" />
+				<unit name="ctlbsagpshaivalidateserver" unitID="lsdo.ctlbsagpshaivalidateserver.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\agpshaivalidate\lbsagpshaivalidate\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+				
+				<!-- sis install tests -->
+				<module name="SisInstall Tests">
+				<unit name="lbssisinstall" unitID="lsdo.lbssisinstall.integ.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbssisinstall\group" mrp="" filter="lbs_integtest_rom" />
+				</module>
+								
+			<module name="Location Monitor Unit Tests (no watcher)">	
+				<!-- locsrv locmon ut -->
+				<unit name="te_locsrvtestlocmonsuite" unitID="lsdo.locsrvtestlocmonsuite.unit.test" bldFile="sf\os\lbs\locationrequestmgmt\locationserver\test\te_locsrvtestlocmonsuite\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- locmon db ut -->
+				<unit name="te_lbslocationmonitordb" unitID="lsdo.lbslocationmonitordb.unit.test" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\te_lbslocmonitordbsuite\group" mrp="" filter="lbs_integtest_rom" />
+				<!-- locmon ut -->
+				<unit name="te_locmonitorsuite" unitID="lsdo.lbslocmonitorsuite.unit.test" bldFile="sf\os\lbs\locationmgmt\locmonitor\test\te_locmonitorsuite\group" mrp="" filter="lbs_integtest_rom" />				
+			</module>	
+							
+			<!-- removed until these ROMs are created
+			<module name="Feature Manager All PSYs ROM">	
+				<unit name="ctlbsfeaturesserver" unitID="lsdo.ctlbsfeaturesserver.unit.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsfeatures\group" mrp="" filter="lbs_signaccallpsys_rom" />
+			</module>	
+			<module name="Feature Manager No PSYs ROM">	
+				<unit name="ctlbsfeaturesserver" unitID="lsdo.ctlbsfeaturesserver.unit.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsfeatures\group" mrp="" filter="lbs_lbsignaccnopsys_rom" />
+			</module>	
+			<module name="Feature Manager Auto PSY AGPS PSY ROM">	
+				<unit name="ctlbsfeaturesserver" unitID="lsdo.ctlbsfeaturesserver.unit.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsfeatures\group" mrp="" filter="lbs_lbsignaccautopsyagpspsy_rom" />
+			</module>	
+			<module name="Feature Manager Auto PSY NET PSY ROM">	
+				<unit name="ctlbsfeaturesserver" unitID="lsdo.ctlbsfeaturesserver.unit.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsfeatures\group" mrp="" filter="lbs_lbsignaccautopsynetpsy_rom" />
+			</module>	
+			<module name="Feature Manager FB PSY AGPS PSY ROM">	
+				<unit name="ctlbsfeaturesserver" unitID="lsdo.ctlbsfeaturesserver.unit.test" bldFile="sf\os\lbs\lbstest\lbstestproduct\lbsfeatures\group" mrp="" filter="lbs_lbsignaccfbpsyagpspsy_rom" />
+			</module>														
+			-->
+					
+		</layer>	<!-- api test layer-->
+  </systemModel>
+</SystemDefinition>

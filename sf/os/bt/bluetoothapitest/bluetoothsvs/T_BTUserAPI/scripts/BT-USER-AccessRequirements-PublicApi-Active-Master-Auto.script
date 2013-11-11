@@ -1,0 +1,160 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the TBTAccessRequirements class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Cliff Chuang
+//! @SYMCreationDate			21/09/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	UCCControlTE
+LOAD_SUITE	T_BTUserAPI	-SharedData
+DELAY		2000
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini BuildRunAccessAutoPassiveSlave
+
+DELAY		20000
+// ****************************************************************************
+// TBTAccessRequirements Master
+// ****************************************************************************
+
+START_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-Auto-0001
+//! @SYMTestCaseID				BT-USER-AccessRequirements-PublicApi-Active-Master-Auto-0001
+//! @SYMAPI						CBluetoothSocket, TBTDevAddr, RHostResolver, TRfcommSockAddr, TBTAccessRequirements, TBTServiceSecurity
+//! @SYMTestCaseDesc			Open a connection to a specific Bluetooth device
+//!								Set SetEncryption() to FALSE
+//!								Set SetDenied() to FALSE
+//!								Set SetPasskeyMinLength() to 4
+//!								Set SetAuthentication() to FALSE
+//!								Set SetAuthorisation() to FALSE
+//!								Connection creates with those setting successfully and test case passes without any error.
+//!								Uses API elements: 	NewL()1, Connect()1 and Shutdown() from CBluetoothSocket
+//!													TBTDevAddr() from TBTDevAddr
+//!													Open(), SetHostName(), GetDeviceAddress() from RHostResolver
+//!													TRfcommSockAddr(), SetSecurity(), SetBTAddr(), BTAddr(), SetPort() from TRfcommSockAddr
+//!													SetEncryption(), SetDenied(), SetPasskeyMinLength(), SetAuthentication() and SetAuthorisation() from TBTAccessRequirements
+//! @SYMTestActions				1. Order slave to set up connection
+//!								2. Get result from slave to wait for it to be ready
+//!								3. Create a connection to the RSocket server
+//!								4. Create the CBluetoothSocket object using NewL()1 (Standard constructor)
+//!								5. Create an empty TBTServiceSecurity object
+//!								6. Set the encryption requirement using SetEncryption() function (FALSE)
+//!								7. Set the denied requirement using SetDenied() function (FALSE)
+//!								8. Set the minimal length requrement for passkey using SetPasskeyMinLength() function (4)
+//!								9. Set the authentication requirement using SetAuthentication() function (FALSE)
+//!								10. Set the authorisation requirement using SetAuthorisation() function (FALSE)
+//!								11. Create an empty TBTDevAddr object (slave)
+//!								12. Create and initialise an RHostResolver
+//!								13. Set Hostname (MasterDevice) of the device
+//!								14. Get the slave device address
+//!								15. Create a TRfcommSockAddr object
+//!								16. Set the Security of the TRfcommSockAddr (Use default/empty as on server)
+//!								17. Set the BT address of the TRfcommSockAddr to the one of the Casira pod of the slave that we connect to
+//!								18. Verify the set BT Address
+//!								19. Set the port to the specific one of the protocol we use
+//!								20. Use the TRfcommSockAddr in the connect of the CBluetoothSocket object
+//!								21. Shut down the CBluetoothSocket object
+//!								22. Delete CBluetoothSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			Critical
+//! @SYMTestExpectedResults		Connection creates successfully and closes successfully.
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Active-Master-Auto.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-AccessRequirements-PublicApi-Active-0001-0001command2NewL
+			COMMAND		TBTServiceSecurity1	Construct		
+			COMMAND		TBTServiceSecurity1	SetEncryption		BT-USER-AccessRequirements-PublicApi-Active-0001-0001command5SetEncryption
+			COMMAND		TBTServiceSecurity1	SetDenied		BT-USER-AccessRequirements-PublicApi-Active-0001-0001command6SetDenied
+			COMMAND		TBTServiceSecurity1	SetPasskeyMinLength	BT-USER-AccessRequirements-PublicApi-Active-0001-0001command7SetPasskeyMinLength
+			COMMAND		TBTServiceSecurity1	SetAuthentication	BT-USER-AccessRequirements-PublicApi-Active-0001-0001command8SetAuthentication					
+			COMMAND		TBTServiceSecurity1	SetAuthorisation	BT-USER-AccessRequirements-PublicApi-Active-0001-0001command9SetAuthorisation	
+			STORE	CBluetoothSocket1	
+			STORE	TBTServiceSecurity1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	DELAY	2000
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY	5000
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Active-Master-Auto.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TRfcommSockAddr	TRfcommSockAddr1	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	TBTServiceSecurity	TBTServiceSecurity1	
+			COMMAND		TBTDevAddrRemote	Construct		
+			COMMAND		TBTDevAddrRemote	OpenHostResolver	BT-USER-AccessRequirements-PublicApi-Active-0001-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrRemote	SetHostNameL		BT-USER-AccessRequirements-PublicApi-Active-0001-0002command4SetHostNameL
+			COMMAND		TBTDevAddrRemote	GetDeviceAddress	BT-USER-AccessRequirements-PublicApi-Active-0001-0002command5GetDeviceAddress
+			OUTSTANDING
+			COMMAND		TRfcommSockAddr1	Construct		
+			COMMAND		TRfcommSockAddr1	SetSecurity	BT-USER-AccessRequirements-PublicApi-Active-0001-0002command8SetSecurity
+			COMMAND		TRfcommSockAddr1	SetBTAddr	BT-USER-AccessRequirements-PublicApi-Active-0001-0002command9SetBTAddr
+			COMMAND		TRfcommSockAddr1	BTAddr		BT-USER-AccessRequirements-PublicApi-Active-0001-0002command10BTAddr
+			COMMAND		TRfcommSockAddr1	SetPort		BT-USER-AccessRequirements-PublicApi-Active-0001-0002command11SetPort
+			STORE	CBluetoothSocket1	
+			STORE	TRfcommSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	DELAY	2000
+	
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	DELAY	5000
+	START_TEST_BLOCK	2000	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Active-Master-Auto.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TRfcommSockAddr		TRfcommSockAddr1
+			COMMAND		CBluetoothSocket1	Connect		BT-USER-AccessRequirements-PublicApi-Active-0001-0003command1Connect
+			OUTSTANDING
+			STORE	CBluetoothSocket1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+	
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StartSyncTestCase
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-AccessRequirements-PublicApi-Active-Master-Auto.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-AccessRequirements-PublicApi-Active-0001-0004command1Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~		
+			COMMAND		CBluetoothSocket1	RSocketServerClose	
+	END_TEST_BLOCK
+	RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveSyncTestCaseResult
+
+END_TESTCASE BT-USER-AccessRequirements-PublicApi-Active-Master-Auto-0001
+
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini RetrieveExecutionResultAccessAutoPassiveSlave
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StopTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\user\UccControlChannelConfig.ini StopSyncService

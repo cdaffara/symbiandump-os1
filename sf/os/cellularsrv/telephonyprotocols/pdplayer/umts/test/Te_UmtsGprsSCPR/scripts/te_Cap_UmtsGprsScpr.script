@@ -1,0 +1,250 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// UmtsGprsScpr component integration tests - Capabality tests.
+//
+
+//! @file TE_Cap_UmtsGrpsScpr.script
+
+
+// Ensure that the default config is present if no cleverer one has been put there already
+RUN_SCRIPT z:\testdata\scripts\exec_esock_default_to_config_1.script
+
+PRINT Run all te_Cap_UmtsGprsScpr Suite Tests
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MkDir c:\private\
+RUN_UTILS  MkDir c:\private\101F7989\
+RUN_UTILS  MkDir c:\private\101F7989\esock\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  MakeReadWrite c:\qospolicies.ini
+RUN_UTILS  MakeReadWrite c:\private\101F7989\esock\qospolicies.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  DeleteFile c:\qospolicies.ini
+RUN_UTILS  DeleteFile c:\private\101F7989\esock\qospolicies.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\te_umtsgprsscpr_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\te_umtsgprsscpr_config.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_UmtsGprsScprLoopbackCSY.ini c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\qospolicies.ini c:\qospolicies.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\qospolicies.ini c:\private\101F7989\esock\qospolicies.ini
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr_Captest.xml ced.log
+
+// No Caps
+RUN_PROGRAM -1 setcap Te_esockteststepsSuite_captest.exe 00002000  C:\sys\bin\Te_esockteststepsSuite_sc.exe
+PRINT --------  capabilities now set to [NetworkServices] (MASK = 00002000)  --------
+PRINT --------  CapConfig1Case1 & 2
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0101
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0101
+//! @SYMTestCaseDesc ESock API Policy check: clients with NETWORKSERVICE CAPABILITY should be able to modify secondary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in ECreateNew mode.
+//! @SYMTestExpectedResults Notification CSubConGenericEventParamsGranted is received, Simtsy returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr_Captest.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case1.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0101
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0102
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0102
+//! @SYMTestCaseDesc ESock API Policing check, clients with NETWORKSERVICE CAPABILITY should not be able to modify primary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in EAttachToDefault mode.
+//! @SYMTestExpectedResults SetParameters() rejected with KErrPermissionDenied.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case2.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0102
+
+
+// NetworkControl
+RUN_PROGRAM -1 setcap Te_esockteststepsSuite_captest.exe 00002400  C:\sys\bin\Te_esockteststepsSuite_sc.exe
+PRINT --------  CapConfig1Case3 & 4
+PRINT --------  capabilities now set to [NetworkServices|NetworkControl] (MASK = 00002400)  --------
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0103
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0103
+//! @SYMTestCaseDesc ESock API Policing check, clients with NETWORKCONTROL CAPABILITY should be able to modify secondary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in ECreateNew mode.
+//! @SYMTestExpectedResults Notification CSubConGenericEventParamsGranted is received, Simtsy returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr_Captest.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case1.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0103
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0104
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0104
+//! @SYMTestCaseDesc ESock API Policing check, clients with NETWORKCONTROL CAPABILITY should be able to modify primary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in EAttachToDefaul mode.
+//! @SYMTestExpectedResults Notification CSubConGenericEventParamsGranted is received, Simtsy returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case4.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0104
+
+// All -Tcb -NetworkControl
+RUN_PROGRAM -1 setcap Te_esockteststepsSuite_captest.exe 000FFBFE  C:\sys\bin\Te_esockteststepsSuite_sc.exe
+PRINT --------  capabilities now set to [ALL -Tcb -NetworkControl] (MASK = 000FFBFE)  --------
+PRINT --------  CapConfig1Case5 & 6
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0105
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0105
+//! @SYMTestCaseDesc ESock API Policing check, clients with ALL -TCB -NETWORKCONTROL  CAPABILITY should be able to modify secondary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in ECreateNew mode.
+//! @SYMTestExpectedResults Notification CSubConGenericEventParamsGranted is received, Simtsy returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr_Captest.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case1.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0105
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0106
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0106
+//! @SYMTestCaseDesc ESock API Policing check, clients with ALL -TCB -NETWORKCONTROL CAPABILITY should not be able to modify primary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in EAttachToDefault mode.
+//! @SYMTestExpectedResults SetParameters() rejected with KErrPermissionDenied.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr_Captest.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case2.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0106
+
+//////////////////////////////////////////////////
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+// using a version of config.txt where it doesn't have qospolicies.ini entry
+// have not implememted SetTestNo() for Simtsy, this is easier option
+// drawback is that can only have 1 section in config.txt, so need to replace old one here
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\te_umtsgprsscpr_Config2.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\te_umtsgprsscpr_Config2.txt c:\config.txt
+
+// remove ip.qos.esk and qospolicies.ini from environment, so QoS FW and GuQoS is not loaded
+RUN_UTILS MkDir C:\te_UmtsGprSscpr_temp\
+RUN_UTILS CopyFile C:\private\101f7989\ESock\qospolicies.ini C:\te_UmtsGprSscpr_temp\qospolicies.ini
+RUN_UTILS CopyFile C:\private\101f7989\ESock\ip.qos.esk C:\te_UmtsGprSscpr_temp\ip.qos.esk
+RUN_UTILS MakeReadWrite c:\private\101F7989\esock\qospolicies.ini
+RUN_UTILS MakeReadWrite c:\private\101F7989\esock\ip.qos.esk
+RUN_UTILS MakeReadWrite c:\qospolicies.ini
+RUN_UTILS DeleteFile C:\private\101f7989\ESock\qospolicies.ini
+RUN_UTILS DeleteFile C:\private\101f7989\ESock\ip.qos.esk
+RUN_UTILS DeleteFile C:\qospolicies.ini
+
+
+//  NetworkServices
+RUN_PROGRAM -1 setcap Te_esockteststepsSuite_captest.exe 00002000  C:\sys\bin\Te_esockteststepsSuite_sc.exe
+PRINT --------  capabilities now set to [NetworkServices] (MASK = 00002000)  --------
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0107
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0107
+//! @SYMTestCaseDesc ESock API Policing check, clients with NETWORKSERVICE CAPABILITY should not be able to modify primary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in EAttachToDefault mode.
+//! @SYMTestExpectedResults SetParameters() rejected with KErrPermissionDenied.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr_Captest.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case2.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0107
+
+
+// NetworkControl
+RUN_PROGRAM -1 setcap Te_esockteststepsSuite_captest.exe 00002400  C:\sys\bin\Te_esockteststepsSuite_sc.exe
+PRINT --------  capabilities now set to [NetworkServices|NetworkControl] (MASK = 00002400)  --------
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0108
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0108
+//! @SYMTestCaseDesc ESock API Policing check, clients with NETWORKCONTROL CAPABILITY should be able to modify primary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in EAttachToDefaul mode.
+//! @SYMTestExpectedResults Notification CSubConGenericEventParamsGranted is received, Simtsy returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case4.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0108
+
+// All - Tcb - NetworkControl
+RUN_PROGRAM -1 setcap Te_esockteststepsSuite_captest.exe 000FFBFE  C:\sys\bin\Te_esockteststepsSuite_sc.exe
+PRINT --------  capabilities now set to [ALL -Tcb -NetworkControl] (MASK = 000FFBFE)  --------
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0109
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0109
+//! @SYMTestCaseDesc ESock API Policing check, clients with ALL -TCB -NETWORKCONTROL CAPABILITY should not be able to modify primary PDP context
+//! @SYMFssID
+//! @SYMTestActions SetParameters on the RSubconnection in EAttachToDefault mode.
+//! @SYMTestExpectedResults SetParameters() rejected with KErrPermissionDenied.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\te_UmtsGprsScpr_Captest.xml ced.log
+RUN_SCRIPT  Z:\TestData\Scripts\te_Cap_UmtsGprsScprConfig1Case2.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0109
+
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+// put it all back for the other tests
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+RUN_UTILS CopyFile C:\te_UmtsGprSscpr_temp\qospolicies.ini C:\private\101f7989\ESock\qospolicies.ini
+RUN_UTILS CopyFile C:\te_UmtsGprSscpr_temp\ip.qos.esk C:\private\101f7989\ESock\ip.qos.esk
+RUN_UTILS CopyFile C:\te_UmtsGprSscpr_temp\qospolicies.ini C:\qospolicies.ini
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\qospolicies.ini
+RUN_UTILS  MakeReadWrite c:\private\101F7989\esock\qospolicies.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  DeleteFile c:\qospolicies.ini
+RUN_UTILS  DeleteFile c:\private\101F7989\esock\qospolicies.ini
+
+PRINT Complete_TEST_CASE_ID_PLACEHOLDER_Tests
+

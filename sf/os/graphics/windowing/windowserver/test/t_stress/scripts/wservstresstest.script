@@ -1,0 +1,142 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run WServer stress tests
+
+LOAD_SUITE twservstresstest
+
+START_TESTCASE GRAPHICS-WSERV-1841-0007
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0007
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test for correct rendering of window scenes			
+//!@SYMTestActions			Form a linear list of windows (or for bonus points, a tree) with various attributes (described in following tests).
+//!							For WSERV rendering of the scene, create RWindows having the required attributes, in the z-order corresponding to 
+//!							the list, and get WSERV to render the scene.
+//!							For comparison, render the windows into an offscreen bitmap, using naïve back-to-front composition of every window.
+//!							The window set is created and updated by a sequence of the following operations:
+//!								* Creating and destroying windows
+//!								* Moving and resizing windows
+//!								* Bring to foreground / send to background
+//!								* Make visible / invisible
+//!								* Invalidate / receive client updates
+//!							The sequence of operations to generate the scenes should be defined in data rather than code. 
+//!							(Ideally, driven by a seeded pseudo-random number generator).
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!							(Note, may need to ensure that OSB has same bit-depth as screen to ensure equality.)
+//!@SYMTestType				CT
+RUN_TEST_STEP 3600 twservstresstest WServStressTest_One z:\wstest\wservstresstest1.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0007
+
+START_TESTCASE GRAPHICS-WSERV-1841-0008
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0008
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test for correct rendering of window scenes	involving opaque windows		
+//!@SYMTestActions			Test setup as for previous test (random windows with various attributes, comparison of WSERV rendering against reference bitmap)
+//!							The test harness is enabled to create opaque windows.
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!@SYMTestType				CT
+RUN_TEST_STEP 4000 twservstresstest WServStressTest_One z:\wstest\wservstresstest2.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0008
+
+START_TESTCASE GRAPHICS-WSERV-1841-0009
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0009
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test for correct rendering of window scenes	involving transparent windows		
+//!@SYMTestActions			Test setup as for previous test (random windows with various attributes, comparison of WSERV rendering against reference bitmap)
+//!							The test harness is enabled to create alpha channel transparent windows. 
+//!							(These windows should draw some semi-transparent pixels. They could also call SetTransparentRegion().)
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!@SYMTestType				CT
+RUN_TEST_STEP 3600 twservstresstest WServStressTest_One z:\wstest\wservstresstest3.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0009
+
+START_TESTCASE GRAPHICS-WSERV-1841-0010
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0010
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test the correctness of the new redraw store, including disabled redraw store		
+//!@SYMTestActions			Test setup as for previous test (random windows with various attributes, comparison of WSERV rendering against reference bitmap)
+//!							Test harness is enabled to create windows with the following attributes:
+//!								* Use redraw drawing or non-redraw drawing
+//!								* Backed-up window
+//!								* Large window with redraw storing disabled
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!@SYMTestType				CT
+RUN_TEST_STEP 4000 twservstresstest WServStressTest_One z:\wstest\wservstresstest4.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0010
+
+START_TESTCASE GRAPHICS-WSERV-1841-0011
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0011
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test the correctness of the new sprite implementation
+//!@SYMTestActions			Test setup as for previous test (random windows with various attributes, comparison of WSERV rendering against reference bitmap)
+//!							Windows with the following attributes:
+//!							Has/does not have a window sprite. The code for these windows should move the sprite around in some deterministic fashion.
+//!							The data driving the test must include cases where a window with sprite appears behind a transparent window,
+//!							as this is a key use case for the new implementation
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!@SYMTestType				CT
+RUN_TEST_STEP 3600 twservstresstest WServStressTest_One z:\wstest\wservstresstest5.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0011
+
+START_TESTCASE GRAPHICS-WSERV-1841-0012
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0012
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test the correctness of the new anim scheduling
+//!@SYMTestActions			Test setup as for previous test (random windows with various attributes, comparison of WSERV rendering against reference bitmap)
+//!							Window which contains a ticking anim (eg clock).
+//!							The data driving the test must include cases where a window with ticking anim appears behind a transparent window, 
+//!							as this is a key use case for the new implementation.
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!@SYMTestType				CT
+RUN_TEST_STEP 3600 twservstresstest WServStressTest_One z:\wstest\wservstresstest6.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0012
+
+START_TESTCASE GRAPHICS-WSERV-1841-0101
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0101
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test the correctness of random usage of pen style
+//!@SYMTestActions			Test setup as for previous test (random windows with various attributes, comparison of WSERV rendering against reference bitmap)
+//!							These windows should draw something using randomize pen style.
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!@SYMTestType				CT
+RUN_TEST_STEP 3600 twservstresstest WServStressTest_One z:\wstest\wservstresstest7.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0101
+
+START_TESTCASE GRAPHICS-WSERV-1841-0102
+//!@SYMTestCaseID			GRAPHICS-WSERV-1841-0102
+//!@SYMPREQ					1841
+//!@SYMTestCaseDesc			Test the correctness of random usage of brush style
+//!@SYMTestActions			Test setup as for previous test (random windows with various attributes, comparison of WSERV rendering against reference bitmap)
+//!							These windows should draw something using randomize brush style.
+//!@SYMTestStatus			Implemented
+//!@SYMTestPriority			1
+//!@SYMTestExpectedResults	The WSERV rendering of the scene produces the same results as the back-to-front rendering into offscreen bitmap. 
+//!@SYMTestType				CT
+RUN_TEST_STEP 3600 twservstresstest WServStressTest_One z:\wstest\wservstresstest8.ini
+END_TESTCASE GRAPHICS-WSERV-1841-0102

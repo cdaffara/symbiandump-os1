@@ -1,0 +1,96 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		COMINF-ESOCK-RConnection-PublicAPI-TCP
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM. An Echo server listening on ports 10007 and 10008.
+//				The communicaion to the server is established using the default connection.
+//				The supplied commsdat is set up to use NTRAS on Emulator as well as on H/W.
+//! @SYMScriptAutomation	The test suites are fully automated using TestDriver and Testexecute
+
+LOAD_SUITE	T_RConnection
+DELAY		2000
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0014
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0014
+//! @SYMAuthor			James Virdee
+//! @SYMCreationDate		17/03/2006
+//! @SYMAPI			RConnection::Stop
+//! @SYMTestCaseDesc		Stop the connection EStopNormal mode
+//! @SYMTestActions		Connect an RSocketServ.
+//!				Open a RSocketServ.
+//!				Open a TCP socket with connection.
+//!				Send some data across the connection whilst recieving it loopbacked.
+//!				Stop the RConnection using the EStopNormal mode.
+//!				Attempt to send some more data over the socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Returns with KErrCancel while sending data after stopping connection .
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_RConnection	\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket		RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket		RSocketPassive
+		CREATE_OBJECT	RSocket		RSessionSocket
+		CREATE_OBJECT	RConnection	RConnectionActive
+		CREATE_OBJECT	RConnection	RConnectionPassive
+		COMMAND			RSocketServActive	Constructor
+		COMMAND			RSocketServActive	Connect
+		COMMAND			RConnectionActive	Constructor
+		COMMAND			RConnectionActive	Open		COMINF-ESOCK-RConnection-PublicAPI-0014-Open_command05
+		COMMAND			RConnectionActive	Start		COMINF-ESOCK-RConnection-PublicAPI-0014-Start_command06
+		OUTSTANDING	
+		COMMAND			RSocketActive	Constructor
+		COMMAND			RSocketActive	Open		COMINF-ESOCK-RConnection-PublicAPI-0014-Open_command10
+		COMMAND			RSocketActive	Bind
+		COMMAND			RSocketActive	Connect		COMINF-ESOCK-RConnection-PublicAPI-0014-Connect_command12
+		OUTSTANDING	
+		COMMAND			RSocketServPassive	Constructor
+		COMMAND			RSocketServPassive	Connect
+		COMMAND			RConnectionPassive	Constructor
+		COMMAND			RConnectionPassive	Open		COMINF-ESOCK-RConnection-PublicAPI-0014-Open_command19
+		COMMAND			RConnectionPassive	Start		COMINF-ESOCK-RConnection-PublicAPI-0014-Start_command20
+		OUTSTANDING	
+		COMMAND			RSessionSocket	Constructor
+		COMMAND			RSessionSocket	Open		COMINF-ESOCK-RConnection-PublicAPI-0014-Open_command24
+		COMMAND			RSocketPassive	Constructor
+		COMMAND			RSocketPassive	Open		COMINF-ESOCK-RConnection-PublicAPI-0014-Open_command27
+		COMMAND			RSocketPassive	SetLocalPort
+		COMMAND			RSocketPassive	Listen		COMINF-ESOCK-RConnection-PublicAPI-0014-Listen_command29
+		COMMAND			RSocketPassive	Accept		COMINF-ESOCK-RConnection-PublicAPI-0014-Accept_command30
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RConnection-PublicAPI-0014-Send_command32
+		OUTSTANDING	
+		COMMAND			RSessionSocket	RecvOneOrMore		COMINF-ESOCK-RConnection-PublicAPI-0014-RecvOneOrMore_command35
+		OUTSTANDING	
+		COMMAND			RSocketActive	Send		COMINF-ESOCK-RConnection-PublicAPI-0014-Send_command38
+		OUTSTANDING	
+		COMMAND			RConnectionActive	Stop		COMINF-ESOCK-RConnection-PublicAPI-0014-Stop_command41
+		COMMAND	!AsyncError=-3	RSessionSocket	RecvOneOrMore
+		OUTSTANDING	
+		COMMAND			RSocketActive	Close
+		COMMAND			RSocketActive	~
+		COMMAND			RSocketPassive	Close
+		COMMAND			RSocketPassive	~
+		COMMAND			RSessionSocket	Close
+		COMMAND			RSessionSocket	~
+		COMMAND			RSocketServPassive	Close
+		COMMAND			RSocketServPassive	~
+		COMMAND			RSocketServActive	Close
+		COMMAND			RSocketServActive	~
+		COMMAND			RConnectionActive	~
+		COMMAND			RConnectionPassive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0014

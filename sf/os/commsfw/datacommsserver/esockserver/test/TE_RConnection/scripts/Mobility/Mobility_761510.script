@@ -1,0 +1,92 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-BEARERMOBILITY
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+PRINT NET_BMOBILITY_761510:
+PRINT RConnection::Start(),
+PRINT RCommsMobilityApiExt::Open(),
+PRINT Pretend the current, newly started carrier is not good.
+PRINT RCommsMobilityApiExt::RegisterForProgress(),
+PRINT RCommsMobilityApiExt::NewCarrierRejected(),
+PRINT RCommsMobilityApiExt::RegisterForMobilityNotification(),
+PRINT Unfortunatelly no other access points are available, await for KConnectionDown progress and error from the mobility API
+PRINT KConnectionDown received
+PRINT RCommsMobilityApiExt::Close()
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+// Set up the comms database and start esock in preparation for the test
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\BearerMobility\BearerMobility_001.ced.cfg c:\BearerMobility_001.ced.cfg.log
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-Mobility-0801
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-Mobility-0801
+//!@SYMTestCaseDesc           	See above
+//!@SYMPREQ                   	PREQ1060
+//!@SYMAPI
+// TODO_CDG
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+// Create and connect socketserver and connectionserver instances
+RUN_TEST_STEP 150 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\BearerMobility\Mobility_761510.ini CreateSockSvr
+RUN_TEST_STEP 150 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\BearerMobility\Mobility_761510.ini ConnectSockSvr
+
+// Create and open a connection (conn1)
+RUN_TEST_STEP 150 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761510.ini CreateConn
+RUN_TEST_STEP 150 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761510.ini OpenConn
+
+// Make bearer1 available and connect with associated snap
+RUN_TEST_STEP 150 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761510.ini InitAvailability1
+RUN_TEST_STEP 150 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761510.ini InitAvailability2
+RUN_TEST_STEP 150 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761510.ini StartConn
+
+// Prepare mobility APIs which we will subscribe on
+RUN_TEST_STEP 150 te_esockteststepsSuite OpenRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761510.ini OpenMobilityExtension
+
+//Pretend the carrier offered by RConnection::Start is not good
+RUN_TEST_STEP 150 te_esockteststepsSuite rejectcarrierrcommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761510.ini RejectNewCarrier
+
+//Register for mobility and progress. We will expect no mobility and KConnectionDown progress
+RUN_TEST_STEP 150 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761510.ini RegisterForMobility
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterProgressNotificationStep    z:\testdata\configs\BearerMobility\Mobility_761510.ini RegisterForProgress2
+
+RUN_TEST_STEP 150 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761510.ini CheckMobilityError
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckProgressNotificationStep z:\testdata\configs\BearerMobility\Mobility_761510.ini CheckConnectionDownReceived
+
+// Clean up what we used
+RUN_TEST_STEP 150 te_esockteststepsSuite CloseRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761510.ini CloseMobilityExtension
+RUN_TEST_STEP 150 te_esockteststepsSuite CloseRConnectionStep z:\testdata\configs\BearerMobility\Mobility_761510.ini CloseConn
+RUN_TEST_STEP 150 te_esockteststepsSuite closersocketservStep z:\testdata\configs\BearerMobility\Mobility_761510.ini CloseSocketSvr
+END_TESTCASE			COMINF-ESOCK-RConnection-Mobility-0801
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed NET_BMOBILITY_761510
+
+
+

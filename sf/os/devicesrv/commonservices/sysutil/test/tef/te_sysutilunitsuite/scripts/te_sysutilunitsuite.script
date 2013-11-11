@@ -1,0 +1,315 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run all te_sysutils unit Suite Tests
+
+LOAD_SUITE te_sysutilunitsuite
+
+RUN_UTILS MkDir c:\versions
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4039
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4039
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			PR Information is made but the purpose file is unreadable.
+//!@SYMTestPriority 		HIGH
+//!@SYMTestActions			Use the SysUtil::GetPRInformation method to get the PR Information 
+//!@SYMTestActions			from C:\versions\purpose.txt. The text file should be 
+//!@SYMTestActions			using ANSI encoding.
+//!@SYMTestExpectedResults	The test does not panic, but KErrCorrupt is returned because 
+//!@SYMTestExpectedResults	the purpose.txt file is unreadable.
+//!@SYMDEF					DEF141094
+RUN_UTILS CopyFile z:\resource\versions\unreadable\purpose.txt c:\versions\purpose.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetPRInformationUnreadable
+
+RUN_UTILS MakeReadWrite c:\versions\purpose.txt
+RUN_UTILS DeleteFile c:\versions\purpose.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4039
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4038
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4038
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			pr information is made but the purpose file has no text.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetPRInformation method to get the product release information 
+//!@SYMTestActions			from C:\versions\purpose.txt. The text file should contain no text.
+//!@SYMTestExpectedResults	KErrEof is returned 
+//!@SYMDEF					DEF141094
+RUN_UTILS CopyFile z:\resource\versions\nocontent\purpose.txt c:\versions\purpose.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetPRInformationNoText
+
+RUN_UTILS MakeReadWrite c:\versions\purpose.txt
+RUN_UTILS DeleteFile c:\versions\purpose.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4038
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4037
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4037
+//!@SYMTestCaseDesc			To ensure the parsing of the purpose.txt when there are no newlines.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetPRInformation method to get the pr information 
+//!@SYMTestActions			from C:\versions\purpose.txt. The text file should contain 
+//!@SYMTestActions			no newlines (\n).
+//!@SYMTestExpectedResults	There is no error returned the contents of the file is printed out. 
+//!@SYMDEF					DEF141094
+RUN_UTILS CopyFile z:\resource\versions\nonewlines\purpose.txt c:\versions\purpose.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetPRInformationNoNewLines z:\testdata\inifiles\te_sysutildata.ini NoNewLines
+
+RUN_UTILS MakeReadWrite c:\versions\purpose.txt
+RUN_UTILS DeleteFile c:\versions\purpose.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4037
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4036
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4036
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			PR Information is made but the PR Information file is missing.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Run the SysUtil::GetPRInformation with the path pointing to a non 
+//!@SYMTestActions			existent file in C:\versions\.
+//!@SYMTestExpectedResults	KErrNotFound should be returned.
+//!@SYMDEF					DEF141094
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetPRInformationMissing
+END_TESTCASE				SYSLIB-BAFL-UT-4036
+
+START_TESTCASE				SYSLIB-BAFL-UT-4024
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4024
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get 
+//!@SYMTestCaseDesc			the software version is made but the length of the software 
+//!@SYMTestCaseDesc			version is greater then sixty four characters.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetSWVersion method, with a buffer of 
+//!@SYMTestActions			sixty six characters, to get the version information 
+//!@SYMTestActions			from the relevant text file in C:\versions\. The file 
+//!@SYMTestActions			should contain sixty six characters.
+//!@SYMTestActions			Repeat if correct error is returned for 
+//!@SYMTestActions			SysUtil::GetLangSWVersion and SysUtil::GetLangVersion.
+//!@SYMTestExpectedResults	KErrTooBig is returned and the buffer is truncated 
+//!@SYMTestExpectedResults	because the software version text is limited to sixty 
+//!@SYMTestExpectedResults	four characters.
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\toomuchtext\sw.txt c:\versions\sw.txt
+RUN_UTILS CopyFile z:\resource\versions\toomuchtext\sw.txt c:\versions\langsw.txt
+RUN_UTILS CopyFile z:\resource\versions\toomuchtext\sw.txt c:\versions\lang.txt
+RUN_UTILS CopyFile z:\resource\versions\toomuchtext\sw.txt c:\versions\purpose.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetVersionTooMuchText
+
+RUN_UTILS MakeReadWrite c:\versions\sw.txt
+RUN_UTILS MakeReadWrite c:\versions\lang.txt
+RUN_UTILS MakeReadWrite c:\versions\langsw.txt
+RUN_UTILS DeleteFile c:\versions\sw.txt
+RUN_UTILS DeleteFile c:\versions\lang.txt
+RUN_UTILS DeleteFile c:\versions\langsw.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4024
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4025
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4025
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			software version is made but the software version file is missing.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Run the SysUtil::GetSWVersion with the path pointing to a non 
+//!@SYMTestActions			existent file in C:\versions\.
+//!@SYMTestExpectedResults	KErrNotFound should be returned.
+//!@SYMREQ					REQ8170
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetSWVersionMissing
+END_TESTCASE				SYSLIB-BAFL-UT-4025
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4026
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4026
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			software version is made but the software version file is unreadable.
+//!@SYMTestPriority 		HIGH
+//!@SYMTestActions			Use the SysUtil::GetSWVersion method to get the software 
+//!@SYMTestActions			version from C:\versions\sw.txt. The text file should be 
+//!@SYMTestActions			using ANSI encoding.
+//!@SYMTestExpectedResults	The test does not panic, but KErrCorrupted is returned because 
+//!@SYMTestExpectedResults	the sw.txt file is unreadable.
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\unreadable\sw.txt c:\versions\sw.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetSWVersionUnreadable
+
+RUN_UTILS MakeReadWrite c:\versions\sw.txt
+RUN_UTILS DeleteFile c:\versions\sw.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4026
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4027
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4027
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			language version is made but the software version file is missing.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Run the SysUtil::GetLangVersion with the path pointing a non 
+//!@SYMTestActions			existent file in C:\versions\.
+//!@SYMTestExpectedResults	KErrNotFound should be returned
+//!@SYMREQ					REQ8170
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetLangVersionMissing
+END_TESTCASE				SYSLIB-BAFL-UT-4027
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4028
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4028
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			software version is made but the software version file is unreadable.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetLangVersion method to get the language 
+//!@SYMTestActions			software version from C:\versions\lang.txt. The text file 
+//!@SYMTestActions			should be using ANSI encoding.
+//!@SYMTestExpectedResults	The test does not panic, but KErrCorrupted is returned because 
+//!@SYMTestExpectedResults	the lang.txt file is unreadable.
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\unreadable\lang.txt c:\versions\lang.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetLangVersionUnreadable
+
+RUN_UTILS MakeReadWrite c:\versions\lang.txt
+RUN_UTILS DeleteFile c:\versions\lang.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4028
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4029
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4029
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get 
+//!@SYMTestCaseDesc			the language software version is made but the software version 
+//!@SYMTestCaseDesc			file is missing.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Run the SysUtil::GetLangSWVersion with the path pointing a non 
+//!@SYMTestActions			existent file in C:\versions\.
+//!@SYMTestExpectedResults	KErrNotFound should be returned.
+//!@SYMREQ					REQ8170
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetLangSWVersionMissing
+END_TESTCASE			SYSLIB-BAFL-UT-4029
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4030
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4030
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			software version is made but the software version file is unreadable.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetLangVersion method to get the language 
+//!@SYMTestActions			version from C:\versions\langsw.txt. The text file should be 
+//!@SYMTestActions			using ANSI encoding.
+//!@SYMTestExpectedResults	The test does not panic, but KErrCorrupt is returned because 
+//!@SYMTestExpectedResults	the langsw.txt file is unreadable.
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\unreadable\langsw.txt c:\versions\langsw.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetLangSWVersionUnreadable
+
+RUN_UTILS MakeReadWrite c:\versions\langsw.txt
+RUN_UTILS DeleteFile c:\versions\langsw.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4030
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4031
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4031
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			software version is made but the software version file has no text.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetSWVersion method to get the software version 
+//!@SYMTestActions			from C:\versions\sw.txt. The text file should contain no text.
+//!@SYMTestExpectedResults	KErrEof is returned 
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\nocontent\sw.txt c:\versions\sw.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetSWVersionNoText
+
+RUN_UTILS MakeReadWrite c:\versions\sw.txt
+RUN_UTILS DeleteFile c:\versions\sw.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4031
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4032
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4032
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get the 
+//!@SYMTestCaseDesc			language version is made but the language version file has no text.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetLangVersion method to get the language version 
+//!@SYMTestActions			from C:\versions\lang.txt. The text file should contain no text.
+//!@SYMTestExpectedResults	KErrEof is returned.
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\nocontent\lang.txt c:\versions\lang.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetLangVersionNoText
+
+RUN_UTILS MakeReadWrite c:\versions\lang.txt
+RUN_UTILS DeleteFile c:\versions\lang.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4032
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4033
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4033
+//!@SYMTestCaseDesc			To ensure the correct error is returned if an attempt to get 
+//!@SYMTestCaseDesc			the language software version is made but the language 
+//!@SYMTestCaseDesc			software version file has no text.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetLangSWVersion method to get the language 
+//!@SYMTestActions			software version from C:\versions\langsw.txt. The text file 
+//!@SYMTestActions			should contain no text.
+//!@SYMTestExpectedResults	KErrEof is returned.
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\nocontent\langsw.txt c:\versions\langsw.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetLangSWVersionNoText
+
+RUN_UTILS MakeReadWrite c:\versions\langsw.txt
+RUN_UTILS DeleteFile c:\versions\langsw.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4033
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4034
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4034
+//!@SYMTestCaseDesc			To ensure the parsing of the sw.txt when there are no newlines.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetSWVersion method to get the software 
+//!@SYMTestActions			version from C:\versions\sw.txt. The text file should contain 
+//!@SYMTestActions			no newlines (\n).
+//!@SYMTestExpectedResults	There is no error returned the contents of the file is printed out. 
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\nonewlines\sw.txt c:\versions\sw.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetSWVersionNoNewLines z:\testdata\inifiles\te_sysutildata.ini NoNewLines
+
+RUN_UTILS MakeReadWrite c:\versions\sw.txt
+RUN_UTILS DeleteFile c:\versions\sw.txt
+END_TESTCASE				SYSLIB-BAFL-UT-4034
+
+
+START_TESTCASE				SYSLIB-BAFL-UT-4035
+//!@SYMTestCaseID			SYSLIB-BAFL-UT-4035
+//!@SYMTestCaseDesc			To ensure the parsing of the langsw.txt when there are no newlines.
+//!@SYMTestPriority			HIGH
+//!@SYMTestActions			Use the SysUtil::GetLangSWVersion method to get the language 
+//!@SYMTestActions			software version from C:\versions\langsw.txt. The text file 
+//!@SYMTestActions			should contain no newlines (\n).
+//!@SYMTestExpectedResults	There is no error returned the contents of the file is printed out. 
+//!@SYMREQ					REQ8170
+RUN_UTILS CopyFile z:\resource\versions\nonewlines\langsw.txt c:\versions\langsw.txt
+
+RUN_TEST_STEP 100 te_sysutilunitsuite SysUtilsGetLangSWVersionNoNewLines z:\testdata\inifiles\te_sysutildata.ini NoNewLines
+
+RUN_UTILS MakeReadWrite c:\versions\langsw.txt
+RUN_UTILS DeleteFile c:\versions\langsw.txt
+END_TESTCASE 				SYSLIB-BAFL-UT-4035
+
+
+RUN_UTILS DeleteDirectory c:\versions

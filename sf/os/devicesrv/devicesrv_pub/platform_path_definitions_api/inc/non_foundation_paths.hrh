@@ -1,0 +1,172 @@
+/*
+* Copyright (c) 2002-2009 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  This file defines macros to be used by non-foundation code.
+*                Main thing is that non_foundation code should NEVER for instance export 
+*                headers to same directories in epoc32/include as the foundation code.
+*                
+*                However to support transition from non-foundation code to foundation code asset
+*                we introduce same layers as in foundation.
+
+* Usage examples:
+*      #include <non_foundation_paths.hrh>
+*    
+*     *************************************************************
+*     * MMP file related macro usages to add the system include paths
+*     * 
+*     * The include paths has to be related to the layer in which your SW 
+*     * resides. Thus as an example: a component residing in middleware
+*     * layer should use the MW specific macro.
+*     * Keep this as a separate line in the mmp-files. If you need to
+*     * add your own SYSTEMINCLUDE paths, please defined them as
+*     * separate statement.
+*     * In addition to these , the non-foundation code should also use
+*     * one of the foundation specific macros. (APP_LAYER_SYSTEMINCLUDE,
+*     * MW_LAYER_SYSTEMINCLUDE or OS_LAYER_SYSTEMINCLUDE)
+*     *************************************************************
+*         NON_FOUNDATION_APP_LAYER_SYSTEMINCLUDE
+*         NON_FOUNDATION_MW_LAYER_SYSTEMINCLUDE
+*         NON_FOUNDATION_OS_LAYER_SYSTEMINCLUDE
+*         NON_FOUNDATION_ADAPT_LAYER_SYSTEMINCLUDE
+*
+*     *************************************************************
+*     * Macros related to exporting non-foundation headers  into 
+*     * correct place in the new system. 
+*     *
+*     * The macro that you should use depends on 2 things:
+*     *  - in which layer your package, which exports the APIs resides
+*     *  - what is the visibility of the API (public or platform)
+*     *************************************************************
+*      // the exporting of public APIs should use one of below macros
+*      // depending on which layer the API belogs to
+*      NON_FOUNDATION_APP_LAYER_EXPORT_PATH
+*      NON_FOUNDATION_MW_LAYER_EXPORT_PATH
+*      NON_FOUNDATION_OS_LAYER_EXPORT_PATH
+*      NON_FOUNDATION_ADAPT_LAYER_EXPORT_PATH
+*
+*      The hierarchy how APIs should reside in foundation has been specified
+*      in developer documentation. See further details from documentation.
+*      Below is example case relying on the structure
+*        my_own_api/group/bld.inf
+*        my_own_api/inc/header1.h
+*        my_own_api/inc/subdir/header2.h
+*  
+*      Assuming that the API is in middleware layer and a public API. 
+*      Then the bld.inf should have the following      
+*        ../inc/header1.h  NON_FOUNDATION_APP_LAYER_EXPORT_PATH(header1.h)
+*        ../inc/subdir/header2.h  NON_FOUNDATION_APP_LAYER_EXPORT_PATH(subdir/header2.h)
+*  
+*      In the above case the locations are as follow (with current MACRO settings):
+*        header1.h in /epoc32/include/ext/app
+*        header2.h in /epoc32/include/ext/app/subdir
+*
+*
+*
+*/
+
+
+#ifndef NON_FOUNDATION_PATHS_HRH
+#define NON_FOUNDATION_PATHS_HRH
+
+/**
+* ---------------------------------------
+* Location, where the non-foundation code should export its headers.
+* These are specific to layer to which the non-foundation code belongs to.
+* See usage on top of this hrh-file.
+* ---------------------------------------
+*/
+
+#if __GNUC__ >= 3
+#define NON_FOUNDATION_APP_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/app/exported
+#define NON_FOUNDATION_MW_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/mw/exported
+#define NON_FOUNDATION_OS_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/os/exported
+// Temporarily commented out to help adaptation side migration
+// #define NON_FOUNDATION_ADAPT_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/adapt/exported
+#else
+#define NON_FOUNDATION_APP_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/app/##exported
+#define NON_FOUNDATION_MW_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/mw/##exported
+#define NON_FOUNDATION_OS_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/os/##exported
+// Temporarily commented out to help adaptation side migration
+// #define NON_FOUNDATION_ADAPT_LAYER_EXPORT_PATH(exported) /epoc32/include/ext/adapt/##exported
+#endif
+
+
+/**
+**************************************************************************
+*  General comments about the 3 define statements related to include paths.
+*  It should be enough only to have one of the below macros and one of the include macros
+*  from platform_paths.hrh.
+*  No other systemincludes to epoc32/include or subdirectories. 
+****************************************************************************
+*/
+
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be 
+* used in the mmp-files that are part of the applications-layer. 
+*
+* Applications layer is the last one in the list, since most likely the most of 
+* the headers come from middleware or os-layer  => thus they are first.
+*/
+#define NON_FOUNDATION_APP_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include/ext/app \
+ /epoc32/include/ext/mw \
+ /epoc32/include/ext/os
+ 
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be
+* used in the mmp-files that are part of the middleware-layer. 
+*/
+#define NON_FOUNDATION_MW_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include/ext/mw \
+ /epoc32/include/ext/os
+
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be
+* used in the mmp-files that are part of the os-layer.
+*/
+#define NON_FOUNDATION_OS_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE \
+ /epoc32/include/ext/os
+
+/**
+* This define statements defines the SYSTEMINCLUDE-line, which is intended to be
+* used in the mmp-files that are part of the adapt-layer.
+*/
+// Temporarily commented out to help adaptation side migration
+// #define NON_FOUNDATION_ADAPT_LAYER_SYSTEMINCLUDE SYSTEMINCLUDE \
+// /epoc32/include/ext/os \
+// /epoc32/include/ext/adapt
+
+
+/**
+****************************************************************************
+* Definitions to export IBY files to different folders where they will be taken 
+* to ROM image
+****************************************************************************
+*/
+
+// Following three definitions are used for exporting IBY files to 
+// Core image (ROM+ROFS1). IBY files are exported according to their layer.
+#if __GNUC__ >= 3
+#define NON_FOUNDATION_CORE_ADAPT_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/exported
+#else
+#define NON_FOUNDATION_CORE_ADAPT_LAYER_IBY_EXPORT_PATH(exported) /epoc32/rom/include/##exported
+#endif
+
+
+
+#endif  // end of NON_FOUNDATION_PATHS_HRH
+
+
+
+
+

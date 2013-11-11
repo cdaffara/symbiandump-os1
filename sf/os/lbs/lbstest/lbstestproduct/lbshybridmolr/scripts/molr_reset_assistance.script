@@ -1,0 +1,111 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         LBS-MOLR-RESET-ASSISTANCE
+//! @SYMScriptTestEnvironment TestExecute
+
+
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+PRINT Run LbsHybridMOLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-MOLR-RESET-TB-AFTERASSISTANCE-0001
+//! @SYMTestCaseID              LBS-MOLR-RESET-TB-AFTERASSISTANCE-0001
+//! @SYMTestCaseDesc            MO-LR request that will be calculated in TB with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it sent out assistance data.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             A client makes an MO-LR request
+//!                             The Network starts the session, with techtype TB
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it sent out some assistance data
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should calculate the position as if starting from cold, by asking for assistance data again
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-RESET-TB-AFTAST
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrResetAssistance c:\testdata\configs\lbs_molr.ini MOLR-RESET-TB-AFTAST
+END_TESTCASE                  LBS-MOLR-RESET-TB-AFTERASSISTANCE-0001
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-MOLR-RESET-TB-BEFORE-0001
+//! @SYMTestCaseID              LBS-MOLR-RESET-TB-BEFORE-0001
+//! @SYMTestCaseDesc            MO-LR request that will be calculated in TB. This request comes after the network sent a reset assistance data message, with mask 0xFFFFFFFF, when the GPS module was warmed up.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to TB
+//!                             A client makes an MO-LR request,  to warm up the GPS module
+//!                             Once the first session is over the network sends a ResetAssistanceData(0xFFFFFFFF)
+//!                             The client makes another MO-LR request
+//!                             The network starts the session, with techtype TB
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset. Then it should calculate the position as if starting from cold.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-RESET-TB-BEFSES
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrResetAssistance c:\testdata\configs\lbs_molr.ini MOLR-RESET-TB-BEFSES
+END_TESTCASE                  LBS-MOLR-RESET-TB-BEFORE-0001
+
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetATAMode
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-MOLR-RESET-TA-AFTERAMEAS-0001
+//! @SYMTestCaseID              LBS-MOLR-RESET-TA-AFTERAMEAS-0001
+//! @SYMTestCaseDesc            MO-LR request that will be calculated in TA with network sending a reset assistance data message, with mask 0xFFFFFFFF, after it received measurements.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Admin is set to ATA
+//!                             A client makes an MO-LR request
+//!                             Network asks for techtype TA
+//!                             The network sends a ResetAssistanceData(0xFFFFFFFF) after it received measurements
+//! @SYMTestExpectedResults     The GPS module should receive the reset and see that the assistance data was reset, and it will ask for assistance data again, when it gets a new request
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini MOLR-RESET-TA-AFTMES
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsMolrResetAssistance c:\testdata\configs\lbs_molr.ini MOLR-RESET-TA-AFTMES
+END_TESTCASE                  LBS-MOLR-RESET-TA-AFTERAMEAS-0001
+
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini

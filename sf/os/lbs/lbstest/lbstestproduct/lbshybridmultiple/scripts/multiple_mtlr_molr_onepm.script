@@ -1,0 +1,69 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: Test script to test multiple MTLR's running over one PM with
+//  a MOLR self locate request also running
+//
+
+//! @File
+//! @SYMTestSuiteName         multiple_mtlr_molr_onepm.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE LbsHybridMultipleTestServer -SharedData
+PRINT Run LbsHybridMultipleTestServer
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_multiple_subsessions.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_SetupMultipleProtocolStubs c:\testdata\configs\lbs_multiple_subsessions.ini ProtocolModule1
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_SetupRoamSelfLocate
+
+// Start LBS
+RUN_TEST_STEP 030 LbsHybridMultipleTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-MultipleMTLRs-MOLR-OnePm-0001
+//! @SYMTestCaseID              LBS-MultipleMTLRs-MOLR-OnePm-0001
+//! @SYMTestCaseDesc            Tests running two MTLR's concurrently over one Protocol Module whilst also running a MOLR request.  Both the MTLR's should run as standard (privacy requests accepted) and should both get an accurate GPS position at the end.  The MOLR should also be able to get an accurate GPS Position.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Test setups LBS with one PM
+//!                             2. Test starts off MOLR request
+//!                             3. After the MOLR request has been sent in, start off the first MTLR request.
+//!                             4. After the privacy request has been accepted on the first MTLR, concurrently start a 2nd MTLR reqt.
+//!                             5. Wait for both MTLR's and the MOLR to finish ensuring they all get the accurate GPS position
+//! @SYMTestExpectedResults     Both MTLR's and the MOLR should run getting an accurate position.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            24/4/2009
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMultipleTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_multiple_subsessions.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_multiple_subsessions.ini MultipleSubsessionsOK
+RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsHybridMultipleTest c:\testdata\configs\multiple_subsessions_onepm.ini TwoMtlrsOneMolrOnePm
+END_TESTCASE                  LBS-MultipleMTLRs-MOLR-OnePm-0001
+
+// Stop LBS
+RUN_TEST_STEP 020 LbsHybridMultipleTestServer LbsStep_StopLbs

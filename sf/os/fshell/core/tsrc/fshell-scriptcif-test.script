@@ -1,0 +1,38 @@
+#!fshell
+# fshell-scriptcif-test.script
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+source $SCRIPT_PATH\errordef.script
+export QUIET "2>&1 >/dev/null" # Used to quieten the things that we're fully expecting to fail
+
+# The things that should suceed use "|| $Error", the things that should fail use $QUIET and "&& $Error" in case they actually succeed when the shouldn't
+
+fshell $SCRIPT_PATH\tscriptargs.script abc123 || $Error
+fshell $SCRIPT_PATH\tscriptargs.script $QUIET && $Error
+
+export EXPECTEDMYOPTIONALARG optionalarg
+fshell $SCRIPT_PATH\tscriptargs.script abc123 optionalarg || $Error
+fshell $SCRIPT_PATH\tscriptargs.script abc123 $QUIET && $Error
+fshell $SCRIPT_PATH\tscriptargs.script abc123 wrongoptionalarg $QUIET && $Error
+export EXPECTEDMYOPTIONALARG
+
+# Check that the arguments to the script are being set as local environment variables and so don't pollute our env
+var myarg not-defined || $Error # Just to make sure our env is sane to start with
+source $SCRIPT_PATH\tscriptargs.script abc123 || $Error
+var myarg not-defined || $Error
+
+# Now test that even if we define a var of the same name, we don't see the definition from the child script
+export myarg "Something that isn't abc123."
+source $SCRIPT_PATH\tscriptargs.script abc123 || $Error
+var myarg == "Something that isn't abc123." || $Error
+
+fshell tlotsofscriptargs abc123 123 0x123 $SCRIPT_PATHtlotsofscriptargs.script 3.141 enumsecondvalue || $Error

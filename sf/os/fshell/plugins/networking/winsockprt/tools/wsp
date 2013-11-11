@@ -1,0 +1,231 @@
+#!perl
+# wsp
+# 
+# Copyright (c) 2002 - 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Description:
+# wsp - A tool for enabling / disabling the Symbian OS WinSock protocol module
+
+use strict;
+use Getopt::Long;
+use File::Copy;
+use File::Basename;
+
+#
+# Globals.
+#
+
+my $verbose = 0;
+my $commands = {
+		'enable' => \&HandleEnable,
+		'e' => \&HandleEnable,
+		'disable' => \&HandleDisable,
+		'd' => \&HandleDisable,
+		'status' => \&HandleStatus,
+		's' => \&HandleStatus
+	       };
+
+my $kRoot = $ENV{EPOCROOT} . 'epoc32\winscw\c\Private\101f7989\esock\\';
+
+my @files = (
+	     {
+	      enabled => $kRoot . 'ip.winsockprt.esk',
+	      disabled => $kRoot . 'ip.winsockprt.esk.disabled',
+	     },
+	     {
+	      enabled => $kRoot . 'ip.dwinsockprt.esk.disabled',
+	      disabled => $kRoot . 'ip.dwinsockprt.esk',
+	     },
+	     {
+	      enabled => $kRoot . 'ip.tcpip.esk.disabled',
+	      disabled => $kRoot . 'ip.tcpip.esk',
+	     },
+	    );
+
+my @undoStack;
+
+
+#
+# Main.
+#
+
+ProcessCommandLine();
+
+
+#
+# Subs.
+#
+
+sub ProcessCommandLine {
+  Getopt::Long::Configure ("bundling");
+  my $help;
+  GetOptions('h' => \$help, 'v+' => \$verbose);
+  if ($help) {
+    Usage();
+  }
+
+  my $command = shift @ARGV;
+  unless ($command and scalar(@ARGV) == 0) {
+    print "Error: Invalid arguments\n";
+    Usage();
+  }
+  unless (exists $commands->{$command}) {
+    print "Error: Unrecognised command\n";
+    Usage();
+  }
+  my $commandSub = $commands->{$command};
+  &$commandSub();
+}
+
+sub Usage {
+  die ("\nUsage: wsp [options] (enable | e | disable | d | status | s)
+
+options:
+
+  -h  help
+  -v  verbose output\n");
+}
+
+sub HandleEnable {
+  my $currentStatus = Status();
+  unless ($currentStatus eq 'disabled') {
+    die "Error: Current status is $currentStatus\n";
+  }
+
+  RenameFilesEnabled();
+  print "WinSock protocol module enabled\n";
+}
+
+sub HandleDisable {
+  my $currentStatus = Status();
+  unless ($currentStatus eq 'enabled') {
+    die "Error: Current status is $currentStatus\n";
+  }
+
+  RenameFilesDisabled();
+  print "WinSock protocol module disabled\n";
+}
+
+sub HandleStatus {
+  print "Current status: ", Status(), "\n";
+}
+
+sub Status {
+  my $numEnabled = 0;
+  my $numDisabled = 0;
+  foreach my $file (@files) {
+    if (-e $file->{enabled}) {
+      ++$numEnabled;
+    }
+    if (-e $file->{disabled}) {
+      ++$numDisabled;
+    }
+  }
+
+  if (($numEnabled == scalar(@files)) and ($numDisabled == 0)) {
+    return 'enabled';
+  }
+  elsif (($numDisabled == scalar(@files)) and ($numEnabled == 0)) {
+    return 'disabled';
+  }
+  return 'indeterminate';
+}
+
+sub RenameFilesDisabled {
+  my $sub = sub {
+    my $file = shift;
+    RenameFile($file->{enabled}, $file->{disabled});
+  };
+  ProcessFilesWithUndo($sub);
+}
+
+sub RenameFilesEnabled {
+  my $sub = sub {
+    my $file = shift;
+    RenameFile($file->{disabled}, $file->{enabled});
+  };
+  ProcessFilesWithUndo($sub);
+}
+
+sub ProcessFilesWithUndo {
+  my $sub = shift;
+  eval {
+    foreach my $thisFile (@files) {
+      &$sub($thisFile);
+    }
+  };
+  if ($@) {
+    while (my $thisUndo = pop (@undoStack)) {
+      &$thisUndo();
+    }
+    die $@;
+  }
+}
+
+sub RenameFile {
+  my $from = shift;
+  my $to = shift;
+  if (-e $to) {
+    die "Error: Attempting to rename \"$from\" to \"$to\" which already exists\n";
+  }
+  print "Renaming \"$from\" -> \"$to\"...\n" if ($verbose);
+  rename($from, $to) or die "Error: Couldn't rename \"$from\" to \"$to\": $!\n";
+  push (@undoStack, sub { print "Undoing rename of \"$from\" -> \"$to\"...\n"; rename ($to, $from) or die; });
+}
+
+__END__
+
+=head1 NAME
+
+wsp - A tool for enabling / disabling the Symbian OS WinSock protocol module
+
+=head1 SYNOPSIS
+
+  wsp [options] (enable | e | disable | d | status | s)
+
+options:
+
+  -h  help
+  -v  verbose output
+
+=head1 DESCRIPTION
+
+The WinSock protocol module can be used with the Symbian OS emulator as a replacement for TCPIP6, PPP and NT-RAS. The various commands have the following meaning:
+
+=over 4
+
+=item * enable (e)
+
+Rename / copy the necessary files to enable the WinSock protocol module.
+
+=item * disable (d)
+
+Delete / rename the necessary files to disable the WinSock protocol module.
+
+=item * status (s)
+
+Display the current status (either 'enabled' or 'disabled').
+
+=item * refresh (r)
+
+Only used during development.
+
+=back
+
+=head1 KNOWN BUGS
+
+None.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2002-2010 Accenture. All rights reserved.
+
+=cut

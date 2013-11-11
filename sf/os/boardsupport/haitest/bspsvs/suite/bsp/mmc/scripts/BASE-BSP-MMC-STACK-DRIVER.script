@@ -1,0 +1,1018 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE	T_mmcsd -SharedData
+
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0001
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0001
+//! @SYMAPI			User::LoadLogicalDevice(const TDesC {ref});
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		17/04/2008
+//! @SYMTestCaseDesc		Load Logical Device Driver.
+//! @SYMTestActions		Load D_MMCSDIF LDD Driver
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	KErrNone
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	LoadDriver		BASE-BSP-MMC-STACK-DRIVER-0001-001-LoadDriver_command02
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0001
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0002
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0002
+//! @SYMAPI			DPBusSocket::PowerUp();
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		11/08/2008
+//! @SYMTestCaseDesc		Powers up the socket
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get state of the socket
+//!				4. Power up the socket
+//!				5. Get state of the socket
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Socket successfully powered up with no error
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		CREATE_OBJECT	MMCSDSocket	mmcsdsocket1
+		CREATE_OBJECT	MMCSDPsu	mmcsdpsu1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0002-001-DriverOpen_command02
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0002-001-NewL_command03
+		COMMAND		mmcsdsocket1	NewL			BASE-BSP-MMC-STACK-DRIVER-0002-001-NewL_command03
+		COMMAND		mmcsdpsu1	NewL			BASE-BSP-MMC-STACK-DRIVER-0002-001-NewL_command03
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0002-001-CardP_command04
+		COMMAND		mmcsdsocket1	iState_Get		BASE-BSP-MMC-STACK-DRIVER-0002-001-iState_Get_command05
+		COMMAND		mmcsdpsu1 	VccState  		BASE-BSP-MMC-STACK-DRIVER-0002-001-VccState_command06
+		COMMAND		mmcsdpsu1 	SetState  		BASE-BSP-MMC-STACK-DRIVER-0002-001-SetState_command07
+		COMMAND		mmcsdpsu1 	VccState  		BASE-BSP-MMC-STACK-DRIVER-0002-001-VccState_command08
+		COMMAND		mmcsdsocket1	iState_Get		BASE-BSP-MMC-STACK-DRIVER-0002-001-iState_Get_command09
+		COMMAND		mmcsdsocket1	PowerUp
+		OUTSTANDING
+		COMMAND		mmcsdsocket1	iState_Get		BASE-BSP-MMC-STACK-DRIVER-0002-001-iState_Get_command11
+		COMMAND		mmcsdpsu1	VccState		BASE-BSP-MMC-STACK-DRIVER-0002-001-VccState_command12
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdpsu1	~
+		COMMAND		mmcsdsocket1	~
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0002
+
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0003
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0003
+//! @SYMAPI			DMMCStack::PasswordStore();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		17/06/2008
+//! @SYMTestCaseDesc		Write to / Read from Password Store.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Write to Password Store
+//!				5. Read from Password Store
+//!				6. Write to Password Store
+//!				7. Read from Password Store
+//!				8. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Password store written to / read from with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0003-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0003-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0003-001-CardP_command03
+		COMMAND		mmcsdstack1	WritePasswordStore	BASE-BSP-MMC-STACK-DRIVER-0003-001-WritePasswordStore_command04
+		COMMAND		mmcsdstack1	ReadPasswordStore	BASE-BSP-MMC-STACK-DRIVER-0003-001-ReadPasswordStore_command05
+		COMMAND		mmcsdstack1	WritePasswordStore	BASE-BSP-MMC-STACK-DRIVER-0003-001-WritePasswordStore_command06
+		COMMAND		mmcsdstack1	ReadPasswordStore	BASE-BSP-MMC-STACK-DRIVER-0003-001-ReadPasswordStore_command07
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0003
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0004
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0004
+//! @SYMAPI			DMMCSession::SetupCIMReadBlock(TMMCArgument, TUint32, TUint8 {ptr});
+//!				DMMCSession::SetupCIMWriteBlock(TMMCArgument, TUint32, TUint8 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		25/07/2008
+//! @SYMTestCaseDesc		Concurrent read/write sector test.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Write to sector 12 of the card
+//!				5. Read from sector 12 of the card and verify contents
+//!				6. Write to sector 13 of the card
+//!				7. Read from sector 13 of the card and verify contents
+//!				8. Write to sector 14 of the card
+//!				9. Read from sector 14 of the card and verify contents
+//!				10. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Sectors correctly written and read with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0004-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0004-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0004-001-CardP_command03
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0004-001-WriteSector_command04
+		OUTSTANDING
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0004-001-ReadSector_command05
+		OUTSTANDING
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0004-001-WriteSector_command06
+		OUTSTANDING
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0004-001-ReadSector_command07
+		OUTSTANDING
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0004-001-WriteSector_command08
+		OUTSTANDING
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0004-001-ReadSector_command09
+		OUTSTANDING
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0004
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0005
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0005
+//! @SYMAPI			DMMCSession::SetupCIMWriteBlock(TMMCArgument, TUint32, TUint8 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		25/07/2008
+//! @SYMTestCaseDesc		Multiple write sector test.
+//! @SYMTestActions    		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Write to sector 12 of the card
+//!				5. Write to sector 13 of the card
+//!				6. Write to sector 13 of the card
+//!				7. Read from sector 12 of the card and verify contents
+//!				8. Read from sector 13 of the card and verify contents
+//!				9. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Sectors correctly written with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0005-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0005-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0005-001-CardP_command03
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0005-001-WriteSector_command04
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0005-001-WriteSector_command05
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0005-001-WriteSector_command06
+		OUTSTANDING
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0005-001-ReadSector_command07
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0005-001-ReadSector_command08
+		OUTSTANDING
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0005
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0006
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0006
+//! @SYMAPI			DMMCSession::SetupCIMReadBlock(TMMCArgument, TUint32, TUint8 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		17/04/2008
+//! @SYMTestCaseDesc		Multiple read sector test.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Write to sector 12 of the card
+//!				5. Write to sector 13 of the card
+//!				6. Read from sector 12 of the card and verify contents
+//!				7. Read from sector 13 of the card and verify contents
+//!				8. Read from sector 13 of the card and verify contents
+//!				9. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	All sectors read correctly with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0006-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0006-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0006-001-CardP_command03
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0006-001-WriteSector_command04
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0006-001-WriteSector_command05
+		OUTSTANDING
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0006-001-ReadSector_command06
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0006-001-ReadSector_command07
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0006-001-ReadSector_command08
+		OUTSTANDING
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0006
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0007
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0007
+//! @SYMAPI			DMMCStack::AdjustPartialRead(const TMMCard {ptr}, TUint32, TUint32, TUint32{ptr}, TUint32 {ptr});
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		28/04/2008
+//! @SYMTestCaseDesc		Adjust Partial Read Test - Get minimum range that must be read off card.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Get minimum range that must be read off card
+//!				5. Get minimum range that must be read off card
+//!				6. Get minimum range that must be read off card
+//!				7. Get minimum range that must be read off card
+//!				8. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	The minimum range that must be read off card is correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0007-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0007-001-NewL_command02
+		COMMAND 	mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0007-001-CardP_command03
+		COMMAND 	mmcsdstack1 	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0007-001-AdjustPartialRead_command04
+		COMMAND 	mmcsdstack1 	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0007-001-AdjustPartialRead_command05
+		COMMAND 	mmcsdstack1 	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0007-001-AdjustPartialRead_command06
+		COMMAND 	mmcsdstack1 	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0007-001-AdjustPartialRead_command07
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0007
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0008
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0008
+//! @SYMAPI			DMMCStack::HasSessionsQueued();
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		06/05/2008
+//! @SYMTestCaseDesc		Has Sessions Queued Test - Get whether any of the session queues have submitted session engaged.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get whether any of the session queues have submitted session engaged
+//!				4. Select the card
+//!				5. Write to sector 7 of the card
+//!				6. Get whether any of the session queues have submitted session engaged
+//!				7. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Sessions Queued status correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0008-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0008-001-NewL_command02
+		COMMAND		mmcsdstack1 	HasSessionsQueued	BASE-BSP-MMC-STACK-DRIVER-0008-001-HasSessionsQueued_command03
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0008-001-CardP_command04
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0008-001-WriteSector_command05
+		COMMAND		mmcsdstack1 	HasSessionsQueued	BASE-BSP-MMC-STACK-DRIVER-0008-001-HasSessionsQueued_command06
+		OUTSTANDING
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0008
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0009
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0009
+//! @SYMAPI			DMMCStack::EffectiveModes();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		28/06/2008
+//! @SYMTestCaseDesc		Effective modes tests
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				4. Remove mode
+//!				5. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				6. Set Bus Clock mode
+//!				7. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				8. Set Busy TimeOut mode
+//!				9. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				10. Set CRC Retries mode
+//!				11. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				12. Set Data TimeOut mode
+//!				13. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				14. Set mode
+//!				15. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				16. Set Op Cond Busy Timeout mode
+//!				17. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				18. Set Poll Attempts mode
+//!				19. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				20. Set Response TimeOut In Ticks mode
+//!				21. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				22. Set Ticks Clock In mode
+//!				23. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				24. Set Ticks Clock Out mode
+//!				25. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				26. Set TimeOut Retries mode
+//!				27. Get the modes which the DMMCStack object serving this session will consider as effective
+//!				28. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	EffectiveModes altered correctly with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd					\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen				BASE-BSP-MMC-STACK-DRIVER-0009-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL					BASE-BSP-MMC-STACK-DRIVER-0009-001-NewL_command02
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command03
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command04
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command05
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command06
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command07
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command08
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command09
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command10
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command11
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command12
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command13
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command14
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command15
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command16
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command17
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command18
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command19
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command20
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command21
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command22
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command23
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command24
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command25
+		COMMAND		mmcsdstack1	AlterEffectiveModes			BASE-BSP-MMC-STACK-DRIVER-0009-001-AlterEffectiveModes_command26
+		COMMAND		mmcsdstack1	EffectiveModes				BASE-BSP-MMC-STACK-DRIVER-0009-001-EffectiveModes_command27
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0009
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0010
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0010
+//! @SYMAPI			DMMCStack::CardP();
+//! @SYMAuthor			M Flowers
+//! @SYMCreationDate		06/05/2008
+//! @SYMTestCaseDesc		Negative test for select card - calls DMMCStackCardP with an invalid card number
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select an invalid card
+//!				4. Write to a sector of the card
+//!				5. Select an invalid card
+//!				6. Write to a sector of the card
+//!				7. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	CardP returns NULL and WriteSector returns KErrNotReady
+//! @SYMTestType		CIT
+	START_TEST_BLOCK		100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT		MMCSDSession	mmcsdsession1
+		CREATE_OBJECT		MMCSDStack	mmcsdstack1
+		COMMAND			mmcsdsession1	NewL
+		COMMAND			mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0010-001-DriverOpen_command01
+		COMMAND			mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0010-001-NewL_command02
+		COMMAND			mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0010-001-CardP_command03
+		COMMAND	!AsyncError=-18	mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0010-001-WriteSector_command04
+		OUTSTANDING
+		COMMAND 		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0010-001-CardP_command05
+		COMMAND	!AsyncError=-18	mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0010-001-WriteSector_command06
+		OUTSTANDING
+		COMMAND			mmcsdsession1	Close
+		COMMAND			mmcsdstack1	~
+		COMMAND			mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0010
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0011
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0011
+//! @SYMAPI			TMMCard::CSD();
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		15/07/2008
+//! @SYMTestCaseDesc		CSD Test - Read the CSD
+//! @SYMTestActions    		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Read the CSD
+//!				7. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	CSD correctly returned with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0011-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0011-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0011-001-CardP_command03
+		COMMAND		mmcsdstack1	ReadCSD
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0011
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0012
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0012
+//! @SYMAPI			DMMCSession::SetupCIMReadBlock(TMMCArgument, TUint32, TUint8 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		15/07/2008
+//! @SYMTestCaseDesc		Multiple read/write sector test.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Write to a sector of the card
+//!				5. Read from a sector of the card
+//!				6. Write to a sector of the card
+//!				7. Read from a sector of the card
+//!				8. Write to a sector of the card
+//!				9. Read from a sector of the card
+//!				10. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Sectors correctly written and read with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0012-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0012-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0012-001-CardP_command03
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0012-001-WriteSector_command04
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0012-001-ReadSector_command05
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0012-001-WriteSector_command06
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0012-001-ReadSector_command07
+		COMMAND		mmcsdstack1	WriteSector		BASE-BSP-MMC-STACK-DRIVER-0012-001-WriteSector_command08
+		COMMAND		mmcsdstack1	ReadSector		BASE-BSP-MMC-STACK-DRIVER-0012-001-ReadSector_command09
+		OUTSTANDING
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0012
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0013
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0013
+//! @SYMAPI			TMMCard::ExtendedCSD();
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		15/07/2008
+//! @SYMTestCaseDesc		Extended CSD Test - Read the Extended CSD
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Read the Extended CSD
+//!				7. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	CSD correctly returned with no errors
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0013-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0013-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0013-001-CardP_command03
+		COMMAND		mmcsdstack1	ReadExtCSD
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0013
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0014
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0014
+//! @SYMAPI			DMMCStack::CardP(TUint);
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		30/04/2008
+//! @SYMTestCaseDesc		Card Pointer Test - Get pointer to a card.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get pointer to card
+//!				4. Get card info
+//!				5. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Pointer to card correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0014-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0014-001-NewL_command02
+		COMMAND 	mmcsdstack1 	CardP			BASE-BSP-MMC-STACK-DRIVER-0014-001-CardP_command03
+		COMMAND 	mmcsdstack1 	CardInfo		BASE-BSP-MMC-STACK-DRIVER-0014-001-CardInfo_command04
+		COMMAND 	mmcsdstack1 	CardIsPresent		BASE-BSP-MMC-STACK-DRIVER-0014-001-CardIsPresent_command05
+		COMMAND 	mmcsdstack1 	CardIsReady		BASE-BSP-MMC-STACK-DRIVER-0014-001-CardIsReady_command06
+		COMMAND 	mmcsdstack1 	CardIsLocked		BASE-BSP-MMC-STACK-DRIVER-0014-001-CardIsLocked_command07
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0014
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0015
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0015
+//! @SYMAPI			DMMCStack::CardP(TUint);
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		25/07/2008
+//! @SYMTestCaseDesc		Card Pointer Test - Get pointer to a card using invalid card numbers.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get pointer to card with correct card number
+//!				4. Get pointer to card with card number -1
+//!				5. Get pointer to card with card number 5
+//!				6. Get pointer to card with correct card number
+//!				7. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Pointer to card correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0015-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0015-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0015-001-CardP_command03
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0015-001-CardP_command04
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0015-001-CardP_command05
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0015-001-CardP_command06
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0015
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0016
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0016
+//! @SYMAPI			DMMCStack::MaxCardsInStack();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		02/05/2008
+//! @SYMTestCaseDesc		Max Cards In Stack Test - Get the max number of MultiMediaCards which could ever be present.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get the max number of MultiMediaCards which could ever be present
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Correct max number of MMC cards returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0016-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0016-001-NewL_command02
+		COMMAND		mmcsdstack1	MaxCardsInStack		BASE-BSP-MMC-STACK-DRIVER-0016-001-MaxCardsInStack_command03
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0016
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0017
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0017
+//! @SYMAPI			DMMCStack::MMCSocket();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		02/05/2008
+//! @SYMTestCaseDesc		Socket Pointer Test - Get pointer to associated socket.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get pointer to associated socket
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Pointer to socket correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		CREATE_OBJECT	MMCSDSocket	mmcsdsocket1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0017-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0017-001-NewL_command02
+		COMMAND		mmcsdsocket1	NewL			BASE-BSP-MMC-STACK-DRIVER-0017-001-NewL_command02
+		COMMAND		mmcsdstack1	MMCSocket		BASE-BSP-MMC-STACK-DRIVER-0017-001-Socket_command03
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdsocket1	~
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0017
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0018
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0018
+//! @SYMAPI			DMMCStack::InitStackInProgress();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		06/05/2008
+//! @SYMTestCaseDesc		Init Stack In Progress Test - Get initialisation state of the stack.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get initialisation state of the stack
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Initialisation state of the stack correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0018-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0018-001-NewL_command02
+		COMMAND		mmcsdstack1	InitStackInProgress	BASE-BSP-MMC-STACK-DRIVER-0018-001-InitStackInProgress_command03
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE 			BASE-BSP-MMC-STACK-DRIVER-0018
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0019
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0019
+//! @SYMAPI			DMMCStack::BufferInfo(TUint8 {ptr ref}, TInt {ref}, TInt {ref});
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		30/04/2008
+//! @SYMTestCaseDesc		Buffer Info Test - Retrieve the DMA-capable buffer start and length and calculate the minor buffer length.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Retrieve the DMA-capable buffer start and length and calculate the minor buffer length
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Buffer info correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0019-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0019-001-NewL_command02
+		COMMAND		mmcsdstack1	BufferInfo		BASE-BSP-MMC-STACK-DRIVER-0019-001-BufferInfo_command03
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0019
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0020
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0020
+//! @SYMAPI			DMMCStack::ProgramPeriodInMilliSeconds();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		06/05/2008
+//! @SYMTestCaseDesc		Poll timer period Test - Get the poll timer period.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get the poll timer period
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	The poll timer period is correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0020-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0020-001-NewL_command02
+		COMMAND 	mmcsdstack1 	ProgramPeriodMs		BASE-BSP-MMC-STACK-DRIVER-0020-001-ProgramPeriodMs_command03
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0020
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0021
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0021
+//! @SYMAPI			DMMCStack:: GetBufferInfo(TUint8 {ptr ptr}, TInt {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		17/04/2008
+//! @SYMTestCaseDesc		Get Buffer Info Test - Get details of buffer allocated by socket for data transfer operations.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get details of buffer allocated by socket for data transfer operations
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Details of buffer correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0021-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0021-001-NewL_command02
+		COMMAND		mmcsdstack1	GetBufferInfo		BASE-BSP-MMC-STACK-DRIVER-0021-001-GetBufferInfo_command03
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0021
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0022
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0022
+//! @SYMAPI			DMMCStack::MachineInfo(TMMCMachineInfo {ref});
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		06/05/2008
+//! @SYMTestCaseDesc		Machine Info Test - Get the platform specific configuration information.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Get the platform specific configuration information
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Platform specific configuration information correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0022-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0022-001-NewL_command02
+		COMMAND		mmcsdstack1	MachineInfo		BASE-BSP-MMC-STACK-DRIVER-0022-001-MachineInfo_command03
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0022
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0023
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0023
+//! @SYMAPI			DMMCStack::DemandPagingInfo(TDemandPagingInfo {ref});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		18/04/2008
+//! @SYMTestCaseDesc		Demand Paging Info Test - Demand paging info.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Demand paging info
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Paging info obtained with KErrNotSupported.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK		100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT		MMCSDSession	mmcsdsession1
+		CREATE_OBJECT		MMCSDStack	mmcsdstack1
+		COMMAND			mmcsdsession1	NewL
+		COMMAND			mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0023-001-DriverOpen_command01
+		COMMAND			mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0023-001-NewL_command02
+		COMMAND	!Error=-5	mmcsdstack1	DemandPagingInfo
+		COMMAND			mmcsdsession1	Close
+		COMMAND			mmcsdstack1	~
+		COMMAND			mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0023
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0024
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0024
+//! @SYMAPI			DMMCStack::AllocSession(const TMMCCallBack {ref});
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		29/04/2008
+//! @SYMTestCaseDesc		Allocate Session Test
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Allocate Session
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Session allocated with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0024-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0024-001-NewL_command02
+		COMMAND		mmcsdstack1	AllocSession
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0024
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0025
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0025
+//! @SYMAPI			DMMCStack::AdjustPartialRead(const TMMCard {ptr}, TUint32, TUint32, TUint32{ptr}, TUint32 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		28/07/2008
+//! @SYMTestCaseDesc		Adjust Partial Read Test - Get minimum range that must be read off card using invalid inputs.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Get minimum range that must be read off card, where aStart=0xFFFFFFFE and aEnd=0xFFFFFFFF
+//!				8. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	The minimum range that must be read off card is correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0025-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0025-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0025-001-CardP_command03
+		COMMAND		mmcsdstack1	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0025-001-AdjustPartialRead_command04
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0025
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0026
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0026
+//! @SYMAPI			DMMCStack::AdjustPartialRead(const TMMCard {ptr}, TUint32, TUint32, TUint32{ptr}, TUint32 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		28/07/2008
+//! @SYMTestCaseDesc		Adjust Partial Read Test - Get minimum range that must be read off card using invalid inputs.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Get minimum range that must be read off card, where aStart=0 and aEnd=0xFFFFFFFF
+//!				8. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	The minimum range that must be read off card is correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0026-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0026-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0026-001-CardP_command03
+		COMMAND		mmcsdstack1	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0026-001-AdjustPartialRead_command04
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0026
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0027
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0027
+//! @SYMAPI			DMMCStack::AdjustPartialRead(const TMMCard {ptr}, TUint32, TUint32, TUint32{ptr}, TUint32 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		28/07/2008
+//! @SYMTestCaseDesc		Adjust Partial Read Test - Get minimum range that must be read off card using invalid inputs.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Get minimum range that must be read off card, where where aStart=aEnd
+//!				8. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	The minimum range that must be read off card is correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0027-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0027-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0027-001-CardP_command03
+		COMMAND		mmcsdstack1	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0027-001-AdjustPartialRead_command04
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0027
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0028
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0028
+//! @SYMAPI			DMMCStack::AdjustPartialRead(const TMMCard {ptr}, TUint32, TUint32, TUint32{ptr}, TUint32 {ptr});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		28/07/2008
+//! @SYMTestCaseDesc		Adjust Partial Read Test - Get minimum range that must be read off card using invalid inputs.
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Select the card
+//!				4. Get minimum range that must be read off card, where where aStart>aEnd
+//!				8. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	The minimum range that must be read off card is correctly returned with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0028-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0028-001-NewL_command02
+		COMMAND		mmcsdstack1	CardP			BASE-BSP-MMC-STACK-DRIVER-0028-001-CardP_command03
+		COMMAND		mmcsdstack1	AdjustPartialRead	BASE-BSP-MMC-STACK-DRIVER-0028-001-AdjustPartialRead_command04
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0028
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0029
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0029
+//! @SYMAPI			DMMCStack::ReportPowerUp();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		19/05/2008
+//! @SYMTestCaseDesc		ReportPowerUp
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Report that that power up operation has successfully completed.
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Power up reported with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0029-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0029-001-NewL_command02
+		COMMAND		mmcsdstack1	ReportPowerUp
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0029
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0030
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0030
+//! @SYMAPI			DMMCStack::ReportPowerDown();
+//! @SYMAuthor			Matt Flowers
+//! @SYMCreationDate		19/05/2008
+//! @SYMTestCaseDesc		ReportPowerDown
+//! @SYMTestActions		1. Create RMMCSDTestControllerInterface Handle object.
+//!				2. Open the driver connection
+//!				3. Report that that power down operation has successfully completed.
+//!				4. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	Power down reported with no errors.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		CREATE_OBJECT	MMCSDStack	mmcsdstack1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	DriverOpen		BASE-BSP-MMC-STACK-DRIVER-0030-001-DriverOpen_command01
+		COMMAND		mmcsdstack1	NewL			BASE-BSP-MMC-STACK-DRIVER-0030-001-NewL_command02
+		COMMAND		mmcsdstack1	ReportPowerDown
+		COMMAND		mmcsdsession1	Close
+		COMMAND		mmcsdstack1	~
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0030
+
+START_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0031
+//! @SYMTestCaseID		BASE-BSP-MMC-STACK-DRIVER-0031
+//! @SYMAPI			FreeLogicalDevice(const TDesC {ref});
+//! @SYMAuthor			James Mechen
+//! @SYMCreationDate		17/04/2008
+//! @SYMTestCaseDesc		Free the Logical Device Driver
+//! @SYMTestActions		Free the D_MMCSDIF LDD Driver
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		high
+//! @SYMTestExpectedResults	logical device driver unloaded.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_mmcsd			\base\mmcsd\BASE-BSP-MMC-STACK-DRIVER.ini
+		CREATE_OBJECT	MMCSDSession	mmcsdsession1
+		COMMAND		mmcsdsession1	NewL
+		COMMAND		mmcsdsession1	UnLoadDriver		BASE-BSP-MMC-STACK-DRIVER-0031-001-UnloadDriver_command03
+		COMMAND		mmcsdsession1	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-MMC-STACK-DRIVER-0031

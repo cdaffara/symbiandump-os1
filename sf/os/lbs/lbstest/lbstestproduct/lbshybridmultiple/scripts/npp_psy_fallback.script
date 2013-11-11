@@ -1,0 +1,77 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: Test script to test the NPP PSY's fallback behaviour
+//
+
+//! @File
+//! @SYMTestSuiteName         npp_psy_fallback.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE LbsHybridMultipleTestServer -SharedData
+PRINT Run LbsHybridMultipleTestServer
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_multiple_subsessions.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_SetupMultipleProtocolStubs c:\testdata\configs\lbs_multiple_subsessions.ini ProtocolModules
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_SetupRoamSelfLocate
+
+// Get SUPL PSY to use Test PM
+RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsStep_ConfigSuplPsy c:\testdata\configs\npp_psy_fallback.ini SuplUseTestPm
+
+RUN_TEST_STEP 030 LbsHybridMultipleTestServer LbsStep_SetUpPsy c:\testdata\configs\npp_psy_fallback.ini NPPPSY
+
+// Start LBS
+RUN_TEST_STEP 030 LbsHybridMultipleTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-NPP-PSY-Fallback_NetworkThenSupl-0001
+RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_multiple_subsessions.ini MultipleSubsessionsOK
+RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsStep_ConfigNppPsy c:\testdata\configs\npp_psy_fallback.ini NetworkThenSupl
+RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsHybridMultipleTest c:\testdata\configs\npp_psy_fallback.ini FallbackNetworkToSupl
+END_TESTCASE                  LBS-NPP-PSY-Fallback_NetworkThenSupl-0001
+
+
+//NOTE: Commented out as test currently fails due to a problem in network gateway
+//
+//
+//START_TESTCASE                LBS-NPP-PSY-Fallback_SuplThenNetwork-0001
+//RUN_TEST_STEP 010 LbsHybridMultipleTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_multiple_subsessions.ini MultipleSubsessionsOK
+//RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsStep_ConfigNppPsy c:\testdata\configs\npp_psy_fallback.ini SuplThenNetwork
+//RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsHybridMultipleTest c:\testdata\configs\npp_psy_fallback.ini FallbackSuplToNetwork
+//END_TESTCASE                  LBS-NPP-PSY-Fallback_SuplThenNetwork-0001
+
+
+// Restore SUPL PSY to use SUPL PM
+RUN_TEST_STEP 120 LbsHybridMultipleTestServer LbsStep_ConfigSuplPsy c:\testdata\configs\npp_psy_fallback.ini SuplUseSuplPm
+
+// Stop LBS
+RUN_TEST_STEP 020 LbsHybridMultipleTestServer LbsStep_StopLbs
+

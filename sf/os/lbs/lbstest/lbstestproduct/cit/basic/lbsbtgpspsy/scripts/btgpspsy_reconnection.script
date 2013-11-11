@@ -1,0 +1,117 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         btgpspsy_reconnection.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE ctlbsbtgpspsytestserver
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+START_TESTCASE                LBS-BTGPSPSY-Reconnection-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-Reconnection-0001
+//! @SYMTestCaseDesc            Test to ensure the BT PSY attempts to reconnect to a device after it has been disconnected from it.
+//! @SYMTestActions             1. Test should add one BT GPS device to the list.  This device should be an available BT device.
+//!                             2. Test makes a number of location request and should get a position returned back to it.
+//!                             3. After the first position is returned, the test should turn the BT device off causing it to disconnect from the PSY.  As soon as the disconnect occurs the test should turn the device back on.
+//!                             4. The test should continue to make location requests and the PSY should attempt to reconnect to the device.  This reconnection should work and the test should get more location updates.
+//! @SYMTestExpectedResults     Test should receive location updates and should attempt to reconnect to the device after getting disconnected from it.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            15/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10807
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection01Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyReconnectionStep c:\testdata\configs\btgpspsy_locationrequest.ini Reconnection01
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection01Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Reconnection-0001
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Reconnection-0002
+//! @SYMTestCaseID              LBS-BTGPSPSY-Reconnection-0002
+//! @SYMTestCaseDesc            Test to ensure the BT PSY attempts to reconnect to devices in the list after it has been disconnected from one of the devices.
+//! @SYMTestActions             1. Test should add two available BT devices to the list.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test turns off the first BT device in the list, disconnecting it from the BT PSY.  This device should remain off for the rest of the test.
+//!                             4. Test continues to make location requests to the PSY.  The PSY should attempt to connect to devices in the list again.
+//!                             5. The PSY should be able to connect to the second available device in the list and should receive a location update from this device.
+//!                             6. Test checks the list still only contains the two available BT GPS, however the second available device should now be at the top of the list.
+//! @SYMTestExpectedResults     Test should receive two location updates, each from a different BT GPS device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            15/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10807
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection02Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyReconnectionStep c:\testdata\configs\btgpspsy_locationrequest.ini Reconnection02
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection02Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Reconnection-0002
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Reconnection-0003
+//! @SYMTestCaseID              LBS-BTGPSPSY-Reconnection-0003
+//! @SYMTestCaseDesc            Test to ensure the BT PSY attempts to reconnect to devices in the list after it has been disconnected from one of the devices.
+//! @SYMTestActions             1. Test should add two available BT devices to the list, with the first device in the list being OFF.
+//!                             2. Test makes a location request and should get a position returned back to it from the second device.
+//!                             3. Test turns off the connected BT device, disconnecting it from the BT PSY.  This device should remain off for the rest of the test and the first device should be turned ON.
+//!                             4. Test continues to make location requests to the PSY.  The PSY should attempt to connect to devices in the list again.
+//!                             5. The PSY should be able to connect to the first device in the list and should receive a location update from this device.
+//!                             6. Test checks the list still only contains the two available BT GPS and that the first device is at the top of the list.
+//! @SYMTestExpectedResults     Test should receive two location updates, each from a different BT GPS device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            6/1/2009
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10807
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection03Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyReconnectionStep c:\testdata\configs\btgpspsy_locationrequest.ini Reconnection03
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection03Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Reconnection-0003
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-Reconnection-0004
+//! @SYMTestCaseID              LBS-BTGPSPSY-Reconnection-0004
+//! @SYMTestCaseDesc            Test to ensure the BT PSY is able to deal with devices in the list marked as valid devices (device type = 2 or 3), but the device is not paired with the handset.
+//! @SYMTestActions             1. Test should add two available BT devices to the list (with device type as a valid device), with the first device in the list being OFF.  Both devices should not be paired with the handset.
+//!                             2. Test makes a location request and should get a position returned back to it from the second device after going through the full pairing process.
+//!                             3. Test turns off the connected BT device, disconnecting it from the BT PSY.  This device should remain off for the rest of the test and the first device should be turned ON.
+//!                             4. Test continues to make location requests to the PSY.  The PSY should attempt to connect to devices in the list again.
+//!                             5. The PSY should be able to connect to the first device in the list and should receive a location update from this device.
+//!                             6. Test checks the list still only contains the two available BT GPS and that the first device is at the top of the list.
+//! @SYMTestExpectedResults     Test should receive two location updates, each from a different BT GPS device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            15/1/2009
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10807
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection03Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyReconnectionStep c:\testdata\configs\btgpspsy_locationrequest.ini Reconnection04
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist_reconnection.ini Reconnection03Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-Reconnection-0004
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

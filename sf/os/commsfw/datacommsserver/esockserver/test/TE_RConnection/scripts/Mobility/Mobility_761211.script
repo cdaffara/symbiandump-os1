@@ -1,0 +1,124 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-BEARERMOBILITY
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+// Set up the comms database and start esock in preparation for the test
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\testdata\configs\BearerMobility\BearerMobility_001.ced.cfg c:\BearerMobility_001.ced.cfg.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-Mobility-3501
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-Mobility-3501
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ1060
+//!@SYMAPI
+// TODO_CDG
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+PRINT NET_BMOBILITY_761211: (Timing out a connection with an opened mobility extension which has already started a mobility handshake)
+PRINT NET_BMOBILITY_761211: (Handshake continues uninterrupted, then we timeout again and chech the error code)
+PRINT RCommsMobilityApiExt::Open(),
+PRINT RCommsMobilityApiExt::RegisterForMobilityNotification(),
+PRINT Simulate current AP (4) going down
+PRINT Receive PreferredCarierAvailable (5),
+PRINT Time out (20s)
+PRINT RCommsMobilityApiExt::RegisterForMobilityNotification(),
+PRINT RSocket::Send()/Receive(), RSocket::Close()
+PRINT RCommsMobilityApiExt::MigrateToPreferredCarrier(),
+PRINT Receive NewCarierActive,
+PRINT RCommsMobilityApiExt::RegisterForMobilityNotification(),
+PRINT RSocket::Open(), RSocket::Connect(), RSocket::Send()/Receive()
+PRINT RCommsMobilityApiExt::NewCarrierAccepted(),
+PRINT Time out (20s)
+PRINT Receive error -3
+PRINT RCommsMobilityApiExt::Close()
+
+
+PRINT RCommsMobilityApiExt::Close()
+
+
+// Create and connect socketserver and connectionserver instances
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CreateSockSvr
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\BearerMobility\Mobility_761211.ini ConnectSockSvr
+
+// Initialise availability
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761211.ini InitAvailability_1
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761211.ini InitAvailability_2
+
+// Create, open and start the connection
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CreateConn
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761211.ini OpenConn
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\BearerMobility\Mobility_761211.ini StartConn
+
+// Create and open a mobility extension on the opened connection and request events on it
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761211.ini OpenMobilityExtension
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761211.ini RegisterForMobilityNotifs
+
+// Make the active bearer become unavailable so that a migration will be offered
+RUN_TEST_STEP 100 te_esockteststepsSuite SetAccessPointAvailabilityStep z:\testdata\configs\BearerMobility\Mobility_761211.ini ChangeAvailability_1
+
+// Now wait for as long as idle timers would need to time out on our connection
+DELAY 20000
+
+// Check for mobility events, fully expecting to now be offered the less preferred bearer, and accept the migration
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CheckPreferredCarrierAvailable
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761211.ini RegisterForMobilityNotifs
+RUN_TEST_STEP 150 te_esockteststepsSuite migratercommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761211.ini MigrateToPreferredCarrier
+
+// Receive NewCarrierActive
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CheckNewCarrierActive
+RUN_TEST_STEP 100 te_esockteststepsSuite RegisterForMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761211.ini RegisterForMobilityNotifs
+
+// Now test the data path and confirm we are on the new bearer
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CreateSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\BearerMobility\Mobility_761211.ini OpenSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\BearerMobility\Mobility_761211.ini ConnectSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\BearerMobility\Mobility_761211.ini SendReceiveSocket
+
+RUN_TEST_STEP 100 te_esockteststepsSuite acceptcarrierrcommsmobilityapiextStep z:\testdata\configs\BearerMobility\Mobility_761211.ini AcceptNewCarrier
+
+// Now wait for as long as idle timers would need to time out on our connection
+DELAY 20000
+
+// Check for mobility events and expect KErrAbort
+RUN_TEST_STEP 100 te_esockteststepsSuite CheckMobilityNotificationStep z:\testdata\configs\BearerMobility\Mobility_761200.ini CheckMobilityAborted
+
+// Close the resources we opened and cleanup
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsMobilityAPIExtStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CloseMobilityExtension
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CloseSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CloseConn
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\BearerMobility\Mobility_761211.ini CloseSocketSvr
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE			COMINF-ESOCK-RConnection-Mobility-3501
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed NET_BMOBILITY_761211
+
+
+

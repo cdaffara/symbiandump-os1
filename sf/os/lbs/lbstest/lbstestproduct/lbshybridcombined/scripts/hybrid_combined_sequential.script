@@ -1,0 +1,92 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+//All rights reserved.
+//This component and the accompanying materials are made available
+//under the terms of "Eclipse Public License v1.0"
+//which accompanies this distribution, and is available
+//at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+//Initial Contributors:
+//Nokia Corporation - initial contribution.
+//
+//Contributors:
+//
+//Description:
+//
+//
+//! @File
+//! @SYMTestSuiteName LBS-HYBRID-COMBINED-SEQUENTIAL
+//! @SYMScriptTestEnvironment TestExecute
+
+PRINT Run LbsHybridCombinedTestServer
+LOAD_SUITE LbsHybridCombinedTestServer -SharedData
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin: gives us the EGpsPreferTerminalBased.
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_SetupProtocolStub
+
+// Set the Privacy Handler
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_combined.ini PrivHandler
+
+
+
+START_TESTCASE                LBS-HybridCombined-0001
+//! @SYMTestCaseID              LBS-HybridCombined-0001
+//! @SYMTestCaseDesc            Checks that the GPS Module is correctly updated with the presence of a Client Assisted GPS request.
+//!                             Client generates MOLR request GPS Module generates an accurate position in TB mode
+//!                             client a-gps flag is checked to be SET during this session
+//!                             When complete, an MTLR is requested, and an accurate position is returned in TB mode.
+//!                             client a-gps flag is checked to be NOT SET during this session
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             See test step Sequence inline comments
+//! @SYMTestExpectedResults     Sequence as per specified by FSM and UML Seq diagram is Followed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            18/8/2009
+//! @SYMAuthor                  ralphs
+//! @SYMTestStatus              2. Functional
+RUN_TEST_STEP 030 LbsHybridCombinedTestServer LbsStep_StartLbs
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_combined.ini LBS-COMBINED
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_combined.ini CombinedSequential
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsHybridCombinedStep_Sequential01
+END_TESTCASE  					LBS-HybridCombined-0001
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_StopLbs
+
+
+START_TESTCASE                LBS-HybridCombined-0002
+//! @SYMTestCaseID              LBS-HybridCombined-0002
+//! @SYMTestCaseDesc            Checks that the GPS Module is correctly updated with the presence of a Client Assisted GPS request.
+//!                             Client generates MOLR request GPS Module generates an accurate position in Autonomous mode
+//!                             client a-gps flag is checked to be NOT SET during this session
+//!                             When complete, an MTLR is requested, and an accurate position is returned in TB mode.
+//!                             client a-gps flag is checked to be NOT SET during this session
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             See test step Sequence inline comments
+//! @SYMTestExpectedResults     Sequence as per specified by FSM and UML Seq diagram is Followed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            18/8/2009
+//! @SYMAuthor                  ralphs
+//! @SYMTestStatus              2. Functional
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 030 LbsHybridCombinedTestServer LbsStep_StartLbs
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_combined.ini LBS-COMBINED
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_combined.ini CombinedSequential2
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsHybridCombinedStep_Sequential02
+END_TESTCASE  					LBS-HybridCombined-0002
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_StopLbs
+
+

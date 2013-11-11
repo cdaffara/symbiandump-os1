@@ -1,0 +1,192 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// LBS Core OS (PREQ1660) Tests 
+// 
+//
+
+
+LOAD_SUITE LbsPrivFwTestServer -SharedData
+ 
+PRINT Run LbsPrivFwTestServer
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini QNN-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0001
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0001
+//!@SYMTestCaseDesc		Set/Get timeout for Network privacy Connection
+//!
+//!@SYMTestActions		
+//!					1. Issue a SetConnectionTimeout request with some timeout value
+//!					2. Issue ConnectionTimeout to get timeout value
+//!					3. Verify both timeouts
+//!
+//!@SYMTestExpectedResults	Both timeout should be identical
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0001
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0001
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0002
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0002
+//!@SYMTestCaseDesc		Set invalid (negative) timeout for Network Privacy Connection
+//!
+//!@SYMTestActions		1. Issue a SetConnectionTimeout request with some negative timeout value
+//!
+//!@SYMTestExpectedResults	SetConnectionTimeout() should panic with panic code ????
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP !PanicCode=1 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0002
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0002
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0003
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0003
+//!@SYMTestCaseDesc		Check for Default Network Privacy Connection timeout.
+//!
+//!@SYMTestActions		1. Do not issue a SetConnectionTimeout request.
+//!					2. Issue ConnectionTimeout to get default timeout value
+//!
+//!@SYMTestExpectedResults	The default timeout value for Network Privacy Connection should be returned.
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0003
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0003
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0004
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0004
+//!@SYMTestCaseDesc		Set/Get Requester Information for GSM Privacy Request.
+//!
+//!@SYMTestActions		1. Issue SetRequester() call to set Requester Identification information to LCS Client
+//!					2. Issue GetRequester() call to retrieve information.
+//!					3. Verify both information
+//!
+//!@SYMTestExpectedResults	Both informations should be identical.
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0004
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0004
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0005
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0005
+//!@SYMTestCaseDesc		Test with Invalid Requester ID length.
+//!
+//!@SYMTestActions		1. Issue SetRequester() call with Request ID length more than 255 characters.
+//!					2. Wait for the action taken by LBS system
+//!
+//!@SYMTestExpectedResults	LBS system should abort the request as it requester ID exceeds more than 255 characters.
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0005
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0005
+
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0006
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0006
+//!@SYMTestCaseDesc		Set Request Information twice and try to retrieve information.
+//!
+//!@SYMTestActions		1. Issue SetRequester() call to set Requester information
+//!					2. Issue SetRequester() call to set Request information again
+//!					3. Wait to see what happens ???
+//!
+//!@SYMTestExpectedResults	
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0006
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0006
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0007
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0007
+//!@SYMTestCaseDesc		Set/Get LCSClient information for GSM Privacy Request
+//!
+//!@SYMTestActions		1. Issue SetLCSClientL() call to set LCS Client information
+//!					2. Issue GetLCSClient() call to retrieve information.
+//!					3. Verify both information
+//!
+//!@SYMTestExpectedResults	Both informations should be identical.
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0007
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0007
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0008
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0008
+//!@SYMTestCaseDesc		Test with Invalid Requester ID length for LCS Client
+//!
+//!@SYMTestActions		1. Issue SetLCSClientL() call with Request ID length more than 255 characters.
+//!					2. Wait for the action taken by LBS system
+//!
+//!@SYMTestExpectedResults	LBS system should abort the request as it requester ID exceeds more than 255 characters.
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0008
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0008
+
+
+
+START_TESTCASE                   LBS-PRIVFW-SETTINGS-0009
+//!@SYMTestCaseID			LBS-PRIVFW-SETTINGS-0009
+//!@SYMTestCaseDesc		Set Request Information for LCSCLient twice and try to retrieve information.
+//!
+//!@SYMTestActions		1. Issue SetLCSClientL() call to set Requester information
+//!					2. Issue SetLCSClientL() call to set Request information again
+//!					3. Wait to see what happens ???
+//!
+//!@SYMTestExpectedResults	
+//!@SYMPREQ				PREQ 1660
+//!
+//!@SYMTestPriority		2
+//!@SYMTestStatus		 	Not Implemented
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_Settings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVFW-SETTINGS-0009
+END_TESTCASE                   LBS-PRIVFW-SETTINGS-0009
+
+

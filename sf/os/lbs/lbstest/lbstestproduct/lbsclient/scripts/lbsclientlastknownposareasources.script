@@ -1,0 +1,156 @@
+//
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//
+
+
+
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareasources.txt c:\config.txt
+
+
+////////////////////////////////////// MOLR TA
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+//	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+//	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupRoamSelfLocate
+
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-Client-LastKnownPosAreaSources-0001
+//! @SYMTestCaseID              LBS-Client-LastKnownPosAreaSources-0001
+//! @SYMTestCaseDesc            1. Client generates MOLR request 
+//!				2. GPS Module generates an accurate position in UE Assisted State 
+//!				3. Position is saved to Last Known pos database
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             See test step Sequence inline comments
+//! @SYMTestExpectedResults     Sequence as per specified by FSM and UML Seq diagram is Followed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            1/4/1009
+//! @SYMAuthor                  oad
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini UEAssistedMOLRGpsOk
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosAreaSources c:\testdata\configs\lbsclientlastknownposareasources.ini LBS-Client-LastKnownPosAreaSources-1001
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsHybridUEAssistedMOLRGPSOk
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosAreaSources c:\testdata\configs\lbsclientlastknownposareasources.ini LBS-Client-LastKnownPosAreaSources-0001
+END_TESTCASE                  LBS-Client-LastKnownPosAreaSources-0001
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+
+DELAY 5000
+
+
+/////////////////////////////////////// Cell Based
+
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+//        CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	DeleteFile c:\private\10202be9\1028224b.cre 
+ 	DeleteFile c:\private\10202be9\persists\1028224b.cre 
+
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-Client-LastKnownPosAreaSources-0002
+//!@SYMTestCaseID			LBS-Client-LastKnownPosAreaSources-0002
+//!@SYMTestCaseDesc			Request a cell-based location
+//!@SYMTestActions			
+//!					1) Open a sub-session using RPositioner::Open() and specifying the network modules module id
+//!					2) Request Location Update.
+//!					3) Wait for location request to complete.
+//!					4) Verify that the location request is logged with appropriate details.  
+//!					5) Verify that location is saved by location monitor                                                                                                                                                               
+//!
+//!@SYMTestExpectedResults		Reference (cell-based) location retrieved and details logged
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			medium
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosAreaSources c:\testdata\configs\lbsclientlastknownposareasources.ini LBS-Client-LastKnownPosAreaSources-1001
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-CLIENT-CELLBASEDNPUD
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ClearLog
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos  c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_CellBasedNotifyPosUpdate c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 020 LbsClientTestServer LbsStep_VerifyLogInfo c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0001
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosAreaSources c:\testdata\configs\lbsclientlastknownposareasources.ini LBS-Client-LastKnownPosAreaSources-0003
+END_TESTCASE LBS-Client-LastKnownPosAreaSources-0002
+
+DELAY 5000
+
+/////////////////////////////////////// BT
+LOAD_SUITE ctlbsbtgpspsytestserver
+
+
+START_TESTCASE                LBS-Client-LastKnownPosAreaSources-0003
+//! @SYMTestCaseID              LBS-Client-LastKnownPosAreaSources-0003
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains a number of devices.  The PSY should be able to connect to and receive a location request from the only available BT device at the top of the list.  The PSY should not need to edit the device list or look at the unavailable devices at the end of the list.  The device in the list is listed as a known device so the PSY should be able to connect directly to the device.
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  One available BT device should be added to the top of the list.  This device should be an available BT device with the device type of valid.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list to ensure no changes have been made.
+//!				4. Test verifies that position has been saved by location monitor
+//! @SYMTestExpectedResults     Test should receive location update and should not make changes to the device list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosAreaSources c:\testdata\configs\lbsclientlastknownposareasources.ini LBS-Client-LastKnownPosAreaSources-1001
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest02Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest02Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_LastKnownPosAreaSources c:\testdata\configs\lbsclientlastknownposareasources.ini LBS-Client-LastKnownPosAreaSources-0005
+END_TESTCASE                  LBS-Client-LastKnownPosAreaSources-0003
+
+PREFIX RUN_UTILS
+	DeleteFile c:\config.txt
+REMOVE_PREFIX

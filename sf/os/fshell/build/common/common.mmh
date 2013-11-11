@@ -1,0 +1,667 @@
+// common.mmh
+// 
+// Copyright (c) 2010 Accenture. All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+// 
+// Initial Contributors:
+// Accenture - Initial contribution
+//
+#ifndef FSHELL_COMMON_MMH
+#define FSHELL_COMMON_MMH
+
+// For documentation on these macros, see \epoc32\fshell\documentation\internal\common_mmh.html
+
+#ifndef FSHELL_PLATFORM_MMH
+#include <fshell/platform.mmh>
+#endif
+
+// Mapping negative defines to the positive ones used from here on:
+#ifndef FSHELL_NO_BTRACE_SUPPORT
+#define    FSHELL_BTRACE_SUPPORT
+#endif
+#ifndef FSHELL_NO_PIPS_SUPPORT
+#define    FSHELL_PIPS_SUPPORT
+#endif
+#ifndef FSHELL_NO_PATCHABLE_CONSTANTS_SUPPORT
+#define    FSHELL_PATCHABLE_CONSTANTS_SUPPORT
+#endif
+#ifndef FSHELL_NO_DYNAMICDFC_SUPPORT
+#define   FSHELL_DYNAMICDFC_SUPPORT
+#endif
+#ifndef FSHELL_NO_AUDIO_SUPPORT
+#define    FSHELL_AUDIO_SUPPORT
+#endif
+#ifndef FSHELL_NO_COMMS_SUPPORT
+#define    FSHELL_COMMS_SUPPORT
+#endif
+#if !defined(FSHELL_NO_BLUETOOTH_SUPPORT) && defined (FSHELL_COMMS_SUPPORT)
+#define FSHELL_BLUETOOTH_SUPPORT
+#endif
+#ifndef FSHELL_NO_TELEPHONY_SUPPORT
+#define    FSHELL_TELEPHONY_SUPPORT
+#endif
+#ifndef FSHELL_NO_APPARC_SUPPORT
+#define    FSHELL_APPARC_SUPPORT
+#endif
+#ifndef FSHELL_NO_EZLIB_SUPPORT
+#define    FSHELL_EZLIB_SUPPORT
+#endif
+#ifndef FSHELL_NO_WSERV_SUPPORT
+#define    FSHELL_WSERV_SUPPORT
+#endif
+#ifndef FSHELL_NO_WSERV2_SUPPORT
+#define    FSHELL_WSERV2_SUPPORT
+#endif
+#ifndef FSHELL_NO_RAMDEFRAG_SUPPORT
+#define    FSHELL_RAMDEFRAG_SUPPORT
+#endif
+#ifndef FSHELL_NO_SAMPLINGPROFILER_SUPPORT
+#define    FSHELL_SAMPLINGPROFILER_SUPPORT
+#endif
+#ifndef FSHELL_NO_COPYTOSHADOWMEMORY_SUPPORT
+#define    FSHELL_COPYTOSHADOWMEMORY_SUPPORT
+#endif
+#ifndef FSHELL_NO_LBS_SUPPORT
+#define    FSHELL_LBS_SUPPORT
+#endif
+#ifndef FSHELL_NO_SQL_SUPPORT
+#define    FSHELL_SQL_SUPPORT
+#endif
+#if !defined(FSHELL_NO_EGL_SUPPORT) && defined(FSHELL_WSERV_SUPPORT)
+#define    FSHELL_EGL_SUPPORT
+#endif
+#if !defined(FSHELL_NO_OPENVG_SUPPORT) && defined(FSHELL_WSERV_SUPPORT)
+#define    FSHELL_OPENVG_SUPPORT
+#endif
+#ifndef FSHELL_NO_DOBJECTIX_SUPPORT
+#define FSHELL_DOBJECTIX_SUPPORT
+#endif
+#ifndef FSHELL_NO_CRYPTO_SUPPORT
+#define FSHELL_CRYPTO_SUPPORT
+#endif
+#ifndef FSHELL_NO_SHA2_SUPPORT
+#define FSHELL_SHA2_SUPPORT
+#endif
+#ifndef FSHELL_NO_MD4_SUPPORT
+#define FSHELL_MD4_SUPPORT
+#endif
+#ifndef FSHELL_NO_SPCRE_SUPPORT
+#define FSHELL_SPCRE_SUPPORT
+#endif
+
+//
+// PlatSec.
+//
+
+#ifdef FSHELL_CAP_ALL
+
+#define FSHELL_CAP_MMP_MAX all
+
+// System Capabilities
+#define FSHELL_CAP_ALLFILES
+#define FSHELL_CAP_COMMDD
+#define FSHELL_CAP_DISKADMIN
+#define FSHELL_CAP_DRM
+#define FSHELL_CAP_MULTIMEDIADD
+#define FSHELL_CAP_NETWORKCONTROL
+#define FSHELL_CAP_POWERMGMT
+#define FSHELL_CAP_PROTSERV
+#define FSHELL_CAP_READDEVICEDATA
+#define FSHELL_CAP_SURROUNDINGSDD
+#define FSHELL_CAP_SWEVENT
+#define FSHELL_CAP_TRUSTEDUI
+#define FSHELL_CAP_WRITEDEVICEDATA
+
+// User Capabilities
+#define FSHELL_CAP_LOCALSERVICES
+#define FSHELL_CAP_LOCATION
+#define FSHELL_CAP_NETWORKSERVICES
+#define FSHELL_CAP_READUSERDATA
+#define FSHELL_CAP_USERENVIRONMENT
+#define FSHELL_CAP_WRITEUSERDATA
+
+#endif // FSHELL_CAP_ALL
+
+#define FSHELL_CAP_MMP_NORMAL FSHELL_CAP_MMP_MAX -tcb
+
+// Yuk the __GNUC__ checks are needed to support SBS which changed the CPP version that parses bld.infs and mmps...
+#ifndef FSHELL_ROM_INCLUDE
+#if __GNUC__ >= 3
+#define FSHELL_ROM_INCLUDE(_FILE_) _FILE_ /epoc32/rom/include/_FILE_
+#else
+#define FSHELL_ROM_INCLUDE(_FILE_) _FILE_ \epoc32\rom\include\ ## _FILE_
+#endif
+#endif
+#ifndef FSHELL_ROM_INCLUDE2
+#if __GNUC__ >= 3
+#define FSHELL_ROM_INCLUDE2(_SRC_FILE_, _DST_FILE_) _SRC_FILE_ /epoc32/rom/include/_DST_FILE_
+#else
+#define FSHELL_ROM_INCLUDE2(_SRC_FILE_, _DST_FILE_) _SRC_FILE_ \epoc32\rom\include\ ## _DST_FILE_
+#endif
+#endif
+
+
+//
+// memoryaccess.
+//
+
+#ifdef FSHELL_CAP_ALL
+#define FSHELL_MEMORY_ACCESS_SUPPORT
+#endif
+
+//
+// extrabtrace
+//
+
+
+#if !defined(FSHELL_TRACE_SUPPORT) && defined(FSHELL_BTRACE_SUPPORT)
+// FSHELL_TRACE_SUPPORT tells you that the BTraceX() functions are available, either via atrace or btrace,
+// for the situations where you don't care which it is
+#define FSHELL_TRACE_SUPPORT
+#endif
+
+#if defined(FSHELL_TRACE_SUPPORT) && defined(FSHELL_CAP_ALL)
+#define FSHELL_EXTRABTRACE_SUPPORT
+#endif
+
+// The FSHELL_TRACE_xyz macros must appear before any other systeminclude/#include/library statements in your MMP.
+#ifndef FSHELL_TRACE_LIBRARY
+#define FSHELL_D32BTRACE_HEADER <d32btrace.h>
+#define FSHELL_TRACE_LIBRARY library btracec.lib
+#define FSHELL_TRACE_CONTROL_LIBRARY library extrabtrace.lib btracec.lib
+#define FSHELL_TRACE_KERNEL_INCLUDE(pathtoroot)
+#endif
+
+//
+// fshell.
+//
+#ifdef FSHELL_WSERV_SUPPORT // Close enough
+#define FSHELL_CORE_SUPPORT_SWI
+#endif
+
+#ifdef FSHELL_PIPS_SUPPORT
+#define FSHELL_CORE_SUPPORT_PIPSRUN
+#endif
+
+#ifdef FSHELL_PATCHABLE_CONSTANTS_SUPPORT
+#define FSHELL_CORE_SUPPORT_PATCHDATA
+#endif
+
+#ifdef FSHELL_BTRACE_SUPPORT
+#define FSHELL_CORE_SUPPORT_BTRACE
+#endif
+
+#ifdef FSHELL_TRACE_SUPPORT
+#define FSHELL_CORE_SUPPORT_BTRACEOUT
+#endif
+
+#ifdef FSHELL_MEMORY_ACCESS_SUPPORT
+#define FSHELL_CORE_SUPPORT_GETSTACK
+#define FSHELL_CORE_SUPPORT_CHUNKINFO
+#define FSHELL_CORE_SUPPORT_SVRINFO
+#define FSHELL_CORE_SUPPORT_FDB
+#ifndef FSHELL_NO_SUPPORT_BUILTIN_REBOOT
+#define FSHELL_CORE_SUPPORT_BUILTIN_REBOOT
+#endif
+#endif
+
+#ifdef FSHELL_CAP_ALL
+#define FSHELL_CORE_SUPPORT_SUDO
+#define FSHELL_CORE_SUPPORT_CHKDEPS
+#define FSHELL_CORE_SUPPORT_SIS_ECLIPSE
+#define FSHELL_CORE_SUPPORT_LOCALDRIVE
+#define FSHELL_CORE_SUPPORT_TOP
+#endif
+
+#if defined(FSHELL_MEMORY_ACCESS_SUPPORT) && defined(FSHELL_CAP_ALL) && defined(FSHELL_TRACE_SUPPORT)
+#define FSHELL_CORE_SUPPORT_MEMSAMPLER
+#endif
+
+#if defined(FSHELL_CAP_READUSERDATA) && defined(FSHELL_CAP_WRITEUSERDATA) && defined(FSHELL_APPARC_SUPPORT)
+#define FSHELL_CORE_SUPPORT_FCONTACTS
+#ifndef FSHELL_GCC298_SUPPORT // I can't get it to build with gcc2.9...
+#define FSHELL_CORE_SUPPORT_FCALENDAR
+#endif
+#endif
+
+#if defined(FSHELL_CAP_PROTSERV) && defined(FSHELL_APPARC_SUPPORT)
+#define FSHELL_CORE_SUPPORT_SHEBANG
+#endif
+
+#ifdef FSHELL_COMMS_SUPPORT
+// todo: find out what capabilities ping actually requires
+#define FSHELL_CORE_SUPPORT_PING
+#define FSHELL_CORE_SUPPORT_RCOMM
+#define FSHELL_CORE_SUPPORT_RCONN
+#define FSHELL_CORE_SUPPORT_IAP
+#define FSHELL_CORE_SUPPORT_BTSERVICES
+#define FSHELL_CORE_SUPPORT_RSOCKET
+#define FSHELL_CORE_SUPPORT_USB
+#endif
+
+#ifdef FSHELL_PLATFORM_UIQ
+#define FSHELL_CORE_SUPPORT_MROUTER
+#endif
+
+#ifdef FSHELL_EXTRABTRACE_SUPPORT
+#define FSHELL_CORE_SUPPORT_UPROFILER
+#endif
+
+#ifdef FSHELL_APPARC_SUPPORT
+#define FSHELL_CORE_SUPPORT_LISTAPPS
+#define FSHELL_CORE_SUPPORT_SHUTAPP
+#define FSHELL_CORE_SUPPORT_OPENDOC
+#endif
+
+#ifdef FSHELL_WSERV_SUPPORT
+#define FSHELL_CORE_SUPPORT_GRABSCREEN
+#define FSHELL_CORE_SUPPORT_FOCUS
+#define FSHELL_CORE_SUPPORT_SWITCHVIEW
+#define FSHELL_CORE_SUPPORT_ACTIVEVIEW
+#define FSHELL_CORE_SUPPORT_WSLOG
+#endif
+
+#ifdef FSHELL_AUDIO_SUPPORT
+#define FSHELL_CORE_SUPPORT_PLAY
+#endif
+
+#ifdef FSHELL_COMMS_SUPPORT
+#define FSHELL_CORE_SUPPORT_WGET
+#endif
+
+#ifdef FSHELL_EZLIB_SUPPORT
+#define FSHELL_CORE_SUPPORT_FZIP
+#endif
+
+#if defined(FSHELL_PLATFORM_S60) && FSHELL_PLATFORM_S60 >= 5
+#ifdef FSHELL_COMMS_SUPPORT
+#define FSHELL_CORE_SUPPORT_SYSINFO_WLAN
+#endif
+#define FSHELL_CORE_SUPPORT_SECURE_TIME
+#endif
+
+#if defined(FSHELL_WSERV_SUPPORT) && defined(FSHELL_CAP_LOCATION) && defined(FSHELL_CAP_READUSERDATA) && defined(FSHELL_CAP_READDEVICEDATA) && defined(FSHELL_CAP_WRITEDEVICEDATA)
+#define FSHELL_CORE_SUPPORT_SCREENMODE
+#endif
+
+#if defined(FSHELL_MEMORY_ACCESS_SUPPORT)
+#define FSHELL_CORE_SUPPORT_HEAPTRACE
+#endif
+
+#ifdef FSHELL_CAP_SWEVENT
+#define FSHELL_CORE_SUPPORT_PASTE
+#endif
+
+#if defined(FSHELL_RAMDEFRAG_SUPPORT) && defined(FSHELL_MEMORY_ACCESS_SUPPORT)
+#define FSHELL_CORE_SUPPORT_RAMDEFRAG
+#endif
+
+#if defined(FSHELL_TELEPHONY_SUPPORT) && defined(FSHELL_CAP_READUSERDATA) && defined(FSHELL_CAP_READDEVICEDATA) && defined(FSHELL_CAP_WRITEUSERDATA)
+#define FSHELL_CORE_SUPPORT_ICC
+#endif
+
+#ifdef FSHELL_WSERV_SUPPORT
+#define FSHELL_CORE_SUPPORT_GENBMP
+#define FSHELL_CORE_SUPPORT_TFINFO
+#endif
+
+#if defined(FSHELL_TELEPHONY_SUPPORT) && defined(FSHELL_CAP_READDEVICEDATA)
+#define FSHELL_CORE_SUPPORT_NITZ
+#endif
+
+#if defined(FSHELL_LBS_SUPPORT) && defined(FSHELL_CAP_LOCATION) && defined(FSHELL_CAP_WRITEDEVICEDATA) && defined(FSHELL_CAP_READDEVICEDATA) && defined(FSHELL_CAP_READUSERDATA)
+#define FSHELL_CORE_SUPPORT_LBS
+#endif
+
+#if defined(FSHELL_SQL_SUPPORT) && defined(FSHELL_CAP_WRITEDEVICEDATA) && defined(FSHELL_CAP_READDEVICEDATA) && defined(FSHELL_CAP_READUSERDATA)
+#define FSHELL_CORE_SUPPORT_SQL
+#endif
+
+#if defined(FSHELL_EGL_SUPPORT) || defined(FSHELL_OPENVG_SUPPORT)
+#define FSHELL_CORE_SUPPORT_GLINFO
+#endif
+
+#if defined(FSHELL_CRYPTO_SUPPORT)
+#define FSHELL_CORE_SUPPORT_HASH
+#endif
+
+#ifdef FSHELL_DYNAMICSTARTUP_SUPPORT
+#define FSHELL_CORE_SUPPORT_STARTUP
+#endif
+
+#ifndef FSHELL_NO_SUPPORT_BUILTIN_VARIANT
+#define FSHELL_CORE_SUPPORT_BUILTIN_VARIANT
+#endif
+
+#ifdef FSHELL_TELEPHONY_SUPPORT
+#define FSHELL_CORE_SUPPORT_SMS
+#endif
+
+
+//
+// qr3.
+//
+
+#ifdef FSHELL_MEMORY_ACCESS_SUPPORT
+#define FSHELL_QR3_SUPPORT
+
+#ifdef FSHELL_TRACE_SUPPORT
+#define FSHELL_QR3_SUPPORT_LOGGINGALLOCATOR
+#endif
+
+#endif // FSHELL_MEMORY_ACCESS_SUPPORT
+
+
+//
+// clogger.
+//
+
+#ifdef FSHELL_CAP_ALL
+#define FSHELL_CLOGGER_SUPPORT_DEBUG_ROUTER
+#endif
+
+
+//
+// tcpcsy.
+//
+
+#if defined(FSHELL_CAP_COMMDD) && defined(FSHELL_CAP_POWERMGMT) && defined(FSHELL_CAP_READDEVICEDATA) && defined(FSHELL_CAP_WRITEDEVICEDATA) && defined(FSHELL_CAP_TRUSTEDUI) && defined(FSHELL_CAP_PROTSERV) && defined(FSHELL_CAP_NETWORKCONTROL) && defined(FSHELL_CAP_NETWORKSERVICES) && defined(FSHELL_CAP_LOCALSERVICES) && defined(FSHELL_CAP_READUSERDATA) && defined(FSHELL_CAP_WRITEUSERDATA) && defined(FSHELL_COMMS_SUPPORT)
+#define FSHELL_TCPCSY_SUPPORT
+#endif
+
+
+//
+// vt100.
+//
+
+#define FSHELL_VT100_WORK_AROUND_TERATERM_CURSOR_BUG
+
+
+//
+// Misc.
+//
+
+#if defined(FSHELL_WSERV_SUPPORT) && defined(FSHELL_NOT_BUILT_ALONE)
+#define FSHELL_AUTOMETRIC_SUPPORT_EIKPLUGIN
+#endif
+
+
+//
+// UIDs.
+//
+
+#ifdef FSHELL_PROTECTED_UIDS
+
+#define FSHELL_UID_ACTIVEVIEW                 0x102866D2
+#define FSHELL_UID_BACKUP                     0x10285E0D
+#define FSHELL_UID_BACKUP_CHILD               0x10285E0E
+#define FSHELL_UID_SMS                        0x102864BE
+#define FSHELL_UID_BTRACE_PARSER              0x10285E09
+#define FSHELL_UID_TINTERVAL                  0x10285E0A
+#define FSHELL_UID_BTINCOMINGSERIAL           0x10285E04
+#define FSHELL_UID_BTSERIALTEST               0x10285e14
+#define FSHELL_UID_CLOGGERDEBUGROUTER         0x102831C7
+#define FSHELL_UID_COMSDBGUTIL_CLOGGER_STUB   0x10004d0a
+#define FSHELL_UID_FLOGGER_CLOGGER_STUB       0x102866D3
+#define FSHELL_UID_CLOGGERBUFFERED            0x102831CE
+#define FSHELL_UID_CLOGGER                    0x10272EFE
+#define FSHELL_UID_CLOGGERSERVER              0x10272EFD
+#define FSHELL_UID_TCLOG                      0x10272F03
+#define FSHELL_UID_BTRACE                     0x102835B3
+#define FSHELL_UID_CAT                        0x102835B4
+#define FSHELL_UID_CENREP                     0x102831C9
+#define FSHELL_UID_CHKDEPS                    0x10285A17
+#define FSHELL_UID_CHKDRIFT                   0x102836dc
+#define FSHELL_UID_CLIPBOARD                  0x10285BA3
+#define FSHELL_UID_CLOGGERCONFIG              0x102831CA
+#define FSHELL_UID_DRVINFO                    0x102836d3
+#define FSHELL_UID_FOCUS                      0x102836e2
+#define FSHELL_UID_GETHEAP                    0x102835B8
+#define FSHELL_UID_GETSTACK                   0x102835BD
+#define FSHELL_UID_GRABSCREEN                 0x102836d5
+#define FSHELL_UID_LEAK                       0x102835BB
+#define FSHELL_UID_LISTAPPS                   0x102835B9
+#define FSHELL_UID_LOAD                       0x102836e1
+#define FSHELL_UID_MEMSAMPLER                 0x102836d6
+#define FSHELL_UID_MROUTER                    0x102836d2
+#define FSHELL_UID_OPENDOC                    0x102836d0
+#define FSHELL_UID_PATCHDATA                  0x102836de
+#define FSHELL_UID_PLAY                       0x10285C6D
+#define FSHELL_UID_PUBSUB                     0x102831CB
+#define FSHELL_UID_RCOMM                      0x102836d4
+#define FSHELL_UID_RENDEZVOUS                 0x10285A15
+#define FSHELL_UID_RESTORE                    0x10285E0F
+#define FSHELL_UID_SHUTAPP                    0x102835BA
+#define FSHELL_UID_SPINLOCK                   0x10285BA5
+#define FSHELL_UID_SUDO                       0x10285BA0
+#define FSHELL_UID_SWI                        0x102864CE
+#define FSHELL_UID_SWITCHVIEW                 0x102866D1
+#define FSHELL_UID_QOTD                       0x10286b42
+#define FSHELL_UID_TAIL                       0x102835B5
+#define FSHELL_UID_XMODEM                     0x102836d9
+#define FSHELL_UID_MEMSAMPLERDD               0x102866D4
+#define FSHELL_UID_FSHELL_INST                0x102836d1
+#define FSHELL_UID_FSHELL_UINST               0x102835C0
+#define FSHELL_UID_IOSRV                      0x10282343
+#define FSHELL_UID_SBAPP                      0x102836cf
+#define FSHELL_UID_SBREC                      0x102835bf
+#define FSHELL_UID_FSHELL                     0x10282D94
+#define FSHELL_UID_LINEEDITOR                 0x10285C66
+#define FSHELL_UID_MEMORYACCESS               0x10273948
+#define FSHELL_UID_VARIANT                    0x102864CF
+#define FSHELL_UID_QR3SANDBOX                 0x102831C6
+#define FSHELL_UID_LOGGINGALLOCATOR           0x102831C8
+#define FSHELL_UID_KERNINFO                   0x10285BA1
+#define FSHELL_UID_QR3                        0x10282DAB
+#define FSHELL_UID_SETCRITICAL                0x10285BA4
+#define FSHELL_UID_SETPRIORITY                0x10285BA2
+#define FSHELL_UID_TOPSAMPLE                  0x10282DA9
+#define FSHELL_UID_TCPCSY                     0x102866D8
+#define FSHELL_UID_VT100                      0x102836db
+#define FSHELL_UID_WINSOCKPRT                 0x102866D9
+#define FSHELL_UID_IAP                        0x102864CB
+#define FSHELL_UID_WGET                       0x102864CC
+#define FSHELL_UID_FZIP                       0x102864CA
+#define FSHELL_UID_SIS                        0x102866DA
+#define FSHELL_UID_TOP                        0x102869FE
+#define FSHELL_UID_FCONTACTS                  0x102869FF
+#define FSHELL_UID_RUNLIB                     0x102864C6
+#define FSHELL_UID_FED                        0x10286A00
+#define FSHELL_UID_RCONN                      0x102866DD
+#define FSHELL_UID_FSHELL_LAUNCH_TCP          0x102866E0
+#define FSHELL_UID_FSHELL_LAUNCH_BT           0x102866E1
+#define FSHELL_UID_LTKUTILS                   0x10286A06
+#define FSHELL_UID_SNAKE                      0x10287022
+#define FSHELL_UID_PING                       0x10286F52
+#define FSHELL_UID_FCALENDAR                  0x10286F53
+#define FSHELL_UID_FIND                       0x10286F54
+#define FSHELL_UID_UPROFILER                  0x10286F55
+#define FSHELL_UID_BTRACEOUT                  0x10286F56
+#define FSHELL_UID_LTKUTILS_TCB               0x10286F57
+#define FSHELL_UID_BTSERVICES                 0x10286F58
+#define FSHELL_UID_S60_GUICONS                0x10286b46
+#define FSHELL_UID_SYSINFO                    0x10286B6B
+#define FSHELL_UID_CONSOLEPROXY               0x10287198
+#define FSHELL_UID_UIDINFO                    0x10286F5A
+#define FSHELL_UID_REZ                        0x10286A01
+#define FSHELL_UID_WSLOG                      0x10286A05
+#define FSHELL_UID_SCREENMODE                 0x10286B6C
+#define FSHELL_UID_HEAPTRACE                  0x10286F5C
+#define FSHELL_UID_INIEDIT                    0x1028719b
+#define FSHELL_UID_NULLNIF                    0x10286B6D
+#define FSHELL_UID_PASTE                      0x10286B6F
+#define FSHELL_UID_FSHELL_LAUNCH_USB          0x10286B70
+#define FSHELL_UID_FSHELL_LAUNCH_RCONS        0x10286B71
+#define FSHELL_UID_RAMDEFRAG                  0x10286F5D
+#define FSHELL_UID_ICC                        0x10286B73
+#define FSHELL_UID_VTCSERIAL                  0x1028719D
+#define FSHELL_UID_ECOM                       0x10286F60
+#define FSHELL_UID_RSOCKET                    0x10286B74
+#define FSHELL_UID_GENBMP                     0x10286B75
+#define FSHELL_UID_TFINFO                     0x10286B76
+#define FSHELL_UID_FDB                        0x10286F61
+#define FSHELL_UID_NITZ                       0x10286B77
+#define FSHELL_UID_HAL                        0x10286B78
+#define FSHELL_UID_POINTER                    0x10286F62
+#define FSHELL_UID_LBS                        0x10286B79
+#define FSHELL_UID_SQL                        0x10286B7A
+#define FSHELL_UID_SQLSRV                     0x102835BC
+#define FSHELL_UID_GLINFO                     0x10286B7B
+#define FSHELL_UID_FSHELL_LAUNCH_SERIAL       0x10286F63
+#define FSHELL_UID_HASH                       0x10286B7C
+#define FSHELL_UID_SPCRE                      0x10286F66
+#define FSHELL_UID_LIBPCRE                    0x10286F67
+#define FSHELL_UID_GREP                       0x10286F68
+#define FSHELL_UID_STARTUP                    0x10286F69
+#define FSHELL_UID_FFSTRACERPLUGIN            0x10286F6B
+#define FSHELL_UID_FFSTRACE                   0x10286F6C
+#define FSHELL_UID_LOCALDRIVE                 0x10286F6D
+#define FSHELL_UID_PIPSRUN                    0x102866DB
+#define FSHELL_UID_USB                        0x10286F6E
+#define FSHELL_UID_EXTRABTRACE                0x10286F6F
+#define FSHELL_UID_MEMSPY                     0x10286F70
+#define FSHELL_UID_EXTRABTRACEK               0x10286F71
+#define FSHELL_UID_TESTEXECUTE                0x10286F72
+#define FSHELL_UID_CONSOLEEXTENSIONS          0x10286F73
+
+#else // Not FSHELL_PROTECTED_UIDS
+
+#define FSHELL_UID_ACTIVEVIEW                 0xE02866D2
+#define FSHELL_UID_BACKUP                     0xE0285E0D
+#define FSHELL_UID_BACKUP_CHILD               0xE0285E0E
+#define FSHELL_UID_SMS                        0xE02864BE
+#define FSHELL_UID_BTRACE_PARSER              0xE0285E09
+#define FSHELL_UID_TINTERVAL                  0xE0285E0A
+#define FSHELL_UID_CLOGGERDEBUGROUTER         0xE02831C7
+#define FSHELL_UID_COMSDBGUTIL_CLOGGER_STUB   0xE0004d0a
+#define FSHELL_UID_FLOGGER_CLOGGER_STUB       0xE02866D3
+#define FSHELL_UID_CLOGGERBUFFERED            0xE02831CE
+#define FSHELL_UID_CLOGGER                    0xE0272EFE
+#define FSHELL_UID_CLOGGERSERVER              0xE0272EFD
+#define FSHELL_UID_TCLOG                      0xE0272F03
+#define FSHELL_UID_BTRACE                     0xE02835B3
+#define FSHELL_UID_CAT                        0xE02835B4
+#define FSHELL_UID_CENREP                     0xE02831C9
+#define FSHELL_UID_CHKDEPS                    0xE0285A17
+#define FSHELL_UID_CHKDRIFT                   0xE02836dc
+#define FSHELL_UID_CLIPBOARD                  0xE0285BA3
+#define FSHELL_UID_CLOGGERCONFIG              0xE02831CA
+#define FSHELL_UID_DRVINFO                    0xE02836d3
+#define FSHELL_UID_FOCUS                      0xE02836e2
+#define FSHELL_UID_GETHEAP                    0xE02835B8
+#define FSHELL_UID_GETSTACK                   0xE02835BD
+#define FSHELL_UID_GRABSCREEN                 0xE02836d5
+#define FSHELL_UID_LEAK                       0xE02835BB
+#define FSHELL_UID_LISTAPPS                   0xE02835B9
+#define FSHELL_UID_LOAD                       0xE02836e1
+#define FSHELL_UID_MEMSAMPLER                 0xE02836d6
+#define FSHELL_UID_MROUTER                    0xE02836d2
+#define FSHELL_UID_OPENDOC                    0xE02836d0
+#define FSHELL_UID_PATCHDATA                  0xE02836de
+#define FSHELL_UID_PLAY                       0xE0285C6D
+#define FSHELL_UID_PUBSUB                     0xE02831CB
+#define FSHELL_UID_RCOMM                      0xE02836d4
+#define FSHELL_UID_RENDEZVOUS                 0xE0285A15
+#define FSHELL_UID_RESTORE                    0xE0285E0F
+#define FSHELL_UID_SHUTAPP                    0xE02835BA
+#define FSHELL_UID_SPINLOCK                   0xE0285BA5
+#define FSHELL_UID_SUDO                       0xE0285BA0
+#define FSHELL_UID_SWI                        0xE02864CE
+#define FSHELL_UID_SWITCHVIEW                 0xE02866D1
+#define FSHELL_UID_QOTD                       0xE0286b42
+#define FSHELL_UID_TAIL                       0xE02835B5
+#define FSHELL_UID_XMODEM                     0xE02836d9
+#define FSHELL_UID_MEMSAMPLERDD               0xE02866D4
+#define FSHELL_UID_FSHELL_INST                0xE02836d1
+#define FSHELL_UID_FSHELL_UINST               0xE02835C0
+#define FSHELL_UID_IOSRV                      0xE0282343
+#define FSHELL_UID_SBAPP                      0xE02836cf
+#define FSHELL_UID_SBREC                      0xE02835bf
+#define FSHELL_UID_FSHELL                     0xE0282D94
+#define FSHELL_UID_LINEEDITOR                 0xE0285C66
+#define FSHELL_UID_MEMORYACCESS               0xE0273948
+#define FSHELL_UID_VARIANT                    0xE02864CF
+#define FSHELL_UID_QR3SANDBOX                 0xE02831C6
+#define FSHELL_UID_LOGGINGALLOCATOR           0xE02831C8
+#define FSHELL_UID_KERNINFO                   0xE0285BA1
+#define FSHELL_UID_QR3                        0xE0282DAB
+#define FSHELL_UID_SETCRITICAL                0xE0285BA4
+#define FSHELL_UID_SETPRIORITY                0xE0285BA2
+#define FSHELL_UID_TOPSAMPLE                  0xE0282DA9
+#define FSHELL_UID_TCPCSY                     0xE02866D8
+#define FSHELL_UID_VT100                      0xE02836db
+#define FSHELL_UID_WINSOCKPRT                 0xE02866D9
+#define FSHELL_UID_IAP                        0xE02864CB
+#define FSHELL_UID_WGET                       0xE02864CC
+#define FSHELL_UID_FZIP                       0xE02864CA
+#define FSHELL_UID_SIS                        0xE02866DA
+#define FSHELL_UID_TOP                        0xE02869FE
+#define FSHELL_UID_FCONTACTS                  0xE02869FF
+#define FSHELL_UID_RUNLIB                     0xE02864C6
+#define FSHELL_UID_FED                        0xE0286A00
+#define FSHELL_UID_RCONN                      0xE02866DD
+#define FSHELL_UID_FSHELL_LAUNCH_TCP          0xE02866E0
+#define FSHELL_UID_FSHELL_LAUNCH_BT           0xE02866E1
+#define FSHELL_UID_LTKUTILS                   0xE0286A06
+#define FSHELL_UID_SNAKE                      0xE0287022
+#define FSHELL_UID_PING                       0xE0286F52
+#define FSHELL_UID_FCALENDAR                  0xE0286F53
+#define FSHELL_UID_FIND                       0xE0286F54
+#define FSHELL_UID_UPROFILER                  0xE0286F55
+#define FSHELL_UID_BTRACEOUT                  0xE0286F56
+#define FSHELL_UID_LTKUTILS_TCB               0xE0286F57
+#define FSHELL_UID_BTSERVICES                 0xE0286F58
+#define FSHELL_UID_S60_GUICONS                0xE0286b46
+#define FSHELL_UID_SYSINFO                    0xE0286B6B
+#define FSHELL_UID_CONSOLEPROXY               0xE0287198
+#define FSHELL_UID_UIDINFO                    0xE0286F5A
+#define FSHELL_UID_REZ                        0xE0286A01
+#define FSHELL_UID_WSLOG                      0xE0286A05
+#define FSHELL_UID_SCREENMODE                 0xE0286B6C
+#define FSHELL_UID_HEAPTRACE                  0xE0286F5C
+#define FSHELL_UID_INIEDIT                    0xE028719b
+#define FSHELL_UID_NULLNIF                    0xE0286B6D
+#define FSHELL_UID_PASTE                      0xE0286B6F
+#define FSHELL_UID_FSHELL_LAUNCH_USB          0xE0286B70
+#define FSHELL_UID_FSHELL_LAUNCH_RCONS        0xE0286B71
+#define FSHELL_UID_RAMDEFRAG                  0xE0286F5D
+#define FSHELL_UID_ICC                        0xE0286B73
+#define FSHELL_UID_VTCSERIAL                  0xE028719D
+#define FSHELL_UID_ECOM                       0xE0286F60
+#define FSHELL_UID_RSOCKET                    0xE0286B74
+#define FSHELL_UID_GENBMP                     0xE0286B75
+#define FSHELL_UID_TFINFO                     0xE0286B76
+#define FSHELL_UID_FDB                        0xE0286F61
+#define FSHELL_UID_NITZ                       0xE0286B77
+#define FSHELL_UID_HAL                        0xE0286B78
+#define FSHELL_UID_POINTER                    0xE0286F62
+#define FSHELL_UID_LBS                        0xE0286B79
+#define FSHELL_UID_SQL                        0xE0286B7A
+#define FSHELL_UID_SQLSRV                     0xE02835BC
+#define FSHELL_UID_GLINFO                     0xE0286B7B
+#define FSHELL_UID_FSHELL_LAUNCH_SERIAL       0xE0286F63
+#define FSHELL_UID_HASH                       0xE0286B7C
+#define FSHELL_UID_SPCRE                      0xE0286F66
+#define FSHELL_UID_LIBPCRE                    0xE0286F67
+#define FSHELL_UID_GREP                       0xE0286F68
+#define FSHELL_UID_STARTUP                    0xE0286F69
+#define FSHELL_UID_FFSTRACERPLUGIN            0xE0286F6B
+#define FSHELL_UID_FFSTRACE                   0xE0286F6C
+#define FSHELL_UID_LOCALDRIVE                 0xE0286F6D
+#define FSHELL_UID_PIPSRUN                    0xE02866DB
+#define FSHELL_UID_USB                        0xE0286F6E
+#define FSHELL_UID_EXTRABTRACE                0xE0286F6F
+#define FSHELL_UID_MEMSPY                     0xE0286F70
+#define FSHELL_UID_EXTRABTRACEK               0xE0286F71
+#define FSHELL_UID_TESTEXECUTE                0xE0286F72
+#define FSHELL_UID_CONSOLEEXTENSIONS          0xE0286F73
+
+#endif // FSHELL_PROTECTED_UIDS
+
+#define FSHELL_UID2_FSHELL_DLL                0x102864C8
+#define FSHELL_UID2_FSHELL_EXE                0x102835BE
+
+#endif // FSHELL_COMMON_MMH

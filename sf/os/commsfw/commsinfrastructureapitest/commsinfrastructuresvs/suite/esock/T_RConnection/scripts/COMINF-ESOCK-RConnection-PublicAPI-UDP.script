@@ -1,0 +1,287 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		COMINF-ESOCK-RConnection-PublicAPI-UDP
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM. An Echo server listening on ports 10007 and 10008.
+//				The communicaion to the server is established using the default connection.
+//				The supplied commsdat is set up to use NTRAS on Emulator as well as on H/W.
+//! @SYMScriptAutomation	The test suites are fully automated using TestDriver and Testexecute
+
+LOAD_SUITE	T_RConnection
+DELAY		2000
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0010
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0010
+//! @SYMAuthor			James Virdee
+//! @SYMCreationDate		17/03/2006
+//! @SYMAPI			RConnection::Close
+//! @SYMTestCaseDesc		Ensure the connection can be closed cleanly
+//! @SYMTestActions		Connect an RSocketServ.
+//! 				Open a RConnection providing the RSocketServ.
+//!				Start the RConnection synchronously.
+//!				Enumerate the number of connections ensuring there is only one.
+//!				Open a UDP socket.
+//!				Send some data across the connection whilst recieving it loopbacked.
+//!				Close the UDP socket.
+//!				Close the RConnection.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The enumeration should show no interfaces present.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100	T_RConnection		\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RConnection	connection2
+		CREATE_OBJECT	RSocket	socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0010-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0010-Start_command06
+		COMMAND		connection1	EnumerateConnections
+		COMMAND		socket1	Constructor
+		COMMAND		socket1	Open		COMINF-ESOCK-RConnection-PublicAPI-0010-Open_command10
+		COMMAND		socket1	SetOpt		COMINF-ESOCK-RConnection-PublicAPI-0010-SetOpt_command11
+		COMMAND		socket1	SetLocalPort
+		COMMAND		socket1	SendTo		COMINF-ESOCK-RConnection-PublicAPI-0010-SendTo_command13
+		OUTSTANDING	
+		COMMAND		socket1	RecvFrom		COMINF-ESOCK-RConnection-PublicAPI-0010-RecvFrom_command15
+		OUTSTANDING	
+		COMMAND		socket1	Close
+		COMMAND		socket1	~
+		COMMAND		connection1	Stop
+		COMMAND		connection1	~
+		COMMAND		connection2	Constructor
+		COMMAND		connection2	Open		COMINF-ESOCK-RConnection-PublicAPI-0010-Open_command24
+		COMMAND		connection2	EnumerateConnections
+		COMMAND		connection2	Close
+		COMMAND		connection2	~
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0010
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0012
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0012
+//! @SYMAuthor			Kavita Gupta
+//! @SYMCreationDate		03/04/2006
+//! @SYMAPI			RConnection::Close,
+//!				RConnection::EnumerateConnections
+//! @SYMTestCaseDesc		Ensure that Close() does not pull down the interface when there are sockets associated with it
+//! @SYMTestActions		Instantiate an RSocketServ object and two RConnection (rconn1, rconn2) objects
+//!				Connect the RSocketServ object
+//!				Open and Start rconn1
+//!				Create a UDP socket and associate it with the newly created connection
+//!				Send data over the socket and receive it looped back from the destination
+//!				Enumerate the connection to ensure only one interface is created
+//!				Close rconn1
+//!				Wait for an appropriate timeout
+//!				Enumerate the interfaces again using rconn2
+//!				There should still be a single interface in place
+//!				Send more data over the socket and receive it looped back from the destination
+//!				Close the socket using RSocket::Close()
+//!				Close the RSocketServ object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	The interface is pulled down onlyafter the sockets associated with it are closed
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_RConnection	\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RConnection	connection2
+		CREATE_OBJECT	RSocket		socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0012-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0012-Start_command06
+		COMMAND		socket1		Constructor
+		COMMAND		socket1		Open		COMINF-ESOCK-RConnection-PublicAPI-0012-Open_command09
+		COMMAND		socket1		SetOpt		COMINF-ESOCK-RConnection-PublicAPI-0012-SetOpt_command10
+		COMMAND		socket1		SetLocalPort
+		COMMAND		socket1		SendTo		COMINF-ESOCK-RConnection-PublicAPI-0012-SendTo_command12
+		OUTSTANDING	
+		COMMAND		socket1		RecvFrom		COMINF-ESOCK-RConnection-PublicAPI-0012-RecvFrom_command14
+		OUTSTANDING	
+		COMMAND		connection1	Close
+		COMMAND		socket1		SendTo		COMINF-ESOCK-RConnection-PublicAPI-0012-SendTo_command19
+		OUTSTANDING	
+		COMMAND		socket1		RecvFrom		COMINF-ESOCK-RConnection-PublicAPI-0012-RecvFrom_command21
+		OUTSTANDING	
+		COMMAND		socket1		Close
+		COMMAND		socket1		~
+		COMMAND		connection1	Close
+		COMMAND		connection1	~
+		ASYNC_DELAY	2000000
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0012
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0013
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0013
+//! @SYMAuthor			James Virdee
+//! @SYMCreationDate		17/03/2006
+//! @SYMAPI			RConnection::Stop
+//! @SYMTestCaseDesc		Stop the connection
+//! @SYMTestActions		Connect an RSocketServ.
+//!				Open a RConnection providing the RSocketServ.
+//!				Start the RConnection synchronously.
+//!				Open a UDP socket.
+//!				Send some data across the connection whilst recieving it loopbacked.
+//!				Stop the RConnection providing no parameters.
+//!				Attempt to send some more data over the socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Successfully closed.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_RConnection	\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSocket		socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0013-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0013-Start_command06
+		COMMAND		socket1		Constructor
+		COMMAND		socket1		Open		COMINF-ESOCK-RConnection-PublicAPI-0013-Open_command09
+		COMMAND		socket1		SetOpt		COMINF-ESOCK-RConnection-PublicAPI-0013-SetOpt_command10
+		COMMAND		socket1		SetLocalPort
+		COMMAND		socket1		SendTo		COMINF-ESOCK-RConnection-PublicAPI-0013-SendTo_command12
+		OUTSTANDING	
+		COMMAND		socket1		RecvFrom	COMINF-ESOCK-RConnection-PublicAPI-0013-RecvFrom_command14
+		OUTSTANDING	
+		COMMAND		connection1	Stop
+		COMMAND		connection1	~
+		COMMAND		socket1		SendTo		COMINF-ESOCK-RConnection-PublicAPI-0013-SendTo_command20
+		OUTSTANDING	
+		COMMAND		socket1		~
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0013
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0016
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0016
+//! @SYMAuthor			Kavita Gupta
+//! @SYMCreationDate		03/04/2006
+//! @SYMAPI			RConnection::Stop
+//! @SYMTestCaseDesc		Ensure that the interface is pulled down even when there are multiple
+//!				clients associated with it
+//! @SYMTestActions		Instantiate and connect a RSocketServ object
+//!				Instantiate, open and start a RConnection
+//!				Create a UDP socket and associate it with the RConnection instance
+//!				Send data over the socket and receive it looped back
+//!				Enumerate the connection and ensure that there is a single interface in place
+//!				Stop the connection
+//!				Enumerate the connection again
+//!				Close the socket
+//!				Close the RSocketServ instance
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	No interface should be present when
+//!				the connection is enumerated the
+//! 				second time
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_RConnection	\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RConnection	connection2
+		CREATE_OBJECT	RSocket		socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0016-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0016-Start_command06
+		COMMAND		socket1		Constructor
+		COMMAND		socket1		Open		COMINF-ESOCK-RConnection-PublicAPI-0016-Open_command09
+		COMMAND		socket1		SetOpt		COMINF-ESOCK-RConnection-PublicAPI-0016-SetOpt_command10
+		COMMAND		socket1		SetLocalPort
+		COMMAND		socket1		SendTo		COMINF-ESOCK-RConnection-PublicAPI-0016-SendTo_command12
+		OUTSTANDING	
+		COMMAND		socket1		RecvFrom		COMINF-ESOCK-RConnection-PublicAPI-0016-RecvFrom_command14
+		OUTSTANDING	
+		COMMAND		connection1	EnumerateConnections
+		COMMAND		connection1	Stop
+		COMMAND		connection1	~
+		COMMAND		connection2	Constructor
+		COMMAND		connection2	Open		COMINF-ESOCK-RConnection-PublicAPI-0016-Open_command22
+		COMMAND		connection2	EnumerateConnections
+		COMMAND		socket1		Close
+		COMMAND		socket1		~
+		COMMAND		connection2	Close
+		COMMAND		connection2	~
+		ASYNC_DELAY	2000000
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0016
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0019
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0019
+//! @SYMAuthor			Kavita Gupta
+//! @SYMCreationDate		17/03/2006
+//! @SYMAPI			RConnection::ProgressNotification
+//! @SYMTestCaseDesc		Verify ProgressNotification reports specific connection stages correctly
+//! @SYMTestActions		Connect an RSocketServ.
+//!				Open an RConnection providing the RSocketServ.
+//!				Start the RConnection synchronously.
+//!				Request asynchronous progress notification for all stages i.e. KStartingSelection,
+//!				KFinishedSelection, KConnectionOpen, KLinkLayerOpen, KLinkLayerClosed
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	All progress stages for the rconnection should be reported.
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_RConnection	\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RSocket		socket1
+		COMMAND		socketServ1	Constructor
+		COMMAND		socketServ1	Connect
+		COMMAND		connection1	Constructor
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0019-Open_command05
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0019-Start_command06
+		COMMAND		connection1	ProgressNotification		COMINF-ESOCK-RConnection-PublicAPI-0019-ProgressNotification_command07
+		OUTSTANDING	
+		COMMAND		connection1	Stop
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0019-Open_command10
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0019-Start_command11
+		COMMAND		connection1	ProgressNotification		COMINF-ESOCK-RConnection-PublicAPI-0019-ProgressNotification_command12
+		OUTSTANDING	
+		COMMAND		connection1	Stop
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0019-Open_command15
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0019-Start_command16
+		COMMAND		connection1	ProgressNotification		COMINF-ESOCK-RConnection-PublicAPI-0019-ProgressNotification_command17
+		OUTSTANDING	
+		COMMAND		connection1	Stop
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0019-Open_command20
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0019-Start_command21
+		COMMAND		connection1	ProgressNotification		COMINF-ESOCK-RConnection-PublicAPI-0019-ProgressNotification_command22
+		OUTSTANDING	
+		COMMAND		connection1	Stop
+		COMMAND		connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0019-Open_command25
+		COMMAND		connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0019-Start_command26
+		COMMAND		connection1	ProgressNotification		COMINF-ESOCK-RConnection-PublicAPI-0019-ProgressNotification_command27
+		COMMAND		socket1		Constructor
+		COMMAND		socket1		Open		COMINF-ESOCK-RConnection-PublicAPI-0019-Open_command30
+		COMMAND		socket1		SetOpt		COMINF-ESOCK-RConnection-PublicAPI-0019-SetOpt_command31
+		COMMAND		socket1		SetLocalPort
+		COMMAND		socket1		SendTo		COMINF-ESOCK-RConnection-PublicAPI-0019-SendTo_command33
+		OUTSTANDING
+		COMMAND		socket1		Close
+		COMMAND		socket1		~
+		COMMAND		connection1	Close
+		COMMAND		connection1	~
+		COMMAND		socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0019

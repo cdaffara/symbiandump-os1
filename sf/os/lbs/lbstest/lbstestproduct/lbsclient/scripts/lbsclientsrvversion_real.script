@@ -1,0 +1,55 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+//Before we start LBS, select the network reg status txt file to use.
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+PRINT Start LBS
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+START_TESTCASE LBS-Client-SrvVersionReal-0001
+
+//!@SYMTestCaseID			LBS-Client-SrvVersionReal-0001
+//!@SYMTestCaseDesc			Get Server Version
+//!
+//!@SYMTestActions			1. Connect to server
+//!							2. GetVersion
+//!							3. Close Server
+//!
+//!@SYMTestExpectedResults	Version is as expected
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler	
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_SrvVersion c:\testdata\configs\LbsClientSrvVersion_real.ini LBS-APIVersion-0001
+
+END_TESTCASE LBS-Client-SrvVersionReal-0001
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

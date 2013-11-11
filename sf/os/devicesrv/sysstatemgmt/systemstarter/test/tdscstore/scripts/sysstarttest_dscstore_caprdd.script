@@ -1,0 +1,125 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Create appropiate test status
+// 
+//
+
+//! @file
+//! @test
+//! @internalComponent - Internal Symbian test code 
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_createnew.script
+
+
+LOAD_SUITE tdscstore_server
+//Set the Capabilities of tdscstore_server.exe to ReadDeviceData(00000010) and name it to tdscstore_server_caprdd.exe
+RUN_PROGRAM -1 setcap tdscstore_server.exe 00000010 tdscstore_server_caprdd.exe
+LOAD_SUITE tdscstore_server_caprdd
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0006
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDesc		DSC database can not be created and opened if the user doesn’t have WriteDeviceData capability.
+//! @SYMTestActions			Precondition: DSC database does not exist
+//!							Call OpenL() and Close().
+//! @SYMTestExpectedResults 	Open failed with KErrPermissionDenied
+
+RUN_UTILS DeleteFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0006
+RUN_UTILS MkDir 			c:\tdscstore_avoid_connection_in_preamble_token\
+RUN_TEST_STEP !error=-46	100 tdscstore_server_caprdd 	OpenDscDatabase
+RUN_UTILS DeleteDirectory 	c:\tdscstore_avoid_connection_in_preamble_token\
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0006
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0008
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDesc		Open an existing DSC database without WriteDeviceData capability.
+//! +@SYMTestActions		Precondition: DSC database exists
+//!							Call OpenL() and Close().
+//! @SYMTestExpectedResults 	DSC opened successfully.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0008
+RUN_UTILS MkDir 			c:\tdscstore_avoid_connection_in_preamble_token\
+RUN_TEST_STEP 				100 tdscstore_server_caprdd 	OpenDscDatabase
+RUN_UTILS DeleteDirectory 	c:\tdscstore_avoid_connection_in_preamble_token\
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0008
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0054
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Without proper (WriteDeviceData)capability, user can not execute write actions
+//! @SYMTestActions			1. Call OpenL() to open an existing DSC database
+//!							2. Call CreateDscL()
+//!							3. Call DeleteDscL()
+//!							4. Call AddItemL() 
+//!							5. Call UpdateItemL() 
+//!							6. Call DeleteItemL() 
+//!							7. Call Close() to close the connection
+//! @SYMTestExpectedResults	Test action 2-6 should leave with KErrPermissionDenied.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0054
+RUN_TEST_STEP  !error=-46		100 tdscstore_server_caprdd 	CreateDsc 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP  !error=-46		100 tdscstore_server_caprdd 	CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP  !error=-46		100 tdscstore_server_caprdd 	DeleteDsc 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP  !error=-46		100 tdscstore_server_caprdd 	UpdateDscItem		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP  !error=-46		100 tdscstore_server_caprdd 	DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0054
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0056
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		With ReadDeviceData only, user can execute read only actions
+//! @SYMTestActions			1. Call OpenL() to open an existing DSC database
+//!							2. Call DscExistsL() 
+//!							3. Call ItemExistL() 
+//!							4. Call ReadItemL()
+//!							5. Call EnumOpenLC() 
+//!							6. EnumClose()
+//!							7. Call Close() to close the connection
+//! @SYMTestExpectedResults	Test action 2-6 should success.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0056
+RUN_TEST_STEP				100 tdscstore_server_caprdd 	DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP  				100 tdscstore_server_caprdd 	DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP  				100 tdscstore_server_caprdd 	ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP  				100 tdscstore_server_caprdd 	EnumOpenDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0056
+
+
+
+//!
+//!	Restore previous status
+//!
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_deletenew.script

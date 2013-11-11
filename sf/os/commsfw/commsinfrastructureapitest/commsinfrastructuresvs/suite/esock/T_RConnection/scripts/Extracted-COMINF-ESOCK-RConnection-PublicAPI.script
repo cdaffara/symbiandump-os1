@@ -1,0 +1,147 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//! @file
+//! @SYMTestSuiteName		Extracted-COMINF-ESOCK-RConnection-PublicAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM. An Echo server installed on a PC to which device under test is connected,
+//				listening in port 10007 and 10008.
+//				These tests cannot be run using TestDriver on the emulator.These tests are run using a slightly different
+//				configuration compared to the "COMINF-ESOCK-RConnection-PublicAPI.script". The required test environment is
+//				slightly different for each test case. These test cases can be run using TestDriver on hardware.
+//				<testcase 15>: Cannot be run using NTRAS as this test keeps the connection active on the server side
+//				(where the echoserver is installed) even after closing the connection by the test. You can use any other PPP connection,
+//				such as NTRAS or Ethernet.
+//				<testcase 58>: This test can't be run on emualtor using TestDriver as the test case disrupts the wintap
+//				connection used by Test Driver to communicate between PC and emulator. Can use a PPP connection such as NTRAS.
+//
+//! @SYMScriptAutomation	The test suites can be executed using Testexecute.
+
+LOAD_SUITE T_RConnection
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0015
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0015
+//! @SYMAuthor			James Virdee
+//! @SYMCreationDate		17/03/2006
+//! @SYMAPI			RConnection::Stop
+//! @SYMTestCaseDesc		Stop the connection EStopAuthoritative mode
+//! @SYMTestActions		Connect an RSocketServ.
+//!				Open a RConnection providing the RSocketServ.
+//!				Start the RConnection synchronously.
+//!				Open a UDP socket.
+//!				Send some data across the connection whilst recieving it loopbacked.
+//!				Stop the RConnection using the EStopAuthoritative mode.
+//!				Attempt to send some more data over the socket.
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	KErrConnectionTerminated(-17210 ). This tests keeps the connection enabled on the PC side
+//!				(NTRAS service configured on PC), even after connection is canceled(especially using NTRAS).
+//!				The above behaviour causes problem when the NTRAS is activated again in next teststep.
+//!				This tests can be tested using any other internet access provider(like ethernet).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_RConnection	\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	RSocketServActive
+		CREATE_OBJECT	RSocket		RSocketActive
+		CREATE_OBJECT	RSocketServ	RSocketServPassive
+		CREATE_OBJECT	RSocket		RSocketPassive
+		CREATE_OBJECT	RSocket		RSessionSocket
+		CREATE_OBJECT	RConnection	RConnectionActive
+		CREATE_OBJECT	RConnection	RConnectionPassive
+		COMMAND				RSocketServActive	Constructor
+		COMMAND				RSocketServActive	Connect
+		COMMAND				RConnectionActive	Constructor
+		COMMAND				RConnectionActive	Open		COMINF-ESOCK-RConnection-PublicAPI-0015-Open_command05
+		COMMAND				RConnectionActive	Start		COMINF-ESOCK-RConnection-PublicAPI-0015-Start_command06
+		OUTSTANDING	
+		COMMAND				RSocketActive	Constructor
+		COMMAND				RSocketActive	Open		COMINF-ESOCK-RConnection-PublicAPI-0015-Open_command10
+		COMMAND				RSocketActive	Bind
+		COMMAND				RSocketActive	Connect		COMINF-ESOCK-RConnection-PublicAPI-0015-Connect_command12
+		OUTSTANDING	
+		COMMAND				RSocketServPassive	Constructor
+		COMMAND				RSocketServPassive	Connect
+		COMMAND				RConnectionPassive	Constructor
+		COMMAND				RConnectionPassive	Open		COMINF-ESOCK-RConnection-PublicAPI-0015-Open_command19
+		COMMAND				RConnectionPassive	Start		COMINF-ESOCK-RConnection-PublicAPI-0015-Start_command20
+		OUTSTANDING	
+		COMMAND				RSessionSocket	Constructor
+		COMMAND				RSessionSocket	Open		COMINF-ESOCK-RConnection-PublicAPI-0015-Open_command24
+		COMMAND				RSocketPassive	Constructor
+		COMMAND				RSocketPassive	Open		COMINF-ESOCK-RConnection-PublicAPI-0015-Open_command27
+		COMMAND				RSocketPassive	SetLocalPort
+		COMMAND				RSocketPassive	Listen		COMINF-ESOCK-RConnection-PublicAPI-0015-Listen_command29
+		COMMAND				RSocketPassive	Accept		COMINF-ESOCK-RConnection-PublicAPI-0015-Accept_command30
+		COMMAND				RSocketActive	Send		COMINF-ESOCK-RConnection-PublicAPI-0015-Send_command32
+		OUTSTANDING	
+		COMMAND				RSessionSocket	RecvOneOrMore		COMINF-ESOCK-RConnection-PublicAPI-0015-RecvOneOrMore_command35
+		OUTSTANDING	
+		COMMAND				RSocketActive	Send		COMINF-ESOCK-RConnection-PublicAPI-0015-Send_command38
+		OUTSTANDING	
+		COMMAND				RConnectionActive	Stop		COMINF-ESOCK-RConnection-PublicAPI-0015-Stop_command41
+		COMMAND	!AsyncError=-17210	RSessionSocket	RecvOneOrMore		COMINF-ESOCK-RConnection-PublicAPI-0015-RecvOneOrMore_command43
+		OUTSTANDING	
+		COMMAND				RSocketActive	Close
+		COMMAND				RSocketActive	~
+		COMMAND				RSocketPassive	Close
+		COMMAND				RSocketPassive	~
+		COMMAND				RSessionSocket	Close
+		COMMAND				RSessionSocket	~
+		COMMAND				RSocketServPassive	Close
+		COMMAND				RSocketServPassive	~
+		COMMAND				RSocketServActive	Close
+		COMMAND				RSocketServActive	~
+		COMMAND				RConnectionActive	~
+		COMMAND				RConnectionPassive	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0015
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0058
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-PublicAPI-0058
+//! @SYMAuthor			Kavita Gupta
+//! @SYMCreationDate		17/03/2006
+//! @SYMAPI			RConnection::Attach
+//! @SYMTestCaseDesc		Ensure Attach() fails if an attempt is made to attach to a non-existent interface
+//! @SYMTestActions		Instantiate and connect a RSocketServ object
+//! 				Open an instance of RConnection (rconn1) providing the RSocketServ object
+//! 				Start the rconn1 synchronously passing the IAP Id as connection preference
+//! 				Stop rconn1
+//! 				Instantiate another RConnection object (rconn2)
+//! 				Attach rconn2 passing aConnectionInfo of rconn1
+//! 				Close rconn2 and RSocketServ instance
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Attach should fail with KErrCouldNotConnect. This tests fails on emulator using tdv2, as there are two active
+//!				inteface(wintap and NTRAS). This will behave properly when run on hardware(as it has only one active interface with NTRAS).
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	100		T_RConnection	\comms-infras\esock\T_RConnection\COMINF-ESOCK-RConnection-PublicAPI.ini 
+		CREATE_OBJECT	RSocketServ	socketServ1
+		CREATE_OBJECT	RConnection	connection1
+		CREATE_OBJECT	RConnection	connection2
+		COMMAND			socketServ1	Constructor
+		COMMAND			socketServ1	Connect
+		COMMAND			connection1	Constructor
+		COMMAND			connection1	Open		COMINF-ESOCK-RConnection-PublicAPI-0058-Open_command05
+		COMMAND			connection1	Start		COMINF-ESOCK-RConnection-PublicAPI-0058-Start_command06
+		COMMAND			connection1	EnumerateConnections
+		COMMAND			connection1	Stop
+		COMMAND			connection2	Constructor
+		COMMAND			connection2	Open		COMINF-ESOCK-RConnection-PublicAPI-0058-Open_command11
+		COMMAND	!Error=-34	connection2	Attach		COMINF-ESOCK-RConnection-PublicAPI-0058-Attach_command12
+		COMMAND			connection2	Close
+		COMMAND			connection2	~
+		ASYNC_DELAY	2000000
+		COMMAND			connection1	~
+		COMMAND			socketServ1	~		
+	END_TEST_BLOCK	
+END_TESTCASE			COMINF-ESOCK-RConnection-PublicAPI-0058

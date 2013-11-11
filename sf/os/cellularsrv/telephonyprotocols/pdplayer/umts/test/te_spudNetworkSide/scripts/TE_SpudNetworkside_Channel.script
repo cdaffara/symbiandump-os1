@@ -1,0 +1,64 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Secondary PDP-context UMTS Driver integration tests using RQoSChannel
+// 
+//
+
+//! @file TE_SpudNetworkside_Channel.script
+
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_Channel_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_Channel_config.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSideLoopbackCSY.ini c:\loopback.ini
+
+// Configure CommDB for the tests
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\TestData\Configs\TE_SpudNetworkSide.xml
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+LOAD_SUITE TE_SpudNetworkSide
+
+START_TESTCASE          NET-Spud-NetworkSide-0901
+//! @SYMTestCaseID      NET-Spud-NetworkSide-0901
+//! @SYMTestCaseDesc Network initiates TFT modification, GuQoS sends the KContextModifyActive to SPUD.
+//! @SYMFssID NETWORKING/Spud/Control Plane/Network initiated PDP Context Modification
+//! @SYMTestActions Creates the primary and 2ndry Context successfully,initiates TFT modification, then GuQoS sends the KContextModifyActive to SPUD.
+//! @SYMTestExpectedResults EQoSEventConfirm and EQoSEventJoin are received bt the test app.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 60 TE_SpudNetworkSide CSpudSecondaryJoin z:\testdata\configs\te_spudNetworkSide.ini SecondaryActivationJoin
+DELAY 3000
+RUN_TEST_STEP 60 TE_SpudNetworkSide CESockCheck z:\testdata\configs\te_spudNetworkSide.ini ESockCheck
+END_TESTCASE            NET-Spud-NetworkSide-0901
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+

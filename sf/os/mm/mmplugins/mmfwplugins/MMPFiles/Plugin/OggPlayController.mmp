@@ -1,0 +1,55 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+TARGET oggplaycontroller.dll
+CAPABILITY ALL -TCB
+TARGETTYPE PLUGIN
+
+// ECom Dll recognition UID followed by the unique UID for this dll
+UID		0x10009D8D 0x01004303
+VENDORID 0x70000001
+
+SOURCEPATH	../../src/Plugin/Controller/Audio/OggVorbis/OggPlayController
+SOURCE		OggPlayController.cpp
+SOURCE		OggDecode.cpp
+
+USERINCLUDE	../../src/Plugin/Controller/Audio/OggVorbis/OggPlayController
+USERINCLUDE     ../../src/Plugin/Controller/Audio/OggVorbis/oggutils/inc
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+OS_LAYER_ESTLIB_SYSTEMINCLUDE
+
+START RESOURCE OggPlayController.RSS
+TARGET oggplaycontroller.rsc
+END
+
+LIBRARY		euser.lib 
+LIBRARY		ecom.lib 
+LIBRARY		estlib.lib 
+LIBRARY 	mmfdevsound.lib 
+LIBRARY		mmfserverbaseclasses.lib 
+LIBRARY		mmfcontrollerframework.lib 
+LIBRARY		mmfstandardcustomcommands.lib
+LIBRARY		oggvorbisintutil.lib
+
+// OggVorbis C libraries are not alloc safe. So we create a separate heap for C library calls with enough space well before 
+// the codec starts processing and we switch to the new heap before making calls to the methods in these libraries. 
+// Chunk and Heap sizes are taken such a way that we have enough space on the new heap to avoid OOM situations to the 
+// maximum extent possible. Also the malloc, calloc and realloc functions in the C libraries are modified to leave with KErrMemory 
+// when the allocation fails. We TRAP the error and cleanup the new heap we had created. This way the library calls are made alloc safe.
+// SYMBIAN_SEP_HEAP is provided to enable/disable this separate heap mechanism.
+MACRO SYMBIAN_SEP_HEAP
+
+SMPSAFE

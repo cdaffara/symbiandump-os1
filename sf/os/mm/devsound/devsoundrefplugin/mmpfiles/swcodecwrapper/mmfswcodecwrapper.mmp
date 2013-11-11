@@ -1,0 +1,84 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// mmfswcodecwrapper.dll Hardware device wrapper for reference software audio devices  
+// __CYCLE_MMF_DATABUFFERS__ tries to replicate the conditions described in INC021405
+// ('Play-EOF-Play on HwAccelerated solution Panics'). Each time DevSound returns a 
+// buffer it will be different to the previous one supplied. This simulates implementations
+// where multiple buffers are available.
+// A similar thing happens on OMAP hardware.
+// MACRO __CYCLE_MMF_DATABUFFERS__
+// __USE_MMF_TRANSFERBUFFERS__ enables devsound to create CMMFTransferBuffers rather than 
+// CMMFDescriptorBuffers
+// MACRO __USE_MMF_TRANSFERBUFFERS__
+// __USE_MMF_PTRBUFFERS__ enables devsound to create CMMFPtrBuffers rather than 
+// CMMFDescriptorBuffers
+// note this MACRO cannot be used in conjunction with __CYCLE_MMF_DATABUFFERS__ and/or __USE_MMF_TRANSFERBUFFERS__
+// MACRO __USE_MMF_PTRBUFFERS__
+// 
+// Enable to get enhanced logging output
+//MACRO SYMBIAN_SCW_DEBUG
+
+/**
+ @file
+*/
+
+
+
+target          mmfswcodecwrapper.dll
+CAPABILITY ALL -TCB
+targettype      DLL
+UNPAGED
+
+UID      0x1000008D 0x101F9EEE //static interface DLL Uid KSharedLibraryUid
+VENDORID 0x70000001
+
+#ifdef SYMBIAN_MDF_SHAREDCHUNK_SOUNDDRIVER
+userinclude 	../../../../mmdevicefw/mdf/src/audio/mdasoundadapter
+#endif
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+SOURCEPATH	../../src/swcodecwrapper
+
+source		mmfSwCodecWrapper.cpp
+source		mmfSwCodecDataPath.cpp
+source		mmfSwCodecPlayDataPath.cpp
+source		mmfSwCodecRecordDataPath.cpp
+source		mmfSwCodecConvertDataPath.cpp
+source		mmfSwCodecUtility.cpp
+
+
+library		euser.lib  
+library		mmfserverbaseclasses.lib 
+library		ecom.lib
+#ifdef SYMBIAN_MDF_SHAREDCHUNK_SOUNDDRIVER
+library		mdasoundadapter.lib
+#endif
+library		mmfswaudiodevice.lib
+
+#ifdef EABI
+DEFFILE ../../eabi/mmfswcodecwrapper.def
+#endif
+
+#ifdef WINSCW
+DEFFILE ../../bwins/MMFSWCODECWRAPPER.DEF
+#endif
+
+nostrictdef
+
+start           wins
+baseaddress     0x4F140000
+end
+
+SMPSAFE

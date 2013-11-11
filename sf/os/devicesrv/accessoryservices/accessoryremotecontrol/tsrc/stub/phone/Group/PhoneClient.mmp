@@ -1,0 +1,205 @@
+/*
+* Copyright (c) 2002-2004 Nokia Corporation and/or its subsidiary(-ies). 
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:  Phone Client DLL defines the API for Phone server.
+*               Actual component in MW. Test stub has dependency to Avkon.
+*/
+
+
+#include <platform_paths.hrh>
+#include <data_caging_paths.hrh>
+
+// Capability assignment.
+CAPABILITY CAP_CLIENT_DLL
+
+// Assign Vendor ID.
+VENDORID VID_DEFAULT
+
+TARGET          PhoneClient.dll
+TARGETTYPE      dll
+UID             0x1000008d 0x1000084F
+
+#if defined(RD_AIW_DIAL_DATA_API) || ( defined(RD_AIW_DIAL_DATA_API) && defined(RD_PHONE_CLIENT_EXT) )
+  SOURCEPATH      ../Src/Notifier/Notifier_Aiw
+  SOURCE          CPhCltCallNotify.cpp 
+  SOURCE          RPhCltCallNotify.cpp
+#else
+  SOURCEPATH      ../Src/Notifier
+  #if defined(RD_PHONE_CLIENT_EXT) && !defined(RD_AIW_DIAL_DATA_API) 
+    SOURCE          RPhCltExtCallNotify.cpp
+  #else
+    SOURCE          RPhCltCallNotify.cpp
+  #endif
+#endif
+
+#if defined(RD_AIW_DIAL_DATA_API)
+  SOURCEPATH      ../Src/ExtCall/ExtCall_Aiw
+  SOURCE          RPhCltExtCall.cpp
+  SOURCE          CPhCltExtPhoneDialData.cpp
+  SOURCEPATH      ../Src/ExtCallWrapper/ExtCallWrapper_Aiw
+  SOURCE          CPhCltExtPhone.cpp
+  SOURCE          CPhCltExtPhoneBase.cpp
+#else
+  SOURCEPATH      ../Src/ExtCall
+  SOURCE          RPhCltExtCall.cpp
+  SOURCE          TPhCltExtPhoneDialData.cpp
+  SOURCEPATH      ../Src/ExtCallWrapper
+  SOURCE          CPhCltDialer.cpp
+  SOURCE          CPhCltDialerDlg.cpp
+  SOURCE          CPhCltExtPhone.cpp
+  SOURCE          CPhCltExtPhoneBase.cpp
+#endif
+
+#if defined(RD_PHONE_CLIENT_EXT)
+  SOURCEPATH      ../Src/Ussd/Ussd_Ext
+  SOURCE          RPhCltUssd.cpp
+#else
+  SOURCEPATH      ../Src/Ussd
+  SOURCE          RPhCltUssd.cpp  
+#endif
+
+SOURCEPATH      ../Src/UssdWrapper
+SOURCE          CPhCltUssdRequestHandler.cpp
+
+SOURCE          CPhCltUssdSatClient.cpp
+  
+#if defined(RD_PHONE_CLIENT_EXT)
+  SOURCE          CPhCltUssdInt.cpp
+  SOURCE          CPhCltUssdImp.cpp
+  SOURCE          CPhCltUssdExt.cpp
+#else
+  SOURCE          CPhCltUssd.cpp 
+#endif
+
+#if defined(RD_AIW_DIAL_DATA_API)
+  SOURCEPATH      ../Src/EmergencyNumber/EmergencyNumber_Aiw
+  SOURCE          CPhCltEmergencyCall.cpp
+  SOURCE          RPhCltEmergencyCall.cpp
+  SOURCE          CPhCltEmergencyCallImpl.cpp
+#else
+  SOURCEPATH      ../Src/EmergencyNumber
+  SOURCE          RPhCltEmergencyNumber.cpp
+  SOURCE          CPhCltEmergencyTelNumber.cpp
+#endif
+
+
+SOURCEPATH      ../Src/Session
+SOURCE          RPhCltServer.cpp
+
+SOURCEPATH      ../Src
+SOURCE          PhCltUtils.cpp
+SOURCE          RPhCltResourceFile.cpp
+
+#if defined(RD_PHONE_CLIENT_EXT)
+  SOURCEPATH      ../Src/CommandHandler
+  SOURCE          CPhCltCommandHandler.cpp
+  SOURCE          CPhCltComHandImplementation.cpp
+  SOURCE          RPhCltCommandHandler.cpp
+  SOURCEPATH      ../Src/ImageHandler
+  SOURCE          CPhCltImageHandler.cpp
+  SOURCE          CPhCltBaseImageParams.cpp
+  SOURCE          CPhCltOperatorLogoContainer.cpp
+  SOURCE          CPhCltImageHandlerImplementation.cpp
+  SOURCE          RPhCltImageHandler.cpp
+  SOURCEPATH      ../Src/Messenger
+  SOURCE          CPhCltMessenger.cpp
+  SOURCE          RPhCltMessenger.cpp
+  SOURCE          CPhCltMessengerImplementation.cpp
+#endif // RD_PHONE_CLIENT_EXT
+
+SOURCEPATH      ../Src
+START RESOURCE ../Data/PhoneClient.RSS
+HEADER
+TARGETPATH   RESOURCE_FILES_DIR  
+LANGUAGE_IDS
+END  // RESOURCE
+
+#if defined(RD_AIW_DIAL_DATA_API) 
+  USERINCLUDE     ../Inc/Notifier/Notifier_Aiw
+  USERINCLUDE     ../Inc/ExtCall/ExtCall_Aiw
+  USERINCLUDE     ../Inc/ExtCallWrapper/ExtCallWrapper_Aiw
+  USERINCLUDE     ../Inc/EmergencyNumber/EmergencyNumber_Aiw
+#else
+  USERINCLUDE     ../Inc/Notifier
+  USERINCLUDE     ../Inc/ExtCall
+  USERINCLUDE     ../Inc/ExtCallWrapper
+  USERINCLUDE     ../Inc/EmergencyNumber
+#endif
+
+USERINCLUDE     ../Inc/Session
+USERINCLUDE     ../Inc/SharedClientServer
+
+#if defined(RD_PHONE_CLIENT_EXT)
+USERINCLUDE     ../Inc/UssdWrapper/Ussd_Ext
+USERINCLUDE     ../Inc/Ussd/Ussd_Ext
+USERINCLUDE     ../Inc/CommandHandler
+USERINCLUDE     ../Inc/ImageHandler
+USERINCLUDE     ../Inc/Messenger
+#else
+USERINCLUDE     ../Inc/Ussd
+#endif
+
+USERINCLUDE     ../Inc/UssdWrapper
+USERINCLUDE     ../Inc
+
+MW_LAYER_SYSTEMINCLUDE
+
+//SYSTEMINCLUDE   ../../../inc
+
+LIBRARY         EUSER.LIB
+LIBRARY         AKNNOTIFY.LIB
+LIBRARY         AVKON.LIB
+LIBRARY         CONE.LIB
+LIBRARY         ESTOR.LIB
+LIBRARY         COMMONENGINE.LIB 
+LIBRARY         EIKDLG.LIB
+LIBRARY         EIKCOCTL.LIB
+LIBRARY         ETELMM.LIB
+LIBRARY         GSMU.LIB
+LIBRARY         EFSRV.LIB
+LIBRARY         CHARCONV.LIB
+LIBRARY         FBSCLI.LIB
+
+
+#ifdef WINSCW
+ 	#if defined(RD_AIW_DIAL_DATA_API) && defined(RD_PHONE_CLIENT_EXT)
+ 	  DEFFILE ../BWINS/PHONECLIENT_AiwExt.DEF
+ 	#endif 
+	#if defined (RD_AIW_DIAL_DATA_API) && !defined(RD_PHONE_CLIENT_EXT)
+      DEFFILE ../BWINS/PHONECLIENT_Aiw.DEF
+    #endif
+    #if defined(RD_PHONE_CLIENT_EXT) && !defined(RD_AIW_DIAL_DATA_API)
+      DEFFILE ../BWINS/PHONECLIENT_Ext.DEF
+    #endif
+    #if !defined(RD_AIW_DIAL_DATA_API) && !defined(RD_PHONE_CLIENT_EXT)
+      DEFFILE ../BWINS/PHONECLIENT.DEF
+    #endif
+#else
+ 	#if defined(RD_AIW_DIAL_DATA_API) && defined(RD_PHONE_CLIENT_EXT)
+ 	  DEFFILE ../EABI/PHONECLIENT_AiwExt.DEF
+ 	#endif
+	#if defined (RD_AIW_DIAL_DATA_API) && !defined(RD_PHONE_CLIENT_EXT)
+      DEFFILE ../EABI/PHONECLIENT_Aiw.DEF
+    #endif
+    #if defined(RD_PHONE_CLIENT_EXT) && !defined(RD_AIW_DIAL_DATA_API)
+      DEFFILE ../EABI/PHONECLIENT_Ext.DEF
+    #endif
+ 	#if !defined(RD_AIW_DIAL_DATA_API) && !defined(RD_PHONE_CLIENT_EXT)
+      DEFFILE ../EABI/PHONECLIENT.DEF
+    #endif
+ 
+#endif
+
+SMPSAFE
+
+// End of File

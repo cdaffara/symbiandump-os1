@@ -1,0 +1,658 @@
+#!perl
+# createsrc
+# 
+# Copyright (c) 2009 - 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+use strict;
+use Getopt::Long;
+use Cwd;
+use FindBin;
+
+# forward decls
+sub homeDir();
+sub processCommandLine();
+sub Usage();
+sub make4CharId($);
+sub caseRename($$$);
+sub renameFileCopy($$);
+sub GetMacroValue($);
+sub PromptMacro($);
+sub CheckMacro($$);
+sub CheckUid($);
+sub CheckIdentifier($);
+sub listTemplates($);
+sub getTemplates();
+sub query($$);
+sub getConfigFileName();
+sub getConfig($);
+sub setConfig($$);
+sub setCopyright($);
+
+
+#globals
+my $template;
+my $newName;
+my $templateDir;
+my $templateName = "SkeletonTemplate";
+my $dest;
+my $help;
+my $verbose = 0;
+my %macroValue;
+my %macroDescription = ( 'UID' => 'a UID', 'COPYRIGHT' => 'a copyright notice' );
+my $homeDir;
+my $listTemplates;
+my $overwrite = 0;
+my $addToPerforce = 0;
+my $addToMercurial = 0;
+my $interactive = 0;
+
+processCommandLine();
+
+unless (defined $macroValue{'COPYRIGHT'}) {
+	$macroValue{'COPYRIGHT'} = getConfig('copyright');
+	$macroValue{'COPYRIGHT'} = "Copyright (c) [[YEAR]] Accenture. All rights reserved." unless $macroValue{'COPYRIGHT'};
+}
+
+
+$homeDir = homeDir() unless defined ($homeDir);
+
+my $year = [localtime()]->[5]+1900;
+$macroValue{'COPYRIGHT'} =~ s|\[\[YEAR\]\]|$year|g;
+
+if ($interactive) {
+  my $templates = getTemplates();
+  print "Available Templates:\n";
+  my $count = 1;
+  my $options="";
+  foreach my $template (@$templates) {
+    print "$count) $template->[0] - $template->[1]\n";
+    $options=$options . $count;
+    $count++;
+  }
+  do {
+  	print "Which template do you want to use? ";
+  	my $in = <>;
+  	chomp $in;
+  	my $choice;
+  	$choice = eval "int($in)";
+  	unless ($@) {
+  	  if (($choice>0) && ($choice <= scalar(@$templates))) {
+  	    $template = $templates->[$choice-1]->[0];
+  	  }
+  	}
+  	my $max = $count-1;
+    print "Please enter a number between 1 and $max\n" unless defined $template;
+  }	until (defined $template);
+  print "Using template $template\n" if $verbose;
+  
+  do {
+    print "Name for the new code? ";
+    $newName = <>;
+    chomp $newName;
+    
+    unless (CheckIdentifier($newName)) {
+      print "$newName is not a valid C++ identifier\n";
+      undef $newName;
+    }
+   
+  } until ((defined $newName) && (length $newName));
+  
+   my $cwd = cwd();
+   print "Directoy to create new code in? [$cwd] ";
+   $dest = <>;
+   chomp $dest;
+   $dest = $cwd unless (length $dest);
+  
+} else {
+
+  $dest = cwd() unless $dest;
+  
+}
+
+$templateDir = $homeDir."/createsrc-templates/$template";
+die "ERROR: Template $template not found at $templateDir\n" unless -d $templateDir;
+
+$dest =~ s|\\|/|g;
+$dest =~ s|/$||;
+print "Creating $newName at $dest from template $template at $templateDir\n" if ($verbose);
+
+# read [[MACRO]] descriptions from .txt file
+my $infoFile;
+my $infoFileName = "$templateDir.txt";
+if ((-f $infoFileName) && (open $infoFile, $infoFileName)) {
+	print "Reading $infoFileName\n" if ($verbose);
+	<$infoFile>; # skip template description
+	while (my $line = <$infoFile>) {
+		chomp $line;
+		$line =~ s|#.*||; # remove perl style comments
+		if ($line =~ m|^\s*(\w[\w\d]*)\s*\:\s*(.*)$|) {
+			my ($macro, $desc) = ($1, $2);
+			print "Macro '$macro': '$desc'\n" if ($verbose>1);
+			$macroDescription{$macro} = $desc;
+		} elsif ($line =~ m|^\s*$|) {
+			# blank line
+		} else {
+			die "Error: cannot parse line $. of $infoFileName\n";
+		}
+	}
+	
+	close $infoFile;
+}
+
+unless (-d $dest) {
+  mkdir($dest) or die "ERROR: Couldn't create directory $dest: $!\n";
+  print "Created directory $dest\n" if ($verbose>1);
+}
+
+my @dirStack;
+push @dirStack, "";
+
+
+while ($#dirStack>=0) {
+  my $dir = pop(@dirStack);
+
+  my $dirName = $dir;
+  $dir = "/$dir" unless ($dir eq "") || ($dir =~ m|^/|);
+
+  # create destination directory
+  unless (-d "$dest$dir") {
+    mkdir "$dest$dir" or die "ERROR: cannot create directory $dest$dir: $!\n";
+    print "Created directory $dest$dir\n" if ($verbose);
+  }
+
+  # read template directory contents
+  opendir DIR, "$templateDir$dir";
+  my @dirContents = readdir(DIR);
+  closedir(DIR);
+
+  foreach my $f (@dirContents) {
+    if (-f "$templateDir$dir/$f") {
+      my $newFile = caseRename($f, $templateName, $newName);
+      print "Renaming from $templateDir$dir/$f to $dest$dir/$newFile\n" if ($verbose);
+      renameFileCopy("$templateDir$dir/$f", "$dest$dir/$newFile"); 
+    } elsif (-d "$templateDir$dir/$f") {
+      unless ($f =~ m|^\.\.?$|) {
+        print "Adding $dirName/$f to stack\n" if ($verbose);
+        push @dirStack, "$dirName/$f";
+      }
+    } else {
+      print "WARNING: $templateDir$dir/$f is neither a file nor a directory";
+    }
+  }
+
+}
+
+
+
+sub homeDir() {
+  my $homeDir = $FindBin::Bin;
+  print "homeDir=$homeDir\n" if ($verbose > 1);
+  return $homeDir;
+}
+
+sub processCommandLine() {
+  my $setCopyright = undef;
+  Getopt::Long::Configure("bundling");
+  my @macroDefs;
+  GetOptions('h'   => \$help,
+             'v+'  => \$verbose,
+             'd=s' => \$dest,
+             's=s' => \$homeDir,
+             't=s' => \$templateName,
+             'l'   => \$listTemplates,
+             'o'   => \$overwrite,
+             'p'   => \$addToPerforce,
+	     'm'   => \$addToMercurial,
+             'i'   => \$interactive,
+             'c=s' => \$setCopyright,
+	     'D=s' => \@macroDefs);
+
+  Usage() if ($help);
+
+  listTemplates(1) if ($listTemplates);
+  
+  setCopyright($setCopyright) if (defined $setCopyright);
+
+  unless ($interactive) {
+    if ($#ARGV < 1) {
+      print "Insufficient arguments; entering interactive mode\n";
+      $interactive = 1;
+    } else {
+      $template = shift(@ARGV);
+      $newName = shift(@ARGV);
+      die "$newName is not a valid C++ identifier\n" unless CheckIdentifier($newName);
+    }
+  }
+  foreach my $d (@macroDefs) {
+	if ($d =~ m|^(\w[\w\d]*)=(.*)$|) {
+		my ($macro, $value) = ($1, $2);
+		print "Got macro '$macro'='$value' from command line\n" if ($verbose>1);
+		die "Error: '$value' is not a valid value for $macro\n" unless CheckMacro($macro, $value);
+		$macroValue{$macro} = $value;
+	} else {
+		die "Error: Incorrect usage of -D: $d: expected a string of the format 'id=value'\n";
+	}
+  }  
+  print "Warning: ignoring " . scalar(@ARGV) . " extra arguments\n" if scalar(@ARGV);
+}
+
+sub Usage() {
+  require Pod::Text;
+  my $parser = Pod::Text->new();
+  $parser->parse_from_file($0);
+  exit;
+}
+
+sub make4CharId($) {
+	my $longId = shift;
+	while (length($longId)<2) {
+		$longId = $longId . '_';
+	}
+	return uc( substr($longId, 0, 2) . substr($longId, length($longId)-2, 2) );
+}
+
+sub caseRename($$$) {
+  my $string = shift;
+  my $oldName = shift;
+  my $newName = shift;
+
+  my $oldUpper = $oldName;
+  $oldUpper =~ tr/a-z/A-Z/;
+
+  my $oldLower = $oldName;
+  $oldLower =~ tr/A-Z/a-z/;
+
+  my $oldLowerFirst = "\l$oldName;\E";
+
+  my $uppercase = $newName;
+  $uppercase =~ tr/a-z/A-Z/;
+
+  my $lowercase = $newName;
+  $lowercase =~ tr/A-Z/a-z/;
+
+  my $lowerFirst = "\l$newName\E";
+  
+  my $old4Char = make4CharId($oldName);
+  my $new4Char = make4CharId($newName);
+
+  $string =~ s/$oldName/$newName/g;
+  $string =~ s/$oldUpper/$uppercase/g;
+  $string =~ s/$oldLower/$lowercase/g;
+  $string =~ s/$oldLowerFirst/$lowerFirst/g;
+  $string =~ s/$old4Char/$new4Char/g;
+  return $string;
+}
+
+sub renameFileCopy($$) {
+  my $src = shift;
+  my $dest = shift;
+  open SOURCE, "<$src" or die "ERROR: can't open $src for reading: $!\n";
+  unless ($overwrite) {
+    die "ERROR: $dest already exists. Use -o to overwrite. Aborting.\n" if (-f $dest);
+  }
+  open DEST, ">$dest" or die "ERROR: can't open $dest for writing: $!\n";
+  while (my $line = <SOURCE>) {
+    while ($line =~ m|\[\[(\w[\w\d]*)\]\]|) {
+	my $id = $1;
+	my $value = GetMacroValue($id);
+	$line =~ s|\[\[$id\]\]|$value|g;
+    }
+    print DEST caseRename($line, $templateName, $newName);
+    
+  }
+  close (SOURCE);
+  close (DEST);
+  if ($addToPerforce) {
+    print "p4 add $dest\n";
+    `p4 add $dest` ;
+  }
+  if ($addToMercurial) {
+    print "hg add $dest\n";
+    `hg add $dest` ;
+  }
+}
+
+sub GetMacroValue($) {
+	my $macro = shift;
+	if (!defined($macroValue{$macro})) {
+		$macroValue{$macro} = PromptMacro($macro);
+	}
+	return $macroValue{$macro};
+}
+
+sub PromptMacro($) {
+	my $macro = shift;
+	my $description = $macroDescription{$macro};
+	$description = $macro unless defined $description;		
+	
+	print "Enter $description for $newName: ";
+	my $value;
+	do  {
+		$value = <>;
+		chomp $value;
+	} while (!CheckMacro($macro, $value));
+	return $value;
+}
+
+sub CheckMacro($$) {
+	my ($macro, $value) = @_;
+	if ($macro eq 'UID') {
+		return CheckUid($value);
+	}
+	return 1;
+}
+
+sub CheckUid($) {
+  my $uid = shift;
+  return 1 if ($uid =~ m|^0x[0-9a-f]{1,8}$|i);
+  return 1 if ($uid =~ m|^[0-9]{1,10}$|);
+  return 0;
+}
+
+sub CheckIdentifier($)	{
+  my $id = shift;
+  return ($id =~ m|[A-Za-z_][A-Za-z_0-9]*|);
+}
+
+sub getTemplates() {
+  $homeDir = homeDir() unless defined ($homeDir);
+  opendir TEMPLATES, "$homeDir/createsrc-templates" or die "Can't read directory $homeDir/createsrc-templates: $!\n";
+  my @templateNames = grep((-d "$homeDir/createsrc-templates/$_")&&!(m|\.\.?|), readdir(TEMPLATES));
+  close TEMPLATES;
+  die "No templates found at $homeDir/createsrc-templates\n" unless scalar(@templateNames);
+  my @templates = ();
+  foreach my $template (@templateNames) {
+  	my $desc;
+    my $descFile = "$homeDir/createsrc-templates/$template.txt";
+    if ((-f $descFile)&&(open DESC, $descFile)) {
+      $desc = <DESC>;
+      chomp $desc;
+      close DESC;
+    } else {
+     $desc = "<no description>";
+    }
+    push @templates, [$template, $desc];
+  }
+  @templates = sort {$a->[0] cmp $b->[0]} @templates;
+  return \@templates;
+}
+
+sub listTemplates($) {
+  my $exitWhenDone = shift;
+  my $templates = getTemplates();
+  foreach my $template (@$templates) {
+    print $template->[0] . " - " . $template->[1] . "\n";
+  }
+  exit if $exitWhenDone;
+}
+
+sub getConfigFileName() {
+  my $fn;
+  if (defined $ENV{'USERPROFILE'}) {
+    $fn = $ENV{'USERPROFILE'};
+  } else {
+    $fn = homeDir();
+  }
+  $fn =~ s|[/\\]$||;
+  $fn .= "\\createsrc.cfg";
+  return $fn;
+}
+
+sub getConfig($) {
+  my $findKey = shift;
+  my $cfg = getConfigFileName();
+  my $foundValue = undef;
+  open CFGFILE, "<$cfg" or return undef;
+  print "Reading $cfg\n" if ($verbose);
+  while (my $line = <CFGFILE>) {
+    chomp $line;
+    if ($line =~ m|^(.*?)\s*=\s*(.*)$|)	{
+      my ($key, $value) = ($1, $2);
+      print "Read '$key'='$value'\n" if ($verbose>1);
+      $foundValue = $value if ($key eq $findKey);
+    } else {
+      print "ignoring line '$line'\n" if ($verbose>1);
+    }
+  }
+  return $foundValue;
+  close CFGFILE;  
+}
+
+sub setConfig($$) {
+  my ($key, $value) = @_;
+  my $cfg = getConfigFileName();
+  my @lines;
+  if (open CFGFILE, "<$cfg") {
+    print "Reading $cfg\n";
+    @lines = <CFGFILE>;
+    close CFGFILE;
+  }
+  open CFGFILE, ">$cfg" or die "Cannot write to $cfg: $!\n";
+  print "Writing $cfg\n" if ($verbose);
+  my $written = 0;
+  foreach my $line (@lines) {
+    if ($line =~ m|^(.*?)\s*=\s*(.*)$|)	{
+      my ($foundKey, $foundValue) = ($1, $2);
+      print "Read '$foundKey'='$foundValue'\n" if ($verbose>1);
+      if ($key eq $foundKey) {
+        $foundValue = $value;
+        $written = 1;
+        print "Updated key $foundKey to '$foundValue'\n" if ($verbose>1);
+      }
+      print CFGFILE "$foundKey=$foundValue\n";
+    } else {
+      print "ignoring line '$line'\n" if ($verbose>1);
+      print CFGFILE $line;
+    }
+  }
+  unless ($written) {
+    print "Adding $key=$value\n";
+    print CFGFILE "$key=$value\n";
+  }
+  close CFGFILE;
+  
+}
+
+sub setCopyright($) {
+  my $copyright =  shift;
+  print "Setting copyright notice to '$copyright'\n" if ($verbose);
+  setConfig('copyright', $copyright);
+  exit(1);
+}
+
+
+__END__
+
+=head1 NAME
+
+createsrc - creates new code from templates
+
+=head1 SYNOPSIS
+
+	createsrc [options] [TemplateName NewName]
+
+options:
+
+=over
+
+=item -i
+
+Use L<Interactive mode>. This will be the default if C<TemplateName> and C<NewName> are not given.
+
+=item -d <directory>
+
+Put the new code in the specified directory. Defaults to current directory.
+
+=item -DMACRO=value
+
+Specfies a value for a macro. See "Macros" section below.
+
+=item -c "Copyright Notice"
+
+Sets the default copyright to use when none other is specified. See L<Copyright Notices> below.
+
+=item -o
+
+Overwrites any existing files when creating the new code.
+
+=item -p
+
+Add the new files to perforce as they are created.
+
+=item -m
+
+Add the new files to mercurial as they are created.
+
+=item -s <directory>
+
+Specifies the home directory of the script, where the templates are located. Defaults to the directory where the script is located.
+
+=item -t <TemplateText>
+
+Specified the text to be replaced in the template. Defaults to C<SkeletonTemplate>. It's not usually necessary to change this.
+
+=item -l
+
+List available templates, then exits.
+
+=item -h
+
+Shows this help.
+
+=item -v
+
+Verbose mode (-vv very verbose).
+
+=back
+
+=head1 DESCRIPTION
+
+This script creates new projects or code snippets from templates. For example, assuming you have a template C<UiqBasic> that consists of a basic UIQ application, you could create a HelloWorld application as follows:
+
+	createsrc UiqBasic HelloWorld
+
+When creating the new code, it performs the following steps:
+
+=over
+
+=item 1.
+
+Copies and renames the files as appropriate.
+
+=item 2.
+
+Replaces text within the files as appropriate.
+
+=item 3.
+
+Substitutes macros enclosed in double square brackets, C<[[MACRO]]>.
+
+=back
+
+When renaming files or substituting text withing the files, case is preseved as follows:
+
+=over
+
+=item 1.
+
+C<MixedCaseText> is preserved - i.e. C<TemplateText> becomes C<NewText>.
+
+=item 2.
+
+C<lowercasetext> is preserved - i.e. C<templatetext> becomes C<newtext>.
+
+=item 3.
+
+C<UPPERCASETEXT> is preserved - i.e. C<TEMPLATETEXT> becomes C<NEWTEXT>.
+
+=item 4.
+
+C<lowerCaseFirst> is preserved - i.e. C<templateText> becomes C<newText>.
+
+=back
+
+This should cover all forms of capitalisation used within normal Symbian code.
+
+In addition, the capitalised first and last two letters of C<TemplateText> is replaced with the same letters of C<NewText> - i.e. C<TEXT> becomes C<NEXT>. This is to support the C<NAME> value in an applications resource file, which must always have 4 letters.
+
+If the new text has less than 4 characters, it will be padded with underscores. For example, an application called C<A> will be given a C<NAME> of C<A_A_>; C<Ap> becomes C<APAP>; C<HelloWorld> becomes C<HELD> and so on.
+
+=head2 Interactive mode
+
+If the C<-i> option is given, of if no C<TemplateName> and C<TemplateText> are given, interactive mode will be used:
+
+	D:\work\new>createsrc
+	Insufficient arguments; entering interactive mode
+	Available Templates:
+	1) UiqBasic - Basic UIQ application
+	2) UiqImaging - Basic UIQ application with one large control, suitable for displaying an image, a video, etc.
+	3) UiqList - Basic UIQ application with a list in the view.
+	4) server - Symbian 9 transient server
+	Which template do you want to use? 1
+	Name for the new code? HelloWorld
+	Directoy to create new code in? [D:/work/new]
+	Enter a UID for HelloWorld: 0x10002000
+
+When prompted for the directory to create the code in, simply hit enter to use the suggestion in square brackets. Or you can enter a relative or absolute path name to use instead.
+
+=head2 Macros
+
+Macros allow extra custom strings to be inserted into the generate code. Macro values can be specified on the command line using the C<-D> option; if no value is specified then it will be prompted for at runtime.
+
+There are two macros that are used by all (or most) templates:
+
+=over
+
+=item C<COPYRIGHT>
+
+Defines a copyright notice for the code, usually inserted in a comment at the top of each source file. See L<Copyright Notices> below.
+
+=item C<UID>
+
+Specifies a UID for the new code. This will be verified as a valid integer.
+
+=back
+
+Some templates may define other, custom macros. To define a macro value on the command line, use -D syntax in a similar way the a C preprocessor:
+
+	createsrc -DUID=0x01234567
+
+
+=head2 Copyright Notices
+
+Copyright notices are automatically inserted into the source files, including the current year. When using the C<-DCOPYRIGHT=...> and C<-c> options, the copyright text may include C<[[YEAR]]>, which will be replaced with the current year when the code was created.
+
+For example,
+
+	createsrc -DCOPYRIGHT="Copyright (c) [[YEAR]] Joe Bloggs. All rights reserved"
+
+The default copyright notice is C<Copyright (c) [[YEAR]] Accenture. All rights reserved.>
+
+When the C<-c> option is used, the copyright notice is stored in C<%USERPROFILE%\createsrc.cfg> and so is persisted for future runs of C<createsrc>.
+
+=head2 Templates
+
+The templates are located in F<\epoc32\tools\Templates\TemplateName>. Each template usually contains an entire buildable project, but this may vary depending upon the nature of the template. The text that is replaced in template filenames and files is C<SkeletonTemplate> by default, but this can be modified with the C<-t TemplateText> option (although it is not recommended).
+
+In the template, macros are enclosed in double square brackets, for example C<[[UID]]>. Templates should make use of the standard C<[[UID]]> and C<[[COPYRIGHT]]> macros and can use others if necessary.
+
+If a F<TemplateName.txt> file is found in F<\epoc32\tools\Templates>, the first line of this file will be used as the description of the template when the C<-l> flag is given. The remainder of the file is expected to contain lines of the format:
+
+	MACRO: description
+
+giving descriptions for any custom macros used in the project. The descriptions will be used instead of the macro name when prmopting the user for a value at runtime.
+
+=head1 COPYRIGHT
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+
+=cut
+

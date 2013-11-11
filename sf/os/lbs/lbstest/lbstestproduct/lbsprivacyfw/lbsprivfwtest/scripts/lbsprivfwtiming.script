@@ -1,0 +1,87 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//@File
+//
+//! @SYMTestSuiteName lbsprivfwtiming.script
+//
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE LbsPrivFwTestServer -SharedData
+PRINT Run LbsPrivFwTestServer
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini CTRL-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyAndSimpleCtlr
+
+
+
+
+START_TESTCASE                 LBS-PRIVACYFW-PERF-TIMING-0001
+//! @SYMTestCaseID               LBS-PRIVACYFW-PERF-TIMING-0001
+//! @SYMTestCaseDesc             Performance timing for a single shot privacy request,
+//!                              The test should be set up to use an auto response privacy controller with an initial state of all LBS processes not running.
+//!                              The REQ actually specifies a timing value for running on the H4 board only so we can be a little forgiving for emulator runs.
+//! @SYMREQ                      REQ8004
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              1. Set Admin setting to use the Privacy Controller.
+//!                              2. Set Controller to auto - return 'accept' for verification requests.
+//!                              3. Check that all the LBS privacy processes are not running.
+//!                              4. Issue a VerificationLocationRequestL() and start a timer
+//!                              5. Wait for verification response sent to the network and stop the timer
+//!                              6. Compare timer value with expected time.
+//! @SYMTestExpectedResults      1. Verification 'accept' response is sent to the network
+//!                              2. Time to complete the verification request is not greater than 100ms (for H4 only)
+//! @SYMTestType                 CIT
+//! @SYMCreationDate             29/8/2007
+//! @SYMAuthor                   alans
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_PerfTimings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFW-PERF-TIMING-0001
+END_TESTCASE                   LBS-PRIVACYFW-PERF-TIMING-0001
+
+
+
+START_TESTCASE                 LBS-PRIVACYFW-PERF-TIMING-0002
+//! @SYMTestCaseID               LBS-PRIVACYFW-PERF-TIMING-0002
+//! @SYMTestCaseDesc             Performance timing for multiple privacy requests,
+//!                              The test should be set up to use an auto response privacy controller and with an initial state of all LBS privacy components already running.
+//!                              The REQ actually specifies a timing value for running on the H4 board only so we can be a little forgiving for emulator runs.
+//! @SYMREQ                      REQ8005
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              1. Set Admin setting to use the Privacy Controller.
+//!                              2. Set Controller to auto - return 'accept' for verification requests.
+//!                              3. Issue a VerificationLocationRequestL() and wait for the response to ensure privacy components are running.
+//!                              4. Issue a VerificationLocationRequestL() and start a timer
+//!                              5. Wait for verification response sent to the network
+//!                              6. Issue and wait for a total of 100 consecutive VerificationLocationRequestL() and then stop the timer
+//!                              6. Compare timer value with expected time.
+//! @SYMTestExpectedResults      1. Verification 'accept' response is sent to the network for all requests
+//!                              2. Time to complete the 100 verification request is not greater than 5secs (for H4 only)
+//! @SYMTestType                 CIT
+//! @SYMCreationDate             29/8/2007
+//! @SYMAuthor                   alans
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_StartLbs
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_PerfTimings  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFW-PERF-TIMING-0002
+END_TESTCASE                   LBS-PRIVACYFW-PERF-TIMING-0002
+
+
+
+

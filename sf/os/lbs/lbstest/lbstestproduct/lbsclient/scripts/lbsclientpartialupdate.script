@@ -1,0 +1,165 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @File
+//! @SYMTestSuiteName         lbsclientpartialupdate
+//! @SYMScriptTestEnvironment TestExecute
+
+// Delete old log file
+RUN_UTILS DeleteFile c:\private\101f401d\Logdbu.dat
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+
+// Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+ 	MkDir c:\private\10282253\
+ 	MkDir c:\private\10282253\lbs\
+ 	MkDir c:\private\10282253\lbs\locmods\
+ 	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+ 	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+ 	DeleteFile c:\private\10202be9\1028224b.cre
+ 	DeleteFile c:\private\10202be9\persists\1028224b.cre
+ 	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+
+
+
+START_TESTCASE                LBS-Client-PartialUpdate-0001
+//! @SYMTestCaseID              LBS-Client-PartialUpdate-0001
+//! @SYMTestCaseDesc            Request Location when Partial Update is turned off (Autonomous mode)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set GPS mode to Autonomous 
+//!				2. Open Positioner with configured required quality. 
+//!				3. Configure Partial Updates with False 
+//!				4. Set test module to respond with quality poorer than required quality set in Positioner, but complete 
+//!				5. Do NPU and wait for request to complete
+//! @SYMTestExpectedResults     Request should complete with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            19/8/2008
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ 1662
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0001
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0001
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_PartialUpdate c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0001
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-PartialUpdate-0001
+
+
+START_TESTCASE                LBS-Client-PartialUpdate-0002
+//! @SYMTestCaseID              LBS-Client-PartialUpdate-0002
+//! @SYMTestCaseDesc            Request Location when postion suplied is poor quality (Autonomous mode)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set GPS mode to Autonomous 
+//!				2. Open Positioner with configured required quality. 
+//!				3. Configure Partial Updates with ETrue 
+//!				4. Set test module to respond with quality poorer than required quality set in Positioner, but complete 
+//!				5. Do NPU and wait for request to complete 
+//!				6. Verify that location info is returned as expected.
+//! @SYMTestExpectedResults     Request should complete with KErrNone with pos2
+//! @SYMTestType                CIT
+//! @SYMCreationDate            19/8/2008
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ 1662
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0002
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0002
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_PartialUpdate c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-PartialUpdate-0002
+
+
+START_TESTCASE                LBS-Client-PartialUpdate-0003
+//! @SYMTestCaseID              LBS-Client-PartialUpdate-0003
+//! @SYMTestCaseDesc            Request postion when position suplied contains NaNs (Autonomous mode)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set GPS mode to Autonomous 
+//!				2. Open Positioner with configured required quality. 
+//!				3. Configure Partial Updates with ETrue 
+//!				4. Set test module to respond with partial update (containing Nans in lat/long)
+//!				5. Do NPU and wait for request to complete
+//! @SYMTestExpectedResults     1. Request should complete with KPositionPartialUpdate with Nans (pos2.1)
+//! @SYMTestType                CIT
+//! @SYMCreationDate            19/8/2008
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ 1662
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0003
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0003
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_PartialUpdate c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0003
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-PartialUpdate-0003
+
+
+START_TESTCASE                LBS-Client-PartialUpdate-0004
+//! @SYMTestCaseID              LBS-Client-PartialUpdate-0004
+//! @SYMTestCaseDesc            Request Location when position supplied by GPS module is better quality than required quality. (Autonomous mode)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set GPS mode to Autonomous 2. Open Positioner with configured required quality. 3. Configure Partial Updates with ETrue 4. Set test module to respond with quality better than required quality set in Positioner (say pos3) 5. Do NPU and wait for request to complete
+//! @SYMTestExpectedResults     1. Request should complete with KErrNone with Pos3
+//! @SYMTestType                CIT
+//! @SYMCreationDate            19/8/2008
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ 1662
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0004
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0004
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_PartialUpdate c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0004
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-PartialUpdate-0004
+
+
+START_TESTCASE                LBS-Client-PartialUpdate-0010
+//! @SYMTestCaseID              LBS-Client-PartialUpdate-0010
+//! @SYMTestCaseDesc            Request position when Partial Update is turned off, and reference position is poor quality than requested (Preferred Terminal Mode)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set GPS mode to Preferred Terminal Based
+//!                             2. Open Positioner with configured required quality.
+//!                             3. Configure Partial Updates with EFalse
+//!                             4. Set Referece Position in NetSim to be poor quality and required quality (say pos12)
+//!                             5. Do NPU and wait to get Reference Position.
+//!                             6. wait for NPU to complete.
+//! @SYMTestExpectedResults     1. NPU Request should complete with KErrNone (pos12)
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0023
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyModuleData c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0023
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_PartialUpdate c:\testdata\configs\lbsclientpartialupdate.ini LBS-PARTIAL-UPDATE-0023
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-PartialUpdate-0010
+
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

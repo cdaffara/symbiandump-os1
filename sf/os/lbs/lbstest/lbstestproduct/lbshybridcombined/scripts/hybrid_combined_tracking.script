@@ -1,0 +1,94 @@
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+//All rights reserved.
+//This component and the accompanying materials are made available
+//under the terms of "Eclipse Public License v1.0"
+//which accompanies this distribution, and is available
+//at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+//Initial Contributors:
+//Nokia Corporation - initial contribution.
+//
+//Contributors:
+//
+//Description:
+//
+//
+//@File
+//! @SYMTestSuiteName	LBS-HYBRID-COMBINED-TRACKING
+//! @SYMScriptTestEnvironment TestExecute
+
+PRINT Run LbsHybridCombinedTestServer
+LOAD_SUITE LbsHybridCombinedTestServer -SharedData
+
+
+// Select the test A-GPS hybrid integration module and register onto the home network.
+PREFIX RUN_UTILS
+DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin: gives us the EGpsPreferTerminalBased.
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_SetupProtocolStub
+
+// Set the Privacy Handler
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_combined.ini PrivHandler
+
+
+
+START_TESTCASE                LBS-HybridCombined-Tracking-0001
+//! @SYMTestCaseID              LBS-HybridCombined-Tracking-0001
+//! @SYMTestCaseDesc            Checks that the GPS Module is correctly updated with the presence of a Client Assisted GPS request.
+//!                             Client generates MOLR request GPS Module generates an accurate position in TB mode, with Tracking enabled
+//!                             After the reference position is received, and the NPUD issued for the next position update, an MTLR
+//!                             request is issued. The Max Fix Time of the MTLR is *BEFORE* the next Client Update is due to be issued.
+//!                             the client A-GPS flag is checked to be SET while the initial MOLR request is in progress,
+//!                             NOT SET while the MTLR is being processed, and SET again once the MTLR has completed and for
+//!                             when the trtacking MOLR is being processed.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             See test step Sequence inline comments
+//! @SYMTestExpectedResults     Sequence as per specified by FSM and UML Seq diagram is Followed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            18/8/2009
+//! @SYMAuthor                  ralphs
+//! @SYMTestStatus              2. Functional
+RUN_TEST_STEP 030 LbsHybridCombinedTestServer LbsStep_StartLbs
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_combined.ini LBS-COMBINED
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_combined.ini CombinedTracking01
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsHybridCombinedStep_Tracking01 c:\testdata\configs\lbs_combined.ini CombinedTracking01
+END_TESTCASE  					LBS-HybridCombined-Tracking-0001
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_StopLbs
+
+
+START_TESTCASE                LBS-HybridCombined-Tracking-0002
+//! @SYMTestCaseID              LBS-HybridCombined-Tracking-0002
+//! @SYMTestCaseDesc            Checks that the GPS Module is correctly updated with the presence of a Client Assisted GPS request.
+//!                             Client generates MOLR request GPS Module generates an accurate position in TB mode, with Tracking enabled
+//!                             After the reference position is received, and the NPUD issued for the next position update, an MTLR
+//!                             request is issued. The Max Fix Time of the MTLR is *AFTER* the next Client Update is due to be issued.
+//!                             the client A-GPS flag is checked to be SET while the initial MOLR request is in progress,
+//!                             remains SET while the MTLR is being processed, and remains SET once the MTLR has completed and for
+//!                             when the trtacking MOLR is being processed.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             See test step Sequence inline comments
+//! @SYMTestExpectedResults     Sequence as per specified by FSM and UML Seq diagram is Followed
+//! @SYMTestType                CIT
+//! @SYMCreationDate            18/8/2009
+//! @SYMAuthor                  ralphs
+//! @SYMTestStatus              2. Functional
+RUN_TEST_STEP 030 LbsHybridCombinedTestServer LbsStep_StartLbs
+RUN_TEST_STEP 010 LbsHybridCombinedTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_combined.ini LBS-COMBINED
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_combined.ini CombinedTracking02
+RUN_TEST_STEP 120 LbsHybridCombinedTestServer LbsHybridCombinedStep_Tracking02 c:\testdata\configs\lbs_combined.ini CombinedTracking02
+END_TESTCASE  					LBS-HybridCombined-Tracking-0002
+RUN_TEST_STEP 020 LbsHybridCombinedTestServer LbsStep_StopLbs
+
+

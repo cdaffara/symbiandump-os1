@@ -1,0 +1,312 @@
+// Copyright (c) 2005-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Modified default resource file to test system monitor
+// WARNING: Any changes made to this resource file must be
+// checked against the system starter test cases. 
+// Specifically:
+// - AppStartCs      
+// 
+//
+
+#include <ssm/ssmcmd.rh>
+#include <ssm/ssmsubstates.hrh>
+
+UID2 KUidSsmCommandListResourceFile
+
+// SSM_COMMAND_LIST_ROOT must be the first resource in a command list resource file.
+// The SSM relies on this having a resource ID of 1.
+RESOURCE SSM_COMMAND_LIST_ROOT
+	{
+	command_list_mapping = r_command_list_mapping;
+	}
+
+RESOURCE SSM_COMMAND_LIST_MAPPING r_command_list_mapping
+	{
+	mappings =
+		{
+		SSM_COMMANDLISTID_TO_RESOURCEID
+			{
+			command_list_id = ESsmStartupSubStateCriticalStatic;
+			resource_id = r_critical_static_commands;
+			},
+		SSM_COMMANDLISTID_TO_RESOURCEID
+			{
+			command_list_id = ESsmStartupSubStateCriticalDynamic;
+			resource_id = r_critical_dynamic_commands;
+			},
+		SSM_COMMANDLISTID_TO_RESOURCEID
+			{
+			command_list_id = ESsmStartupSubStateNetworkingCritical;
+			resource_id = r_networking_critical_commands;
+			},
+		SSM_COMMANDLISTID_TO_RESOURCEID
+			{
+			command_list_id = ESsmStartupSubStateNonCritical;
+			resource_id = r_non_critical_commands;
+			}
+		};
+	}
+
+
+RESOURCE SSM_COMMAND_LIST r_critical_static_commands
+   	{
+	commands =
+		{
+		r_command_publish_system_state
+		, r_command_ssmutilsrv
+		, r_command_sysmon
+		, r_command_sysagt2svr
+		, r_command_fbserv
+		, r_command_wserv
+		, r_command_set_splash_property
+		, r_command_start_splash
+		, r_command_eiksrvs
+		, r_command_tzserver
+		, r_command_app_startupregerosfaillater
+		};
+	}
+
+RESOURCE SSM_COMMAND_LIST r_critical_dynamic_commands
+   	{
+	commands =
+		{
+		r_command_publish_system_state
+		, r_command_initialise_locale
+		, r_command_apparc
+		, r_command_shell
+		, r_command_multiple_wait
+		, r_command_remove_splash_property
+		};
+	}
+
+RESOURCE SSM_COMMAND_LIST r_networking_critical_commands
+   	{
+	commands =
+		{
+		r_command_publish_system_state
+		, r_command_c32start
+		, r_command_msexe
+		, r_command_watcher
+		};
+	}
+
+RESOURCE SSM_COMMAND_LIST r_non_critical_commands
+   	{
+	commands =
+		{
+		r_command_publish_system_state
+		, r_command_system_ams
+		, r_command_swidaemon
+		, r_command_cntsrv
+		, r_command_agsvexe
+		, r_command_fotaagent
+		, r_command_schexe
+		, r_command_ama_starter
+		};
+	}
+
+
+RESOURCE SSM_START_PROCESS_INFO r_command_ssmutilsrv
+	{
+	severity = ECmdCriticalSeverity;
+	name = "ssmutilsrv.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	retries = 2;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_sysmon
+	{
+	severity = ECmdCriticalSeverity;
+	name = "sysmon.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	retries = 2;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_sysagt2svr
+	{
+	severity = ECmdCriticalSeverity;
+	name = "SysAgt2Svr.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	retries = 2;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_fbserv
+	{
+	severity = ECmdCriticalSeverity;
+	name = "fbserv.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	retries = 1;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_wserv
+	{
+	severity = ECmdCriticalSeverity;
+	name = "ewsrv.exe";
+	args = "-NoShell";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_command_set_splash_property
+	{
+	severity = ECmdCriticalSeverity;
+	category = 0x2000D75B;
+	key = 0x01;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_start_splash
+	{
+	severity = ECmdCriticalSeverity;
+	name = "splash.exe";
+	execution_behaviour = ESsmFireAndForget;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_eiksrvs
+	{
+	severity = ECmdCriticalSeverity;
+	name = "eiksrvs.exe";
+	args = "-OnlyStartDependentServers";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_tzserver
+	{
+	severity = ECmdCriticalSeverity;
+	name = "tzserver.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_app_startupregerosfaillater
+	{
+	severity = ECmdCriticalSeverity;
+	name = "tsysmon_app_startupregerosfaillater.exe";
+	args = "APPFWK-SYSMON-0045";
+	execution_behaviour = ESsmWaitForSignal;
+	monitor_info = r_command_monitor;
+	}
+
+RESOURCE SSM_MONITOR_INFO r_command_monitor
+	{
+	restart_policy = ESsmRestartOS;
+	restart_mode = 0;
+	timeout = 0;
+	retries = 0;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_initialise_locale
+	{
+	name = "initialiselocale.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_apparc
+	{
+	severity = ECmdCriticalSeverity;
+	name = "apsexe.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_APP_INFO r_command_shell
+	{
+	severity = ECmdCriticalSeverity;
+	name = "shell.exe";
+	execution_behaviour = ESsmDeferredWaitForSignal;
+	viewless = 1;
+	}
+
+RESOURCE SSM_MULTIPLE_WAIT r_command_multiple_wait
+	{
+	timeout = 20000;
+	}
+
+RESOURCE SSM_SET_PUBLISH_AND_SUBSCRIBE r_command_remove_splash_property
+	{
+	severity = ECmdCriticalSeverity;
+	category = 0x2000D75B;
+	key = 0x01;
+	value = 1;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_c32start
+	{
+	severity = ECmdCriticalSeverity;
+	name = "c32start.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_msexe
+	{
+	severity = ECmdCriticalSeverity;
+	name = "msexe.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_watcher
+	{
+	severity = ECmdCriticalSeverity;
+	name = "watcher.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_system_ams
+	{
+	name = "SystemAMS.exe";
+	args = "-boot";
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_swidaemon
+	{
+	severity = ECmdCriticalSeverity;
+	name = "swidaemon.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_cntsrv
+	{
+	severity = ECmdCriticalSeverity;
+	name = "cntsrv.exe";
+	args = "-nontransient";
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_agsvexe
+	{
+	severity = ECmdCriticalSeverity;
+	name = "agsvexe.exe";
+	args = "-nontransient";
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_fotaagent
+	{
+	name = "fotaagent.exe";
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_schexe
+	{
+	name = "schexe.exe";
+	args = "sysstartschexe";
+	}
+
+RESOURCE SSM_START_AMA_STARTER r_command_ama_starter
+	{
+	severity = ECmdIgnoreFailure;
+	dsc_id = 0x2000836D;		// removing this id will cause a rcomp failure unless dsc_id is #defined in ssmcmd.rh file.
+	}
+
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_command_publish_system_state
+	{
+	severity = ECmdCriticalSeverity;
+	}
+
+
+
+

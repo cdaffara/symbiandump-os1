@@ -1,0 +1,68 @@
+# dialog.cif
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+==name dialog
+
+==short-description
+
+Displays a UI dialog.
+
+==long-description
+
+Up to two buttons are supported. If neither C<--first-button> or C<--second-button> are specified, two buttons are shown, C<OK> and C<Cancel>. The button the user selected can be determined by the return code of the command. The first button will produce a return code of zero (0), and the second a code of one (1). If there was an error displaying the dialog, the error code will be returned (always a negative number). The return code makes it possible to write scripts like:
+
+  dialog "Do you want to proceed?" && do_something
+
+This will result in C<do_something> only being executed if the user presses the first button. An error or the user pressing the second button with NOT result in C<do_something> being executed. Note that killing a dialog command while it is running will usually result in the device crashing or hanging, to prevent this the dialog command traps the CTRL-C key combination.
+
+==argument string body optional
+
+The body of the dialog. If not specified, the body is read from C<stdin>.
+
+==option string t title
+
+The title of the dialog. If not specified, defaults to "Attention".
+
+==option string f first-button
+
+The text for the first button.
+
+==option string s second-button
+
+The text for the first button.
+
+==option enum m mode DIALOG_IMPL
+
+Specify the way in which the dialog is displayed. If not specified the default is "notifier".
+
+==enum-value notifier
+
+The C<RNotifier> API will be used. The behaviour of C<RNotifier> depends on the handset configuration, but normally it will result in a graphical dialog being displayed.
+
+==enum-value console
+
+The user will be interacted with via the console that the dialog command is connected to. In this mode, pressing the enter (or on some platforms, select) key corresponds to pressing the first button and any other input corresponds to pressing the second button.
+
+==enum-value null
+
+The dialog is not shown to the user and it is assumed that the first button is always pressed. This mode allows all user interaction to be disabled.
+
+==copyright
+
+Copyright (c) 2006-2010 Accenture. All rights reserved.
+
+==smoke-test
+
+# Don't actually post a dialog, the tests need to be unobtrusive (and non-blocking)
+export DIALOG_IMPL null
+dialog "Some question which isn't important"
+var ? == 0 || $Error

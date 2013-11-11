@@ -1,0 +1,88 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+ced -i z:\TestData\configs\WapProtSuite\WapProtSuite.cfg ced.log
+
+//delete any existing config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+
+//copy our config file
+RUN_UTILS copyfile z:\testdata\configs\wapprotsuite\config.txt c:\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+
+RUN_UTILS  MkDir c:\sms\
+
+LOAD_SUITE TE_WapProt
+
+START_TESTCASE                 	TEL-WAP-WAPPRT-200
+//! @SYMTestCaseID               TEL-WAP-WAPPRT-200
+//! @SYMTestCaseDesc             Receiving a WAP Datagram inside a class0 SMS message meanwhile NO disk condition exists.
+//! @SYMFssID                    3.12.1
+//! @SYMREQ                      7012
+//! @SYMPREQ                     1736
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Setup - The SMS Stack is configured for handling Class 0 messages meanwhile OOD exists. Receive a class 0 WAP message.
+//! @SYMTestExpectedResults      No message is delivered to the client and the Stack has NAck'd the TSY.
+//! @SYMTestType                 CIT
+//! @SYMCreationDate             7/12/2006
+//! @SYMTestStatus               2. Development
+//! @SYMAuthor                   danieldu
+RUN_TEST_STEP 60 	TE_WapProt 	SetDiskMonitorLimits		z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	DiskMonitorLimits
+RUN_TEST_STEP 120	TE_WapProt 	SetDiskSpace	 			z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60 	TE_WapProt 	ReceiveWapMessage			z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	TestNumber100
+RUN_TEST_STEP 120 	TE_WapProt 	FreeDiskSpace														
+//Tear Down
+RUN_UTILS DeleteFile 	c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-WAP-WAPPRT-200
+
+START_TESTCASE                 TEL-WAP-WAPPRT-202
+//! @SYMTestCaseID               TEL-WAP-WAPPRT-202
+//! @SYMTestCaseDesc             Receiving a WAP Datagram inside a class1 type0 SMS message meanwhile NO disk condition exists.
+//! @SYMREQ                      7012
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Setup - The SMS Stack is configured for handling Class 0 messages. Fill the disk. Receive a type 0 class1 WAP message.
+//! @SYMTestExpectedResults      No WAP message is delivered to the client and the Stack has NAcked the TSY.
+//! @SYMTestType                 CIT
+//! @SYMCreationDate             7/12/2006
+//! @SYMTestStatus               2. Development
+//! @SYMAuthor                   danieldu
+RUN_TEST_STEP 60 	TE_WapProt 	SetDiskMonitorLimits		z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	DiskMonitorLimits
+RUN_TEST_STEP 120	TE_WapProt 	SetDiskSpace	 			z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60 	TE_WapProt 	ReceiveWapMessage			z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	TestNumber101
+RUN_TEST_STEP 120 	TE_WapProt 	FreeDiskSpace														
+//Tear Down
+RUN_UTILS DeleteFile 	c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-WAP-WAPPRT-202
+
+
+START_TESTCASE                 TEL-WAP-WAPPRT-203
+//! @SYMTestCaseID               TEL-WAP-WAPPRT-203
+//! @SYMTestCaseDesc             Receiving a WAP Datagram inside a class1 type0 SMS message meanwhile NO disk space available.
+//! @SYMREQ                      7012
+//! @SYMTestPriority             High
+//! @SYMTestActions              Setup - The SMS Stack is configured for handling Class 0 messages. Receive a single PDU type 0 class1 WAP Message.
+//! @SYMTestExpectedResults      Wap message is not delivered to the client and the Stack has NAcked the TSY.
+//! @SYMTestType                 CIT
+//! @SYMCreationDate             7/12/2006
+//! @SYMTestStatus               2. Development
+//! @SYMAuthor                   danieldu
+RUN_TEST_STEP 60 	TE_WapProt 	SetDiskMonitorLimits		z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	DiskMonitorLimits
+RUN_TEST_STEP 120	TE_WapProt 	SetDiskSpace	 			z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60 	TE_WapProt 	ReceiveWapMessage			z:\testdata\configs\WapProtSuite\WAPStackOutOfDiskSpace.ini	TestNumber102
+RUN_TEST_STEP 120 	TE_WapProt 	FreeDiskSpace														
+//Tear Down
+RUN_UTILS DeleteFile 	c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-WAP-WAPPRT-203

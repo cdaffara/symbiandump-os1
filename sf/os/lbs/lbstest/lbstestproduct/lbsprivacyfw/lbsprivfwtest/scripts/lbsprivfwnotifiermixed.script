@@ -1,0 +1,83 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//
+//! @SYMTestSuiteName lbsprivfwnotifier.script
+//
+//! @SYMScriptTestEnvironment
+
+// create dir for lbs log if it doesn't exist:
+RUN_UTILS MkDir c:\logs\lbs
+RUN_UTILS MkDir c:\logs\LbsTestLogs
+
+LOAD_SUITE LbsPrivFwTestServer -SharedData
+PRINT Run LbsPrivFwTestServer
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetPrivacyHandler  c:\testdata\configs\lbsprivfw.ini NOTIFIER-HANDLER
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_SetupStandalonePrivacyMode
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_InitializeTestChannel
+
+
+START_TESTCASE                LBS-PRIVACYFW-NOTIFIER-VERIFYNOTIFY-0001
+//! @SYMTestCaseID              LBS-PRIVACYFW-NOTIFIER-VERIFYNOTIFY-0001
+//! @SYMTestCaseDesc            Multiple External Privacy Verification and Notification Request through Notifier
+//!                             (single client)
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use Notifier
+//!                             3. Make sure that Notifier will accept/reject user requests
+//!                             4. Issue multiple (say 3) VerifyLocationRequestL() and multiple (say 3)
+//!                             NotifyLocationRequestL() calls from a single client
+//!                             5. Verify that all the responses are sent to network
+//! @SYMTestExpectedResults     The appropriate accept/reject responses should be sent to network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            4/10/2007
+//! @SYMAuthor                  peterturner
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8006, REQ8007, REQ8014,REQ8789
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_VerifyNotify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFW-VERIFYNOTIFY-0001
+END_TESTCASE                     LBS-PRIVACYFW-NOTIFIER-VERIFYNOTIFY-0001
+
+
+START_TESTCASE                LBS-PRIVACYFW-NOTIFIER-VERIFYNOTIFY-0002
+//! @SYMTestCaseID              LBS-PRIVACYFW-NOTIFIER-VERIFYNOTIFY-0002
+//! @SYMTestCaseDesc            External Privacy Verification and Notification Request through notifier (with SUPL network Type)
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Set EExternalLocationON in admin settings
+//!                             2. Set Admin settings to use Notifier
+//!                             3. Set Network Type to SUPL.
+//!                             4. Make sure that Notifier plug-in will accept user request
+//!                             5. Issue single Verify and then Notify Request
+//!                             5. Verify the response sent to network
+//! @SYMTestExpectedResults     The appropriate Accept responses should be sent to network
+//! @SYMTestType                CIT
+//! @SYMCreationDate            27/9/2007
+//! @SYMAuthor                  alans
+//! @SYMPREQ                    PREQ1660
+//! @SYMREQ                     REQ8006, REQ8007, REQ8014,REQ8789
+RUN_TEST_STEP 010 LbsPrivFwTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 030 LbsPrivFwTestServer KLbsPrivFwStep_VerifyNotify  c:\testdata\configs\lbsprivfw.ini LBS-PRIVACYFW-VERIFYNOTIFY-0002
+END_TESTCASE                     LBS-PRIVACYFW-NOTIFIER-VERIFYNOTIFY-0002
+
+RUN_TEST_STEP 030 LbsPrivFwTestServer LbsStep_CloseTestChannel

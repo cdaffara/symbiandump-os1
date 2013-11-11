@@ -1,0 +1,75 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run All Cmd Tests
+LOAD_SUITE tclayer_server
+
+START_TESTCASE DEVSRVS-SSREFPLUGINS-CLAYER-0027
+//! @SYMTestCaseID DEVSRVS-SSREFPLUGINS-CLAYER-0027
+RUN_TEST_STEP 100 tclayer_server CCLayerTestStarterSession
+RUN_TEST_STEP 100 tclayer_server CCLayerTestStartupAdaptationAdapter
+RUN_TEST_STEP 100 tclayer_server CCLayerTestSsmPropertyObserver
+END_TESTCASE DEVSRVS-SSREFPLUGINS-CLAYER-0027
+
+PRINT Swapping SID over to CSsmUiSpecific::StartupPSUid()
+RUN_PROGRAM -1 setcap tclayer_server.exe 0 -SID 2000e65e tclayer_serverSID.exe
+PRINT Running remaining tests
+LOAD_SUITE tclayer_serverSID
+
+START_TESTCASE DEVSRVS-SSREFPLUGINS-CLAYER-0028
+//! @SYMTestCaseID DEVSRVS-SSREFPLUGINS-CLAYER-0028
+RUN_TEST_STEP 100 tclayer_serverSID CCLayerTestSsmSimStatusObserver
+END_TESTCASE DEVSRVS-SSREFPLUGINS-CLAYER-0028
+
+LOAD_SUITE tclayer_serverwithssm
+LOAD_Server tclayer_serverwithssm -SharedData
+
+START_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-29
+RUN_PROGRAM -1 setcap tclayer_serverwithssm.exe  00001134  -SID 2000d75b c:\sys\bin\tclayer_serverwithssmcap
+LOAD_SUITE tclayer_serverwithssmcap -SharedData 
+
+START_TEST_BLOCK  100	tclayer_serverwithssmcap	z:\ssrefpluginstest\testdata\ssrefpluginstest_clayer_startersessionwithssm.ini
+	CREATE_OBJECT	CLayerTestWrapper  	clayerObject
+//! Command to define SwP
+	COMMAND				clayerObject		DefineSwpCmd				ssrefpluginstest_clayer_startersessionwithssm_DefineSwpCmd
+//! Command to set state EOffline
+	COMMAND				clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd01
+//! Command for set state ENormal
+	COMMAND				clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd02
+//! Command for set state EBTSap
+	COMMAND				clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd03
+//! Command for set state InvalidState
+	COMMAND	!Error=-6	clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd04
+//! Command for resetting the normal state because testexecute starts from normal state
+	COMMAND				clayerObject		SetStateCmd					ssrefpluginstest_clayer_startersessionwithssm_SetStateCmd02
+	COMMAND				clayerObject		RequestResetNetworkCmd		ssrefpluginstest_clayer_startersessionwithssm_RequestResetNetworkCmd
+	COMMAND				clayerObject		IsRTCTimeValidCmd			ssrefpluginstest_clayer_startersessionwithssm_IsRTCTimeValidCmd01
+	COMMAND				clayerObject		IsRTCTimeValidCmd			ssrefpluginstest_clayer_startersessionwithssm_IsRTCTimeValidCmd02
+END_TEST_BLOCK	
+END_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-29
+
+START_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-30
+LOAD_SUITE tclayer_serverwithssm
+RUN_PROGRAM -1 setcap tclayer_serverwithssm.exe  01130 c:\sys\bin\tserverwithoutpwrmgmtcap 
+LOAD_SUITE tserverwithoutpwrmgmtcap -SharedData
+
+START_TEST_BLOCK  100	tserverwithoutpwrmgmtcap	 z:\ssrefpluginstest\testdata\ssrefpluginstest_clayer_startersessionwithssm.ini
+	CREATE_OBJECT	CLayerTestWrapper  clayerObject
+//! Command to set state EOffline
+	COMMAND	!Error=-5	clayerObject		RFSwpTransitionNotAllowCmd		ssrefpluginstest_clayer_startersessionwithoutssm_RFSwpTransitionNotAllowedCmd01
+//! Command for set state ENormal	
+	COMMAND	!Error=-6	clayerObject		RFSwpTransitionNotAllowCmd		ssrefpluginstest_clayer_startersessionwithoutssm_RFSwpTransitionNotAllowedCmd02
+END_TEST_BLOCK	
+END_TESTCASE			DEVSRVS-SSREFPLUGINS-CLAYER-30

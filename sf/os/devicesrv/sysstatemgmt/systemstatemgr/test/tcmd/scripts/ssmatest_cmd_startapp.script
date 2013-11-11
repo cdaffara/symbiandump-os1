@@ -1,0 +1,127 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run StartApp tests
+
+LOAD_SUITE tcmd_server
+
+START_TESTCASE 			DEVSRVS-SSMA-CMD-0018
+//! @SYMTestCaseID 		DEVSRVS-SSMA-CMD-0018
+//! @SYMPREQ 			PREQ1871
+//! @SYMREQ			REQ9141 REQ9154
+//! @SYMTestType		UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 		Implemented
+//! @SYMTestCaseDesc		Ensure that all overloads of NewL implemented for CCmdStartApp are working as expected if valid data is passed.
+//! 				Ensure that all overloads of NewL implemented for CCmdStartApp are working as expected if invalid data is passed.
+//! 				Ensure that CCmdStartApp::NewL(RReadStream& aReadStream) creates command with KErrNone if valid data is passed.
+//!  					This NewL internally calls InternalizeL(RReadStream& aReadStream).
+//!  				Ensure that CCmdStartApp::NewL(RReadStream& aReadStream) leave with KErrArgument if invalid data is passed.
+//!  					This NewL internally calls InternalizeL(RReadStream& aReadStream).
+//!  				Ensure that CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters) creates command with KErrNone if valid data is passed.
+//!  				Ensure that CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters) leaves with 
+//! 					KErrNotSupported if we pass invalid reader.
+//! 				Ensure that CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters) leaves with 
+//! 					KErrArgument if we pass valid reader but invalid data.
+//!  				Ensure that all overloads of NewL implemented for CCmdStartApp returning type as ESsmCmdStartApp if command created without any error.
+//!  				It runs StartApp command with different execution behaviours, i.e. 
+//! 					ESsmWaitForSignal, ESsmFireAndForget and ESsmDeferredWaitForSignal, and severity is set to ECmdIgnoreFailure.
+//! 				It runs StartApp command with different execution behaviours, i.e. 
+//! 					ESsmWaitForSignal, ESsmFireAndForget and ESsmDeferredWaitForSignal, and severity is set to ECmdHighSeverity.
+//! 				It runs StartApp command with different execution behaviours, i.e. 
+//! 					ESsmWaitForSignal, ESsmFireAndForget and ESsmDeferredWaitForSignal, and severity is set to ECmdIgnoreFailure.
+//! 					Test will cancel the execution before command execution is completed.
+//! 				It runs StartApp command with different execution behaviours, i.e. 
+//!					ESsmWaitForSignal, ESsmFireAndForget and ESsmDeferredWaitForSignal, and severity is set to ECmdHighSeverity.
+//! 					Test will cancel the execution before command execution is completed.
+//! 				It runs StartApp command with different execution behaviours, i.e. 
+//! 					ESsmWaitForSignal, ESsmFireAndForget and ESsmDeferredWaitForSignal, and severity is set to ECmdIgnoreFailure.
+//! 				It runs StartApp command with different execution behaviours, i.e. 
+//! 					ESsmWaitForSignal, ESsmFireAndForget and ESsmDeferredWaitForSignal, and severity is set to ECmdHighSeverity.	
+//! 				The system monitor will monitor the applications started with deferred wait for signal.
+//! 				Negative retries for startapp should not be allowed.
+//! 				The system monitor will monitor the applications started with Fire and Forget.				
+//! @SYMTestActions			doTestNewLWithGoodDataL() Create CCmdStartApp command using below overloads
+//!  					CCmdStartApp::NewL(RReadStream& aReadStream)
+//!  					CCmdStartApp::NewL(TCmdErrorSeverity aSeverity, const CSsmStartupProperties *aAppInfo)
+//!  					CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters)
+//!  				doTestNewLWithBadDataL() Create CCmdStartApp command using below overloads
+//! 				 	CCmdStartApp::NewL(RReadStream& aReadStream)
+//! 				 	CCmdStartApp::NewL(TCmdErrorSeverity aSeverity, const CSsmStartupProperties *aAppInfo)
+//!  					CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters)
+//!  				doTestInternalizeLWithGoodDataL() Create CCmdStartApp command using CCmdStartApp::NewL(RReadStream& aReadStream) and pass valid data
+//!  				doTestInternalizeLWithBadDataL() Create CCmdStartApp command using CCmdStartApp::NewL(RReadStream& aReadStream) and pass invalid data
+//!  				doTestResourceReaderWithGoodDataL() Create CCmdStartApp command using CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters) and pass valid data
+//!  				doTestResourceReaderWithMissingDataL() Create reader and read some data so that reader becomes invald. Now create CCmdStartApp 
+//! 					command using CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters)
+//!  				doTestResourceReaderWithBadDataL() Create a valid reader and create CCmdStartApp command using CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters)
+//!  				doTestCommandTypeL() Create CCmdStartApp command using below overloads
+//! 				 	CCmdStartApp::NewL(RReadStream& aReadStream)
+//! 				 	CCmdStartApp::NewL(TCmdErrorSeverity aSeverity, const CSsmStartupProperties *aAppInfo)
+//! 				 	CCmdStartApp::NewL(TSsmCommandParameters& aCommandParameters)
+//!  					and check the type.
+//!  				doTestCmdFailureIgnoreSeverityL() Create a StartApp command
+//! 					Add newly created command to the command list.
+//! 					Execute the command list.
+//! 				doTestCmdFailureHighSeverityL() Create a StartApp command
+//! 					Add newly created command to the command list.
+//! 					Execute the command list.
+//! 				doTestCancelCmdIgnoreSeverityL() Create a StartApp command.
+//! 					Add newly created command to the command list.
+//! 					Execute the command list.
+//! 					Cancel the command list execution.
+//! 				doTestCancelCmdHighSeverityL() Create a StartApp command.
+//! 					Add newly created command to the command list.
+//! 					Execute the command list.
+//! 					Cancel the command list execution.
+//! 				doTestSuccessfulExecution1L() Create a StartApp command.
+//! 					Add newly created command to the command list.
+//! 					Execute the command list.
+//! 				doTestSuccessfulExecution2L() Create a StartApp command.
+//! 					Add newly created command to the command list.
+//! 					Execute the command list.
+//! 				doTestDwfsStateAppWithMonitorL() Create a StartApplication command with ECmdIgnoreFailure severity.
+//! 					Add newly created command to the command list.
+//! 					Set a monitor
+//! 					Execute the command list.
+//! 					Kill the Application 
+//! 					System Monitor should restart the application after KThrottleTime (15s). 
+//! 					Verify that the application is restarted.
+//! 				doTestNegativeRetryL() Create a StartApplication command with ECmdIgnoreFailure severity and negetive retry.
+
+//! @SYMTestExpectedResults 	All overloads should not leave, KErrNone is expected as leave code if NewL's are trapped.
+//! 				All overloads should not leave, KErrArgument is expected as leave code if NewL's are trapped.
+//! 				Test should return KErrNone.
+//! 				Test should return KErrArgument.
+//! 				Test should return KErrNone.
+//! 				Test should return KErrNotSupported because command creation will not read the Type of command correctly.
+//! 				Test should return KErrArgument.
+//! 				All created objects should return ESsmCmdStartApp as Type of the command.
+//! 				Command list execution should always return KErrNone even if command execution is failed.
+//! 				Command list execution should always return KErrNotFound even if command execution is failed.
+//! 				Command list completion should finish with KErrCancel.
+//! 				Command list completion should finish with KErrCancel.
+//! 				Command list completion should finish with KErrNone and application should be launched.
+//! 				Command list completion should finish with KErrNone and application should be launched.
+//! 				Command list completion should finish with KErrNone and application should be launched.
+//! 				Creation of StartApplication command should leave with KErrArgument.
+//! 				Command list completion should finish with KErrNone and application should be launched.				
+RUN_TEST_STEP 300 tcmd_server CCmdTestStartApp
+END_TESTCASE 			DEVSRVS-SSMA-CMD-0018
+
+
+
+
+

@@ -1,0 +1,138 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//!@File
+//!@SYMTestSuiteName         LBS-BTGPSPSY-0001
+//!@SYMScriptTestEnvironment TestExecute with LBS-BTGPSPSY-0001
+//
+//
+//
+LOAD_SUITE te_lbsbtgpspsysuite
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+START_TESTCASE              LBS-BTGPSPSY-PairingSuccessful-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-PairingSuccessful-0001
+//! @SYMTestCaseDesc            The test first makes a call to RemoveHwAddrStep which as well as removing the pairing information from
+//!                             the test notifier, unpairs a bluetooth device (if it was previously paired). SetHwAddrStep is then called
+//!                             which will set the address that the test notifier should try to pair to.
+//!                             TDBTConnectionStep is called with value 0, which calls upon the test to do a location request of the BT GPS PSY.
+//!                             After a position has been received by this, the test has passed.
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Unpair device if it was previously paired.
+//!                             2. Set the device address that will be paired to by the test notifier.
+//!                             3. Request a position from the bluetooth gps psy.
+//!                             4. Ensure the position is received.
+//! @SYMTestExpectedResults     Verify Actions 1 to 4.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMPREQ                    PREQ1657
+//! @SYMREQ                     REQ8866
+//!                             
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite RemoveHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite TDBTConnectionStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-PairingSuccessful-0001
+END_TESTCASE                LBS-BTGPSPSY-PairingSuccessful-0001
+
+
+START_TESTCASE              LBS-BTGPSPSY-PrePaired-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-PrePaired-0001
+//! @SYMTestCaseDesc            This test needs to be ran after the previous test. The test first sets the address in the test notifier to a null 
+//!                             address followed by making a position request from the bluetooth gps psy. It will use the device
+//!								it was paired with from the previous step to get a position.
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Set hardware address for the test notifier to be a null address.
+//!                             2. Make a position request of the bluetooth gps psy.
+//!                             3. Request a position from the bluetooth gps psy.
+//!                             4. Ensure a position is received.
+//! @SYMTestExpectedResults     Verify Actions 1 to 4.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMCR                      PREQ1657
+//! @SYMREQ                     REQ8866
+//!                             
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini null_address
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTConnectionStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-PrePaired-0001
+END_TESTCASE                LBS-BTGPSPSY-PrePaired-0001
+
+START_TESTCASE              LBS-BTGPSPSY-PairingFailed-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-PairingFailed-0001
+//! @SYMTestCaseDesc            This test first removes any last connected device information from the central repository, then unpairs the
+//!								previously connected bluetooth device. Then the test notifier has a null address set as its address to attempt
+//!								connection with. Following this a secondary hw address is set for the test notifier which it should connect to
+//!								in the case that the first position request fails. As well as doing this 'SetSecondaryHwAddrStep' also sets the
+//!								test notifiers mode to 1 which means it will try it's primary bluetooth address once before trying it's secondary
+//!								bluetooth address. The test will then make a position request, the original attempt will fail (due to it being a
+//!								null address) but then the bluetooth gps psy will go back to the test notifier which will then provide it with
+//!								the secondary address. It will then connect to this secondary device and return a position.
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Remove any last known device information from the central repository.
+//!                             2. Unpair the last used device and remove it's information from the test notifier.
+//!                             3. Set the hardware address for the test notifier to a null address.
+//!                             4. Set the secondary hardware address for the test notifier to be a valid bluetooth gps device.
+//!								5. Request a position from the Bluetooth gps psy.
+//!								6. Ensure a position is received.
+//! @SYMTestExpectedResults     Verify Actions 1 to 6.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMCR                      PREQ1657
+//! @SYMREQ                     REQ8866
+//!                             
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite DeleteLastConnectedDevice
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite RemoveHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini null_address
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetSecondaryHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W_2
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTConnectionStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-PrePaired-0001
+END_TESTCASE                LBS-BTGPSPSY-PairingFailed-0001
+ 
+START_TESTCASE              LBS-BTGPSPSY-PairingFailedCancelled-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-PairingFailedCancelled-0001
+//! @SYMTestCaseDesc            This test first removes any last connected device information from the central repository, then unpairs the
+//!								previously connected bluetooth device. Then the test notifier has a null address set as its address to attempt
+//!								connection with. Following this a secondary hw address is set also to a null address and the test notifiers mode
+//!								is set to 2, which means that it will try to connect to a device once and then it will simply cancel and stop trying
+//!								to return a position.
+//!                             .
+//! @SYMTestPriority            High
+//! @SYMTestActions             1. Remove any last known device information from the central repository.
+//!                             2. Unpair the last used device and remove it's information from the test notifier.
+//!                             3. Set the hardware address for the test notifier to a null address.
+//!                             4. Set the secondary hardware address for the test notifier to be null and set notifier mode to 2.
+//!								5. Request a position from the Bluetooth gps psy.
+//!								6. Ensure that no position is received
+//! @SYMTestExpectedResults     Verify Actions 1 to 6.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            03/12/2008
+//! @SYMAuthor                  andrews
+//! @SYMCR                      PREQ1657
+//! @SYMREQ                     REQ8866
+//!                             
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite DeleteLastConnectedDevice
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite RemoveHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini Nokia_LD-4W 
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini null_address
+RUN_TEST_STEP 100 te_lbsbtgpspsysuite SetSecondaryHwAddrStep c:\testdata\configs\te_LbsBtGpsPsy.ini null_address_2
+RUN_TEST_STEP 250 te_lbsbtgpspsysuite TDBTConnectionStep c:\testdata\configs\te_LbsBtGpsPsy.ini LBS-BTGPSPSY-PairingFailedCancelled-0001
+END_TESTCASE                LBS-BTGPSPSY-PairingFailedCancelled-0001
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+PRINT Completed te_LbsBtGpsPsy_connection Tests

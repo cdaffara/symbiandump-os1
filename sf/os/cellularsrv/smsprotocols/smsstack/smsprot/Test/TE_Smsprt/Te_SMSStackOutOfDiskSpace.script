@@ -1,0 +1,876 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+
+//! @SYMTestSuiteName Te_SMSStackOutOfDiskSpace
+//! @SYMScriptTestEnvironment SIM TSY used as a simulation layer below ETEL, while the test harness is using the RSocket Interface in order to use the SMSStack.
+
+RUN_SCRIPT z:\TestData\Scripts\TE_SetupSMSStackOutOfDiskSpace.script
+
+LOAD_SUITE TE_smsprt -SharedData
+
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0125
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0125
+//! @SYMTestCaseDesc             Receive a single PDU of a multiple PDU class 0 message when there is NO availale disk space.
+//! @SYMFssID                    3.1.1
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Fill the Disk Up. Then receive a PDU of a multiple PDU message.
+//! @SYMTestExpectedResults      The PDU is not forward to the client, but the SMS Stack does positively ack the TSY.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             29/11/2006
+//! @SYMAuthor                   donalclerkin
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60   TE_smsprt   LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber8
+RUN_TEST_STEP 60    TE_smsprt   SetDiskMonitorLimits    z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskMonitorLimits
+RUN_TEST_STEP 120   TE_smsprt   SetDiskSpace         z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60    TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageExpectedSinglePDU8Bit
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_UTILS       DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                    TEL-SMS-SMSPRT-0125
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0126
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0126
+//! @SYMTestCaseDesc             Receive a class 0 message when there is NO availale disk space.
+//! @SYMREQ                      6523
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the disk space. Receive a single PDU class 0 message.
+//! @SYMTestExpectedResults      The message is delivered to the client and the TSY is positively Ack'd
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             29/11/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber1
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpected
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0126
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0128
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0128
+//! @SYMTestCaseDesc             Receive a mulitple (3) PDU SMS message under OOD condition.
+//! @SYMFssID                    3.1.4
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the disk space. Receive a three PDU SMS message.
+//! @SYMTestExpectedResults      The message is delivered to the client only when the third segment is received, and each PDU is positively Ack'd by the SMSStack.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             29/11/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber2
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpected
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  	TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0128
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0129
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0129
+//! @SYMTestCaseDesc             Receive one PDU of a mulitple (3) PDU SMS message under OOD condition. The pre-allocated storage has space for only one segment.
+//! @SYMFssID                    3.1.5
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Fill the disk space. Fill the preallocation file until one space remaining. Receive one PDU of a multiple message.
+//! @SYMTestExpectedResults      The PDU is positively ack'd by the network. The oldest partially formed message in the pre-allocated store is delivered to the client.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             29/11/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+//Copy esk file with MAX PDUs = 5
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS  copyfile   z:\testdata\configs\smswap_MaxFivePDUsInOOD.esk    c:\private\101F7989\esock\smswap.sms.esk
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber27
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+
+//Wait for 4 PDUs to be received - trigger each from a send - no message expected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+
+// Trigger receipt of another PDU to fill the last slot - check that the oldest  PDU is delivered
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpectedPartOf8Bit
+
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0129
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0130
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0130
+//! @SYMTestCaseDesc             Receive a three PDU SMS message. The first is received when memory is available. The second in OOD condition and it fills the last segment in the pre-allocation storeage, and the third is when disk space is available.
+//! @SYMFssID                    3.1.6
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Medium
+//! @SYMTestActions              Fill the disk space. Fill the preallocation storeage leaving just one slot. Free the disk space. Receive the first PDU. Fill the disk space. Receive the second PDU. Free the disk space. Receive the third PDU.
+//! @SYMTestExpectedResults      Every PDU is posiitively ack'd by the SMS Stack. The oldest partially constructed message in the preallocation store is delivered to the client on receipt of the second PDU. The entire message is delivered to client when the third PDU arrives.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             29/11/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+
+//Copy esk file with MAX PDUs = 5
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS  copyfile   z:\testdata\configs\smswap_MaxFivePDUsInOOD.esk    c:\private\101F7989\esock\smswap.sms.esk
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber28
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+
+//Wait for 4 PDUs to be received - trigger each from a send - no message expected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpectedPartOf8Bit
+
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpectedThreePDUs
+
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0130
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0131
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0131
+//! @SYMTestCaseDesc             A three segment PDU is received - The first is in OOD condition and as a result fills the last segment in the preallocation file.; The second and third is also received under OOD condition.
+//! @SYMFssID                    3.1.6
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Fill the disk space. Fill the preallocation storeage leaving just one slot. Receive the first PDU. Receive the second PDU. Receive the third PDU. Free Disk space
+//! @SYMTestExpectedResults      All PDUs are positively ack'd. A partially formed SMS message is delivered to the client after the first PDU is delivered. It consist of the first and second PDU combined.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             30/11/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+//Copy esk file with MAX PDUs = 5
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS  copyfile   z:\testdata\configs\smswap_MaxFivePDUsInOOD.esk    c:\private\101F7989\esock\smswap.sms.esk
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber29
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+//Fill the preallocation file
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+//Wait for 4 PDUs to be received
+DELAY 60000
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+//Recieve the first of the three
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 120  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpectedFirstMessage
+//Receive the second PDU
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpectedSecondMessage
+//Receive the thrid PDU
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpectedThreePDUs
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0131
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0132
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0132
+//! @SYMTestCaseDesc             Receive one PDU of a mulitple PDU SMS message. It is received in OOD condition. No other segment is received within 12 hours or same as configured in INI file.
+//! @SYMFssID                    3.1.8
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the disk space. Receive one PDU of a multiple PDU message. Wait for same time as set in configuration file (7 hours). Check to see if the partially constructed message has been received. Forward the system time another 7 hours and check again.
+//! @SYMTestExpectedResults      A partially constructed message is forward to the client after 12hrs or other configured time.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             30/11/2006
+//! @SYMAuthor                   danieldu
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber4
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 30 TE_smsprt ForwardSystemTime  z:\testdata\configs\SMSOutOfDiskSpace.ini  SevenHours
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 30 TE_smsprt ForwardSystemTime  z:\testdata\configs\SMSOutOfDiskSpace.ini  SevenHours
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpectedFirstPDU
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0132
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0133
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0133
+//! @SYMTestCaseDesc             Receive the third PDU of a mulitple (3) PDU class 0 SMS message. At boot up, the first two PDUs are in the Class 0 reassembly store. The third segment is received only after a specifed time(12 hrs)
+//! @SYMFssID                    3.1.9
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Preset a Preallocation file containing two PDUs of a Class 0 message. Boot the phone. Wait for 12hrs or what was set in the configuration file. Receive the third and final PDU.
+//! @SYMTestExpectedResults      A partially formed SMS is delivered to the client after the specified time is up (12hrs). The third PDU is received, positively ack'd by the SMSStack.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             30/11/2006
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber12
+RUN_TEST_STEP 60    TE_smsprt   SetDiskMonitorLimits   z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskMonitorLimits
+RUN_TEST_STEP 120   TE_smsprt   SetDiskSpace         z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber14
+RUN_TEST_STEP 30 TE_smsprt ForwardSystemTime  z:\testdata\configs\SMSOutOfDiskSpace.ini  TwelveHours
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageExpectedTwoPDUs
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 30 TE_smsprt ForwardSystemTime  z:\testdata\configs\SMSOutOfDiskSpace.ini  TwelveHours
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageExpectedThirdPDU
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0133
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0134
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0134
+//! @SYMTestCaseDesc             Receive the third PDU of a mulitple (3) PDU SMS message under OOD condition. At boot time the pre-allocated storage has the first two segments.
+//! @SYMFssID                    3.1.9
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Preset the preallocation file to contain two PDUs of a three PDU message. Boot the phone. Fill the disk space. Receive the third and final PDU of the message.
+//! @SYMTestExpectedResults      The SMS message is delivered to client, and the third PDU is positively ack'd by the SMS Stack.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             30/11/2006
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt   DeleteSARStores
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber9
+RUN_TEST_STEP 60    TE_smsprt   SetDiskMonitorLimits   z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskMonitorLimits
+RUN_TEST_STEP 120   TE_smsprt   SetDiskSpace         z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60    TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber13
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60    TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageExpectedThreePDUs
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_UTILS     DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0134
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0135
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0135
+//! @SYMTestCaseDesc             A three segment PDU is received - The first is when memory is available; The second is under OOD condition and the third and final is when disk space is free.
+//! @SYMFssID                    3.1.4
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Recieve the first PDU. Fill the disk. Receive the second PDU. Free the disk space. Receive the third PDU.
+//! @SYMTestExpectedResults      The SMS message is delivered to the client only when the third PDU received. Every PDU is positively Ack'd.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             30/11/2006
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_TEST_STEP 60  TE_smsprt   DeleteSARStores
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber10
+RUN_TEST_STEP 60    TE_smsprt   SetDiskMonitorLimits   z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskMonitorLimits
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60    TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 120   TE_smsprt   SetDiskSpace         z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60    TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 120  TE_smsprt  SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60    TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageExpectedThreePDUs
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0135
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0136
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0136
+//! @SYMTestCaseDesc             Receive PDUs of multiple PDUs messages until the number of Class 0 message in the permanent storage is equal to the maximum set in the esk file. Then receive a single class 0 PDU message, followed by more class 0 PDUs of other messages so to exeed the value in the esk file (Default is 10).
+//! @SYMFssID                    3.1.7
+//! @SYMREQ                      6523
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Receive PDUs of multiple PDU messages until number in store = number configured in esk file. Receive a single Class 0 message, followed by a single PDU of a multiple PDU message.
+//! @SYMTestExpectedResults      Every PDU received is positively ack'd. The single PDU class 0 is delivered to the client. Then the oldest partially constructed message is also forward to the client. This leaves two spaces open for PDUs.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             30/11/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               3. Under Execution
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber5
+RUN_TEST_STEP 60  TE_smsprt  DeleteSARStores
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+//Wait for all PDUs to be received
+DELAY 90000
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini  MessageNotExpected
+//Fill the last space with single PDU class 0 message
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini    SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini  MessageExpectedSinglePDU8Bit
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini  MessageNotExpected
+//Fill the last space again
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini  MessageExpectedSecondMessage
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+END_TESTCASE                   TEL-SMS-SMSPRT-0136
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0137
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0137
+//! @SYMTestCaseDesc             Start the device meanwhile a corrupt Class 0 reassembly store exists.
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Place a corrupt file in place. Boot the device. Fill the disk space. Receive a single PDU class 0 message. Free the disk space.
+//! @SYMTestExpectedResults      Device remains stable - A single PDUs message is received by the client.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             1/12/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_UTILS  copyfile  z:\testdata\configs\smsclass0preallocated.dat  c:\private\101F7989\esock\smsclass0preallocated.dat
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smsclass0preallocated.dat
+RUN_UTILS  copyfile  z:\testdata\configs\smsclass0reast.dat    c:\private\101F7989\esock\smsclass0reast.dat
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber1
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpected
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS DeleteFile c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0137
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0138
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0138
+//! @SYMTestCaseDesc             Receive a type 0 class 0 single PDU message when there is NO availale disk space. SMS Stack is configured NOT to discard type0Class0 messages. I.e. The Class is taking preference.
+//! @SYMFssID                    3.1.10.1
+//! @SYMREQ                      7232
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the device. Receive a single PDU Type 0 Class 0 message.
+//! @SYMTestExpectedResults      Type 0 Class 0 message is delivered to the client. The TSY is postively Ack'd.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             1/12/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+//Setup
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS  copyfile   z:\testdata\configs\smswap_DontDiscardType0s.esk   c:\private\101F7989\esock\smswap.sms.esk
+//Run Steps
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber25
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageExpected
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+//Tear Down
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0138
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0139
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0139
+//! @SYMTestCaseDesc             Receive a type 0 class 0 single PDU message when there is NO availale disk space. SMS Stack is configured to discard type 0 messages.
+//! @SYMFssID                    3.1.10.2
+//! @SYMREQ                      6522
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the disk. Setup ESK file for discarding Type0s. Receive a single PDU type 0 message.
+//! @SYMTestExpectedResults      No message is delivered to the client. The message is postively Ack'd by the SMS Stack.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             1/12/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+//Setup
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS  copyfile   z:\testdata\configs\smswap_discardType0s.esk    c:\private\101F7989\esock\smswap.sms.esk
+//Run Steps
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber25
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+//Tear Down
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0139
+
+
+//START_TESTCASE                 TEL-SMS-SMSPRT-0140
+////! @SYMTestCaseID               TEL-SMS-SMSPRT-0140
+////! @SYMTestCaseDesc             Receive a type 0 class 2 single PDU message when there is NO availale disk space. SMS Stack is configured Not to discard type 0 messages. I.e. Class Takes precedence.
+////! @SYMFssID                    3.1.10.3
+////! @SYMREQ                      7232
+////! @SYMPREQ                     1736
+////! @SYMComponent                SMSStack
+////! @SYMTestPriority             Critical
+////! @SYMTestActions              Fill the disk. Receive a single PDU Class 0 type 0 message.
+////! @SYMTestExpectedResults      No message is delivered to the client, message is negatively Ack'd.
+////! @SYMTestType                 CIT
+////! @SYMTestCaseDependencies     SIM TSY
+////! @SYMCreationDate             1/12/2006
+////! @SYMAuthor                   danieldu
+////! @SYMTestStatus               2. Development
+////Setup
+//RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+//RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+//RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+//RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+//RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+//RUN_UTILS  copyfile   z:\testdata\configs\smswap_DontDiscardType0s.esk   c:\private\101F7989\esock\smswap.sms.esk
+////Run Steps
+//RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol   z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber26
+//RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+//RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+//RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+//RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+//RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+////Tear Down
+//RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsu.rsc
+//RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+//RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+//END_TESTCASE                   TEL-SMS-SMSPRT-0140
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0141
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0141
+//! @SYMTestCaseDesc             Receive a type 0 class 1 single PDU message when there is NO availale disk space.
+//! @SYMFssID                    3.1.10.4
+//! @SYMREQ                      6522
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Fill the disk. Receive a single Class 1 Type 0 message.
+//! @SYMTestExpectedResults      No message is delivered to the client, message is positively Ack'd.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             2/2/2007
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol      z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber7
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits   z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace       z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS         z:\testdata\configs\SMSOutOfDiskSpace.ini  MessageNotExpected
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0141
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0146
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0146
+//! @SYMTestCaseDesc             Enumerate a single Class 0 PDU message from the SIM in OOD
+//! @SYMFssID                    3.1.13
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMTestPriority             Critical
+//! @SYMTestExpectedResults      1 Message is Enumerated from the SIM. The Class 0 message is delivered to the client.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             8/1/2007
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_UTILS  			DeleteFile	c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  			DeleteFile  c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol             z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber17
+RUN_TEST_STEP 60	TE_smsprt  	SetDiskMonitorLimits 		z:\testdata\configs\SMSOutOfDiskSpace.ini 	DiskMonitorLimits
+RUN_TEST_STEP 120 	TE_smsprt  	SetDiskSpace    			z:\testdata\configs\SMSOutOfDiskSpace.ini  	DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  	TE_smsprt  	EnumerateInOODCondition
+RUN_TEST_STEP 120  	TE_smsprt  	FreeDiskSpace
+RUN_TEST_STEP 60  	TE_smsprt  	CloseSMSProtocol
+RUN_UTILS  			DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0146
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0151
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0151
+//! @SYMTestCaseDesc             Receive a class 0 message when there is NO availale disk space while simulating OOM condition in SocketServer.
+//! @SYMFssID                    3.1.2
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the disk space. Receive a single PDU class 0 message meanwhile OOM exists.
+//! @SYMTestExpectedResults      A Leave at each heap allocation cleans up all the heap allocated cells prior to the leave. The message is finally delivered to the client and the TSY is positively Ack'd
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             5/2/2007
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber30
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits     z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace        z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  SendReceiveSMSWhileServerInOOM   z:\testdata\configs\SMSOutOfDiskSpace.ini SendSinglePDU8BitMessageReceiveInOOM
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0151
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0154
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0154
+//! @SYMTestCaseDesc             Receive two segments of a three PDU SMS message. The first is received when memory is available. The second in OOD condition. The preallocation file then fills with single PDUs of multiple PDU messages.
+//! @SYMFssID                    3.1.6
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Medium
+//! @SYMTestActions              Fill the disk space. Fill the preallocation storeage leaving just one slot. Free the disk space. Receive the first PDU. Fill the disk space. Receive the second PDU. Free the disk space. Receive the third PDU.
+//! @SYMTestExpectedResults      Every PDU is posiitively ack'd by the SMS Stack. On receipt of the PDU filling the last space in the pre-allocation file, the first two PDUS of the first message is forward as a partially formed message.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             25/4/2007
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile    z:\testdata\configs\smswap_MaxFivePDUsInOOD.esk   c:\private\101F7989\esock\smswap.sms.esk
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol         z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber15
+RUN_TEST_STEP 60    TE_smsprt   SetDiskMonitorLimits    z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskMonitorLimits
+RUN_TEST_STEP 120   TE_smsprt   SendSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 120   TE_smsprt   SetDiskSpace           z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120   TE_smsprt   SendSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 120   TE_smsprt   SendSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+//Wait for 4 PDUs to be received -
+DELAY 60000
+RUN_TEST_STEP 120   TE_smsprt   SendSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS             z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageExpectedTwoPDUs
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0154
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0155
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0155
+//! @SYMTestCaseDesc             Receive a type 0 class 0 single PDU message when there is NO availale disk space. SMS Stack is configured to discard type0Class0 messages.
+//! @SYMFssID                    3.1.10.1
+//! @SYMREQ                      6522
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the device. Receive a single PDU Type 0 Class 0 message.
+//! @SYMTestExpectedResults      No message is delivered to the client. The TSY is positively Ack'd.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             15/3/2007
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               3. Under Execution
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+//Put in new esk file
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile    z:\testdata\configs\smswap_discardType0s.esk   c:\private\101F7989\esock\smswap.sms.esk
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber6
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits    z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace         z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS          z:\testdata\configs\SMSOutOfDiskSpace.ini MessageNotExpected
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS   DeleteFile   c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0155
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0156
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0156
+//! @SYMTestCaseDesc             Check if stack does forward partially formed messages when pre-allocation file overflows AND when Class 0 has been enabled - using the IOCtl call.
+//! @SYMFssID                    3.3.1.4
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Fill the Disk Up. Then receive a PDU of a multiple PDU message.
+//! @SYMTestExpectedResults      The SMSstack has been activated. Partially constructed PDU is forward to the client.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             25/4/2007
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+//Copy esk file with MAX PDUs = 5
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS  copyfile   z:\testdata\configs\smswap_MaxFivePDUsInOOD.esk    c:\private\101F7989\esock\smswap.sms.esk
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol     z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber32
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits  z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskMonitorLimits
+RUN_TEST_STEP 60  TE_smsprt  Class0StoreEnabled    z:\testdata\configs\SMSOutOfDiskSpace.ini   EnableClass0Store
+//Fill the preallocation file
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace   z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120 TE_smsprt  SendSMS      z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+// NOTE - no need to wait for 5 PDUs to be received - the SMS stack should notify client (with 1st PDU) when 5th PDU is received
+RUN_TEST_STEP 120   TE_smsprt  ReceiveSMS     z:\testdata\configs\SMSOutOfDiskSpace.ini  MessageExpectedFirstMessage
+RUN_TEST_STEP 120   TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60   TE_smsprt  CloseSMSProtocol
+RUN_UTILS   DeleteFile   c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite   c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile    c:\private\101F7989\esock\smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE                   TEL-SMS-SMSPRT-0156
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0157
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0157
+//! @SYMTestCaseDesc             Check if stack does not forward partially formed messages when pre-allocation file overflows AND when Class 0 has NOT been enabled - using the IOCtl call.
+//! @SYMFssID                    3.3.1.4
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             High
+//! @SYMTestActions              Fill the Disk Up. Then receive a PDU of a multiple PDU message.
+//! @SYMTestExpectedResults      The SMSstack has been activated. Partially constructed PDU is forward to the client.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             25/4/2007
+//! @SYMAuthor                   donalclerkin
+RUN_UTILS  	DeleteFile  		c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  	DeleteFile    		c:\private\101F7989\sms\smsclass0reast.dat
+//Copy esk file with MAX PDUs = 5
+RUN_UTILS  DeleteFile   c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS   copyfile  c:\private\101F7989\esock\smswap.sms.esk      c:\private\101F7989\esock\smswap.sms.bak
+RUN_UTILS  MakeReadWrite   		c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS  copyfile   			z:\testdata\configs\smswap_Class0DisabledMaxFivePDUsInOOD.esk  	c:\private\101F7989\esock\smswap.sms.esk
+RUN_TEST_STEP 60   	TE_smsprt  	LoadSMSProtocol    	z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber16
+RUN_TEST_STEP 60   	TE_smsprt  	Class0StoreEnabled 	z:\testdata\configs\SMSOutOfDiskSpace.ini   DisableClass0Store
+//Fill the preallocation file
+RUN_TEST_STEP 120   TE_smsprt   SetDiskSpace      z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120   TE_smsprt   SendSMS          z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+//Wait for 5 PDUs to be received
+DELAY 60000
+RUN_TEST_STEP 60  TE_smsprt   ReceiveSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  MessageNotExpected
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_UTILS   DeleteFile      c:\private\101F7989\sms\smsu.rsc
+RUN_UTILS   MakeReadWrite    c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile       c:\private\101F7989\esock\smswap.sms.bak  c:\private\101F7989\esock\smswap.sms.esk
+END_TESTCASE             TEL-SMS-SMSPRT-0157
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0127
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0127
+//! @SYMTestCaseDesc             Receive a mulitple (3) PDU SMS message. First segment received when there is availale disk space, but second and third are received under OOD condition.
+//! @SYMFssID                    3.1.3
+//! @SYMREQ                      6523
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Recieve one PDU of a three PDU message. Fill the disk. Receive the remaining PDUs.
+//! @SYMTestExpectedResults      The message is delivered to the client when the third segment is delivered, while every PDU is positively Ack'd by the SMSStack.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             29/11/2006
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  	DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  	DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol        z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber3
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits 	z:\testdata\configs\SMSOutOfDiskSpace.ini 	DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     			z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace    		z:\testdata\configs\SMSOutOfDiskSpace.ini  	DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120 TE_smsprt  SendSMS     			z:\testdata\configs\SMSOutOfDiskSpace.ini   SinglePDU8BitMessage
+RUN_TEST_STEP 60  TE_smsprt  ReceiveSMS    			z:\testdata\configs\SMSOutOfDiskSpace.ini 	MessageExpected
+RUN_TEST_STEP 120  TE_smsprt FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS   DeleteFile     c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE           TEL-SMS-SMSPRT-0127
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0152
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0152
+//! @SYMTestCaseDesc             Receive a mulitple (3) PDU SMS message under OOD condition and OOM condition exist.
+//! @SYMFssID                    3.1.4
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the disk space. Receive a three PDU SMS message meanwhile OOM exists.
+//! @SYMTestExpectedResults      Every leave due to OOM results in the server heap being cleaned totally and no orphaned objects results. The message is delivered to the client only when the third segment is received, and each PDU is positively Ack'd by the SMSStack.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             5/2/2007
+//! @SYMAuthor                   danieldu
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60  TE_smsprt  LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini  TestNumber31
+RUN_TEST_STEP 60  TE_smsprt  SetDiskMonitorLimits     z:\testdata\configs\SMSOutOfDiskSpace.ini DiskMonitorLimits
+RUN_TEST_STEP 120 TE_smsprt  SetDiskSpace        z:\testdata\configs\SMSOutOfDiskSpace.ini  DiskSpaceBelowLowLimit
+RUN_TEST_STEP 60  TE_smsprt  SendReceiveSMSWhileServerInOOM   z:\testdata\configs\SMSOutOfDiskSpace.ini SendSinglePDU8BitMessageReceiveMultipleInOOM
+RUN_TEST_STEP 120  TE_smsprt  FreeDiskSpace
+RUN_TEST_STEP 60  TE_smsprt  CloseSMSProtocol
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0152
+
+
+START_TESTCASE                 TEL-SMS-SMSPRT-0153
+//! @SYMTestCaseID               TEL-SMS-SMSPRT-0153
+//! @SYMTestCaseDesc             Receive two PDUs of a 3 PDU SMS message under OOD condition.
+//! @SYMFssID                    3.1.4
+//! @SYMREQ                      6523
+//! @SYMPREQ                     1736
+//! @SYMComponent                SMSStack
+//! @SYMTestPriority             Critical
+//! @SYMTestActions              Fill the disk space. Receive two of the three PDUs.
+//! @SYMTestExpectedResults      No message is delivered to the client.
+//! @SYMTestType                 CIT
+//! @SYMTestCaseDependencies     SIM TSY
+//! @SYMCreationDate             5/2/2007
+//! @SYMAuthor                   donalclerkin
+//! @SYMTestStatus               2. Development
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0preallocated.dat
+RUN_UTILS  DeleteFile   c:\private\101F7989\sms\smsclass0reast.dat
+RUN_TEST_STEP 60    TE_smsprt   LoadSMSProtocol       z:\testdata\configs\smsstacksimtsytestnumbers.ini   TestNumber11
+RUN_TEST_STEP 60    TE_smsprt   SetDiskMonitorLimits   z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskMonitorLimits
+RUN_TEST_STEP 120   TE_smsprt   SetDiskSpace         z:\testdata\configs\SMSOutOfDiskSpace.ini   DiskSpaceBelowLowLimit
+RUN_TEST_STEP 120   TE_smsprt   SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 120   TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 120   TE_smsprt   SendSMS        z:\testdata\configs\SMSOutOfDiskSpace.ini  SinglePDU8BitMessage
+RUN_TEST_STEP 60    TE_smsprt   ReceiveSMS           z:\testdata\configs\SMSOutOfDiskSpace.ini   MessageNotExpected
+RUN_TEST_STEP 120   TE_smsprt   FreeDiskSpace
+RUN_TEST_STEP 60    TE_smsprt   CloseSMSProtocol
+RUN_UTILS  DeleteFile  c:\private\101F7989\sms\smsu.rsc
+END_TESTCASE                   TEL-SMS-SMSPRT-0153
+
+
+RUN_UTILS   MakeReadWrite  c:\private\101F7989\esock\smswap.sms.esk
+RUN_UTILS   copyfile  c:\private\101F7989\esock\backup_smswap.sms.bak     c:\private\101F7989\esock\smswap.sms.esk

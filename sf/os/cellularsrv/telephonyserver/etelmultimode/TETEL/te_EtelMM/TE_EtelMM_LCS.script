@@ -1,0 +1,316 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE Te_EtelMM
+
+//!@file
+//!@SYMTestSuiteName TEL-ETELMM-LCS
+//!@SYMScriptTestEnvironment	DUMMY TSY is used as a stub to simulate network behaviour. This test script requires a H4 hardware board for testing on ARMV5
+
+START_TESTCASE TEL-ETELMM-LCS-2040
+//!@SYMTestCaseID TEL-ETELMM-LCS-2040
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Successful MT-LR and Measurement Control request
+//!@SYMTestActions	Register to be notified of incoming MT-LR request and measurement control using NotifyMTLR() and NotifyMeasurementControl() respectively. Response sent back from client using SendMtlrResponse(). Computed measurement data is sent using SendMeasurementReport()
+//!@SYMTestExpectedResults Client is notified of incoming location requests. MT-LR request received successfully and Measurement control holds complete data filled by TSY
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowed
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReport
+END_TESTCASE TEL-ETELMM-LCS-2040
+
+
+START_TESTCASE TEL-ETELMM-LCS-2041
+//!@SYMTestCaseID TEL-ETELMM-LCS-2041
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Issue MT-LR request for notification type ENotifyAndVerify_LocationAllowedIfNoResponse and Client grants permission
+//!@SYMTestActions Register to be notified of incoming MT-LR request using NotifyMTLR(). Client authorizes the request. Response is sent back from client using SendMtlrResponse(). 
+//!@SYMTestExpectedResults Client is notified of incoming location requests.  Notification type is ENotifyAndVerify_LocationAllowedIfNoResponse. MTLR response is EPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyAndVerifyLocationAllowedIfNoResponse
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+END_TESTCASE TEL-ETELMM-LCS-2041
+
+
+START_TESTCASE TEL-ETELMM-LCS-2042
+//!@SYMTestCaseID TEL-ETELMM-LCS-2042
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Issue MT-LR request for notification type ENotifyAndVerify_LocationNotAllowedIfNoResponse Client denies permission
+//!@SYMTestActions  Register to be notified of incoming MT-LR request using NotifyMTLR(). Client denies the request. Response is sent back from client using SendMtlrResponse(). 
+//!@SYMTestExpectedResults Client is notified of incoming location requests.  Notification type is ENotifyAndVerify_LocationNotAllowedIfNoResponse. MTLR response is EPermissionDenied
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyAndVerifyLocationNotAllowedIfNoResponse
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionDenied
+END_TESTCASE TEL-ETELMM-LCS-2042
+
+
+START_TESTCASE TEL-ETELMM-LCS-2043
+//!@SYMTestCaseID TEL-ETELMM-LCS-2043
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Issue MT-LR request and  check if permission is not allowed
+//!@SYMTestActions	Register to be notified of incoming MT-LR request using NotifyMTLR(). TSY completes the notification with Permission not allowed and privacy override. Response sent back in SendMTLRResponse()
+//!@SYMTestExpectedResults Client is notified of incoming location requests.  MTLR response is EPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	LocationNotAllowed
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	LocationPrivacyOverride
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+END_TESTCASE TEL-ETELMM-LCS-2043
+
+
+START_TESTCASE TEL-ETELMM-LCS-2044
+//!@SYMTestCaseID TEL-ETELMM-LCS-2044
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Unsuccessful MT-LR with invalid external client id
+//!@SYMTestActions	Register to be notified of incoming MT-LR request using NotifyMTLR(). Invalid client ID set. SendMtlrResponse returns an error code. Repost the notification request again using NotifyMTLR()
+//!@SYMTestExpectedResults Client is notified of incoming location requests and MTLR error response is EUnexpectedDataValue
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	MtlrInvalidClientId
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowed
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+END_TESTCASE TEL-ETELMM-LCS-2044
+
+
+START_TESTCASE TEL-ETELMM-LCS-2045
+//!@SYMTestCaseID TEL-ETELMM-LCS-2045
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Unsuccessful MT-LR with measurement control failure
+//!@SYMTestActions	Register to be notified of incoming MT-LR request and measurement control using NotifyMTLR() and NotifyMeasurementControl() respectively. Response sent back from client using SendMtlrResponse(). Send incorrect/missing measurement control details to client. The client fails to compute the location measurements and SendMeasurementControlFailure() sends respective error
+//!@SYMTestExpectedResults Client is notified of incoming requests. MTLR response is PermissionGranted. Encountered control failure EAsn1ViolationOrEncoding is sent to TSY
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowed
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	MeasurementControlFailure
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	MeasurementReportFailure
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReport
+END_TESTCASE TEL-ETELMM-LCS-2045
+
+
+START_TESTCASE TEL-ETELMM-LCS-2046
+//!@SYMTestCaseID TEL-ETELMM-LCS-2046
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Cancel a MT-LR request
+//!@SYMTestActions	Register to be notified of incoming Location service requests. Client cancels the requests using CancelAsyncRequest(). Result sent back to the TSY using  SendMeasurementReport()
+//!@SYMTestExpectedResults All requests cancelled successfully returning KErrCancel
+RUN_TEST_STEP 10 Te_EtelMM CancelLbsRequests	z:\testdata\configs\TE_mmLocationServices.ini	CancelAllRequests
+END_TESTCASE TEL-ETELMM-LCS-2046
+
+
+START_TESTCASE TEL-ETELMM-LCS-2047
+//!@SYMTestCaseID TEL-ETELMM-LCS-2047
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Successful MO-LR - UE requests its own location
+//!@SYMTestActions	Domain is set to PacketSwitched  using SetLcsDomain(). Register to be notified of incoming measurement control request and MOLR request using NotifyMeasurementControl() and SendMolr(). Client computes and returns measurement results to TSY using SendMeasurementReport().
+//!@SYMTestExpectedResults Client is notified of incoming measurement control and MOLR requests. Measurement request completes successfully and Molr request completes successfully with KErrNone
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM SendMolr 			z:\testdata\configs\TE_mmLocationServices.ini	PacketSwitchedDomain
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReport
+END_TESTCASE TEL-ETELMM-LCS-2047
+
+
+START_TESTCASE TEL-ETELMM-LCS-2048
+//!@SYMTestCaseID TEL-ETELMM-LCS-2048
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Successful MO-LR's using Circuit Switch Domain- Send location information to external client
+//!@SYMTestActions	Domain is set to CircuitSwitched using SetLcsDomain(). Register to be notified of incoming measurement control request and MOLR request using NotifyMeasurementControl() and SendMolr(). Client computes and returns measurement results to TSY using SendMeasurementReport().
+//!@SYMTestExpectedResults Client is notified of incoming measurement control and MOLR requests. Measurement request completes successfully and Molr request completes successfully with KErrNone
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM SendMolr 			z:\testdata\configs\TE_mmLocationServices.ini	CircuitSwitchedDomain
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReport
+END_TESTCASE TEL-ETELMM-LCS-2048
+
+
+START_TESTCASE TEL-ETELMM-LCS-2049
+//!@SYMTestCaseID TEL-ETELMM-LCS-2049
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Unsuccessful MO-LR - with invalid data
+//!@SYMTestActions	Register to be notified of incoming MOLR request using SendMolr(). Invalid client ID is passed. MOLR completes with error in the return result.
+//!@SYMTestExpectedResults Client is notified of incoming location requests and request completed with error EMolrUnexpectedDataValue 
+RUN_TEST_STEP 10 Te_EtelMM SendMolr			z:\testdata\configs\TE_mmLocationServices.ini	InvalidMolrID
+END_TESTCASE TEL-ETELMM-LCS-2049
+
+
+START_TESTCASE TEL-ETELMM-LCS-2050
+//!@SYMTestCaseID TEL-ETELMM-LCS-2050
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Unsuccessfull MTLR - incomplete measurement control data
+//!@SYMTestActions	Register to be notified of incoming MT-LR request and Register to be notified of incoming Measurement control request. Send Measurment report containing incomplete data.  Re-post measurement control requesting for missing data. Send Measurement report containing complete data
+//!@SYMTestExpectedResults Client is notified of incoming location requests.  Measurement control holds complete data
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowed
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	IncompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	IncompleteMeasurementReport
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReport
+END_TESTCASE TEL-ETELMM-LCS-2050
+
+
+START_TESTCASE TEL-ETELMM-LCS-2051
+//!@SYMTestCaseID TEL-ETELMM-LCS-2051
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Issue MTLR request - Client denies permission
+//!@SYMTestActions	Register to be notified of incoming MT-LR request.  Register to be notified of incoming Measurement control request. Client denies permission. MTLR Response sent. Send Measurement report containing error element
+//!@SYMTestExpectedResults Client is notified of incoming location requests.  MTLR and MeasurementControl requests completes succesfully. MTLR response is EPermission Denied. Measurement Report contain error ERequestDeniedByUser
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowed
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionDenied
+RUN_TEST_STEP 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	MeasurementReportDeniedByUser
+END_TESTCASE TEL-ETELMM-LCS-2051
+
+
+START_TESTCASE TEL-ETELMM-LCS-2052
+//!@SYMTestCaseID TEL-ETELMM-LCS-2052
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Issue MT-LR request for notification type ENotifyAndVerify_LocationAllowedIfNoResponse and  Client denies Permission
+//!@SYMTestActions Register to be notified of incoming MT-LR request using NotifyMTLR(). Client denies the request. Response is sent back from client using SendMtlrResponse(). 
+//!@SYMTestExpectedResults Client is notified of incoming location requests.  Notification type is ENotifyAndVerify_LocationAllowedIfNoResponse. MTLR response is EPermissionDenied
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyAndVerifyLocationAllowedIfNoResponse
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionDenied
+END_TESTCASE TEL-ETELMM-LCS-2052
+
+
+START_TESTCASE TEL-ETELMM-LCS-2053
+//!@SYMTestCaseID TEL-ETELMM-LCS-2053
+//!@SYMREQ REQ6239
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Issue MT-LR request for notification type ENotifyAndVerify_LocationNotAllowedIfNoResponse and Client grants permission
+//!@SYMTestActions Register to be notified of incoming MT-LR request using NotifyMTLR(). Client authorize the request. Response is sent back from client using SendMtlrResponse(). 
+//!@SYMTestExpectedResults Client is notified of incoming location requests.  Notification type is ENotifyAndVerify_LocationNotAllowedIfNoResponse. MTLR response is either EPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyAndVerifyLocationNotAllowedIfNoResponse
+RUN_TEST_STEP 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+END_TESTCASE TEL-ETELMM-LCS-2053
+
+
+START_TESTCASE TEL-ETELMM-LCS-2054
+//!@SYMTestCaseID TEL-ETELMM-LCS-2054
+//!@SYMREQ REQ6242
+//!@SYMTestCaseDesc To check even under low memory condition of default Etel process heap,the APIs using reserved heap doesn’t fail
+//!@SYMTestPriority Critical
+//!@SYMTestActions  Call SetEmergencyClient API to preallocate the heap memory for handling Emergency Mobile Terminated Location service request, then call  __DbgFailNext macro with a parameter telling in which allocation of default process heap memory it has to fail and then call the LBS notification APIs NotifyMtlr.
+//!@SYMTestExpectedResults SetEmergencyClient API preallocate heap memory and NotifyMtlr API pass successfully
+//!@SYMTestType CT
+RUN_TEST_STEP 10 Te_EtelMM TestMMSetEmgClientLcsReqPreallocHeap
+END_TESTCASE TEL-ETELMM-LCS-2054
+
+
+START_TESTCASE TEL-ETELMM-LCS-2055
+//!@SYMTestCaseID TEL-ETELMM-LCS-2055
+//!@SYMREQ REQ6242
+//!@SYMTestCaseDesc Combination test -SetEmergencyClient API (with LCS request) and SetPriorityClient API.
+//!@SYMTestPriority Critical
+//!@SYMTestActions  Call SetEmergencyClient API (which preallocate the heap memory for handling Emergency Mobile Terminated Location service request) followed by SetPriorityClient API, then  call __DbgFailNext macro and LBS notification API NotifyMtlr.
+//!@SYMTestExpectedResults SetEmergencyClient and SetPriorityClient API preallocate heap memory and NotifyMtlr API pass successfully
+//!@SYMTestType CT
+RUN_TEST_STEP 10 Te_EtelMM TestMMSetEmgClientLcsReqAndSetPrClient
+END_TESTCASE TEL-ETELMM-LCS-2055
+
+
+START_TESTCASE TEL-ETELMM-LCS-2056
+//!@SYMTestCaseID TEL-ETELMM-LCS-2056
+//!@SYMREQ REQ6242
+//!@SYMTestCaseDesc Ensure preallocated heap is sufficient for the Location Based Services
+//!@SYMTestPriority Critical
+//!@SYMTestActions  Call SetEmergencyClient API (which preallocate the heap memory for handling Emergency Voice call request) followed by SetPriorityClient API, then  call __DbgFailNext macro and LBS notification APIs NotifyMtlr, NotifyMeasurementcontrol, SendMtlrResponse, MeasurementReport.
+//!@SYMTestExpectedResults SetEmergencyClient API preallocate heap memory and the APIS NotifyMtlr,SendMtlrResponse,NotifyMeasurementControl,SendMeasurementReport API pass sucessfully
+//!@SYMTestType CT
+RUN_TEST_STEP 10 Te_EtelMM TestMMSetEmgClientHeapSuffForLBS
+END_TESTCASE TEL-ETELMM-LCS-2056
+
+
+START_TESTCASE TEL-ETELMM-LCS-2057
+//!@SYMTestCaseID TEL-ETELMM-LCS-2057
+//!@SYMREQ REQ6242
+//!@SYMTestCaseDesc Call to LBS APIs with out LBS Open API.
+//!@SYMTestPriority Critical
+//!@SYMTestActions  With out LBS open API call the other APIS NotifyMtlr,SendMtlrResponse,NotifyMeasurementControl,SendMeasurementReport.
+//!@SYMTestExpectedResults All the LBS APIs NotifyMtlr,SendMtlrResponse,NotifyMeasurementControl,SendMeasurementReport API fails
+//!@SYMTestType CT
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowedWithoutOpenCall
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGrantedWithoutOpenCall
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControlWithoutOpenCall
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReportWithoutOpenCall
+END_TESTCASE TEL-ETELMM-LCS-2057
+
+START_TESTCASE TEL-ETELMM-LCS-2061
+//!@SYMTestCaseID TEL-ETELMM-LCS-2061
+//!@SYMREQ REQ10754
+//!@SYMTestPriority Critical
+//!@SYMTestCaseDesc Issue request for notification of UE Positioning Data reset message received from the network.
+//!@SYMTestActions  Register a Notify on a UePositioning reset. 
+//!@SYMTestExpectedResults Client is notified of incoming UE Positioning data reset request. Positioning technology is KUePosTechnologyAGPS.
+RUN_TEST_STEP 10 Te_EtelMM TestNotifyUePositioningReset
+END_TESTCASE TEL-ETELMM-LCS-2061
+
+
+START_TESTCASE TEL-ETELMM-LCS-2058
+//!@SYMTestCaseID TEL-ETELMM-LCS-2058
+//!@SYMREQ REQ6239
+//!@SYMTestCaseDesc Call to LBS Open API with different SID.
+//!@SYMTestPriority Critical
+//!@SYMTestActions  Call the LBS Open API with Different SID then call the LBS APIs NotifyMtlr,NotifyMeasurementcontrol,SendMtlrResponse, MeasurementReport. 
+//!@SYMTestExpectedResults Open API has to fail,and all the LBS APIs NotifyMtlr,NotifyMeasurementcontrol,  SendMtlrResponse, MeasurementReport fail.
+//!@SYMTestType CT
+PRINT --------  Testing LBS Open API with different SID,SID set to 123456
+RUN_PROGRAM -1 setcap.exe Te_EtelMM.exe 00000000 -SID 1234567 Te_EtelMM_cap3.exe
+PRINT --------  SID set to 123456
+LOAD_SUITE Te_EtelMM_cap3
+
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM_cap3 NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowed
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM_cap3 SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM_cap3 NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP !PanicCode=8 !PanicString=Etel 10 Te_EtelMM_cap3 SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReport
+END_TESTCASE TEL-ETELMM-LCS-2058
+
+
+START_TESTCASE TEL-ETELMM-LCS-2059
+//!@SYMTestCaseID TEL-ETELMM-LCS-2059
+//!@SYMREQ REQ6239
+//!@SYMTestCaseDesc Call to LBS Open API with same SID.
+//!@SYMTestPriority Critical
+//!@SYMTestActions  Call the LBS Open API with same SID then call the LBS APIs NotifyMtlr,NotifyMeasurementcontrol,SendMtlrResponse, MeasurementReport. 
+//!@SYMTestExpectedResults Open API has to Pass,and all the LBS APIs NotifyMtlr,NotifyMeasurementcontrol,  SendMtlrResponse, MeasurementReport has to pass.
+//!@SYMTestType CT
+PRINT --------  Testing LBS Open API with required SID
+RUN_PROGRAM -1 setcap.exe Te_EtelMM.exe 00000000 Te_EtelMM_cap11.exe
+PRINT --------  SID now set to 0x10281806
+LOAD_SUITE Te_EtelMM_cap11
+
+RUN_TEST_STEP 10 Te_EtelMM_cap11 NotifyMtlr 			z:\testdata\configs\TE_mmLocationServices.ini	NotifyLocationAllowed
+RUN_TEST_STEP 10 Te_EtelMM_cap11 SendMtlrResponse		z:\testdata\configs\TE_mmLocationServices.ini	MtlrPermissionGranted
+RUN_TEST_STEP 10 Te_EtelMM_cap11 NotifyMeasurementControl	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementControl
+RUN_TEST_STEP 10 Te_EtelMM_cap11 SendMeasurementReport	z:\testdata\configs\TE_mmLocationServices.ini	CompleteMeasurementReport
+END_TESTCASE TEL-ETELMM-LCS-2059
+
+START_TESTCASE TEL-ETELMM-LCS-2060
+//!@SYMTestCaseID TEL-ETELMM-LCS-2060
+//!@SYMPREQ REQ6242
+//!@SYMTestCaseDesc Combination test - SetPriorityClientV2 API and SetEmergencyClient API.
+//!@SYMTestPriority High
+//!@SYMTestActions  Call SetPriorityClientV2 API followed by SetEmergencyClient API(which preallocate the heap memory for handling Emergency Voice request), then  call __DbgFailNext macro with a parameter telling in which allocation of memory it has to fail and then call NotifyMtlr API.
+//!@SYMTestExpectedResults As NotifyMtlr API using reserved heap it has to pass in OOM condition.
+//!@SYMTestType CT
+RUN_TEST_STEP 300 Te_EtelMM TestMMSetPrClientV2AndSetEmgClientLcsReq
+
+END_TESTCASE TEL-ETELMM-LCS-2060

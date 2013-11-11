@@ -1,0 +1,72 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// MM_A3F_DEVSOUND_CHRTZ_RAW_REC_PREEMPTION.script
+// Syntax:
+// RUN_TEST_STEP <timeout>, <test suite>,  <test step>, <configuration file.ini>
+//
+
+LOAD_SUITE char_a3f_devsound.dll
+delay 10
+
+//!@SYMTestCaseID: MM-A3F-DEVSOUND-CHRTZ-REC-RAW-0031
+//!@SYMREQ: 7951
+//!@SYMPREQ: 1540
+//!@SYMTestCaseDec: Record audio - Pre-emption of recording audio. 
+//!@SYMTestPriority: Normal
+//!@SYMTestType: Alternative Usecase
+//!@SYMTestActions: 
+//1. Create a Devsound instance.
+//2. Create a CPeriodic instance.
+//3. Open the audio files to be recorded and initialize the Devsound instance to record audio.
+//3.1 Wait for InitializeComplete(KErrNone) callback response.
+//4. Create a second DevSound instance.
+//5. Start the CPeriodic object.
+//6. Set the priority settings of the first devsound instance to a very low value and call RecordInitL() to start the RecordData()/BufferToBeEmptied() process.
+//7. After 2 seconds of recording, on the CPeriodic event, set the priority settings of the second Devsound instance to the max allowed value.
+//8. Initialize the second Devsound instance to record audio and start the recording process as in step 4.
+//9. After another 2 seconds, pause the second Devsound instance, then wait for last buffer flag to be set inside BufferToBeEmptied() in order to call stop.
+//10. Close file sessions.
+//!@SYMTestExpectedResults: 
+//InitializeComplete(KErrNone) callback shall be received  with no errors.
+//BufferToBeEmptied() callback shall be received.
+//A recording loop shall be started.
+//The pre-emption shall be reported to the client. RecordError() callback returns KErrInUse, KErrDied or KErrAccessDenied.
+PRINT Record audio - Pre-emption of recording audio. 
+RUN_TEST_STEP 100000, char_a3f_devsound, MM-A3F-DEVSOUND-CHRTZ-REC-RAW-0031, c:\mm_a3f_devsound_record_raw.ini
+TEST_COMPLETE
+
+//!@SYMTestCaseID: MM-A3F-DEVSOUND-CHRTZ-REC-RAW-0032
+//!@SYMREQ: 7951
+//!@SYMPREQ: 1540
+//!@SYMTestCaseDec: Record audio - Immediate Rejection on Record.
+//!@SYMTestPriority: Normal
+//!@SYMTestType: Alternative Usecase
+//!@SYMTestActions: 
+//1. Create a Devsound instance.
+//2. Create a CPeriodic instance.
+//3. Open the audio files to be recorded and initialize the Devsound instance to record audio.
+//3.1 Wait for InitializeComplete(KErrNone) callback response.
+//4. Create a second DevSound instance.
+//5. Set the priority settings of the first devsound instance to the max allowed value and call RecordInitL() to start the RecordData()/BufferToBeEmptied() loop process.
+//6. After 2 seconds of recording, set the priority settings of the second Devsound instance to the min allowed value.
+//7. Initialize the second Devsound instance to record audio and start the recording process.
+//8. After 2 seconds pause the first Devsound instance, then wait for its last buffer flag to be set inside BufferToBeEmptied() in order to call stop.
+//9. Close file sessions.
+//!@SYMTestExpectedResults: 
+//InitializeComplete(KErrNone) callback shall be received  with no errors.
+//The rejection shall be reported to the client.RecordError() callback returns KErrInUse, KErrDied or KErrAccessDenied.
+PRINT Record audio - Immediate Rejection on Record.
+RUN_TEST_STEP 10000, char_a3f_devsound, MM-A3F-DEVSOUND-CHRTZ-REC-RAW-0032, c:\mm_a3f_devsound_record_raw.ini
+TEST_COMPLETE
+

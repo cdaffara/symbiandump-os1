@@ -1,0 +1,150 @@
+// Copyright (c) 2007-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+/**
+ @file
+ @test
+ @internalComponent - Internal Symbian test code 
+*/
+ 
+
+TARGET			tclayer_server.exe
+TARGETTYPE		exe
+TARGETPATH		/sys/bin
+UID				0x1000007A 0xA00056EB
+VENDORID		0x70000001
+SECUREID 		0x2000D75B
+
+CAPABILITY 		WriteDeviceData   
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+// testcode
+USERINCLUDE		../inc
+USERINCLUDE 	../../../localinc
+USERINCLUDE		../../../custcmd/inc
+
+LIBRARY			euser.lib
+LIBRARY			efsrv.lib
+LIBRARY			estor.lib
+LIBRARY			testexecuteutils.lib 
+LIBRARY			testexecutelogclient.lib 
+
+LIBRARY			ssmcmn.lib
+LIBRARY			ssmuiproviderdll.lib
+
+LIBRARY			etel.lib
+LIBRARY			etelmm.lib
+LIBRARY			centralrepository.lib
+LIBRARY			ws32.lib
+
+// testcode
+SOURCEPATH		../src
+SOURCE			tclayer_server.cpp
+SOURCE			tclayer_step_startersession.cpp
+SOURCE			tclayer_step_startupadaptationadapter.cpp
+SOURCE			tclayer_step_ssmpropertyobserver.cpp
+SOURCE			tclayer_step_ssmsimstatusobserver.cpp
+SOURCE			tclayer_step_ssmsecurityeventobserver.cpp
+
+#if !defined (TEST_CLAYER)
+#define TEST_CLAYER
+MACRO TEST_CLAYER_MACRO
+#endif
+
+
+/*
+The following wrapper source files use a slightly complex trick to provide dummy (or wrapper) implementations of external APIs used by 
+the classes under test.
+
+The external APIs used by the classes under test are re-defined in the wrapper .cpp files with a dummy implementation which can have
+functionality such as the return values etc. varied by the test steps easily.
+
+This means that the external APIs symbols are resolved by the linker to the symbols provided in the *wrapper.cpp (or at link time, *wrapper.o)
+files. This means that there is no need to include the .lib files which provide these external APIs, such as ecom.lib.
+
+The case of ssmcmn.lib is handled in a slightly more complex way. As only some of the methods in these .libs
+needed wrapping for the test, only some of the methods are wrapped. This means that some unresolved symbols are still present after the linker
+has processed all the .o files. These unresolved symbols are then linked to the fully functional DLL stub implementations in the .lib files.
+
+As the wrapped/dummy implementations are present there are no unresolved symbols for them when the .libs are considered by the linker, so the
+linker doesn't link in the fully functional DLL stub code for them.
+
+For further details please see the tool chain documentation, particularily how linking works.    
+
+
+A simple explaination of the above is:
+--------------------------------------
+The compiler first looks in .cpp files and then in .lib files for methods/functions.
+
+By providing implementations of these methods/functions in the .cpp
+files the compiler doesn't need to look in the .lib files for the
+real implementations.
+
+*/
+
+OPTION ARMCC --diag_suppress 2874
+
+SOURCE			adaptationcliwrapper.cpp
+SOURCE			ssmcmnwrapper.cpp
+SOURCE 			featurediscoverywrapper.cpp
+SOURCE			ecomsessionwrapper.cpp
+SOURCE			startupadaptationwrapper.cpp
+
+SOURCE			testpropertyobserver.cpp
+
+// Source under test
+
+USERINCLUDE ../../../clayer/inc
+
+SOURCEPATH ../../../clayer/src
+SOURCE			starterclient.cpp
+
+SOURCE			adaptationbase.cpp
+
+SOURCE 			saaemergencycallrfadaptation.cpp
+SOURCE			saamiscadaptation.cpp
+SOURCE 			saartcadaptation.cpp
+SOURCE			saasimadaptation.cpp
+SOURCE			saastateadaptation.cpp
+
+SOURCE			emergencycallrfadaptation.cpp
+SOURCE			miscadaptation.cpp
+SOURCE			rtcadaptation.cpp
+SOURCE			simadaptation.cpp
+SOURCE			stateadaptation.cpp
+
+SOURCE			startupadaptationadapter.cpp
+
+SOURCE			ssmpropertyobserver.cpp
+
+SOURCE			ssmsimstatusobserver.cpp
+SOURCE			ssmsecurityeventobserver.cpp
+SOURCE			ssmsecuritynotecontroller.cpp
+SOURCE			strtsecphaseobserver.cpp
+SOURCE			strtsecnoterequestqueue.cpp
+
+// We test this custom command here as it is closely related to the SIM status observer SUP 
+SOURCEPATH		../../../custcmd/src
+SOURCE			cmdpublishsimownedandchanged.cpp		
+
+//Needed for security event observer
+SOURCE			ssmsecuritychecknotifier.cpp
+
+//Needed for security note controller
+SOURCEPATH		../../../localsrc
+SOURCE			ssmpanic.cpp
+
+SMPSAFE

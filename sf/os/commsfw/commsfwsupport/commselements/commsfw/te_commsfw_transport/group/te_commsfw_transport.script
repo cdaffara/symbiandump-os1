@@ -1,0 +1,298 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+//! @file te_CommsFW_Transport.script
+
+PRINT ------------------------------
+LOAD_SUITE TE_CommsFW_Transport
+
+START_TESTCASE			COMINF-commsfw-transport-0101
+//! @SYMTestCaseID		COMINF-commsfw-transport-0101
+//!@SYMTestCaseDesc Simple one way transfer and dispatch
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Send 3 messages in sequence from peer1 in thread1 to peer2 in thread2. Have both threads start together.
+//! thread1 and thread2 same priority. Queue only as many messages as there are slots in outbound queue such that there will be no 
+//! blocking. peer2 is ready and drains its inbound queue immediately.
+//! Confirm sequencing of messages and contents. All messages to fit and use narrow interface.
+//!@SYMTestExpectedResults Messages arrive to peer2
+//! Sequencing of messages in correct order
+//! Message contents intact and correct on reception
+//! peer1 does not block on sending
+//! Standard heap checks for memory leaks pass
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep1_1 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0101
+
+
+START_TESTCASE			COMINF-commsfw-transport-0102
+//! @SYMTestCaseID		COMINF-commsfw-transport-0102
+//!@SYMTestCaseDesc Simple one-way transfer - peers in the same thread
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Sender and Receiver are in the same Thread
+//! Peer1 (sender/Receiver) sends 3 messages to Itself. 
+//! Peer1 will use Self Sender to send messages 
+//!@SYMTestExpectedResults Messages arrive to peer1
+//! Sequencing of messages in correct order
+//! Message contents intact and correct on reception
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep1_2 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0102
+
+
+START_TESTCASE			COMINF-commsfw-transport-0103
+//! @SYMTestCaseID		COMINF-commsfw-transport-0103
+//!@SYMTestCaseDesc Simple one-way transfer - queue more messages than slots
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Send 3 messages from Peer2 (sender) to Peer1 (receiver). 
+//! Change .ini file so that queue size becomes equal to 2
+//! Queue one more message than slots in outbound queue. 
+//! Peer1 should then drain a single message from its inbound queue inside the sleep cycle timeout.
+//! this should free up Peer2 to send its last message. Peer1 then drains the rest of its queue. 
+//!@SYMTestExpectedResults Sequence and integrity of messages is then confirmed but not beyond timeout.
+//! Expect all messages in sequence and no panic.
+//! Standard heap checks for memory leaks pass
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep1_3 z:\testdata\configs\CommsFWTransport\CTransportTestStep1_3.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0103
+
+
+START_TESTCASE			COMINF-commsfw-transport-0104
+//! @SYMTestCaseID		COMINF-commsfw-transport-0104
+//!@SYMTestCaseDesc Simple one-way transfer - receiving peer blocked beyond timeout
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Peer2 sends messages to Peer1
+//! Peer1 is busy and does not start ActiveScheduler
+//! After a the sleep cycle of Peer1 timeouts then Peer1 will be panicked
+//! Ensure that sender panics the receiver on timeout of sender's blocked outbound queue (two thread case). Receiver genuinely busy. Nothing to consume in sender's inbound queue.
+//!@SYMTestExpectedResults Peer1 (receiver) is panicked by peer2 (sender) with ECFTransPeerDrainFailure
+//! Standard heap checks for memory leaks pass
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep1_4 z:\testdata\configs\CommsFWTransport\CTransportTestStep1_4.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0104
+
+
+START_TESTCASE			COMINF-commsfw-transport-0105
+//! @SYMTestCaseID		COMINF-commsfw-transport-0105
+//!@SYMTestCaseDesc Simple one-way transfer - receiving peer blocked but NOT beyond timeout
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Peer2 sends messages to Peer1
+//! Peer1 is busy and does not start ActiveScheduler
+//! Before the End of Peer1's sleep cycle Peer1 will become available again
+//! Receiver genuinely busy. Nothing to consume in sender's inbound queue.
+//!@SYMTestExpectedResults All Messages are delivered from Peer2 to Peer1
+//! All Messages are dispatched correctly by Peer1
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep1_5 z:\testdata\configs\CommsFWTransport\CTransportTestStep1_5.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0105
+
+
+START_TESTCASE			COMINF-commsfw-transport-0106
+//! @SYMTestCaseID		COMINF-commsfw-transport-0106
+//!@SYMTestCaseDesc Simple one-way transfer - dispatch of messages of type EDispatchItfPtr
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions peer1 sends message of type EDispatchItfPtr to peer2 for dispatch
+//!@SYMTestExpectedResults Message arrives at Peer1
+//! Message contents intact and correct on reception
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep1_6 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0106
+
+
+START_TESTCASE			COMINF-commsfw-transport-0107
+//! @SYMTestCaseID		COMINF-commsfw-transport-0107
+//!@SYMTestCaseDesc Simple one-way transfer using Dispatch messages - peers in the same thread
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Sender and Receiver are in the same Thread
+//! Peer1 (sender/Receiver) sends single dispatch message to Itself. 
+//! Peer1 will use Self Sender to send message
+//!@SYMTestExpectedResults Message arrives to peer1
+//! Sequencing of messages in correct order
+//! Message contents intact and correct on reception
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep1_7 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0107
+
+
+START_TESTCASE			COMINF-commsfw-transport-0108
+//! @SYMTestCaseID		COMINF-commsfw-transport-0108
+
+//!@SYMTestCaseDesc Deadlock management of full channel pair (Legacy message).
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Both Peer1 and Peer2 have the ability to send and receive messages
+//! Have Peer1 and Peer2 consecutively send one more message than slots available. They will have to wait on inbound queue from peers to //! clear.
+//! After all Send calls have been made Start the Active Scheduler of both peers(Note: The final send of each peer will not complete)
+//! Peer1 and Peer2 should pre-fetch inbound messages and finally send the last message it wanted to send.
+//! Detect that all messages are dispatched as expected and therefore that both peers are now unblocked and free to continue.
+//!@SYMTestExpectedResults Both peers receive the correct number of messages in correct sequence with integrity of messages intact.
+//! Standard heap checks for memory leaks pass
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep2_1 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0108
+
+
+
+START_TESTCASE			COMINF-commsfw-transport-0113
+//! @SYMTestCaseID		COMINF-commsfw-transport-0113
+//!@SYMTestCaseDesc OOM deadlocked case. Using dispatch messages. 
+//! All memory allocations fail when threads try to drain messages from inbound queue
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Using CTransportChipper::SendMessageL() send 1 more object dispatch message than allocated message slots from peer2 to peer1. 
+//! Peer1 also uses CTransportChipper::SendMessageL()send 1 more object dispatch message than allocated message slots from peer1 to peer2. 
+//! All inbound queues become full. Therefore peer1 and peer2 cannot send the extra message on their outbound queues
+//! Peer1 and peer2 must pre-fetch messages from their inbound queue in order to avoid deadlock 
+//! However when both Peers attempt to pre-fetch messages from their inbound queue all memory allocations are set to fail. 
+//!@SYMTestExpectedResults Highest Priority Peer (Peer1) will be panicked with ECFTransPeerDrainFailure. Peer2 will then complete and exit
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep3_5 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0113
+
+
+START_TESTCASE			COMINF-commsfw-transport-0114
+//! @SYMTestCaseID		COMINF-commsfw-transport-0114
+//!@SYMTestCaseDesc OOM deadlocked case 2. Using dispatch messages. 
+//! All memory allocations will fail when threads try to drain messages from inbound queue. 
+//! Memory will become available before the end of the Peers sleep cycle timeout. 
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Using CTransportChipper::SendMessageL() send 1 more object dispatch message than allocated message slots from Peer2 to Peer1. 
+//! Peer1 also uses CTransportChipper::SendMessageL()send 1 more object dispatch message than allocated message slots from Peer1 to Peer2. 
+//! All inbound queues become full. Therefore Peer1 and Peer2 cannot send the extra message on their outbound queues
+//! Peer1 and Peer2 must pre-fetch messages from their inbound queue in order to avoid deadlock 
+//! However when both Peers attempt to pre-fetch messages from their inbound queue all memory allocations are set to fail. 
+//!@SYMTestExpectedResults Highest Priority Peer (Peer1) will be panicked with ECFTransPeerDrainFailure. Peer2 will then complete and exit
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep3_6 z:\testdata\configs\CommsFWTransport\CTransportTestStep3_6.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0114
+
+
+
+START_TESTCASE			COMINF-commsfw-transport-0116
+//! @SYMTestCaseID		COMINF-commsfw-transport-0116
+//!@SYMTestCaseDesc Attempted send with bad cookie arguments
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Using CTransportChipper::Send(const TCookie& aPeerCookie, const TCFMessage& aMessage) peer2 in thread2 attempts to send a message to peer1 in thread1.
+//! thread1 starts before thread2
+//! The cookie that peer1 attempts to send the message on has a Cookie.WorkerId()that is not equal to the PeerId of Peer2
+//!@SYMTestExpectedResults Panics sending thread with a ECFTransInvalidWorkerId panic
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep4_1 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0116
+
+
+START_TESTCASE			COMINF-commsfw-transport-0117
+//! @SYMTestCaseID		COMINF-commsfw-transport-0117
+//!@SYMTestCaseDesc Attempt to send message on unregistered interface
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Peer2 in thread 2 attempts to send a ELegacyId message to peer1 in thread 1 on an interface 
+//! that has not been registered by that peer
+//!@SYMTestExpectedResults Receiving thread will be panicked with ECFTransInvalidCookie .
+//! Standard heap checks for memory leaks pass
+
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep5_1 z:\testdata\configs\CommsFWTransport\CTransportTestStep5_1.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0117
+
+
+START_TESTCASE			COMINF-commsfw-transport-0119
+//! @SYMTestCaseID		COMINF-commsfw-transport-0119
+//!@SYMTestCaseDesc Attempt to send message on deregistered interface. Cookie will be of type EObjectDispatchItf 
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Peer1 in thread 1 will register a interface of type EObjectDispatchItf
+//! Peer1 will then deregister that interface
+//! Peer2 in thread 2 will then attempt to send a message on the Interface deregistered by receiving peer(peer1)
+//!@SYMTestExpectedResults In Debug builds Receiving Thread is Panicked with ECFTransInvalidCookie. 
+//! Standard heap checks for memory leaks pass
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep5_3 z:\testdata\configs\CommsFWTransport\CTransportTestStep5_3.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0119
+
+START_TESTCASE			COMINF-commsfw-transport-0121
+//! @SYMTestCaseID		COMINF-commsfw-transport-0121
+//!@SYMTestCaseDesc Half Dropping of CCommsTransport channel. 
+//! Peer1 Drops the CCommsTransport channel to Peer2 as Peer2 tries to send a message to peer1
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Peer1 and Peer2 establish a CCommsTransport link
+//! Peer1 registers an interface of type ELegacyId
+//! Peer1 then drops the transport link to peer2 
+//! Using CTransportChipper::Send(const TCookie& aPeerCookie, const TCFMessage& aMessage) Peer2 in thread2 attempts to send a number of messages to Peer1 in thread1.
+//! thread1 starts before thread2
+//! Before Peer2 is finished sending all messages Peer1 drops the CCommsTransport channel to Peer2
+//!@SYMTestExpectedResults Sending Peer (peer2) will complete send and exit.  
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep7_1 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0121
+
+
+START_TESTCASE			COMINF-commsfw-transport-0122
+//! @SYMTestCaseID		COMINF-commsfw-transport-0122
+//!@SYMTestCaseDesc During the Dispatch of a Legacy message an error occurs and the dispatch leaves. 
+//!@SYMPREQ 399
+//!@SYMTestPriority 1
+//!@SYMTestActions Peer1 and Peer2 establish a CCommsTransport link
+//! Peer1 registers an interface of type ELegacyId
+//! Peer2 then sends a message on this interface.
+//! While dispatching the interface the dispatching function will Leave. 
+//!@SYMTestExpectedResults Peer1 will handle the leave and call the OnDispatchLeave function
+//! implemented from the MLegacyMessageReceiver interface
+RUN_TEST_STEP 10000 TE_CommsFW_Transport CTransportTestStep7_2 z:\testdata\configs\CommsFWTransport\CTransportTestStepStandard.ini
+TEST_COMPLETE
+PRINT ------------------------------
+END_TESTCASE			COMINF-commsfw-transport-0122
+
+test_complete
+
+
+

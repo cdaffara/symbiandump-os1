@@ -1,0 +1,223 @@
+// hwbreak.cia
+// 
+// Copyright (c) 2010 Accenture. All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of the "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+// 
+// Initial Contributors:
+// Accenture - Initial contribution
+//
+#include <fshell/common.mmh>
+#include <u32std.h>
+
+#define READ_BCR(cond, n, resultreg) asm("MRC"#cond" p14,0,"#resultreg",c0,c"#n",5")
+#define WRITE_BCR(n, valuereg) asm("MCR p14,0,"#valuereg",c0,c"#n",5")
+#define WRITE_BVR(n, valuereg) asm("MCR p14,0,"#valuereg",c0,c"#n",4")
+
+#ifdef __GCCE__
+#ifdef __NAKED__
+#undef __NAKED__
+#endif
+#define __NAKED__ __attribute__((__naked__))
+#endif
+
+__NAKED__ void MCR_SetContextIdBrp(TInt /*aRegister*/, TUint /*aContextId*/)
+	{
+	asm("ldr r2, KContextIdBCR");
+	
+	// Use BVR 4 or 5 as appropriate
+	asm("cmp r0, #4");
+	asm("beq usefour");
+	
+	// otherwise use 5
+	WRITE_BVR(5, r1);
+	WRITE_BCR(5, r2);
+	asm("b contextdone");
+	
+	asm("usefour:");
+	WRITE_BVR(4, r1);
+	WRITE_BCR(4, r2);
+	
+	asm("contextdone:");
+	__JUMP(,lr);
+	
+	// These are according to "ARM 13.3.9. CP14 c80-c85, Breakpoint Control Registers (BCR)"
+	asm("KContextIdBCR:");
+	asm(".word 0x003001E7");
+	}
+
+__NAKED__ TUint MRC_ReadBcr(TInt /*aRegister*/)
+	{
+	// Switch on aRegister
+	asm("cmp r0, #0");
+	READ_BCR(eq, 0, r0);
+	__JUMP(eq, lr);
+
+	asm("cmp r0, #1");
+	READ_BCR(eq, 1, r0);
+	__JUMP(eq, lr);
+
+	asm("cmp r0, #2");
+	READ_BCR(eq, 2, r0);
+	__JUMP(eq, lr);
+
+	asm("cmp r0, #3");
+	READ_BCR(eq, 3, r0);
+	__JUMP(eq, lr);
+
+	asm("cmp r0, #4");
+	READ_BCR(eq, 4, r0);
+	__JUMP(eq, lr);
+
+	asm("cmp r0, #5");
+	READ_BCR(eq, 5, r0);
+	__JUMP(eq, lr);
+	
+	// Shouldn't get here, compiler shutter-upper
+#ifdef __GCCE__
+	return 0;
+#else
+	__JUMP(, lr);
+#endif
+	}
+	
+__NAKED__ void MCR_SetBreakpointPair(TInt /*aRegister*/, TUint /*aBvrValue*/, TUint /*aBcrValue*/ )
+	{
+	// Switch on aRegister
+	asm("cmp r0, #0");
+	asm("beq zero");
+	asm("cmp r0, #1");
+	asm("beq one");
+	asm("cmp r0, #2");
+	asm("beq two");
+	asm("cmp r0, #3");
+	asm("beq three");
+	
+	// If we reach here it's an error...
+	asm("b done");
+	
+	asm("zero:");
+	WRITE_BVR(0, r1);
+	WRITE_BCR(0, r2);
+	asm("b done");
+	
+	asm("one:");
+	WRITE_BVR(1, r1);
+	WRITE_BCR(1, r2);
+	asm("b done");
+	
+	asm("two:");
+	WRITE_BVR(2, r1);
+	WRITE_BCR(2, r2);
+	asm("b done");
+	
+	asm("three:");
+	WRITE_BVR(3, r1);
+	WRITE_BCR(4, r2);
+	asm("b done");
+	
+	asm("done:");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 GetDscr()
+	{
+	asm("MRC p14,0,r0,c0,c1,0");
+	__JUMP(,lr);
+	}
+	
+__NAKED__ TUint32 GetDrar()
+	{
+	// Read Debug ROM Address Register
+	asm("MRC p14, 0, r0, c1, c0, 0");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 GetDsar()
+	{
+	// Read Debug Self Address Offset Register
+	asm("MRC p14, 0, r0, c2, c0, 0");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void MCR_SetDscr(TUint32 /*aVal*/)
+	{
+	asm("MCR p14,0,r0,c0,c1,0");
+	__JUMP(,lr);
+	}
+
+__NAKED__ TUint32 GetContextId()
+	{
+	asm("MRC p15, 0, r0, c13, c0, 1");
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Dsb()
+	{
+	asm("Dsb:");
+	// Data Sync Barrier
+	// From the various definitions of ARM_DSBxx in cpudefs.h
+#if defined(FSHELL_ARM11XX_SUPPORT)
+	asm("mcr p15, 0, r0, c7, c10, 4 ")
+#elif defined(FSHELL_ARM_MEM_MAPPED_DEBUG)
+	asm("nop"); // Shut up complaints about branches to non-code symbols
+	asm(".word %a0" : : "i" ((TInt)(0xf57ff04f)));
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Isb()
+	{
+	asm("Isb:");
+	// Instruction Sync Barrier
+	// From the various definitions of ARM_ISBxx in cpudefs.h
+
+#if defined(FSHELL_ARM11XX_SUPPORT)
+	asm("mcr p15, 0, r0, c7, c5, 4 ")
+#elif defined(FSHELL_ARM_MEM_MAPPED_DEBUG)
+	asm("nop"); // Shut up complaints about branches to non-code symbols
+	asm(".word %a0" : : "i" ((TInt)(0xf57ff06f)));
+#endif
+	__JUMP(,lr);
+	}
+
+__NAKED__ void Imb()
+	{
+	// Instruction Memory Barrier
+	asm("push {r14}");
+	asm("bl Dsb");
+	asm("bl Isb");
+	asm("pop {r14}");
+	__JUMP(,lr);
+	}
+
+
+#if 0
+__NAKED__ void SetIvaBrp(TUint /*aAddress*/, TBool /*aUseContextIdFive*/, TInt /*aRegister*/ )
+	{
+	asm("cmp r1, #0");
+	// r3 gets the BCR value
+	asm("ldreq r3, KIvaBcrLinkedToFour");
+	asm("ldrne r3, KIvaBcrLinkedToFive");
+	asm("b DoSetIvaBrp"); // DoSetIvaBrp handles the return
+	
+	asm("KIvaBcrLinkedToFour:");
+	asm(".word 0x001401E5");
+	asm("KIvaBcrLinkedToFive:");
+	asm(".word 0x001501E5");
+	}	
+
+__NAKED__ void UnsetBrp(TInt /*aRegister*/)
+	{
+	asm("mov r2, r0");
+	asm("mov r1, #0");
+	asm("mov r0, #0");
+	asm("ldr r3, KIvaBcrDisabled");
+	asm("b DoSetIvaBrp");
+	
+	asm("KIvaBcrDisabled:");
+	asm(".word 0x001401E4");
+	}
+#endif

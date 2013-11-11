@@ -1,0 +1,78 @@
+// Copyright (c) 2000-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// csd.agt Circuit-switched agent plug-in for the Comms-infras/Nifman framework, for GSM and CDMA connectivity
+// 
+//
+
+/**
+ @file
+*/
+
+TARGET			csd.agt
+TARGETTYPE		DLL
+UID				0x10003d39 0x10008b69
+VENDORID 0x70000001
+TARGETPATH    	/system/libs
+
+NOEXPORTLIBRARY  /* Ensures that DEF file can be safely shared 
+                    for RVCT builds                            */
+                    
+SOURCEPATH		../src
+SOURCE			Nd_Bases.cpp ND_DBACC.CPP ND_DIRCT.CPP
+SOURCE			ND_DIRECTSTATES.CPP ND_DLIN.CPP  Nd_dlinStates.cpp
+SOURCE			ND_DLL.CPP  ND_DLUP.CPP  Nd_dlupStates.cpp
+SOURCE			ND_ETEL.CPP ND_SCR.CPP Nd_CallBack.cpp
+SOURCE			Nd_Agent.cpp
+
+SOURCEPATH		../script
+SOURCE			SCHAT.CPP  SCHCONV.CPP  SCOMMAND.CPP  SIO.CPP
+SOURCE			SSCREXEC.CPP  SSCRREAD.CPP  SVARLAB.CPP
+
+USERINCLUDE		../src
+USERINCLUDE		../script 
+USERINCLUDE		../inc
+USERINCLUDE		../traces
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+
+// The resource file containing csd error messages, generated
+// for the system error resolver
+SOURCEPATH              ../group
+START RESOURCE          csdErr.rss
+TARGETPATH		/resource/errors
+LANG                    01
+END
+
+LIBRARY			euser.lib efsrv.lib c32.lib charconv.lib
+LIBRARY			etel.lib nifman.lib 
+LIBRARY			etelmm.lib
+
+LIBRARY			commsdat.lib
+
+#if defined(EABI)
+deffile    /epoc32/include/def/eabi/agent.def
+#elif defined(WINS)
+deffile    /epoc32/release/wins/agent.def
+#else
+deffile    /epoc32/release/marm/agent.def
+#endif
+
+START WINS
+BASEADDRESS		0x47900000
+END
+
+CAPABILITY CommDD PowerMgmt ReadDeviceData WriteDeviceData TrustedUI ProtServ NetworkControl NetworkServices LocalServices ReadUserData WriteUserData
+
+UNPAGED
+
+SMPSAFE

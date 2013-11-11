@@ -1,0 +1,864 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName			T_BTUserAPI
+//! @SYMScriptTestEnvironment	This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription		Tests all public elements of the RBTPhysicalLinkAdapter class
+//!								as a means of confidence that the API works as expected. 
+//!								The purpose is to provide a regression test suite of PublishedAll APIs for 
+//!								BT USER related classes.
+//!								Negative testing is performed to confirm that correct errors are returned 
+//!								when incorrect parameters are given. The tests are fully automated.
+//! @SYMAuthor					Ting Yen and PaiHung Huang
+//! @SYMCreationDate			11/09/2007
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\user\
+
+LOAD_SUITE	T_BTUserAPI	-SharedData
+DELAY		500
+
+
+START_TESTCASE	BT-USER-PublicApi-Slave-SetBTAddresses
+
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			CREATE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	RSocketServerConnect		
+			COMMAND		CBluetoothSocket1	NewL		BT-USER-PublicApi-Passive-SetBTAddresses-0001command3NewL
+			COMMAND		TL2CAPSockAddr1	TL2CAPSockAddr		
+			COMMAND		TL2CAPSockAddr1	SetFamily		BT-USER-PublicApi-Passive-SetBTAddresses-0001command6SetFamily
+			COMMAND		TL2CAPSockAddr1	SetPort		BT-USER-PublicApi-Passive-SetBTAddresses-0001command7SetPort
+			COMMAND		CBluetoothSocket1	Bind		BT-USER-PublicApi-Passive-SetBTAddresses-0001command9Bind
+			COMMAND		CBluetoothSocket1	Listen		BT-USER-PublicApi-Passive-SetBTAddresses-0001command10Listen
+			COMMAND		CBluetoothSessionSocket	SetRsocketServerFromCBTSocket		BT-USER-PublicApi-Passive-SetBTAddresses-0001command12SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocket	NewL		BT-USER-PublicApi-Passive-SetBTAddresses-0001command13NewL
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TL2CAPSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			COMMAND		TBTDevAddrLocal	Construct		
+			COMMAND		TBTDevAddrLocal	OpenHostResolver		BT-USER-PublicApi-Passive-SetBTAddresses-0002command3OpenHostResolver
+			COMMAND		TBTDevAddrLocal	SetHostNameL		BT-USER-PublicApi-Passive-SetBTAddresses-0002command4SetHostNameL
+			COMMAND		TBTDevAddrLocal	SetDiscoverable		
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TBTDevAddrLocal	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0003
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			COMMAND		CBluetoothSocket1	Accept		BT-USER-PublicApi-Passive-SetBTAddresses-0003command1Accept
+			OUTSTANDING	
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0003
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0004
+	START_TEST_BLOCK	300	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrLocal	
+			CREATE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			COMMAND		CBluetoothSessionSocket	Recv		BT-USER-PublicApi-Passive-SetBTAddresses-0004command1Recv
+			OUTSTANDING	
+			COMMAND		TBTDevAddrLocal	SetBTAddr		BT-USER-PublicApi-Passive-SetBTAddresses-0004command4SetBTAddr
+			COMMAND		TBTDevAddrRemote	Construct		
+			COMMAND		TBTDevAddrRemote	SetBTAddr		BT-USER-PublicApi-Passive-SetBTAddresses-0004command7SetBTAddr
+			STORE	CBluetoothSocket1	
+			STORE	CBluetoothSessionSocket	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0004
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0005
+	START_TEST_BLOCK	100	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocket	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocket1	
+			COMMAND		CBluetoothSessionSocket	Shutdown		BT-USER-PublicApi-Passive-SetBTAddresses-0005command1Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSessionSocket	~
+			COMMAND		CBluetoothSocket1	Shutdown		BT-USER-PublicApi-Passive-SetBTAddresses-0005command4Shutdown
+			OUTSTANDING
+			COMMAND		CBluetoothSocket1	~
+			COMMAND		CBluetoothSocket1	RSocketServerClose
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PublicApi-Active-SetBTAddresses-0005
+
+END_TESTCASE	BT-USER-PublicApi-Slave-SetBTAddresses
+
+
+DELAY		500
+// ****************************************************************************
+// RBTPhysicalLinkAdapter::Authenticate() Slave (Manual Tests)
+// ****************************************************************************	
+// Connected
+
+START_TESTCASE	BT-USER-Authenticate-PublicApi-Passive-Slave-0001
+//! @SYMTestCaseID				BT-USER-Authenticate-PublicApi-Passive-Slave-0001
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Get the state of the physical link
+//!								Uses API elements: 	RSocketServ() and Connect() from RSocketServ
+//!													NewL() and CreateConnection() from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													RBTPhysicalLinkAdapterData(), Open()2, IsOpen(), PhysicalLinkState() and Close() from RBTPhysicalLinkAdapter
+//!													NewL()1, Bind(), Listen()1, NewL()4 and Accept()1 from CBluetoothSocket
+//!													HandleAcceptCompleteL() from MBluetoothSocketNotifier
+//! @SYMTestActions				1. Create a connection to the RSocket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								4. Call the Listen()1 method of the CBluetoothSocket object
+//!								5. Create a new empty CBluetoothSocket using NewL()4
+//!								6. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								7. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								8. Create and start a session on the socket server
+//!								9. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								10. Bring in a new member to the piconet with a slave device address using CreateConnection()
+//!								    function. Return KErrNone if successful
+//!								11. Return callback HandleCreateConnectionCompleteL() function
+//!								12. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								13. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!								14. Open a physical link adapter on an existing physical link with a device address
+//!								    using Open()2 function. Return KErrNone if successful
+//!								15. Check whether the physical link adapter is open using IsOpen() function
+//!								16. Verify that the result (True) is as expected (True)
+//!								17. Get the state of the physical link using PhysicalLinkState() function
+//!								18. Verify that the result (3178246) is as expected (3178246)
+//!								19. Close the physical link adapter using Close() function
+//!								20. Destroy the physical link adapter object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		The state of the physical link was returned as expected
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocketData	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			COMMAND		CBluetoothSocketData	RSocketServerConnect		
+			COMMAND		CBluetoothSocketData	NewL		BT-USER-Authenticate-PublicApi-Passive-0001-0001command3NewL
+			COMMAND		CBluetoothSocketData	Bind		BT-USER-Authenticate-PublicApi-Passive-0001-0001command4Bind
+			COMMAND		CBluetoothSocketData	Listen		BT-USER-Authenticate-PublicApi-Passive-0001-0001command5Listen
+			COMMAND		CBluetoothSessionSocketData	SetRsocketServerFromCBTSocket		BT-USER-Authenticate-PublicApi-Passive-0001-0001command7SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocketData	NewL		BT-USER-Authenticate-PublicApi-Passive-0001-0001command8NewL
+			STORE	CBluetoothSocketData	
+			STORE	CBluetoothSessionSocketData	
+			STORE	TL2CAPSockAddr1	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0001-0002
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocketData	
+			COMMAND		CBluetoothSocketData	Accept		BT-USER-Authenticate-PublicApi-Passive-0001-0002command2Accept
+			OUTSTANDING	
+			STORE	CBluetoothSocketData	
+			STORE	CBluetoothSessionSocketData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0001-0002
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0001-0003
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-Authenticate-PublicApi-Passive-0001-0003command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-Authenticate-PublicApi-Passive-0001-0003command6CreateConnection
+			OUTSTANDING	
+			COMMAND		RBTPhysicalLinkAdapterData	RBTPhysicalLinkAdapter		
+			COMMAND		RBTPhysicalLinkAdapterData	Open		BT-USER-Authenticate-PublicApi-Passive-0001-0003command10Open
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-Authenticate-PublicApi-Passive-0001-0003command11IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-Authenticate-PublicApi-Passive-0001-0003command12PhysicalLinkState
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND		RBTPhysicalLinkAdapterData	~		
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0001-0003
+
+END_TESTCASE	BT-USER-Authenticate-PublicApi-Passive-Slave-0001
+
+
+START_TESTCASE	BT-USER-Authenticate-PublicApi-Passive-Slave-0002
+//! @SYMTestCaseID				BT-USER-Authenticate-PublicApi-Passive-Slave-0002
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Get the state of the physical link
+//!								Uses API elements: 	RBTPhysicalLinkAdapterData(), Open()2, IsOpen(), PhysicalLinkState(), Close() and destructor from RBTPhysicalLinkAdapter
+//!													destructor from CBluetoothPhysicalLinks
+//!													Close() from RSocketServ
+//!													Shutdown()1 and destructor from CBluetoothSocket
+//!													HandleShutdownCompleteL() from MBluetoothSocketNotifier
+//! @SYMTestActions				1. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!								2. Open a physical link adapter on an existing physical link with a device address
+//!								   using Open()2 function. Return KErrNone if successful
+//!								3. Check whether the physical link adapter is open using IsOpen() function
+//!								4. Verify that the result (True) is as expected (True)
+//!								5. Get the state of the physical link using PhysicalLinkState() function
+//!								6. Verify that the result (3178246) is as expected (3178246)
+//!								7. Close the physical link adapter using Close() function
+//!								8. Destroy the physical link adapter object
+//!								9. Delete CBluetoothPhysicalLink object
+//!								10. Close RSocket object
+//!								11. Do socket1 cleanup by calling Shutdown()1
+//!								12. HandleShutdownCompleteL gets called verify error code
+//!								13. Delete CBluetoothSocket object1
+//!								14. Do socket2 cleanup by calling Shutdown()1
+//!								15. HandleShutdownCompleteL gets called verify error code
+//!								16. Delete CBluetoothSocket object2
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		The state of the physical link was returned as expected
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0002-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RBTPhysicalLinkAdapterData	RBTPhysicalLinkAdapter		
+			COMMAND		RBTPhysicalLinkAdapterData	Open		BT-USER-Authenticate-PublicApi-Passive-0002-0001command3Open
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-Authenticate-PublicApi-Passive-0002-0001command4IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-Authenticate-PublicApi-Passive-0002-0001command5PhysicalLinkState
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND		RBTPhysicalLinkAdapterData	~		
+			STORE	RSocketServData	
+			STORE	TBTDevAddrRemote	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0002-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0002-0002
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocketData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		RSocketServData	Close		
+			COMMAND		CBluetoothSessionSocketData	Shutdown		BT-USER-Authenticate-PublicApi-Passive-0002-0002command6Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSessionSocketData	~		
+			COMMAND		CBluetoothSessionSocketData	RSocketServerClose		
+			COMMAND		CBluetoothSocketData	Shutdown		BT-USER-Authenticate-PublicApi-Passive-0002-0002command11Shutdown
+			OUTSTANDING	
+			COMMAND		CBluetoothSocketData	~		
+			COMMAND		CBluetoothSocketData	RSocketServerClose		
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-Authenticate-PublicApi-Active-0002-0002
+
+END_TESTCASE	BT-USER-Authenticate-PublicApi-Passive-Slave-0002
+
+
+DELAY		500
+// ****************************************************************************
+// RBluetoothPhysicalLinkAdapter Slave (Auto Tests)
+// ****************************************************************************	
+// Connected
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0001
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0001
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, RBTPhysicalLinkAdapter, CBluetoothSocket, MBluetoothSocketNotifier
+//! @SYMTestCaseDesc			Check whether the physical link adapter is open
+//!								Uses API elements: 	RSocketServ() and Connect() from RSocketServ
+//!													NewL() and CreateConnection() from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													RBTPhysicalLinkAdapterData(), Open()2, IsOpen() and Close() from RBTPhysicalLinkAdapter
+//!													NewL()1, Bind(), Listen()1, NewL()4 and Accept()1 from CBluetoothSocket
+//!													HandleAcceptCompleteL() from MBluetoothSocketNotifier
+//! @SYMTestActions				1. Create a connection to the RSocket server
+//!								2. Create a CBluetoothSocket using the NewL()1 (Standard constructor)
+//!								3. Use the Bind method of the CBluetoothSocket to bind the socket using the TL2CAPSockAddr object
+//!								4. Call the Listen()1 method of the CBluetoothSocket object
+//!								5. Create a new empty CBluetoothSocket using NewL()4
+//!								6. Call Accept()1 on the old CBluetoothSocket object with the new as argument
+//!								7. HandleAcceptCompleteL gets called when accept is completed, verify that there is no error
+//!								8. Create and start a session on the socket server
+//!								9. Open a Bluetooth socket using NewL() function. Return KErrNone if successful
+//!								10. Bring in a new member to the piconet with a device address using CreateConnection()
+//!								    function. Return KErrNone if successful
+//!								11. Return callback HandleCreateConnectionCompleteL() function
+//!								12. Verify that if return result (decimal 0) from callback function is as expected (decimal 0)
+//!								13. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!								14. Check whether the physical link adapter is open using IsOpen() function
+//!								15. Verify that the result (False) is as expected (False)
+//!								16. Open a physical link adapter on an existing physical link with a device address
+//!								    using Open()2 function. Return KErrNone if successful
+//!								17. Check whether the physical link adapter is open using IsOpen() function
+//!								18. Verify that the result (True) is as expected (True)
+//!								19. Close the physical link adapter using Close() function
+//!								20. Destroy the physical link adapter object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		False returned at step 8, True returned at step 11
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSocketData	
+			CREATE_OBJECT	CBluetoothSocket	CBluetoothSessionSocketData	
+			RESTORE_OBJECT	TL2CAPSockAddr	TL2CAPSockAddr1	
+			COMMAND		CBluetoothSocketData	RSocketServerConnect		
+			COMMAND		CBluetoothSocketData	NewL		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0001command3NewL
+			COMMAND		CBluetoothSocketData	Bind		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0001command4Bind
+			COMMAND		CBluetoothSocketData	Listen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0001command5Listen
+			COMMAND		CBluetoothSessionSocketData	SetRsocketServerFromCBTSocket		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0001command7SetRsocketServerFromCBTSocket
+			COMMAND		CBluetoothSessionSocketData	NewL		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0001command8NewL
+			STORE	CBluetoothSocketData	
+			STORE	CBluetoothSessionSocketData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0001-0002
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocketData	
+			COMMAND		CBluetoothSocketData	Accept		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0002command2Accept
+			OUTSTANDING	
+			STORE	CBluetoothSocketData	
+			STORE	CBluetoothSessionSocketData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0001-0002
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0001-0003
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			CREATE_OBJECT	RSocketServ	RSocketServData	
+			CREATE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			COMMAND		RSocketServData	RSocketServ		
+			COMMAND		RSocketServData	Connect		
+			COMMAND		CBluetoothPhysicalLinksData	NewL		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0003command5NewL
+			COMMAND		CBluetoothPhysicalLinksData	CreateConnection		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0003command6CreateConnection
+			OUTSTANDING	
+			COMMAND		RBTPhysicalLinkAdapterData	RBTPhysicalLinkAdapter		
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0003command10IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	Open		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0003command11Open
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0001-0003command12IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND		RBTPhysicalLinkAdapterData	~		
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	CBluetoothPhysicalLinksData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0001-0003
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0001
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0002
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0002
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Block the use of a specified set of low power modes with ESniffMode
+//!								Uses API elements: RBTPhysicalLinkAdapterData(), Open()2, IsOpen(), PreventLowPowerModes() and PhysicalLinkState()
+//! @SYMTestActions				1. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!								2. Open a physical link adapter on an existing physical link with a device address
+//!								   using Open()2 function. Return KErrNone if successful
+//!								3. Check whether the physical link adapter is open using IsOpen() function
+//!								4. Verify that the result (True) is as expected (True)
+//!								5. Get the state of the physical link using PhysicalLinkState() function
+//!								6. Verify that the result (3178246) is as expected (3178246)
+//!								7. Block the use of a specified set of low power modes with ESniffMode using 
+//!								   PreventLowPowerModes() function. Return KErrNone if successful
+//!								8. Get the state of the physical link using PhysicalLinkState() function
+//!								9. Verify that the result (3178246) is as expected (3178246)
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0002-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RBTPhysicalLinkAdapterData	RBTPhysicalLinkAdapter		
+			COMMAND		RBTPhysicalLinkAdapterData	Open		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0002-0001command3Open
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0002-0001command4IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0002-0001command5PhysicalLinkState
+			COMMAND		RBTPhysicalLinkAdapterData	PreventLowPowerModes		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0002-0001command6PreventLowPowerModes
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0002-0001command7PhysicalLinkState
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0002-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0002
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0003
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0003
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Block the use of a specified set of low power modes with EHoldMode
+//!								Uses API elements: IsOpen(), PreventLowPowerModes() and PhysicalLinkState()
+//! @SYMTestActions				1. Check whether the physical link adapter is open using IsOpen() function
+//!								2. Verify that the result (True) is as expected (True)
+//!								3. Block the use of a specified set of low power modes with EParkMode using 
+//!								   PreventLowPowerModes() function. Return KErrNone if successful
+//!								4. Get the state of the physical link using PhysicalLinkState() function
+//!								5. Verify that the result (3178246) is as expected (3178246)
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0003-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0003-0001command2IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	PreventLowPowerModes		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0003-0001command3PreventLowPowerModes
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0003-0001command4PhysicalLinkState
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0003-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0003
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0004
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0004
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Block a role
+//!								Uses API elements: IsOpen(), PreventRoleSwitch(), PhysicalLinkState() and Close()
+//! @SYMTestActions				1. Check whether the physical link adapter is open using IsOpen() function
+//!								2. Verify that the result (True) is as expected (True)
+//!								3. Block a role switch using PreventRoleSwitch() function. Return KErrNone if successful
+//!								4. Get the state of the physical link using PhysicalLinkState() function
+//!								5. Verify that the result (3178246) is as expected (3178246)
+//!								6. Close the physical link adapter using Close() function
+//!								7. Destroy the physical link adapter object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0004-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0004-0001command2IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	PreventRoleSwitch		
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0004-0001command4PhysicalLinkState
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND		RBTPhysicalLinkAdapterData	~		
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0004-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0004
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0005
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0005
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Ensure this object does not block a role switch
+//!								Uses API elements: RBTPhysicalLinkAdapterData(), Open()2, IsOpen(), AllowRoleSwitch(), PhysicalLinkState(), Close() and destructor from RBTPhysicalLinkAdapter
+//!													destructor from CBluetoothPhysicalLinks
+//!													Close() from RSocketServ
+//! @SYMTestActions				1. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!								2. Open a physical link adapter on an existing physical link with a device address
+//!								   using Open()2 function. Return KErrNone if successful
+//!								3. Check whether the physical link adapter is open using IsOpen() function
+//!								4. Verify that the result (True) is as expected (True)
+//!								5. Ensure this object does not block a role switch using AllowRoleSwitch() function. 
+//!								   Return KErrNone if successful
+//!								6. Get the state of the physical link using PhysicalLinkState() function
+//!								7. Verify that the result (3178245) is as expected (3178245)
+//!								8. Close the physical link adapter using Close() function
+//!								9. Destroy the physical link adapter object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0005-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RBTPhysicalLinkAdapterData	RBTPhysicalLinkAdapter		
+			COMMAND		RBTPhysicalLinkAdapterData	Open		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0005-0001command3Open
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0005-0001command4IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	AllowRoleSwitch		
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0005-0001command6PhysicalLinkState
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND		RBTPhysicalLinkAdapterData	~		
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0005-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0005
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0006
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0006
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Ensure this object does not block the use of a specified set of low power modes
+//!								Uses API elements: RBTPhysicalLinkAdapterData(), Open()2, IsOpen(), AllowLowPowerModes() and PhysicalLinkState()
+//! @SYMTestActions				1. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!								2. Open a physical link adapter on an existing physical link with a device address
+//!								   using Open()2 function. Return KErrNone if successful
+//!								3. Check whether the physical link adapter is open using IsOpen() function
+//!								4. Verify that the result (True) is as expected (True)
+//!								5. Ensure this object does not block the use of a specified set of low power modes with 
+//!								   EParkMode using AllowLowPowerModes() function. Return KErrNone if successful
+//!								6. Get the state of the physical link using PhysicalLinkState() function
+//!								7. Verify that the result (3178257) is as expected (3178257)
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0006-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RBTPhysicalLinkAdapterData	RBTPhysicalLinkAdapter		
+			COMMAND		RBTPhysicalLinkAdapterData	Open		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0006-0001command3Open
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0006-0001command4IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	AllowLowPowerModes		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0006-0001command5AllowLowPowerModes
+			STORE	TBTDevAddrRemote	
+			STORE	RSocketServData	
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0006-0001
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0006-0002
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0006-0002command1PhysicalLinkState
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0006-0002
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0006
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0007
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0007
+//! @SYMAPI						RBTPhysicalLinkAdapter, CBluetoothSocket, MBluetoothSocketNotifier
+//! @SYMTestCaseDesc			Update the set of baseband packet types that are allowed locally
+//!								Uses API elements: 	RequestChangeSupportedPacketTypes(), PhysicalLinkState() and Close() from RBTPhysicalLinkAdapter
+//!													Recv()1 from CBluetoothSocket
+//!													HandleReceiveCompleteL() from MBluetoothSocketNotifier
+//! @SYMTestActions				1. Update the set of baseband packet types that are allowed locally with EPacketsDM1
+//!								   using RequestChangeSupportedPacketTypes() function. Return KErrNone if successful
+//!								2. Get the state of the physical link using PhysicalLinkState() function
+//!								3. Verify that the result (3178245) is as expected (3178245)
+//!								4. Receive data from a remote Bluetooth device using Recv()1 function. Return KErrNone if successful
+//!								5. HandleReceiveCompleteL() gets called when we finished receiving data, verify data received
+//!								6. Close the physical link adapter using Close() function
+//1								7. Destroy the physical link adapter object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		KErrNone returned
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0007-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocketData	
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0007-0001command2PhysicalLinkState
+			COMMAND		CBluetoothSessionSocketData	Recv		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0007-0001command4Recv
+			OUTSTANDING	
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND		RBTPhysicalLinkAdapterData	~		
+			STORE	CBluetoothSessionSocketData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0007-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0007
+
+
+// ****************************************************************************
+// RBluetoothPhysicalLinkAdapter Negative Test Cases
+// ****************************************************************************	
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0008
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0008
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Get the state of the physical link
+//!								Uses API elements: 	Close() from RSocketServ
+//!													destructor from CBluetoothPhysicalLinks
+//!													RBTPhysicalLinkAdapterData(), Open()2, IsOpen(), PhysicalLinkState() and Close() from RBTPhysicalLinkAdapter
+//! @SYMTestActions				1. Create a RBTPhysicalLinkAdapter object using RBTPhysicalLinkAdapter() function
+//!								2. Open a physical link adapter on an existing physical link with a device address
+//!								   using Open()2 function. Return KErrNone if successful
+//!								3. Check whether the physical link adapter is open using IsOpen() function
+//!								4. Verify that the result (True) is as expected (True)
+//!								5. Get the state of the physical link using PhysicalLinkState() function
+//!								6. Verify that the result (3178245) is as expected (3178245)
+//!								7. Close the physical link adapter
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		The state of the physical link was returned as expected
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0008-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			CREATE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	TBTDevAddr	TBTDevAddrRemote	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RBTPhysicalLinkAdapterData	RBTPhysicalLinkAdapter		
+			COMMAND		RBTPhysicalLinkAdapterData	Open		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0008-0001command3Open
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0008-0001command4IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	PhysicalLinkState		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0008-0001command5PhysicalLinkState
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			STORE	RSocketServData	
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0008-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0008
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0009
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0009
+//! @SYMAPI						RSocketServ, CBluetoothPhysicalLinks, MBluetoothPhysicalLinksNotifier, RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Block the use of a specified set of lowe power modes (ESniffMode) without opening a physical link adapter
+//!								Uses API elements: 	RSocketServ() and Connect() from RSocketServ
+//!													NewL() and CreateConnection() from CBluetoothPhysicalLinks
+//!													HandleCreateConnectionCompleteL() from MBluetoothPhysicalLinksNotifier
+//!													RBTPhysicalLinkAdapterData(), Open()2, IsOpen() and Close() from RBTPhysicalLinkAdapter
+//! @SYMTestActions				1. Verify that if a physical link adapter has not been opened and returned result (False) is as expected
+//!								2. Block the use of a specified set of low power modes (ESniffMode)
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Error at step 2. KErrNotReady (-18) returned
+//! @SYMTestType				CIT
+
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0009-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0009-0001command1IsOpen
+			COMMAND		!Error=-18	RBTPhysicalLinkAdapterData	PreventLowPowerModes		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0009-0001command2PreventLowPowerModes
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-0009-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0009
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0010
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0010
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Attempt to be a Bluetooth Slave of a piconet without opening a physical link adapter
+//!								Uses API elements: 	Close() and RequestSlaveRole() from RBTPhysicalLinkAdapter
+//! @SYMTestActions				1. Close the physical link adapter
+//!								2. Attempt to be a Bluetooth Slave
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Error at step 2. KErrNotReady (-18) returned
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND	!Error=-18		RBTPhysicalLinkAdapterData	RequestSlaveRole		
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0010
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0011
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0011
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Block the use of a specified set of low power modes without opening a physical link adapter
+//!								Uses API elements: 	IsOpen() and PreventLowPowerModes() and IsOpen() from RBTPhysicalLinkAdapter
+//! @SYMTestActions				1. Verify that if a physical link adapter has not been opened and returned result (false) is as expected
+//!								2. Block the use of a specified set of low power modes (EAnyLowPowerMode)
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Error at step 2. KErrNotReady (-18) returned
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0011-0001command1IsOpen
+			COMMAND	!Error=-18		RBTPhysicalLinkAdapterData	PreventLowPowerModes		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0011-0001command2PreventLowPowerModes
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0011
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0012
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0012
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Start a facility that will continually attempt to put the physical link into Park Mode without opening a physical link adapter
+//!								Uses API elements: IsOpen() and RequestChangeSupportedPacketTypes() from RBTPhysicalLinkAdapter
+//! @SYMTestActions				1. Verify that if a physical link adapter has not been opened and returned result (false) is as expected
+//!								2. Update the set of baseband packet types that are allowed locally (EAnyPacket)
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Error at step 2. ErrNotReady (-18) returned
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0012-0001command1IsOpen
+			COMMAND	!Error=-18		RBTPhysicalLinkAdapterData	RequestChangeSupportedPacketTypes		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0012-0001command2RequestChangeSupportedPacketTypes
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0012
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0013
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0013
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Cancel a facility that is continually requesting a low power mode without opening a physical link adapter
+//!								Uses API elements: 	CancelLowPowerModeRequester() from RBTPhysicalLinkAdapter
+//! @SYMTestActions				Cancel a facility that is continually requesting a low power mode
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		ErrNotReady (-18) returned
+//! @SYMTestType				CIT
+
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			COMMAND	!Error=-18		RBTPhysicalLinkAdapterData	CancelLowPowerModeRequester		
+			STORE	RBTPhysicalLinkAdapterData	
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0013
+
+
+START_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0014
+//! @SYMTestCaseID				BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0014
+//! @SYMAPI						RBTPhysicalLinkAdapter
+//! @SYMTestCaseDesc			Cancel a notification without opening a physical link adapter
+//!								Uses API elements: IsOpen(), Close(), CancelNextBasebandChangeEventNotifier() and destructor from RBTPhysicalLinkAdapter
+//!												   Destructor() from CBluetoothSocket
+//!												   Destructor() from CBluetoothPhysicalLinks
+//!												   Close() from RSocketServ
+//! @SYMTestActions				1. Verify that if a physical link adapter has not been opened and returned result (false) is as expected
+//!								2. Cancel the requested notification
+//!								3. Close the physical link adapter
+//!								4. Destroy the physical link adapter object
+//!								5. Delete CBluetoothSocket object1
+//!								6. Delete CBluetoothSocket object2
+//!								7. Delete CBluetoothPhysicalLink object
+//!								8. Close RSocket object
+//!
+//! @SYMTestStatus				Implemented
+//! @SYMTestPriority			High
+//! @SYMTestExpectedResults		Failed to cancel the notification
+//! @SYMTestType				CIT
+
+	START_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-00015-0001
+	START_TEST_BLOCK	500	T_BTUserAPI	\bluetooth\user\BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave.ini
+			SHARED_ACTIVE_SCHEDULER
+			RESTORE_OBJECT	RBTPhysicalLinkAdapter	RBTPhysicalLinkAdapterData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSocketData	
+			RESTORE_OBJECT	CBluetoothSocket	CBluetoothSessionSocketData	
+			RESTORE_OBJECT	CBluetoothPhysicalLinks	CBluetoothPhysicalLinksData	
+			RESTORE_OBJECT	RSocketServ	RSocketServData	
+			COMMAND		RBTPhysicalLinkAdapterData	IsOpen		BT-USER-PhysicalLinkAdapter-PublicApi-Passive-0014-0001command2IsOpen
+			COMMAND		RBTPhysicalLinkAdapterData	CancelNextBasebandChangeEventNotifier		
+			COMMAND		RBTPhysicalLinkAdapterData	Close		
+			COMMAND		RBTPhysicalLinkAdapterData	~		
+			COMMAND		CBluetoothPhysicalLinksData	~		
+			COMMAND		CBluetoothSessionSocketData	~		
+			COMMAND		CBluetoothSessionSocketData	RSocketServerClose		
+			COMMAND		CBluetoothSocketData	~		
+			COMMAND		CBluetoothSocketData	RSocketServerClose		
+			COMMAND		RSocketServData	Close		
+			STORE_ACTIVE_SCHEDULER
+	END_TEST_BLOCK
+	END_SYNCHRONISED_TESTCASE BT-USER-PhysicalLinkAdapter-PublicApi-Active-00015-0001
+
+END_TESTCASE	BT-USER-PhysicalLinkAdapter-PublicApi-Passive-Slave-0014
+
+
+DELAY		500

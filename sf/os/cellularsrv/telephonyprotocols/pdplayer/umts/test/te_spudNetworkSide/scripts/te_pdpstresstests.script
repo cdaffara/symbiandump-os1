@@ -1,0 +1,50 @@
+// Copyright (c) 2004-2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// PDP-context stress tests.
+//
+
+//! @file te_pdpstresstests.script
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MkDir c:\private\
+RUN_UTILS  MkDir c:\private\101F7989\
+RUN_UTILS  MkDir c:\private\101F7989\esock\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSide_config.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_SpudNetworkSideLoopbackCSY.ini c:\loopback.ini
+
+// Configure CommDB for the tests
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\TestData\Configs\te_spudnetworkside.xml
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			PDP-STRESSTEST-0001
+//run stress test 1 
+run_script z:\testdata\scripts\te_pdpstresstest1.script
+END_TESTCASE			PDP-STRESSTEST-0001
+
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+

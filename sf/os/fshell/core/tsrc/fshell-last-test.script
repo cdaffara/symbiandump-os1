@@ -1,0 +1,56 @@
+#!fshell
+# fshell-last-test.script
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Test that the behaviour of the 'last' attribute behaves the way we expect, in various awkward cases involving pipes and pipelines
+
+source $SCRIPT_PATH\errordef.script
+
+export TEST_TEXT "Something with spaces and 'inner quotes' and --options"
+
+echo -n "Something with spaces and 'inner quotes' and --options" | export -s RESULT
+var RESULT == "$TEST_TEXT" || $Error
+
+echo -n Something with spaces and 'inner quotes' and --options | export -s RESULT
+var RESULT == "$TEST_TEXT" || $Error
+
+fshell -e "echo -n a && echo -n b" | export -s RESULT
+var RESULT == "ab" || $Error
+
+repeat 1 "fshell -e 'echo -n c && echo -n d'" | export -s RESULT
+var RESULT == "cd" || $Error
+
+repeat 3 echo a && echo b | export -s RESULT
+var RESULT == b^r^n || $Error # Apparently pipe only operates on a single pipeline stage
+
+# Put the repeat inside an fshell -e merely so we can pipe the whole lot into export
+fshell -e "repeat 3 echo -n a && echo -n b" | export -s RESULT
+var RESULT == aaab || $Error # last doesn't include &&
+
+fshell -e "repeat 3 'echo -n a && echo -n b'" | export -s RESULT
+var RESULT == ababab || $Error
+
+fshell -e "repeat 1 echo -n 'quotation ^^'soup^^''" | export -s RESULT
+var RESULT == "quotation 'soup'" || $Error
+
+export ARG1 "Arg 1"
+export ARG2 "2222"
+export ARG3 "Arg '3' has inner quotes"
+fshell $SCRIPT_PATH\checkargs.script "Arg 1" 2222 "Arg '3' has inner quotes"
+
+# Check that escape sequences inside a "last" command are handled correctly (ie aren't expanded)
+echo hello ^t world | export -s RESULT
+var RESULT == "hello ^^t world^r^n" || $Error
+
+# Check that variable expansion inside a "last" command is handled correctly
+echo -n dollar questionmark is: $? | export -s RESULT
+var RESULT == "dollar questionmark is: 0" || $Error

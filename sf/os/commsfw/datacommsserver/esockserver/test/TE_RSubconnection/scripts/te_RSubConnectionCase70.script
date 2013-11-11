@@ -1,0 +1,145 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName te_RSubConnection
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+
+START_TESTCASE			te_RSubConnectionCase70
+//! @SYMTestCaseID		te_RSubConnectionCase70
+//!@SYMTestCaseDesc           	Confirm that extension protocols can be associated with a non-default subconnection
+//!	and that sockets of the extended protocol type can be opened and used for data flow.
+//!@SYMPREQ                   	CR1302
+/!@SYMTestPriority           	Critical
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	Can send and receive data without error on the dummy network flow based socket.
+
+
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+// Unload esock to make config changes
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+// Load ced and esk files appropriate to dummy protocol, archiving the existing esk for reinstatement later
+//CED -i z:\testdata\configs\dummy_flow_configuration.cfg c:\ced.log
+
+RUN_UTILS MkDir c:\private\101f7989\
+RUN_UTILS MkDir c:\private\101f7989\ESock\
+
+RUN_UTILS CopyFile c:\private\101f7989\ESock\ip.tcpip.esk c:\private\101f7989\ESock\ip.tcpip.esk.te_RSubConnectionCase70.archive
+RUN_UTILS DeleteFile c:\private\101f7989\ESock\ip.tcpip.esk
+RUN_UTILS CopyFile z:\testdata\configs\ip.tcpip.esk.with_dummy_flow c:\private\101f7989\ESock\ip.tcpip.esk
+
+RUN_UTILS DeleteFile c:\rconnectiontest.ini
+RUN_UTILS CopyFile z:\testdata\configs\te_RSubConnectionCase70.ini c:\rconnectiontest.ini
+RUN_UTILS MakeReadWrite c:\rconnectiontest.ini
+
+// Load esock
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+LOAD_SUITE te_echo
+
+// start simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StartSimTSYStep z:\testdata\configs\te_RSubConnectionCase70.ini SimTsy
+
+// start Echo Daemon
+RUN_TEST_STEP 100 te_echo StartEchoDaemon c:\rconnectiontest.ini EchoDaemon1
+RUN_TEST_STEP 100 te_echo StartEchoDaemon c:\rconnectiontest.ini EchoDaemon2
+
+// Create resources we need
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconnectionStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconparameterbundleStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateSubConnParams1
+
+// Connect to the socket server and open and start the connection
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\te_RSubConnectionCase70.ini ConnectSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\te_RSubConnectionCase70.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\te_RSubConnectionCase70.ini StartConn1
+
+// Open and connect a socket on this connection (therefore the default subconnection)
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\te_RSubConnectionCase70.ini OpenSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\te_RSubConnectionCase70.ini ConnectSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\te_RSubConnectionCase70.ini SendReceiveOnSocket1
+
+// Open a new secondary subconnection (ECreateNew) and apply protocol extension to it
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsubconnectionStep z:\testdata\configs\te_RSubConnectionCase70.ini OpenSubConn1
+
+// Set parameters on the new subconnection
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconparameterfamilyStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateQoSSubConnParamFamily
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersubconparameterfamilyStep z:\testdata\configs\te_RSubConnectionCase70.ini CreateProtocolSubConnParamFamily
+RUN_TEST_STEP 100 te_esockteststepsSuite initialiseGenQosParameterSetStep z:\testdata\configs\te_RSubConnectionCase70.ini InitGenQosParams
+RUN_TEST_STEP 100 te_esockteststepsSuite initialiseExtIPLink99ParameterSetStep z:\testdata\configs\te_RSubConnectionCase70.ini InitExtIPLink99Params
+RUN_TEST_STEP 100 te_esockteststepsSuite InitialiseDummyProtocolParameterSetStep z:\testdata\configs\te_RSubConnectionCase70.ini InitDummyProtocolParameters
+RUN_TEST_STEP 100 te_esockteststepsSuite setrsubconparametersStep z:\testdata\configs\te_RSubConnectionCase70.ini SetParametersOnSubConn1
+
+// Open a socket on the secondary subconnection and send and receive data on it
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\te_RSubConnectionCase70.ini OpenSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\te_RSubConnectionCase70.ini ConnectSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\te_RSubConnectionCase70.ini SendReceiveOnSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\te_RSubConnectionCase70.ini SendReceiveOnSocket2
+
+// Perform ioctl operations on each socket to confirm the flow types in each case
+RUN_TEST_STEP 100 te_esockteststepsSuite SocketGetOptionStep z:\testdata\configs\te_RSubConnectionCase70.ini DummyGetOptOnDummySocket
+RUN_TEST_STEP 100 te_esockteststepsSuite SocketGetOptionStep z:\testdata\configs\te_RSubConnectionCase70.ini IpGetOptOnDummySocket
+RUN_TEST_STEP !Error=-5 100 te_esockteststepsSuite SocketGetOptionStep z:\testdata\configs\te_RSubConnectionCase70.ini DummyGetOptOnUdpSocket
+RUN_TEST_STEP 100 te_esockteststepsSuite SocketGetOptionStep z:\testdata\configs\te_RSubConnectionCase70.ini IpGetOptOnUdpSocket
+
+// Fetch protocol information for each socket and confirm
+RUN_TEST_STEP 100 te_esockteststepsSuite SocketProtocolDescriptionStep z:\testdata\configs\te_RSubConnectionCase70.ini ProtocolDescOnSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite SocketProtocolDescriptionStep z:\testdata\configs\te_RSubConnectionCase70.ini ProtocolDescOnSocket2
+
+
+// Close the resources that we used
+RUN_TEST_STEP 100 te_esockteststepsSuite closersubconparameterbundleStep z:\testdata\configs\te_RSubConnectionCase70.ini CloseSubConnParams1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\te_RSubConnectionCase70.ini CloseSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\te_RSubConnectionCase70.ini CloseSocket2
+RUN_TEST_STEP 100 te_esockteststepsSuite closersubconnectionStep z:\testdata\configs\te_RSubConnectionCase70.ini CloseSubConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\te_RSubConnectionCase70.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\te_RSubConnectionCase70.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// stop Echo Deamon
+run_test_step 100, te_echo StopEchoDaemon c:\rconnectiontest.ini EchoDaemon1
+run_test_step 100, te_echo StopEchoDaemon c:\rconnectiontest.ini EchoDaemon2
+
+// stop simtsy
+RUN_TEST_STEP 100 te_esockteststepsSuite StopSimTSYStep z:\testdata\configs\te_RSubConnectionCase70.ini SimTsy
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+// Restore the original esk file
+RUN_UTILS MakeReadWrite c:\private\101f7989\ESock\ip.tcpip.esk
+RUN_UTILS DeleteFile c:\private\101f7989\ESock\ip.tcpip.esk
+RUN_UTILS CopyFile c:\private\101f7989\ESock\ip.tcpip.esk.te_RSubConnectionCase70.archive c:\private\101f7989\ESock\ip.tcpip.esk
+RUN_UTILS DeleteFile c:\private\101f7989\ESock\ip.tcpip.esk.te_RSubConnectionCase70.archive
+
+END_TESTCASE			te_RSubConnectionCase70
+
+
+
+
+
+
+
+
+
+
+
+
+
+

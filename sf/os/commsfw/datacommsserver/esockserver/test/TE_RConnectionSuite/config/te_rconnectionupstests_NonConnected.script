@@ -1,0 +1,1242 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Tests in this script run in "Process Lifetime" mode and do not require a network connection.
+// TE_RConnectionSuite UPS Tests
+// 
+//
+
+//! @file te_rconnectionupstests_NonConnected.script
+//! @SYMTestSuiteName COMINF-ESOCK-RConnectionSuite-UPS
+//! @SYMScriptTestEnvironment networking
+
+// Shutdown ESock, load the appropriate CommDB
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced z:\TestData\configs\rconnectionudp.xml
+
+// Copy across the necessary config file
+run_utils MakeReadWrite c:\rconnectiontest.ini
+run_utils DeleteFile c:\rconnectiontest.ini
+run_utils CopyFile z:\TestData\configs\rconnectiontest_vlan7.ini c:\rconnectiontest.ini
+RUN_UTILS MakeReadWrite c:\rconnectiontest.ini
+
+// Copy across the Reference policy file under test
+run_utils mkdir c:\private\10283558\
+run_utils mkdir c:\private\10283558\policies\
+run_utils CopyFile z:\System\data\ups_101F7989_10281DD8.rsc c:\private\10283558\policies\ups_101F7989_10281DD8.rsc
+run_utils MakeReadWrite c:\private\10283558\policies\ups_101F7989_10281DD8.rsc
+
+// Copy across the "Process Lifetime" NetUPS component coniguration file
+run_utils MakeReadWrite c:\private\101f7989\esock\netups.ini
+run_utils DeleteFile c:\private\101f7989\esock\netups.ini
+run_utils mkdir c:\private\101f7989\
+run_utils mkdir c:\private\101f7989\esock\
+run_utils CopyFile z:\TestData\configs\netups_ProcLifetime.ini c:\private\101f7989\esock\netups.ini
+run_utils MakeReadWrite c:\private\101f7989\esock\netups.ini
+
+// Copy across the config file specific to the UPS tests
+run_utils MakeReadWrite c:\ipupstest.ini
+run_utils CopyFile z:\TestData\configs\ipupstest.ini c:\ipupstest.ini
+
+//Restart ESock
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+// Load the necessary test servers
+LOAD_SUITE TE_RConnectionUpsSuite
+//LOAD_SUITE TE_RConnectionUpsSuite2
+
+//Set overriding of test notifier config file
+RUN_TEST_STEP 100, TE_RConnectionUpsSuite SetNotifFileOverride
+
+
+// **************************************************************************
+// *                                                                        *
+// *  Implicit API calls, "Always" Response, Process Lifetime               *
+// *                                                                        *
+// **************************************************************************
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0115
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0115
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted when response is Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo on a UDP socket.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest1b c:\rconnectiontest.ini TestConfig1
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0115
+
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0116
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0116
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both Always response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo followed by another Implicit RSocket::SendTo
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest2b c:\rconnectiontest.ini TestConfig2
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0116
+
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0117
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0117
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both Always response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, followed by Implicit RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest3b c:\rconnectiontest.ini TestConfig2
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0117
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0118
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0118
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both Always response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, followed by RConnection::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest6b c:\rconnectiontest.ini TestConfig2
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0118
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0119
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0119
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both Always response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, Delete UPS decision Database, followed by RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest7b c:\rconnectiontest.ini TestConfig2
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0119
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+PRINT
+PRINT  ---- Implicit, SessionYes, Process Lifetime ----
+PRINT
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0120
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0120
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted when response is SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo() on a UDP socket.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest1b c:\rconnectiontest.ini TestConfig3
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0120
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0121
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0121
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both SessionYes response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo followed by another Implicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest2b c:\rconnectiontest.ini TestConfig4
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0121
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0122
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0122
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both SessionYes response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, followed by Implicit RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest3b c:\rconnectiontest.ini TestConfig4
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0122
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0123
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0123
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both SessionYes response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, followed by RConnection::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest6b c:\rconnectiontest.ini TestConfig4
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0123
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0124
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0124
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted only once for both SessionYes response. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, Delete UPS decision Database, followed by RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest7b c:\rconnectiontest.ini TestConfig4
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0124
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+PRINT
+PRINT  ---- Implicit, Never, Process Lifetime ----
+PRINT
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0125
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0125
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc Implicit RSocket::SendTo on a UDP socket. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::Connect() on a TCP socket
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest1b c:\rconnectiontest.ini TestConfig5
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0125
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0126
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0126
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc Appropriate error code is returned when user respond first with Never, then with Always(Prompted only once). Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo followed by another Implicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest2b c:\rconnectiontest.ini TestConfig8
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0126
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0127
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0127
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc Appropriate error code is returned when user respond first with Never, then with Always(Prompted only once). Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, followed by Implicit RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest3b c:\rconnectiontest.ini TestConfig8
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0127
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0128
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0128
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc Appropriate error code is returned when user respond first with Never, then with Always(Prompted only once). Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, followed by RConnection::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest6b c:\rconnectiontest.ini TestConfig8
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0128
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0129
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0129
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc Appropriate error code is returned when user respond first with Never, then with Always(Prompted only once). Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, Delete UPS decision Database, followed by RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest7b c:\rconnectiontest.ini TestConfig8
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0129
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+PRINT
+PRINT  ---- Implicit, SesionNo, Process Lifetime ----
+PRINT
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0130
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0130
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted and response is SessionNo. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo on a UDP socket
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest1b c:\rconnectiontest.ini TestConfig16
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0130
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0131
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0131
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are SessionNo. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo followed by another Implicit RSocket::SendTo
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest2b c:\rconnectiontest.ini TestConfig19
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0131
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0132
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0132
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are SessionNo. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, followed by Implicit RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest3b c:\rconnectiontest.ini TestConfig19
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0132
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0133
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0133
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are SessionNo. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, followed by RConnection::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest6b c:\rconnectiontest.ini TestConfig19
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0133
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0134
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0134
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are SessionNo. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo, close RSocket, Delete UPS decision Database, followed by RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest7b c:\rconnectiontest.ini TestConfig19
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0134
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+PRINT
+PRINT  ---- Explicit, Always, Process Lifetime ----
+PRINT
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0135
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0135
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an explicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest11 c:\rconnectiontest.ini TestConfig28
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0135
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0136
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0136
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an explicit RSocket::SendTo followed by an explicit RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest15 c:\rconnectiontest.ini TestConfig29
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0136
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0137
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0137
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by RConnection2::Start followed by an explicit RSocket::SendTo using RConnection2.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest16 c:\rconnectiontest.ini TestConfig29
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0137
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0138
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0138
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start, close RConnection, RConnection2::Start, followed by an explicit RSocket::SendTo on RConnection2.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest17 c:\rconnectiontest.ini TestConfig29
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0138
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0139
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0139
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start, close RConnection, Delete UPS Decision DB Followed by an RConnection2::Start, followed by an explicit.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest18 c:\rconnectiontest.ini TestConfig29
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0139
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0140
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0140
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest19 c:\rconnectiontest.ini TestConfig28
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0140
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0141
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0141
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo followed by RConnection2::Start, followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest23 c:\rconnectiontest.ini TestConfig30
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0141
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0142
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0142
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo, followed by RConnection2::Start. Close all RSockets and RConnections, followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest24 c:\rconnectiontest.ini TestConfig30
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0142
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+PRINT
+PRINT  ---- Explicit, SessionYes, Process Lifetime ----
+PRINT
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0143
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0143
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an explicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest11 c:\rconnectiontest.ini TestConfig32
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0143
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0144
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0144
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all the three responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an explicit RSocket::SendTo, followed by an explicit RSocket2::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest15 c:\rconnectiontest.ini TestConfig33
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0144
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0145
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0145
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all the three responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by RConnection2::Start, followed by an explicit RSocket::SendTo using RConnection2.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest16 c:\rconnectiontest.ini TestConfig33
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0145
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0146
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0146
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all the three responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start, close RConnection, RConnection2::Start, followed by an explicit RSocket::SendTo on RConnection2.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest17 c:\rconnectiontest.ini TestConfig33
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0146
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0147
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0147
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all the three responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start, close RConnection, Delete UPS Decision DB, Followed by an RConnection2::Start, followed by an explicit.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest18 c:\rconnectiontest.ini TestConfig33
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0147
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0148
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0148
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest19 c:\rconnectiontest.ini TestConfig32
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0148
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0149
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0149
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo,followed by RConnection2::Start,followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest23 c:\rconnectiontest.ini TestConfig34
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0149
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0150
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0150
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when all three responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo,followed by RConnection2::Start. Close all RSockets and RConnections, followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest24 c:\rconnectiontest.ini TestConfig34
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0150
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+PRINT
+PRINT  ---- Explicit, Never, Process Lifetime ----
+PRINT
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0151
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0151
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when the responses are Never and then Always. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest19 c:\rconnectiontest.ini TestConfig36
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0151
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0152
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0152
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when the responses are Never and then Always. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo,followed by RConnection2::Start,followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest23 c:\rconnectiontest.ini TestConfig40
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0152
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0153
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0153
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when the responses are Never and then Always. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo,followed by RConnection2::Start. Close all RSockets and RConnections,followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest24 c:\rconnectiontest.ini TestConfig40
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0153
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+PRINT
+PRINT  ---- Explicit, SessionNo, Process Lifetime ----
+PRINT
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0154
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0154
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when the responses are SessionNo and Always. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest19 c:\rconnectiontest.ini TestConfig42
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0154
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0155
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0155
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when the responses are SessionNo and Always. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo,followed by RConnection2::Start, followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest23 c:\rconnectiontest.ini TestConfig46
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0155
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0156
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0156
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when the responses are SessionNo and Always. Appropriate error is returned. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions RConnection::Start followed by an implicit RSocket::SendTo,followed by RConnection2::Start. Close all RSockets and RConnections,followed by RConnection3::Start.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest24 c:\rconnectiontest.ini TestConfig46
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0156
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+//PRINT
+//PRINT ---- Advanced Tests ----
+//PRINT
+//
+// Some tests do not run reliably on arm due to timing issues. These tests are not included in the overnight build.
+//
+
+//START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0157
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0157
+
+//// Multithreaded RSocket::SendTo()
+//heap_mark
+//run_test_step 100, TE_RConnectionUpsSuite UPSPreMultiThreaded c:\rconnectiontest.ini TestConfig1
+//CONCURRENT
+//run_test_step 100, TE_RConnectionUpsSuite UPSTest27b c:\rconnectiontest.ini TestConfig1
+//run_test_step 100, TE_RConnectionUpsSuite UPSTest27b c:\rconnectiontest.ini TestConfig72
+//CONSECUTIVE
+//run_test_step 100, TE_RConnectionUpsSuite UPSPostMultiThreaded c:\rconnectiontest.ini TestConfig73
+//heap_markend
+//test_complete
+//END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0157
+
+//run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+//run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+//run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+//START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0158
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0158
+//// Multithreaded RSocket::SendTo() SessionNo
+
+//heap_mark
+//run_test_step 100, TE_RConnectionUpsSuite UPSPreMultiThreaded c:\rconnectiontest.ini TestConfig1
+//CONCURRENT
+//run_test_step 100, TE_RConnectionUpsSuite UPSTest27b c:\rconnectiontest.ini TestConfig16
+//run_test_step 100, TE_RConnectionUpsSuite UPSTest27b c:\rconnectiontest.ini TestConfig74
+//CONSECUTIVE
+//run_test_step 100, TE_RConnectionUpsSuite UPSPostMultiThreaded c:\rconnectiontest.ini TestConfig73
+//heap_markend
+//test_complete
+//END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0158
+
+//run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+//run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+//run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+//START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0159
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0159
+//// Multi Process RSocket::SendTo()
+
+//heap_mark
+//run_test_step 100, TE_RConnectionUpsSuite UPSPreMultiThreaded c:\rconnectiontest.ini TestConfig1
+//CONCURRENT
+//run_test_step 100, TE_RConnectionUpsSuite UPSTest27b c:\rconnectiontest.ini TestConfig1
+//run_test_step 100, TE_RConnectionUpsSuite2 UPSTest27b c:\rconnectiontest.ini TestConfig72
+//CONSECUTIVE
+//run_test_step 100, TE_RConnectionUpsSuite UPSPostMultiThreaded c:\rconnectiontest.ini TestConfig77
+//heap_markend
+//test_complete
+//END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0159
+
+//run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+//run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+//run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+//START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0160
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0160
+
+//// Multi Process RSocket::SendTo() SessionNo Vs. Always
+//heap_mark
+//run_test_step 100, TE_RConnectionUpsSuite UPSPreMultiThreaded c:\rconnectiontest.ini TestConfig1
+//CONCURRENT
+//run_test_step 100, TE_RConnectionUpsSuite UPSTest27b c:\rconnectiontest.ini TestConfig16
+//run_test_step 100, TE_RConnectionUpsSuite2 UPSTest27b c:\rconnectiontest.ini TestConfig78
+//CONSECUTIVE
+//run_test_step 100, TE_RConnectionUpsSuite UPSPostMultiThreaded c:\rconnectiontest.ini TestConfig77
+//heap_markend
+//test_complete
+//END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0160
+
+//run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+//run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+//run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0161
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0161
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User not prompted when the responses is SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo() specifying a local loopback address - 127.0.0.1. SendTo to a local address should never result in prompting.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest29 c:\rconnectiontest.ini TestConfig80
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0161
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0162
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0162
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User not prompted when the responses is SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo() specifying a local loopback address. SendTo to a local address should never result in prompting.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest30 c:\rconnectiontest.ini TestConfig80
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0162
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0163
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0163
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are SessionYes. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Explicit RSocket::SendTo() specifying a local address of interface.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest32 c:\rconnectiontest.ini TestConfig84
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0163
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0164
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0164
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Implicit RSocket::SendTo specifying an address that is scoped to the NetworkId of the interface.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest33 c:\rconnectiontest.ini TestConfig28
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0164
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0165
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0165
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc User prompted once when both the responses are Always. Test run in "Process Lifetime" mode.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Explicit RSocket::SendTo specifying an address that is scoped to the NetworkId of the interface.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        15-04-2008
+//!@SYMTestStatus 3. Released
+
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest34 c:\rconnectiontest.ini TestConfig28
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0165
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+// Setup for UPSTest35 (requires pdummy protocol)
+run_utils DeleteFile c:\private\101f7989\esock\ip.esock.esk
+run_utils CopyFile z:\TestData\configs\esock\ip.esock.esk c:\private\101f7989\esock\ip.esock.esk
+
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0334
+//! @SYMTestCaseID COMINF-ESOCK-RConnectionSuite-UPS-0334
+//!@SYMPREQ PREQ1116
+//!@SYMTestCaseDesc A socket write generating a NoBearer() with no IPC pending (e.g. RTP Flow) does not cause an ESock crash.
+//!@SYMTestPriority Critical
+//!@SYMTestActions Use pdummy protocol to generate a NoBearer() without any pending IPC.
+//!@SYMTestExpectedResults Pass
+//!@SYMTestType CIT
+//! @SYMCreationDate        12-10-2009
+//!@SYMTestStatus 3. Released
+heap_mark
+run_test_step 100, TE_RConnectionUpsSuite UPSTest35 c:\rconnectiontest.ini TestConfig28
+heap_markend
+test_complete
+END_TESTCASE COMINF-ESOCK-RConnectionSuite-UPS-0334
+
+run_test_step 100, TE_RConnectionUpsSuite CloseInterfaces
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+// Cleanup for UPSTest35
+run_utils DeleteFile c:\private\101f7989\esock\ip.esock.esk
+
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+## close down
+run_utils DeleteFile c:\rconnectiontest.ini
+
+//Unset overriding of test notifier config file
+RUN_TEST_STEP 100, TE_RConnectionUpsSuite UnsetNotifFileOverride

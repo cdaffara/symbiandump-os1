@@ -1,0 +1,119 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName NET-DATAMON
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i  z:\testdata\configs\DataMonitoring\DataMonitoring.ced.cfg c:\DataMonitoring.ced.cfg
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-1901
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-DataMonitoring-1901
+//!@SYMTestCaseDesc           	Confirm timely reception of data sent notifications on a connection
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RCommsDataMonitoringApiExt::Open()
+//RCommsDataMonitoringApiExt::RequestDataSentNotification()
+//RCommsDataMonitoringApiExt::Close()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+//Establish a connection using RConnection::Open() and RConnection::Start() explicitly specifying which interface is to be started.
+//Open an echoed UDP socket on the connection.
+//Open a data monitor on the connection with ::Open().
+//Issue a ::RequestDataSentNotification() on the data monitor with a given threshold.
+//Send several fixed amounts of echoed data on the socket (keeping the total under the notification theshold) and ensure after each send/receive that the notification is not received early. Cross the threshold with a final send/receive and confirm the notification now received as expected.
+//Confirm the stats returned in the completed notification with those expected.
+//Repeat the process of making the request and then sending/receiving data two more times ensuring that each iteration behaves correctly.
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	Expect notification only after sending the number of bytes required to meet the trigger threshold.
+
+// Create and connect the socket server required
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\DataMonitoring\765433.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\DataMonitoring\765433.ini ConnectSockSvr1
+
+// Establish connection and start it explicitly with IAP ID
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\DataMonitoring\765433.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openRConnectionStep z:\testdata\configs\DataMonitoring\765433.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite StartRConnectionStep z:\testdata\configs\DataMonitoring\765433.ini StartConn1
+
+// Open a UDP socket on our newly formed connection
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketStep z:\testdata\configs\DataMonitoring\765433.ini CreateSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrsocketStep z:\testdata\configs\DataMonitoring\765433.ini OpenSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketStep z:\testdata\configs\DataMonitoring\765433.ini ConnectSocket1
+
+// Create DataMonitoring extension API for our new connection and request on it notifications of data sent
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765433.ini OpenDataMonitor1
+
+
+// Send data in chunks waiting for expected data sent notification
+// Expect timeout for the first two waits and completion on the third
+// Notification will be cancelled as soon as it is received
+// Check against minimum expected data volume sent
+// Iteration 1
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini ReqDataNotif_Phase1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase1_1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase1_2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase1_3
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase1_3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase1_4
+
+// Iteration 2
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini ReqDataNotif_Phase2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase2_1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase2_1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase2_2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase2_2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase2_3
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase2_3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase2_4
+
+// Iteration 3
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini ReqDataNotif_Phase3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase3_1
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase3_1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase3_2
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase3_2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase3_3
+RUN_TEST_STEP 100 te_esockteststepsSuite sendreceiversocketStep z:\testdata\configs\DataMonitoring\765433.ini SendReceiveOnSocket1_Phase3_3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveDataSentNotificationStep z:\testdata\configs\DataMonitoring\765433.ini RecvDataNotif_Phase3_4
+
+
+// Close the networking entities we used
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRCommsDataMonitoringApiExtStep z:\testdata\configs\DataMonitoring\765433.ini CloseDataMonitor1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketStep z:\testdata\configs\DataMonitoring\765433.ini CloseSocket1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\DataMonitoring\765433.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\DataMonitoring\765433.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE			COMINF-ESOCK-RConnection-DataMonitoring-1901
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+PRINT Completed NET-DATAMON-0433
+
+
+

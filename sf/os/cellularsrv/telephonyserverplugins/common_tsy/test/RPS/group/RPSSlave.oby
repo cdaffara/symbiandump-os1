@@ -1,0 +1,230 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#ifndef __RPSSLAVE_OBY__
+#define __RPSSLAVE_OBY__
+
+#if defined(TEXT_ONLY_ROM)
+	define OBEYFILE TelephonyTest
+#else
+	#define techview TelephonyTest
+#endif // TEXT_ONLY_ROM
+
+define ROMDATE	##TODAY##
+
+#define __TCPIP_IBY__ // HACK to avoid including the old IP4 TCPIP.IBY via PLP.IBY
+#define NO_METROTRK_APP // don't want metrotrk application
+#define EXCLUDE_APPINST
+#define __INCLUDE_SW_KEYSTORE__ // Put sw implementation of keystore into v8.0a ROM
+
+#define HAS_ETHERNET //pull in etehrnet components that are needed by the slave
+
+#include <header.iby>                  /* ROM header definitions */
+#include <base.iby>                    /* The lowest-level of the operating system */
+
+
+#ifdef SYMBIAN_SYSTEM_STATE_MANAGEMENT
+	#include <aplp.iby>			/*Application Launch Plugins*/
+	#include <amastart.iby>			/*After Market Application Starter*/
+	#include <ssma.iby>			/*System State Management Architecture*/
+	#include <shma.iby>			/*System Health Management Architecture*/
+	#include <ssrefplugins.iby>		/*System State Management Reference Plugins*/
+	#include <ssplugins.iby>	/* System State Management Plugins */
+#else
+	#include <sysstart.iby>		/* SysStart process, which loads various components on startup, including SysAgent2 */
+	#include <sysstartconfig.iby>
+#endif // SYMBIAN_SYSTEM_STATE_MANAGEMENT
+
+#include <eshell.iby>
+
+#include <debug.iby>
+file=ABI_DIR\DEBUG_DIR\RUNTESTS.EXE					System\Programs\RUNTESTS.EXE 
+
+REM Telephony Test Text ROM Specific Files
+
+kerneltrace 0x80000000
+
+#if defined(EKA2)
+	file=ABI_DIR\DEBUG_DIR\EDISP.DLL				System\Libs\EDISP.DLL
+#else
+	#if defined(BRUTUS_UARTS) // only way to check if assabet
+		debugport 1
+		file[VARID]=ASSP_DIR\DEBUG_DIR\cikdab.DLL	System\Libs\ekdata.dll
+		file[VARID]=ASSP_DIR\DEBUG_DIR\difiab.pdd	System\Libs\difir.pdd
+		file[VARID]=ASSP_DIR\DEBUG_DIR\EFIR.LDD		System\Libs\EFIR.LDD
+	#elif defined(LUBBOCK_UARTS) // only way to check if lubbock
+		file[VARID]=ASSP_DIR\DEBUG_DIR\cikdla.DLL	System\Libs\ekdata.dll
+	#endif // BRUTUS_UARTS
+
+	file=ASSP_DIR\DEBUG_DIR\EDISP.DLL				System\Libs\EDISP.DLL
+	file=ABI_DIR\DEBUG_DIR\ELOCL.DLL				System\Libs\ELOCL.DLL	
+#endif //EKA2
+
+file=ABI_DIR\DEBUG_DIR\ECONS.DLL					System\Libs\ECONS.DLL	
+
+file=ABI_DIR\DEBUG_DIR\EWSRV.EXE					System\Libs\EWSRV.EXE	fixed 
+
+file=ABI_DIR\DEBUG_DIR\form.DLL						System\Libs\form.dll
+file=ABI_DIR\DEBUG_DIR\tagma.DLL					System\Libs\tagma.DLL
+
+#ifdef SYMBIAN_GRAPHICS_USE_GCE
+	file=ABI_DIR\BUILD_DIR\ws32_nga.dll				System\Libs\Ws32.dll
+	file=ABI_DIR\BUILD_DIR\surfaceupdateclient.dll	System\Libs\surfaceupdateclient.dll
+#else
+file=ABI_DIR\BUILD_DIR\ws32_nonnga.dll				sys\bin\Ws32.dll
+#endif
+
+file=ABI_DIR\BUILD_DIR\VIEWCLI.DLL                  System\Libs\VIEWCLI.DLL
+file=ABI_DIR\BUILD_DIR\VIEWSRV.DLL                  System\Libs\VIEWSRV.DLL
+file=ABI_DIR\BUILD_DIR\UIKLAF.DLL                   System\Libs\UIKLAF.DLL
+file=ABI_DIR\BUILD_DIR\EXPARSER.DLL                 System\Libs\EXPARSER.DLL
+file=ABI_DIR\BUILD_DIR\Eikcore.DLL                  System\Libs\Eikcore.dll
+file=ABI_DIR\BUILD_DIR\EIKSRVC.DLL                  System\Libs\EIKSRVC.DLL
+
+file=ABI_DIR\BUILD_DIR\eikcoctl.dll 			System\Libs\EikCoctl.dll
+
+#ifndef __MESSAGING_API_V2__
+	#include <sysamob.iby> //system agent messaging observer
+#endif	// __MESSAGING_API_V2__
+
+/* extras */
+#include "mmfsounddev.iby"
+#include "ezlib.iby"
+#include <gtmessaging.iby>
+#include <ups.iby> // removed from gtmessaging.iby in CL1240666 (DEF127063)
+#include <http.iby>
+
+#ifdef SYMBIAN_CRYPTO
+	#include <crypto.iby>
+#else
+	#include <cryptalg.iby>
+#endif // SYMBIAN_CRYPTO
+
+#include <c32.iby>					/* standard Sockets components */
+#include <irda.iby>     			/* standard Sockets components */
+#include <bluetooth.iby>     		/* standard Sockets components */
+#include <gdi.iby>     				/* standard Graphics components */
+#include <fntstore.iby> 			/* standard Graphics components */
+#include <fbserv.iby>   			/* standard Graphics components */
+#include <bitgdi.iby>   			/* standard Graphics components */
+
+#include <apparc.iby>   			/* Application architecture DLLs */
+#include <emime.iby>				/* Mime recognition */
+
+#include <fepbase.iby>				/* Front end processor base classes */
+#include <mmf.iby> 					/* Multimedia Framework */
+
+#include <sysagent.iby>				/* System Agent client and server */
+
+#include <network.iby>				/* Networking Components */
+
+#include <etel.iby>
+
+#ifdef CDMA
+	#include <cdmasmsstack.iby>
+#else
+	#include <smsstack.iby>
+#endif // CDMA
+
+#include <etelmm.iby>
+#include <etelpckt.iby>
+#include <mmtsy.iby>
+#include <phbksync.iby>
+#include <etelsat.iby>
+#include <sysawatcher.iby>
+#include <plpvariant.iby>
+#include <stdlib.iby>
+
+#include <ecom.iby>
+
+/* Store */
+#include "Store.iby"
+
+/* Etext */
+#include "EText.iby"
+
+/* Clock */
+file=ABI_DIR\BUILD_DIR\clock.dll 		System\Libs\Clock.dll
+
+/* Print */
+file=ABI_DIR\BUILD_DIR\print.dll 		System\Libs\Print.dll
+
+/* Pwrcli */
+#include "PwrCli.iby"
+
+#include <securitycommonutils.iby>
+
+/* Bafl */
+#include "Bafl.iby"
+
+/* Cone */
+file=ABI_DIR\DEBUG_DIR\cone.dll 		System\Libs\Cone.dll
+
+/* NumberConversion */
+#include "NumberConversion.iby"
+
+/* EGUL */
+file=ABI_DIR\DEBUG_DIR\egul.dll 		System\Libs\Egul.dll
+
+/* Dial */
+file=ABI_DIR\BUILD_DIR\dial.dll 		System\Libs\Dial.dll
+
+/* BmpAnim */
+file=ABI_DIR\BUILD_DIR\BmpAnim.dll 		System\Libs\BmpAnim.dll
+file=ABI_DIR\BUILD_DIR\BmpAnSRv.dll 	System\Libs\BmpAnSrv.dll
+
+/* Central Repository*/
+#include "centralrepository.iby"
+
+/* Secure Backup Engine */
+#include "connectivity_securebackupengine.iby"
+
+#include "swi.iby"
+
+//
+// The resource file needed to allow Contacts Model to work is supplied by
+// the UI (e.g. Series 60 or TechView) and in a Text Only ROM we need to
+// include the TechView version.
+//
+data=MULTI_LINGUIFY(RSC EPOCROOT##epoc32\data\Z\resource\cntmodel\cntmodel  resource\cntmodel\Cntmodel)
+
+//
+// For v9.1+ we need to import the nowatcher.iby file to disable watchers and allow
+// TE_TelWatchers to work.
+//
+#include <nowatcher.iby>
+
+/* Time Zone Server */
+#include <timezoneserver.iby>
+
+///////////////////////////////////////////// Include Our Test Code
+
+#include <XmlFramework.iby>
+
+DEBUGPORT 3
+#include <trpat.iby> 
+#include <RPSSlave.iby>
+
+//
+// Comms-Infra's CommDB Editing Tools...
+//
+#ifndef _DEBUG
+file=ABI_DIR\DEBUG_DIR\ced.exe                      SYSTEM_BINDIR\ced.exe
+file=ABI_DIR\DEBUG_DIR\ceddump.exe                  System\Programs\ceddump.exe
+#endif // _DEBUG
+
+ 
+#endif // !__RPSSLAVE_OBY__

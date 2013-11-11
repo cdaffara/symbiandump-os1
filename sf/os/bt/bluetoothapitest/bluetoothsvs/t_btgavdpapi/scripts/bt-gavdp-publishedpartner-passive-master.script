@@ -1,0 +1,1817 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+///////////////////////////////////////////////////////////////////////////////
+//! @file
+//! @SYMTestSuiteName           T_BTGavdp
+//! @SYMScriptTestEnvironment   This test script requires a basic ROM with bluetooth dongle.
+//! @SYMScriptDescription
+//! @SYMAuthor                  Niandong Qiao, Jianhui Ren, Kevin Zeng
+//! @SYMCreationDate            05-06-2008
+///////////////////////////////////////////////////////////////////////////////
+
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\
+RUN_UTILS MkDir ${SYSDRIVE}\bluetooth\gavdp\
+
+LOAD_SUITE    UCCControlTE
+LOAD_SUITE    t_btgavdpapi    -SharedData
+DELAY    2000
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini BuildRunGavdpActiveSlave
+DELAY    5000
+
+// ****************************************************************************
+// Set up BT Addresses
+// ****************************************************************************
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   CBluetoothSocket    bluetoothsocket1
+        CREATE_OBJECT   TRfcommSockAddr     rfcommsockaddr1
+        CREATE_OBJECT   TBTDevAddr          addrlocal   
+        COMMAND         bluetoothsocket1    RSocketServerConnect
+        COMMAND         bluetoothsocket1    NewL                BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses-0001-NewL_Command02
+        COMMAND         rfcommsockaddr1     Construct
+        COMMAND         rfcommsockaddr1     SetFamily           BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses-0001-SetFamily_Command04
+        COMMAND         rfcommsockaddr1     SetPort             BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses-0001-SetPort_Command05
+        COMMAND         bluetoothsocket1    Bind                BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses-0001-Bind_Command06
+        COMMAND         bluetoothsocket1    Listen              BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses-0001-Listen_Command07
+        COMMAND         addrlocal           Construct
+        COMMAND         addrlocal           OpenHostResolver    BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses-0001-OpenHostResolver_Command09
+        COMMAND         addrlocal           SetHostNameL        BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses-0001-SetHostNameL_Command10
+        COMMAND         addrlocal           SetDiscoverable
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-SetBTAddresses
+
+// ****************************************************************************
+// RGavdp Tests
+// ****************************************************************************
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0001
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0001
+//! @SYMAPI                     RGavdp::RGavdp();
+//!                             RGavdp::Open(MGavdpUser {ref}, RSocketServ {ref})
+//!                             RGavdp::Close()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Create a RGavdp object by default constructor and then open and close it.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. RGavdp object was created without causing panic.
+//!                             2. Method RGavdp::Open() return KErrNone.
+//!                             3. Method RGavdp::Close() called without causing panic.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                BT-GAVDP-PublishedPartner-Passive-Master-0001-0001-Open_Command04
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0001
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0002
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0002
+//! @SYMAPI                     RGavdp::RegisterSEP(TAvdtpSEPInfo {ref});
+//!                             RGavdp::BeginConfiguringLocalSEP(TSEID);
+//!                             RGavdp::AddSEPCapability(const TAvdtpServiceCapability {ref});
+//!                             RGavdp::CommitSEPConfiguration();
+//!                             MGavdpUser::GAVDP_ConfigurationConfirm()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Configure a local SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method RGavdp::RegisterSEP() return KErrNone.
+//!                             2. Method RGavdp::BeginConfiguringLocalSEP() return KErrNone.
+//!                             3. Method RGavdp::AddSEPCapability() return KErrNone.
+//!                             4. Method RGavdp::CommitSEPConfiguration() called without causing panic.
+//!                             5. The callback function MGavdpUser::GAVDP_ConfigurationConfirm() is called when locally-initiated configuration procedure successfully completes.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0002-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0002
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0003
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0003
+//! @SYMAPI                     RGavdp::Listen ();
+//!                             MGavdpUser::GAVDP_ConnectConfirm(const TBTDevAddr {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Accept a connect from a peer device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method Listen() return KErrNone.
+//!                             2. The call back function MGavdpUser::GAVDP_ConnectConfirm() is called  when a signalling channel has successfully been created.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0003-0001-Listen_Command29
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0003
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0004
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0004
+//! @SYMAPI                     RGavdp::DiscoverRemoteSEPs();
+//!                             MGavdpUser::GAVDP_SEPDiscovered(const TAvdtpSEPInfo {ref});
+//!                             MGavdpUser::GAVDP_SEPDiscoveryComplete()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Set local SEPs and wait for SEP discovering from remote device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Delay 5 second and wait for SEP discovering from remote device.
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Number of discovered SEPs is as expected.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0004-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0004
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0005
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0005
+//! @SYMAPI                     RGavdp:: GetRemoteSEPCapabilities(TSEID, const TAvdtpServiceCategories {ref});
+//!                             MGavdpUser::GAVDP_SEPCapability(TAvdtpServiceCapability {ptr});
+//!                             MGavdpUser::GAVDP_SEPCapabilityComplete()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Set a local SEP and wait for remote device to get capabilities of this SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Delay 5 second and wait for remote device to get capabilities of local SEP.
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Received capabilities at remote device is same as capabilities of local SEP.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0005-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0005
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0006
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0006
+//! @SYMAPI                     MGavdpUser::GAVDP_ConfigurationStartIndication(TSEID, TSEID);
+//!                             MGavdpUser::GAVDP_ConfigurationIndication(TAvdtpServiceCapability {ptr});
+//!                             MGavdpUser::GAVDP_ConfigurationEndIndication()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Accept remotely initiated configuration of local SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_ConfigurationStartIndication() is called when remote is beginning to configure a local SEP.
+//!                             2. The call back function GAVDP_ConfigurationIndication() is called when each capability is being proposed by the peer during configuration.
+//!                             3. The call back function GAVDP_ConfigurationEndIndication() is called when remotely initiated configuration of local SEP is completed.
+//!                             4. Number of received capabilities is as expected.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0006-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0006
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0007
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0007
+//! @SYMAPI                     MGavdpUser::GAVDP_BearerReady(RSocket, const TAvdtpSockAddr {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Receive remotely cteated bearers.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             13. Close bearers
+//!                             14. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_BearerReady() is called when a bearer has been created for a session in the stream.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0007-0001-Listen_Command29
+        OUTSTANDING
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0007
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0008
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0008
+//! @SYMAPI                     MGavdpUser::GAVDP_StartIndication(TSEID);
+//!                             MGavdpUser::GAVDP_AbortIndication(TSEID)
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Accept start stream and abort stream from remote device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_StartIndication().
+//!                             13. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             14. Close bearers
+//!                             15. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_StartIndication() is called when the remote is trying to Start a stream.
+//!                             2. The call back function GAVDP_AbortIndication() is called when the remote has Aborted the stream.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0008-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0008
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0009
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0009
+//! @SYMAPI                     RGavdp::CreateBearerSockets(TSEID, TBool, TBool)
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Receive data through created socket. 
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_StartIndication().
+//!                             13. Read data.
+//!                             14. Wait for call back to RunL().
+//!                             15. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             16. Close bearers.
+//!                             17. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Received data is as expected.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-Listen_Command29
+        OUTSTANDING
+        
+        COMMAND         gavdp               Read                        BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-Read_Command31
+        OUTSTANDING
+        
+        COMMAND         gavdp               IncOutstanding              BT-GAVDP-PublishedPartner-Passive-Master-0009-0001-IncOutstanding_Command33
+        OUTSTANDING
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0009
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0010
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0010
+//! @SYMAPI                     MGavdpUser::GAVDP_SuspendIndication(TSEID)
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Accept suspend stream and restart stream from remote device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_StartIndication().
+//!                             13. Wait for call back to MGavdpUser::GAVDP_SuspendIndication()
+//!                             14. Wait for call back to MGavdpUser::GAVDP_StartIndication()
+//!                             15. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             16. Close bearers
+//!                             17. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_SuspendIndication() is called when the remote is trying to Suspend a stream.
+//!                             2. The call back function GAVDP_StartIndication() is called when the remote is trying to Start a stream.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0010-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0010
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0011
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0011
+//! @SYMAPI                     MGavdpUser::GAVDP_SecurityControlIndication(TSEID, TDes8 {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Accept security control information from remote device and don not change the security data.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to MGavdpUser::GAVDP_SecurityControlIndication()
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_SecurityControlIndication() is called when the remote is sending Security Control information.
+//!                             2. Received data is as expected.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0011-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0011
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0012
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0012
+//! @SYMAPI                     MGavdpUser::GAVDP_SecurityControlIndication(TSEID, TDes8 {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Accept security control information from remote device and change the security data.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to MGavdpUser::GAVDP_SecurityControlIndication()
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_SecurityControlIndication() is called when the remote is sending Security Control information.
+//!                             2. Received data is as expected.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0012-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0012
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0013
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0013
+//! @SYMAPI                     MGavdpUser::GAVDP_ReleaseIndication(TSEID)
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Callback to MGavdpUser::GAVDP_ReleaseIndication(TSEID) when the remote end has Released a stream. 
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_StartIndication().
+//!                             13. Read data.
+//!                             14. Wait for call back to RunL().
+//!                             15. Wait for call back to MGavdpUser::GAVDP_ReleaseIndication().
+//!                             16. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function MGavdpUser::GAVDP_ReleaseIndication() is called when the remote end has Released a stream.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-Listen_Command29
+        OUTSTANDING
+        
+        COMMAND         gavdp               Read                        BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-Read_Command31
+        OUTSTANDING
+        
+        COMMAND         gavdp               IncOutstanding              BT-GAVDP-PublishedPartner-Passive-Master-0013-0001-IncOutstanding_Command33
+        OUTSTANDING
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0013
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0014
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0014
+//! @SYMAPI                     RGavdp::Cancel()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Cancel a command of start stream.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_StartIndication().
+//!                             13. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             14. Close bearers
+//!                             15. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_StartIndication() is called when the remote end has canceled a start stream command.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0014-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0014
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0016
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0016
+//! @SYMAPI                     MGavdpUser::GAVDP_Error(TInt, const TDesC8 {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            GAVDP error occurs.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             13. Close bearers
+//!                             14. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_Error() is called when a GAVDP error occurs.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0016-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0016
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0017
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0017
+//! @SYMAPI                     RGavdp::Connect(const TBTDevAddr {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Negative test, connect to a not ready remote device.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function MGavdpUser::GAVDP_ConnectConfirm() is not called.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0017-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0017
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0018
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0018
+//! @SYMAPI                     RGavdp::CommitSEPConfiguration()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Reject remotely initiated configuration of local SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication(), at here reject it with -2.
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_ConfigurationEndIndication() is called when remotely initiated configuration of local SEP is completed.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0018-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0018
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0019
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0019
+//! @SYMAPI                     RGavdp::Listen()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Negative test, call listen() again after local SEP has been connected.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Call listen() again.
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Method Listen() return -14 when call it again.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0019-0001-Listen_Command29
+        OUTSTANDING
+        COMMAND !Error=-14  gavdp           Listen
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0019
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0020
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0020
+//! @SYMAPI                     MGavdpUser::GAVDP_ConfigurationStartIndication(TSEID, TSEID);
+//!                             MGavdpUser::GAVDP_ConfigurationIndication(TAvdtpServiceCapability {ptr});
+//!                             MGavdpUser::GAVDP_ConfigurationEndIndication()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Accept remotely initiated reconfiguration of local SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             12. Wait for call back to 
+//!                               12.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               12.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               12.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             13. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_ConfigurationStartIndication() is called when remote is beginning to configure/reconfigure a local SEP.
+//!                             2. The call back function GAVDP_ConfigurationIndication() is called when each capability is being proposed by the peer during configuration/reconfiguration.
+//!                             3. The call back function GAVDP_ConfigurationEndIndication() is called when remotely initiated configuration/reconfiguration of local SEP is completed.
+//!                             4. Number of received capabilities is as expected.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0020-0001-Listen_Command29
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0020
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0021
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0021
+//! @SYMAPI                     MGavdpUser::GAVDP_BearerReady(RSocket, const TAvdtpSockAddr {ref})
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Receive remotely cteated transport bearer.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio).
+//!                             4. Begin configuration of this SEP.
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration.
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm().
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Wait for call back to 
+//!                               10.1. MGavdpUser::GAVDP_ConfigurationStartIndication()
+//!                               10.2. MGavdpUser::GAVDP_ConfigurationIndication()
+//!                               10.3. MGavdpUser::GAVDP_ConfigurationEndIndication()
+//!                             11. Wait for call back to MGavdpUser::GAVDP_BearerReady().
+//!                             12. Wait for call back to MGavdpUser::GAVDP_AbortIndication().
+//!                             13. Close bearer.
+//!                             14. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. The call back function GAVDP_BearerReady() is called when the transport bearer has been created for a session in the stream.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-AddSEPCapability_Command24
+        COMMAND         capnonsbc1          new                         BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-new_Command25
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-AddSEPCapability_Command26
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-CommitSEPConfiguration_Command27
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0021-0001-Listen_Command29
+        OUTSTANDING
+        
+        COMMAND         gavdp               CloseBearerSockets
+        
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0021
+
+START_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0022
+//! @SYMTestCaseID              BT-GAVDP-PublishedPartner-Passive-Master-0022
+//! @SYMAPI                     RGavdp:: GetRemoteSEPCapabilities(TSEID, const TAvdtpServiceCategories {ref});
+//!                             MGavdpUser::GAVDP_SEPCapability(TAvdtpServiceCapability {ptr});
+//!                             MGavdpUser::GAVDP_SEPCapabilityComplete()
+//! @SYMAuthor                  Niandong Qiao
+//! @SYMCreationDate            05-06-2008
+//! @SYMTestCaseDesc            Set a local SEP and wait for remote device to get capabilities of this SEP.
+//! @SYMTestActions             1. Create a RGavdp object by default constructor.
+//!                             2. Open a GAVDP session.
+//!                             3. Register SEP (sink & audio)
+//!                             4. Begin configuration of this SEP
+//!                             5. Add local SEP capabilities:
+//!                               5.1. TAvdtpMediaTransportCapabilities
+//!                               5.2. TAvdtpReportingCapabilities
+//!                               5.3. TAvdtpRecoveryCapabilities
+//!                               5.4. TAvdtpContentProtectionCapabilities
+//!                               5.5. TNonSBCCodecCapabilities
+//!                             6. Commit the local SEP configuration
+//!                             7. Wait for call back to MGavdpUser::GAVDP_ConfigurationConfirm()
+//!                             8. Begin to listen.
+//!                             9. Wait for call back to MGavdpUser::GAVDP_ConnectConfirm().
+//!                             10. Delay 5 second and wait for remote device to get capabilities of local SEP.
+//!                             11. Closes the GAVDP session.
+//! @SYMTestStatus              Implemented
+//! @SYMTestPriority            High
+//! @SYMTestExpectedResults     1. Received capabilities at remote device is same as capabilities of local SEP.
+//! @SYMTestType                CIT
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StartSyncTestCase
+    START_TEST_BLOCK    100    t_btgavdpapi    \bluetooth\gavdp\bt-gavdp-publishedpartner-passive-master.ini
+        SHARED_ACTIVE_SCHEDULER
+        CREATE_OBJECT   RSocketServ         socketserv
+        CREATE_OBJECT   RGavdp              gavdp
+        CREATE_OBJECT   TAvdtpSEPInfo                         localsepinfo1
+        CREATE_OBJECT   TSEID                                 localseid1
+        CREATE_OBJECT   TAvdtpMediaTransportCapabilities      captransport1
+        CREATE_OBJECT   TAvdtpReportingCapabilities           capreport1
+        CREATE_OBJECT   TAvdtpRecoveryCapabilities            caprecovery1
+        CREATE_OBJECT   TAvdtpContentProtectionCapabilities   capprotect1
+        CREATE_OBJECT   TNonSBCCodecCapabilities              capnonsbc1
+        
+        COMMAND         socketserv          RSocketServ
+        COMMAND         socketserv          Connect
+        COMMAND         gavdp               new
+        COMMAND         gavdp               Open                        BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-Open_Command04
+        
+        COMMAND         localsepinfo1       new
+        COMMAND         localsepinfo1       SetIsSink                   BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SetIsSink_Command06
+        COMMAND         localsepinfo1       SetMediaType                BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SetMediaType_Command07
+        COMMAND         gavdp               RegisterSEP                 BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-RegisterSEP_Command08
+        COMMAND         localseid1          new
+        COMMAND         localsepinfo1       SEID                        BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SEID_Command10
+        COMMAND         gavdp               BeginConfiguringLocalSEP    BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-BeginConfiguringLocalSEP_Command11
+        COMMAND         captransport1       new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-AddSEPCapability_Command13
+        COMMAND         capreport1          new
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-AddSEPCapability_Command15
+        COMMAND         caprecovery1        new
+        COMMAND         caprecovery1        SetRecoveryType             BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SetRecoveryType_Command17
+        COMMAND         caprecovery1        SetMaxWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SetMaxWindowSize_Command18
+        COMMAND         caprecovery1        SetMinWindowSize            BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SetMinWindowSize_Command19
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-AddSEPCapability_Command20
+        COMMAND         capprotect1         new
+        COMMAND         capprotect1         SetContentProtectionType    BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SetContentProtectionType_Command22
+        COMMAND         capprotect1         SetContentProtectionData    BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-SetContentProtectionData_Command23
+        COMMAND         gavdp               AddSEPCapability            BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-AddSEPCapability_Command24
+        COMMAND         gavdp               CommitSEPConfiguration      BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-CommitSEPConfiguration_Command25
+        OUTSTANDING
+        
+        COMMAND         gavdp               Listen                      BT-GAVDP-PublishedPartner-Passive-Master-0022-0001-Listen_Command27
+        OUTSTANDING
+        
+        DELAY           5000000
+        COMMAND         gavdp               Close
+        COMMAND         socketserv          Close
+        STORE_ACTIVE_SCHEDULER
+    END_TEST_BLOCK
+    RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveSyncTestCaseResult
+END_TESTCASE BT-GAVDP-PublishedPartner-Passive-Master-0022
+
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini RetrieveExecutionResultSamplesDatabaseActiveSlave
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StopTDService
+RUN_TEST_STEP -1 UCCControlTE RunCommand \bluetooth\gavdp\ucc-control-channel-config.ini StopSyncService

@@ -1,0 +1,361 @@
+# clogger.pod
+#
+# Copyright (c) 2007-2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+#
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+__END__
+
+=head1 Clogger
+
+=head2 Introduction
+
+I<This document describes the underlying clogger log engine. For how to configure clogger from fshell, see L<here|fshell::commands::cloggerconfig>. >
+
+Clogger (pronounced clogger or see-logger) is an alternative logging engine that aims to unify all the disperate logging systems currently used across the system, and to try and improve on them all wherever possible. Clogger has a single log file that everything logs to (using multiple files was one of the major problems with Flogger). It also provides BC stubs for the older logging APIs so that you can use Clogger without needing to modify your source code (although generally it will be neater if you do). Good ideas and useful features from the existing loggers have been included wherever possible, as well as a few new ones.
+
+=head2 Features, or, What can Clogger do that other loggers can't?
+
+=over 4
+
+=item Unified log file
+
+All logging ends up in a single interleaved file. Much nicer than Flogger, similar to CDU. In addition, logging from other logging solutions can be redirected to the unified log, unlike CDU.
+
+=item Integrates with other loggers
+
+Replacement stub DLLs are provided to redirect Flogger and CDU logging into Clogger. RDebug::Print logs can also be redirected, and switched on and off per-thread. No other logging solution offers this (that I am aware of).
+
+=item More focused on performance
+
+Or rather, focused on not impacting the performance of whatever you are trying to get logging from. There have been a number of recent occasions where a problem was unreproducable when the conventional logging was enabled, but when the logging was switched to using clogger it could be successfully reproduced and the problem diagnosed from the log. Even RDebug::Print is faster to call if Clogger's RDebug redirection is enabled (albeit it is no longer synchronous).
+
+Examples of the performance features include: the static functions use TLS to avoid the overhead of repeatedly connecting to the Clogger server (unlike flogger); buffering can be enabled which means the timing overhead of logging calls is very low; when logging is present but disabled the overhead is a single exec call plus a couple of branch instructions (like CDU); in buffered mode file writes are guaranteed to be block aligned and rounded up to the flash block size for maximum performance; 
+
+There is also a separate client library (called clogger-buffered.dll instead of clogger.dll) which uses highly optimised code and has minimal impact on the calling thread. It has reduced functionality and no error handling so is not suitable for general logging, but where it is critical to not affect the timing of the calling thread then you can elect to use this library instead.
+
+=item Easier to use
+
+A contentious claim, but a simple client side API that has lots of logging functions (and not a lot else) goes a long way towards it. Compare the number of macro definitions in CDU's header file for example, then factor in how easy it is to fail to get CDU to log anything at all because you wanted logging in UREL or you forgot to include the mmh file, or you had to change your design because Flogger's static methods give such lousy performance. Or you couldn't copy your log file off the device because it was still being logged to and therefore was in use. Or you had to fiddle around for creating directories or rebooting in order to turn a particular bit of logging on or off, or...
+
+=item Configuration and logging can be toggled at run time
+
+CDU tried with allowing you to overwrite the comsdbg.ini file but it was pretty tedious. Clogger has a proper API for enabling and disabling what is logging, and for configuring the log server. There are command line and (UIQ3) GUI tools so you don't have to call the API directly yourself (see the L<See Also> section for details of these tools.)
+
+=item Multiple output mechanisms are supported at the same time
+
+You can output your logging to RDebug::Print at the same time as writing it to disk and outputting over bluetooth, should you want to. The logging is fully asynchronous so that, for eg, the file writer is not waiting for RDebug to complete before writing the next buffer to disk. Because of the SetGlobalOptions API and the tools that use it, you can toggle the different output mechanisms on and off at runtime.
+
+=item Carbide support!
+
+Ok, not really. But if someone wants to write a carbide plugin that integrates into the Bluetooth logger (or some other way) then it will be straightforward to support it within the server.
+
+=back
+
+=head1 Using the RClogger API
+
+=head2 Logging functions
+
+Summary of the main logging API. Note that there is an overload of every Log function which accepts a TDesC8 and a char*, in addition to the TDesC versions shown below. Every variable argument function also has an overload that takes a VA_LIST, these have been omitted below for clarity. The Log functions take a format string in the same way as RDebug::Printf, RFileLogger::WriteFormat etc. The class and its usage should look pretty familiar to anyone who has used RFileLogger.
+
+Clogger is, like the kernel, deliberately only 8-bit aware. Therefore if you log a 16 bit descriptor containing non-ASCII unicode, the log file will contain a mangled 8-bit version of the string. If you really need to log some unicode, use the HexDump() API. 16-bit descriptors are accepted as input but will be Collapsed into 8-bit.
+
+From C<\epoc32\include\clogger.h>:
+
+    class RClogger: public RSessionBase
+        {
+    public:
+        IMPORT_C void Log(TRefByValue<const TDesC> aFmt, ...);
+        IMPORT_C void HexDump(const TDesC8& aHeader, const TDesC8& aData);
+        
+        IMPORT_C static void Slog(TRefByValue<const TDesC> aFmt, ...);
+        IMPORT_C static void StaticHexDump(const TDesC8& aHeader, const TDesC8& aData);
+        
+        IMPORT_C void Log(TUint32 aLogMask, TRefByValue<const TDesC> aFmt, ...);
+        IMPORT_C void HexDump(TUint32 aLogMask, const TDesC8& aHeader, const TDesC8& aData);
+        
+        IMPORT_C static void Slog(TUint32 aLogMask, TRefByValue<const TDesC> aFmt, ...);
+        IMPORT_C static void StaticHexDump(TUint32 aLogMask, const TDesC8& aHeader, const TDesC8& aData);
+    
+        IMPORT_C RClogger();
+        IMPORT_C TInt Connect(); // If using this overload your thread full name becomes your tag
+        IMPORT_C TInt Connect(const TDesC& aTag); // All logging will be prepended with this tag.
+        
+        // ...
+        };
+
+The first 2 functions listed above (and their equivalents that take a TDesC8/char*) are the most basic interface to Clogger. Usage:
+
+    RClogger clogger;
+    User::LeaveIfError(clogger.Connect(_L("MyLogging")));
+    clogger.Log("This is me doing some logging");
+
+... I<Outputs the following to the clogger log file> :
+
+    2007-06-07 16:44:21.563: [MyLogging] This is me doing some logging
+
+The second 2 functions are the static equivalents, that don't require you to construct an RClogger instance. TLS is used to cache the RClogger object:
+
+    RClogger::Slog(_L("Some static logging");
+    RClogger::StaticHexDump(_L8("Heading "), myData);
+
+... I<Outputs the following to the clogger log file> :
+
+    2007-05-28 14:38:45.794: [MyLogging] Some static logging
+    2007-05-28 14:38:45.794: [MyLogging] Heading 0000 : 43 50 6F 72 64 6C 65 72 BC B3 57 7C 00 00 FA 7F  PlainText
+    2007-05-28 14:38:45.794: [MyLogging]         0010 : 60 21 5C 7C 08 2B 57 7C                          GoesHere
+
+The C<Connect()> function and its static equivalent C<StaticConnect()> are used to give a name to your logging that differentiates it from logging produced by other components in the system. This name is called a tag, you can see above that the tag (in this case "MyLogging") is included on every line of the log file. Logging can be enabled and disabled on a per-tag basis. If finer granularity control over what gets logged is required (eg you have different logging verbosities), Clogger supports an additional 32-bit parameter called the log mask that can be used to subdivide your logging. Example usage:
+
+    enum TLoggingMasks
+        {
+        ELogWarning = 1,
+        ELogUnderflow = 2,
+        ELogError = 4,
+        ELogConnectionFailure = 8,
+        };
+        
+    // ...
+    
+    RClogger::StaticConnect(_L("MyLoggingTag"));
+    RClogger::Slog(ELogConnectionFailure, "A connection failure occurred");
+    RClogger::Slog(ELogWarning, "A warning that probably isn't very interesting and will fill up your log");
+
+The mechanism for enabling and disabling logging allows you to specify what log mask you want to enable, so in the example above you could specify that logging should be enabled for MyLoggingTag, but only for C<ELogError|ELogConnectionFailure>. Log statements that specified C<ELogWarning> would not be recorded in the log. The above code snippet uses the static logging APIs but the non-static ones are treated the same.
+
+When you call one of the logging functions that doesn't take a log mask, such as C<RClogger::Slog("Some Logging")>, it is treated the same as if you'd called C<RClogger::Slog(0x80000000, "Some Logging")>. In other words, the top bit of the log mask implicitly means "any logging which doesn't specify a log mask".
+
+=head2 Configuring Clogger
+
+Note that the APIs in this section are generally only used by the GUI/command line configuration tool. Most of them (with the exception of C<SetLogBehaviour>) have a global effect on all clients of the logger so calling them from within your logging code is almost certainly the wrong thing to do.
+
+    class RClogger: public RSessionBase
+        {
+    public:
+        // ...
+        enum TGlobalOptions {
+            EBufferLog = 1,
+            EMirrorToRDebugPrint = 2,
+            EMirrorToBluetooth = 4,
+            ERedirectRDebugPrintToClogger = 8,
+			EDisableFileWriter = 16,
+        };
+        IMPORT_C void SetGlobalOptions(TUint aGlobalOptions);
+
+EBufferLog determines whether calls to the log functions should be buffered or whether the calls should wait for the log to be written to disk before returning. It is a toss up between performance and the need to collect logs from immediately before the phone crashes. In the future there may be support added to baseports to allow the buffer to be flushed to the crashlog in the event of a crash. The C<EMirror...> options are fairly self-explanatory, if you set them then clogger will echo the log file over a bluetooth serial port or the debug port. Note that C<EMirrorToBluetooth> is unlikely to work properly if you are trying to collect comms logging. C<EMirrorToMessageQueue> is deprecated and should not be used. C<EDisableFileWriter> is useful if you're trying to log something that is dependant on good file server performance - you'd usually combine this another option that allowed you to get the logs off the device, such as C<EMirrorToRDebugPrint> or something that uses C<RCloggerLogConsumer>.
+
+        IMPORT_C void SetRamBufferSize(TInt aSizeInBytes, TInt aNum)
+
+How many linked RAM buffers to use and how big. Defaults to 2 buffers of 4KB each. The log is only written out when the current RAM buffer is full, so a larger buffer may give a performance improvement but will increase latency. There is a 2-second timer on the buffer to ensure that the latency is bounded. The buffers are arranged in a ring structure so that one (or more) can be in the process of being written to disk/bluetooth/etc while another is being logged to. Has no effect if EBufferLog option is not being used.
+
+        enum TLogBehaviour {
+            EUseHeapBuffer = 2,
+        };      
+        IMPORT_C void SetLogBehaviour(TUint aLogBehaviour);
+
+By default RClogger allocates a buffer on the client side to aid formatting without limiting log lines to 256 chars using a stack-allocated buffer (as Flogger/CDU/RDebug do). If it is important that your RClogger doesn't do this, you may disable it on a per-session basis by calling C<SetLogBehaviour(0)> before your first call to any of the Log functions. If you plan on sharing the RClogger object across multiple threads, you must disable C<EUseHeapBuffer> as it is not safe to use if there is any possibility that multiple threads could call Log at the same time. If it disabled then log lines will be silently truncated to 256 characters. The Flogger/CDU compatibility libraries turn this off automatically to be compatible with how RFileLogger is supposed to work. More options may be added to this enum in the future. 
+
+        IMPORT_C TInt SetEnabled(const TDesC& aTag, TUint32 aEnabledMask);
+
+API to allow you to enable and disable logging for a given tag. The convenience variable C<RClogger::EAllEnabled> can be passed in as aEnabledMask to indicate that all logging for the tag should be enabled. To disable all logging, pass in zero. If aTag is not known to clogger (ie has not yet logged anything), this function will try and create the tag (returning KErrNoMemory if the tag could not be created). In all other circumstances returns KErrNone.
+
+There is a special tag called C<KCloggerDefaultTag> (whose value is "DefaultForNewTags") which holds the default setting for anything that connects to the clogger server in the future. This is useful to avoid turning on all your logging at once on boot (ie before you can get to the config tool to disable the bits you don't need). You cannot pass this tag into C<Connect()>, consequently you will never see it in the log. Equally using "Clogger" for your tag is not allowed. If you do pass in a disallowed tag, then the server will fall back to using the threadname, just as if you didn't specify a tag at all.
+
+        enum TRotateBehaviour {
+            EDoNothingSpecial = 0,
+            ECopyRotatedToExternalMedia = 1,
+            EAutoRotateAtStartup = 4,
+            ECompressRotatedLogs = 8,
+        };
+        IMPORT_C void SetRotateBehaviour(TInt aNumberOfOldLogsToKeep, TUint aRotateBehaviour);
+        IMPORT_C TInt Rotate();
+
+The clogger log file is written to C:\logs\clogger.txt. Because that file is permanently kept open by the Clogger server, you cannot directly copy it off the device (unless you use fshell's force copy option). So there is an API to tell Clogger to close the log file, rename it to clogger-TIMESTAMP.txt, and start logging into a fresh clogger.txt file. If C<ECopyRotatedToExternalMedia> is configured then calling C<Rotate()> will copy the old file onto the first external disk it can find, if there are any. (on most devices, this is the D: or E: drive). C<ECompressRotatedLogs> will cause the logs to be GZIP compressed to save disk space (GZIP can be opened by WinZip or UNIX command line zip). Note that the current log file is never compressed, in case the device crashes before the log can be cleanly closed.
+
+        IMPORT_C void PersistSettings();
+        IMPORT_C void ResetSettings();
+        };
+
+You can save all the settings (including what tags are enabled) across reboots by calling C<PersistSettings()>. C<ResetSettings()> will reset all settings to their default values. All the settings are altered immediately, with the exception of what tags are enabled - these are not reset until reboot.
+
+=head1 Architecture
+
+Clogger is a standard client-server setup, the client API RClogger (in clogger.dll) talks to the server (in cloggerserver.exe). The client takes care of checking whether logging is enabled (so as to avoid having to make a client-server call if disabled) then formatting the format string and passing the buffer to the server. The client also takes care of stashing an RClogger handle in TLS when the static functions are called.
+
+The server behaves differently depending on whether EBufferLog has been specified. If it hasn't, then all Log() calls are fully synchronous and will not return until the log string has been written to disk. If it has, then the log string goes into a buffer which is written out asynchronously. An idle timer (currently 2 seconds) ensures that logging does get written out reasonably quickly even if there isn't enough logging to fill the buffer and cause it to be flushed to disk.
+
+Multiple buffers arranged in a ring take care of the fact that the different output mechanisms that may be enabled (file, bluetooth, RDebug::Print) take different times to complete. It also handles the case of logging coming in faster than it can be written out by allocating one or more new buffers and adding them to the ring.
+
+The redirection of RDebug::Print is done by a device driver, clogger-debugrouter.ldd (For more info see the section L<"Base and baseport support"> below). CDU/Flogger/CFlog is done by replacing the client-side library DLL (eg flogger.dll) with one provided by clogger (flogger_clogger_stub.dll in this case). Generally the easiest way of doing this is by changing the flogger IBY to include the Clogger version instead. It is also possible to install the stub on the C drive providing you have a helper tool that can bypass Software Install.
+
+The server writes out to C:\logs\clogger.txt, if the logs directory is not present it will do nothing (other writer mechanisms like RDebug or bluetooth will still work regardless). If you create the logs directory while the device is running clogger will start logging to it without needing to reboot. Rotating the log in order to copy it off the device renames the log file by adding a date and time stamp, eg clogger_2007-07-01_12-23-00.000.txt. Optionally the server can copy the logs to the external media and compress them using GZIP.
+
+Logging statements from Flogger appear in the clogger log file with tag C<[Folder/FileName]>, logging from CDU gets the tag C<[Subsystem:Component]>. If RDebug redirection is enabled, things work a little differently. Internally clogger keeps track of RDebug::Prints and Kern::Printfs via the name of the thread that called it (the same as if the thread had called RClogger::Slog). Thread names are however rather long to include in every log statement, so in the log file clogger will only show the thread ID. If you want to figure out what that thread name actually is, check back in the log as clogger will note it the first time a thread prints. Ie:
+
+    2008-02-07 00:36:13.862: [Clogger] Thread [67] (c32exe::ESock_Bt) has started rdebugging
+    2008-02-07 00:36:14.011: [67] Logging here
+    2008-02-07 00:36:19.810: [67] More logging from this thread...
+    2008-02-07 00:36:19.974: [67] ... only logs the thread ID, [67]
+
+If you want to disable logging from a thread, you should use the threadname, not the ID. In the case above, C<clogger.SetEnabled(_L("c32exe::ESock_Bt"), 0)>. In rare out-of-memory situations, rdebug logging will appear with just C<[RDebug]>. As shown in the example above, Clogger trims the excess from the thread name, it uses C<c32exe::ESock_Bt> instead of the fullname C<c32exe.exe[101f7989]0001::ESock_Bt>.
+
+Logs are all timestamped using the fast tick counter (C<User::FastCounter()>) translated into GMT. The format is:
+
+    2007-05-28 14:38:45.794: [MyLogging] The logging text
+    YYYY-MM-DD HH:MM:SS:MMM: [TAGNAME] The logging text
+
+Where C<MMM> is milliseconds. The timestamp is added on the client side when the call to RClogger::Log (etc) is made so whether buffering is enabled or how busy the server is will make no difference to the timestamp. Because the FastCounter API is not directly related to the system time, changing the system time while the server is running will have no effect on the timestamps, they will still show the time in GMT as it would have been if the clock had not been changed. Because RDebug logging is asynchronous and the timestamp is taken when the logging is done not when the clogger server processes it, RDebug logging may appear out of sequence with respect to non-RDebug logs.
+
+=head2 Performance-critical logging
+
+Occasionally it is necessary to add instrumentation to your code that has a near-zero impact on timing and thread scheduling. If you find that using clogger even in buffered mode alters the timing too much for your needs, clogger does provide an alternative library called clogger-buffered.dll which uses the same API but uses a large RAM buffer to avoid IPC and talking the server. The log routines themselves are also optimised to minimise branching, memory accesses and exec calls.
+
+The performance-critical library clogger-buffered.dll is enabled by changing your MMP to link against clogger-buffered.lib instead of clogger.lib. The static log functions (C<RClogger::Slog>) have been replaced with versions that log to a 2MB mem buffer without causing memory allocations or client-server calls. This means the log functions should return very quickly without blocking the thread or causing it to reshedule. The log functions that take a TDesC16 are not implemented, it made the code more complicated. Calling them (as well as any other error condition that would mean that logging couldn't take place) will cause a panic - the idea being that if you've enabled the performance logging, you either want the logging to work or you want it to fail quickly and noticably. Global variables are used for the RClogger, RChunk and temp buffers. The buffer is flushed when the session is closed (by calling C<RClogger::StaticClose()>) or when the client thread exits. It is not currently thread-safe, if multiple threads in the client try and use the interface at once (unlike the usual RClogger interface, which is). It also skips a bunch of checks and error handling. It will probably panic if the logging exceeds 2MB, or if the formatted log string is over 2KB, or in a dozen other places. If the baseport supports crashdumpareas then the logging chunk will be added to the crashlog.
+
+=head2 Base and baseport support
+
+The kernel-side clogger library (clogger-debugrouter.ldd) is now able to capture Kern::Printf logging that occurs before the cloggerserver has started. This is possible because you can now load clogger-debugrouter.ldd as a kernel extension, this is done by defining the CLOGGER_EARLY_DEBUG rombuild macro. The earlier you put clogger.iby in your master OBY the more logging you will (potentially) capture (because of how extensions are loaded by the kernel). When the debug router loads it will enable RDebug::Print (and Kern::Printf) redirection. Until the clogger server connects to the LDD, the debug output will be cached in the LDD buffer. This allows you to capture debug from early on in the boot process. You must enable rdebug redirection before the debug router's buffers will be read. There are also a couple of APIs that the baseport can use to improve how the logger works. These are defined in F<fshell/debugRouter-kext.h>:
+    
+    namespace CloggerDebugRouter
+    {
+    /* Implementations of these functions should expect to be called in a thread context with the kernel unlocked
+     */
+    typedef void (*TRegisterFn)(TAny* /*aAddr*/, TUint /*aSize*/, SCrashDumpArea& /*aCrashDumpArea*/);
+    typedef void (*TUnregisterFn)(SCrashDumpArea& /*aCrashDumpArea*/);
+    
+    IMPORT_C void SetCrashDumpFunctions(TRegisterFn aRegisterFn, TUnregisterFn aUnregisterFn);
+    };
+
+If the baseport supports adding information to the crashlogs, then clogger can be configured to add the buffers it uses. To configure it, the baseport (or something kernel-side) can call C<CloggerDebugRouter::SetCrashDumpFunctions> passing in appropriate function pointers to register and unregister areas of memory. Clogger will then use these functions to map all its buffers into the log. This functionality is very useful if you need to use buffered logging for performance reasons, but you need to see what was logged immediately before the device crashed (ie before clogger had a chance to flush the buffer). Because of how the RDebug::Print redirection works, the debug prints are always buffered in the LDD, so this support is vital for capturing all the RDebug info. Clogger will add the following sections to the crashlog if SetCrashDumpFunctions has been called:
+
+=over 4
+
+=item RDebug::Print buffer
+
+If RDebug::Print redirection has been enabled, the buffer used to get the debug prints from the kernel to the clogger server.
+
+=item Interrupt handler debugprint buffer
+
+To handle the possiblitily of kernel code calling Kern::Printf during an Interrupt Service Routine, a separate buffer is needed
+
+=item Performance logging chunks
+
+If any clients are using the performance-critical library clogger-buffered.dll, then all the memory chunk used for that will also be saved.
+
+=item "Buffered logging" buffers
+
+If the clogger server is configured to do buffered logging then these buffers are also added.
+
+=back
+
+=head2 Patchable constants
+
+A couple of patchable constants are defined in the debug router LDD. These are:
+
+=over 4
+
+=item * KChunkSize
+
+64KB by default, this is the size of the RDebug::Print buffer. You can modify this by specifying the rombuild argument C<-DCLOGGER_RDEBUG_BUFSIZE=xyz>.
+
+=item * KIsrBufSize
+
+The interrupt handler debugprint buffer size. Defaults to 256 bytes. Please note, the support for patching KIsrBufSize is not yet complete!
+
+=item * KEnableEarlyRdebug
+
+Whether to start logging from the moment the debug router loads. Better to use the rombuild argument C<-DCLOGGER_EARLY_DEBUG> because that also ensures the debug router is loaded as a kernel extension and sets the buffer size.
+
+=back
+
+You may wish to raise KChunkSize, for example, if you need to capture more than 64KB of tracing during bootup, before the cloggerserver has connected. The buffers used by the clogger server's buffered logging are configured either in the cenrep config, or at runtime using the RClogger::SetRamBufferSize API.
+
+On platforms that do not support patchable constants (ie v9.1 or earlier) you cannot use the CLOGGER_EARLY_DEBUG macro, because it relies on a patchable constant. Instead you can set the debugport to 67 (C<KCloggerDebugPort> in F<fshell/debugRouter-kext.h>) to achieve the same thing. This mechanism is only recommended for platforms without patchdata support though.
+
+=head1 Collecting logs
+
+Checklist for using clogger logging:
+
+=over 4
+
+=item 1. Add the logging statements to your code
+
+As appropriate, either by using your existing logging setup (eg flogger/CDU) or by using RClogger directly. The RClogger class behaves identically when called/run from UREL or UDEB, but if you are using macros for your logging ensure they are setup such that your logging is getting called (eg by putting the UDEB binaries in the ROM or by defining USE_CLOGGER etc).
+
+=item 2. Include the clogger IBY(s) in the ROM
+
+The main clogger IBY is \epoc32\rom\include\clogger.iby. If you want to redirect logging from flogger/CDU then you also need to change flogger.iby or commsdbgutil.iby to include xxx_CLOGGER_STUB.DLL instead of the client library flogger.dll or commsdbgutil.dll.
+
+=item 3. Configure clogger to enable the logging you want
+
+Using the command line or GUI configuration tools, or by specifying defaults in the cenrep config. Logging defaults to being on for all tags, so you'll only need to change this if you want to limit the amount of logging you want.
+
+Also remember to turn on RDebug::Print redirection or the other configuration options that you want. Use C<PersistSettings()> as needed. Turn on C<EBufferLog> if desired, depending on whether you want performance or guaranteed logging.
+
+=item 4. Collect your logs
+
+You may wish to call C<Rotate()> immediately before doing the logging you're interested in, so that the log file doesn't contain irrelevant logging. Likewise setting C<EAutoRotateAtStartup> and yanking the battery after you've collected the logs you need is a good way of ensuring that there isn't irrelevant stuff at the end of the log.
+
+=item 5. Retreive the log
+
+Call C<Rotate()> from the command line or gui tool (or C<EAutoRotateAtStartup>) to move your logs to C:\logs\clogger-TIMESTAMP.txt (or D:, or .txt.gz, depending on what options you've configured.). If you configured RDebug::Print or bluetooth logging then you obviously won't need to do this step.
+
+=back
+
+=head2 Rombuild-time configuration
+
+Clogger has a cenrep file which can be used to setup default values for the settings mentioned in L<"Configuring Clogger">. These settings are:
+
+    0 The default TGlobalOptions settings (eg "5" means EMirrorToBluetooth|EBufferLog)
+    1 The default buffer size (as per RClogger::SetRamBufferSize)
+    2 The default number of buffers (as per RClogger::SetRamBufferSize)
+    3 The default number of rotated logs to keep (as per SetRotateBehaviour)
+    4 The default TRotateBehaviour setting (eg "5" means EAutoRotateAtStartup|ECopyRotatedToExternalMedia)
+
+You can also specify what tags are enabled by default using the following syntax. The special tag name C<"**Everything else**"> specifies the default setting for any tags not specified here. Therefore, use this tag to specify whether logging is on or off by default for any new tags. This tag name is defined in clogger.h as C<KCloggerDefaultTag>.
+
+    # This sets the logging mask for MyComponent to 0xFFFFFFFF (ie all logging enabled)
+    0x80000000 string8 "MyComponent" 0
+    0x80000001 int 0xFFFFFFFF 0
+    # This sets the default for everything else to be zero (ie disabled)
+    0x80000002 string8 "**Everything else**" 0
+    0x80000003 int 0 0
+    # Further tags could be specified at location 0x80000004 etc
+
+For setting tags, the first tag must be specified with index 0x80000000, with the tag name being at the even-numbered location and the value at the corresponding odd-numbered location. The actual location used isn't important so long as they're all unique and in the 0x80nnnnnn range. Remember that this cenrep file and the settings in it will only be considered if the settings haven't been saved to the persistant cenrep file on the C drive!
+
+The debug router LDD is configured in the IBY as specified in the L<"Base and baseport support"> section.
+
+=head2 Setting up Bluetooth logging
+
+I<Please note, Bluetooth logging support is not compiled in by default - you'll need to recompile with _USE_BLUETOOTH_ defined in server.mmp>
+
+Using the command line or GUI config tools, ensure that the EMirrorToBluetooth option is enabled.
+
+You will need HyperTerminal or similar running on your PC. On your PC's "My Bluetooth Places" find the relvant phone in "Entire Bluetooth Neighborhood". Open the phone, and double click on "m-Router Connectivity". You will see a dialog saying that COM xx is now connected. If the PC has chosen the correct serial port (it's a bit of a toss-up) the you'll see "Clogger: Bluetooth connected" info print on the device. IF that happens, then you are free to connect Hyperterminal to the COM port that the bluetooth dialog said, and you're good to go.
+
+If however the PC chose the wrong port (and you didn't get an info print on the phone) then you still need to connect to the appropriate port using HyperTerminal. The trick to making it work is to connect in hyperterminal, wait for mrouter to start outputting junk data, then disconnect in hyperterminal and re-try double-clicking on "m-Router Connectivity" in the My Bluetooth Places window. Generally, the PC gets it right second time around.
+
+The reason this is more complicated that it should be is that the PC Bluetooth UI doesn't allow you to make connections to services it doesn't understand, so clogger has to appear to be a "Virtual serial port". This causes problems because m-Router advertises itself in the same way, and the BT UI is not very good when a device advertises multiple instances of the same service. Generally though it does sort itself out and connects you to the right port second time round.
+
+=head1 See also
+
+=over 4
+
+=item L<cloggerconfig|fshell::commands::cloggerconfig>
+
+Command-line tool for configuring Clogger options (built as part of fshell)
+
+=back
+
+=head1 Copyright
+
+Copyright (c) 2007-2010 Accenture. All rights reserved.
+
+=cut

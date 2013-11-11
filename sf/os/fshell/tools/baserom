@@ -1,0 +1,931 @@
+#!perl -w
+# baserom
+# 
+# Copyright (c) 2009 - 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+use strict;
+use Cwd;
+use Getopt::Long;
+use File::Path;
+
+#fwd decls for functions.
+sub CreateNewObeyFile();
+sub ProcessCommandLine();
+sub Usage();
+sub ConvertIbyLine($);
+sub FindMissingDeps($);
+sub ResolveMissingDeps($);
+sub FindIby($);
+sub CheckIbyContains($$);
+sub headerInfo($);
+sub trim($);
+sub Query($$);
+sub makeFullFileName($);
+
+
+# globals
+my $verbose = 0;
+my $help;
+my $epocroot = $ENV{"epocroot"};
+my $tempDir = $ENV{"temp"};
+my $romIncludeDir;
+my $obyName;
+my $obyPath;
+my $baseObeyFile = "tshell.oby";
+my $main = "armv5";
+my $build = "udeb";
+my $variant = "h4hrp";
+my $extraInclude = undef;
+
+my %ignoreDeps = ('scppnwdl.dll' => 1, 'drtaeabi.dll' => 1, 'drtrvct2_2.dll' => 1, 'dfpaeabi.dll' => 1, 'dfprvct2_2.dll' => 1);
+
+ProcessCommandLine();
+
+my $newObyFile;
+my $missingCount;
+my $continue;
+do {
+  $continue = 0;
+  $newObyFile = CreateNewObeyFile();
+  my $missingFiles = FindMissingDeps($newObyFile);
+  $missingCount = scalar(@$missingFiles);
+  
+  if ($missingCount) {
+    #print "$missingCount missing dependancies:\n";
+    #foreach my $dep (@$missingFiles) {
+    #	if (defined $dep->[1]) {
+    #		print "$dep->[0] UID3: $dep->[1]\n";
+    #	} else {
+    #		print "$dep->[0]\n";
+    #	}
+    #}
+
+    if (Query("\nThere are $missingCount missing dependancies; resolve them now?", "yn")==0) {
+
+    	ResolveMissingDeps($missingFiles);
+    	
+    	$continue = 1;
+    	
+    } else {
+    	$newObyFile = CreateNewObeyFile();
+    }
+  }
+} while ($missingCount && $continue);
+
+print "New OBY file: $newObyFile\n\n";
+print "To build a ROM:\n";
+print "rom --type tshell_$obyName --inst $main --build $build --variant $variant\n";
+exit(0);
+
+
+sub ProcessCommandLine() {
+	Getopt::Long::Configure ("bundling");
+	GetOptions( 'h' => \$help, 
+	            'v+' => \$verbose, 
+	            'e=s' => \$epocroot, 
+	            'i=s' => \$romIncludeDir, 
+				'x=s' => \$extraInclude,
+	            'o=s' => \$baseObeyFile, 
+	            'V=s' => \$variant,
+	            't=s' => \$main,
+	            'b=s' => \$build);
+	Usage() if ($help);
+
+	$epocroot = "$epocroot\\" unless $epocroot =~ m/\\$/;
+	my ($drive) = (getcwd =~ m/^(\w)\:/);
+	die "Can't get current drive\n" unless $drive;
+	$epocroot = "$drive:$epocroot";
+	print "Using epocroot $epocroot\n" if ($verbose);
+
+
+
+	($romIncludeDir = "epoc32\\rom\\include") unless ($romIncludeDir);
+	$romIncludeDir =~ s/\\$//; # remove trailing \ if it exists
+	$romIncludeDir = "$epocroot$romIncludeDir";
+	print "Using include directory $romIncludeDir\n" if ($verbose);
+
+	unless (scalar (@ARGV) == 1) {
+		print "Inavlid arguments\n";
+		Usage();
+		}
+		
+	$obyPath = $ARGV[0];
+	if ($obyPath =~ m/.*[\\\/]([^.]+)\..*/i) {
+		$obyName = $1;
+	} else {
+		$obyName = $obyPath;
+	}
+	
+	die "ERROR: Build must be either 'udeb' or 'urel'\n" unless ($build =~ m/(udeb)|(urel)/i);
+	
+	print "Using variant $variant, build $main $build\n";
+}
+
+sub CreateNewObeyFile() {
+	unless (-d $obyName) {
+		mkdir $obyName or die "Can't create dir $obyName: $!\n";
+	}
+
+	open OBEY, "<$obyPath" or die "Can't open $obyPath: $!\n";
+
+
+	my %ibysProcessed;
+	my @ibyStack;
+	
+	my $obyBaseName;
+	if ($baseObeyFile =~ m/(.*)\.oby/i) {
+		$obyBaseName = $1;
+	} else {
+		$obyBaseName = "tshell";
+	}
+	
+	my $newObyName = "${obyBaseName}_$obyName.oby";
+
+	open TSHELL_OBY, "<$baseObeyFile" or die "Can't open $baseObeyFile: $!\n";
+	open TSHELL_NEW, ">$newObyName" or die "Can't write to $newObyName: $!\n";
+
+	print "Creating tshell_$obyName.oby\n";
+
+	while (my $line = <TSHELL_OBY>) {
+		print TSHELL_NEW "$line";
+	}
+
+	close (TSHELL_OBY);
+
+	while (my $line = <OBEY>) {
+		chomp $line;
+		if ($line =~ m/^#include\s+[<"](.*)[>"]/ ) {
+			my $iby = $1;
+			if (!$ibysProcessed{lc($iby)}) {
+				print "Adding $iby to stack\n" if ($verbose);
+				push @ibyStack, $iby;
+				$ibysProcessed{lc($iby)} = 1;
+				}
+			print TSHELL_NEW "#include \"$obyName\\$iby\"\n";
+			next;
+		} else {
+			print TSHELL_NEW ConvertIbyLine("$line");
+			print TSHELL_NEW "\n";
+		}
+	}
+
+	close TSHELL_NEW;
+
+	while (my $iby = pop(@ibyStack)) {
+		print "Processing $iby\n" if ($verbose);
+		my $fullIby = "$romIncludeDir\\$iby";
+		unless (-f $fullIby) {
+			warn "$fullIby does not exist\n" ;
+			next;
+		}
+		
+		my $fixedIby = $iby;
+		$fixedIby =~ s|^(\.\.[\\/])*||; # get rid of ..\ at path start
+		$fixedIby =~ s|^[\\/]||; # remove \ at start too
+		my ($ibyPath, $ibyFile) = ($fixedIby =~ m|^((?:.*[\\/])?)(.*)$|);
+		if (($ibyPath) && (!-d "$obyName\\$ibyPath")) {
+			$ibyPath =~ s|[\\/]$||;
+			mkpath("$obyName\\$ibyPath") or die "Can't create path $obyName\\$ibyPath: $!\n";
+			$ibyPath .= "/";
+		}
+		
+		my $newIby = "$obyName\\$ibyPath$ibyFile";
+		
+		#BEGIN TOMSCI
+		# For the purposes of finding #includes, we run $fulliby through CPP first so that we don't pick up includes that are #ifdef'd out
+		# To prevent the #includes being expanded, we have to change them in the file we run cpp over.
+		open IBY, "<$fullIby" or die "Can't open $fullIby: $!\n";		
+		open NOINCLUDEIBY, ">$newIby.noinclude" or die "Can't open $newIby.noinclude: $!\n";
+		while (my $line = <IBY>) {
+			$line =~ s/#include/BASEROMHASHINCLUDE/;
+			print NOINCLUDEIBY $line;
+		}
+		close IBY;
+		close NOINCLUDEIBY;
+		my $cppOpts = "-undef -traditional -lang-c++ -nostdinc -I . -I $romIncludeDir";
+		if ($extraInclude) {
+			if (!($newIby =~ /$extraInclude$/)) { # Make sure we don't include the extraInclude in itself
+				$cppOpts .= " -include $romIncludeDir\\$extraInclude";
+			}
+		}
+		
+		my $cmd .= "cpp $cppOpts $newIby.noinclude";
+		print "running: $cmd\n" if ($verbose);
+		open IBYCPP, "$cmd |" or die "Can't run '$cmd': $!\n";
+		while (my $line = <IBYCPP>) {
+			chomp $line;
+			#print "TOMSCI: $line\n";
+			if ($line =~ m/^BASEROMHASHINCLUDE\s+[<"](.*)[>"]/ ) {
+				my $iby = $1;
+				if (!$ibysProcessed{lc($iby)}) {
+					print "Adding $iby to stack\n" if ($verbose);
+					push @ibyStack, $iby;
+					$ibysProcessed{lc($iby)} = 1;
+				}
+			}
+		}
+		close IBYCPP;
+		#END TOMSCI
+
+		open IBY, "<$fullIby" or die "Can't open $fullIby: $!\n";		
+		open NEWIBY, ">$newIby" or die "Can't open $newIby: $!\n";
+		print "Creating $newIby\n" if ($verbose);
+		
+		while (my $line = <IBY>) {
+			chomp $line;
+			if ($line =~ m/^#include\s+[<"](.*)[>"]/ ) {
+				my $iby = $1;
+				#if (!$ibysProcessed{lc($iby)}) {
+				#	print "Adding $iby to stack\n" if ($verbose);
+				#	push @ibyStack, $iby;
+				#	$ibysProcessed{lc($iby)} = 1;
+				#	}
+				print NEWIBY "#include \"$iby\"\n";
+				next;
+			} else {
+				print NEWIBY ConvertIbyLine("$line");
+				print NEWIBY "\n";
+			}
+		}
+		
+		
+		close IBY;
+		close NEWIBY;
+	}
+	return $newObyName;
+}
+
+
+sub ConvertIbyLine($) {
+	my $line = shift;
+	
+	if ($line =~ m/^\s*\w*ECOM_PLUGIN(?:_UDEB)?\s*\(\s*(.*?)\s*,\s*(.*?)\s*\)\s*$/ ) {
+		my $dll = $1;
+		my $rsc = $2;
+		
+		my ($dllName) = $dll =~ m/^(.*?)\./;
+		$rsc =~ s/[A-Fa-f0-9]{8}\.rs[cs]/$dllName.rsc/; # Some broken IBYs specify .rss instead of .rsc
+		
+		return "file=\\epoc32\\release\\##MAIN\\##BUILD##\\$dll\t\"sys\\bin\\$dll\"\n".
+				"data=\\epoc32\\data\\Z\\resource\\Plugins\\$rsc\t\"resource\\plugins\\$rsc\"";
+	}
+	
+	if ($line =~ m|\\ABI_DIR\\|) {
+		$line =~ s|\\ABI_DIR\\|\\epoc32\\release\\##MAIN##\\|;
+	} else {
+		$line =~ s|ABI_DIR\\|\\epoc32\\release\\##MAIN##\\|;
+	}
+	$line =~ s|\\BUILD_DIR\\|\\##BUILD##\\|;
+	$line =~ s|\\DEBUG_DIR\\|\\##BUILD##\\|;
+	$line =~ s|\\USB_DIR\\|\\##BUILD##\\|;
+	$line =~ s|ZRESOURCE\\|\\epoc32\\data\\Z\\resource\\|;
+	$line =~ s|ZPRIVATE\\|\\epoc32\\data\\Z\\private\\|;
+	$line =~ s|ZSYSTEM\\|\\epoc32\\data\\Z\\system\\|;
+	$line =~ s|DATAZ_\\|\\epoc32\\data\\Z\\|;
+	
+	if ($line =~ m|MULTI_LINGUIFY\s*\(\s*RSC\s+(.*?)\s+(.*?)\s*\)|) {
+		my $localRsc = $1;
+		my $romRsc = $2;
+		
+		my @resources = <$epocroot$localRsc.R*>;
+		
+		if (scalar(@resources)) {
+			$localRsc = $resources[0];
+			my $er = $epocroot;
+			$er =~ s/\\/\\\\/g;
+			$localRsc =~ s|$er|\\|;
+			#print "FOUND: $localRsc\n";
+		} else {
+			print "WARNING: resource for $romRsc could not be found\n";
+			$localRsc .= ".RSC";
+		}
+		
+		$line = "data=$localRsc\t\"$romRsc.RSC\"";
+	}
+	
+	if ($line =~ m|^#\s*include (["^])(.*?)([">])(.*)$|) {
+		my ($firstQuote, $include, $lastQuote, $extra) = ($1, $2, $3, $4);
+		$include =~ s|^(\.\.[\\/])*||;
+		$include =~ s|^[\\/]||;
+		$line = "#include $firstQuote$include$lastQuote$extra\n";
+	}
+	
+	return $line;
+}
+
+
+sub Usage() {
+	require Pod::Text;
+	print "\n";
+	my $parser = Pod::Text->new();
+	$parser->parse_from_file($0);
+	exit;
+}
+
+
+sub FindMissingDeps($) {
+	my $obyFile = shift;
+	print "Checking dependancies...\n";
+	
+	my $ibys = {};
+	my $filesByName = {};
+	my $filesByUid = {};
+	
+	
+	# since cpp doesn't deal with macros inside #include's, do it manually here:
+	print "Manually processing $obyFile\n" if ($verbose);
+	open IBY, "<$obyFile" or die "Can't open $obyFile: $!\n";
+	my $ibyFile = "$tempDir\\baserom.tmp";
+	open TEMPIBY, ">$ibyFile" or die "Can't open $ibyFile: $!\n";
+	
+	while (my $line = <IBY>) {
+		$line =~ s/\#\#VARIANT\#\#/$variant/;
+		$line =~ s/^\s*#/#/;
+		print TEMPIBY $line;
+	}
+	close IBY;
+	close TEMPIBY;
+	
+	my $cppOpts = "-undef -traditional -lang-c++ -nostdinc -I . -I ${epocroot}epoc32 -DVARIANT=$variant -DBUILD=$build -DMAIN=$main -DEUSERDIR=$main -DKMAIN=$main";
+	
+	my $cmd .= "cpp $cppOpts $ibyFile";
+	print "running: $cmd\n" if ($verbose);
+	
+	open CPP, "$cmd |" or die "Can't run '$cmd': $!\n";
+	while (my $line = <CPP>) {
+		chomp $line;
+		#print "\tCPP:$.:$line\n";
+		$line =~ s/EPOCROOT##/\\/;
+		$line =~ s/##//g;
+		
+		my $executableSrc = undef;
+		my $executableTrg = undef;
+
+		if ($line =~ m/^# 1 "(.*)" 1/) {
+			my $includedIby = $1;
+			print "iby included by cpp: $includedIby\n" if ($verbose);
+			$ibys->{lc($includedIby)} = 1;
+		} elsif ($line =~ m/^#/) {
+			# ignore - line inserted by c preprocessor
+			$line = "";
+		} elsif ($line =~ m/^\s*file\s*=\s*(.*?)\s+(.*)$/) {
+			$executableSrc = $1;
+			$executableTrg = trim $2;
+		} elsif ($line =~ m/^\s*(device|extension|primary|variant|file)\[0x[0-9A-Fa-f]{8}\]\s*=\s*(.*?)\s+(.*)$/) {
+			$executableSrc = $2;
+			$executableTrg = trim $3;
+		} elsif ($line =~ m|^\s*ECOM_PLUGIN\(\s*(.*?)\s*,| ) {
+			$executableSrc = $1;
+			$executableTrg = $executableSrc;
+		} elsif ($line =~ m|^\s*secondary\s*=(.*?)\s+(.*)$| ) {
+			$executableSrc = $1;
+			$executableTrg = trim $2;
+		} elsif ($line =~ m|^\s*data\s*=(.*?)\s|) {
+			my $data = $1;
+			print "WARNING: file $data not found\n" unless (-f "$epocroot$data");
+		} elsif (length(trim($line))==0) {
+			# ignore empty line
+		} elsif ($line =~ m|^\s*REM\s.*$|i) {
+			# comment, ignore.
+		} elsif ($line =~ m|^\s*patchdata\s.*$| ) {
+			# patchdata - ignore
+		} elsif ($line =~ m|^files=$|) {
+			# tshell.oby contains this line, not sure why.
+		} elsif ($line =~ m/^\s*PlatSec(Diagnostics|Enforcement|ProcessIsolation|EnforceSysBin)\s*(ON|OFF)\s*$/) {
+			# ignore platsec stuff
+		} elsif ($line =~ m/^\s*(debugport|kerneltrace|memmodel|trace|collapse|multikernel|version|bootbinary|romsize|romlinearbase|romalign|(kernel)?dataaddress|kernelheap(max|min)|defaultstackreserve|romchecksum|nowrapper|pagingpolicy)/) {
+			# rom config stuff, ignore
+		} elsif ($line =~ m/^\s*#/) {
+			# We ignore any other preprocessor directive
+		} else {
+			print "OBY line not recognised: $line\n";
+		}
+		
+		if ((defined $executableSrc) && (! ($executableSrc =~ m|eka1_entry_stub\.dll$|)) ) {
+			
+			#die "Cannot find file ${epocroot}$executableSrc\n" unless (-f "${epocroot}$executableSrc");
+			# Assume anything like BTDEBUG_DIR should equate to urel
+			$executableSrc =~ s/\\[A-Z]+_DIR\\/\\urel\\/;
+			
+			if (!(-f "${epocroot}$executableSrc")) {
+				print "WARNING: Can't find ${epocroot}$executableSrc, skipping dependancy check\n";
+				next;
+			}
+			
+			my $exeOnly = lc $executableSrc;
+			$exeOnly =~ s/.*\\//;
+			my $exeOnlyTrg = lc $executableTrg;
+			$exeOnlyTrg =~ s/.*\\//;
+			
+			my $uid3 = (headerInfo("${epocroot}$executableSrc"))[3];
+			if (defined $uid3) {
+				if ($filesByName->{$exeOnlyTrg}) {
+				  print "WARNING: 2 files with name $exeOnlyTrg in rom\n";
+			  }	
+				$filesByName->{$exeOnlyTrg} = $executableSrc;
+				if (!($uid3 eq "00000000")) {
+					$filesByUid->{$uid3} = $executableSrc;
+					print "UID3 for $executableSrc: $uid3\n" if ($verbose>1);
+				}
+			} else {
+				print "WARNING: could not find UID3 for $executableSrc\n"
+			}
+			
+			
+		}
+
+	}
+	
+	close CPP;
+	
+	
+	# now check for missing dependancies
+	my @missingFiles;
+	
+	foreach my $dependancy (keys %$filesByName) {
+	
+		my $executable = $filesByName->{$dependancy};
+
+		$cmd = "elftran -dump i ${epocroot}$executable";
+		print "running: $cmd\n" if ($verbose);
+
+		open ELFTRAN, "$cmd|" or die "Couldn't run $cmd: $!\n";
+
+		while (my $line = <ELFTRAN>) {
+			if ($line =~ m/^\d+ imports from (.*)$/) {
+				my $dep = lc($1);
+				
+				my $depName = undef;
+				my $depUid = undef;
+				
+				if ($dep =~ m/^(.*?)\{[a-f0-9]{8}\}\[([a-f0-9]{8})\]\.(.*)$/ ) {
+					unless ($ignoreDeps{lc("$1.$3")}) {
+						$depName = "$1.$3";
+						$depUid = $2;
+					}
+				} elsif ($dep =~ m/^(.*?)\{[a-f0-9]{8}\}\.(.*)$/ ) {
+					unless ($ignoreDeps{lc("$1.$2")}) {
+						$depName = "$1.$2";
+					}
+				} else {
+					print "WARNING: dependancy name '$dep' could not be parsed\n";
+				}
+				
+				
+				if (defined $depName) {
+					print "$executable links to $depName\n" if ($verbose>1);
+					if ((defined $depUid) && ($filesByUid->{$depUid})) {
+						print "Found match by UID3: $filesByUid->{$depUid} ($depUid)\n" if ($verbose>1);
+					} elsif ($filesByName->{lc($depName)}) {
+						my $uid3 = $filesByName->{lc($depName)};
+						#print "WARNING: Found match by name but not UID: $depName UID3: $uid3 expected $depUid\n";
+					} else {
+						my $fullDepName = makeFullFileName($depName);
+						if (defined $depUid) {
+							print "Missing dependancy: $depName (UID3 $depUid) required by $executable\n";
+							$filesByUid->{$depUid} = $fullDepName;
+						} else {
+							print "Missing dependancy: $depName required by $executable\n";
+						}
+						push @missingFiles, [$depName, $depUid];
+						#print "WARNING: can't find dependancy $depName at $fullDepName\n" unless (-f $fullDepName);
+						$filesByName->{lc($depName)} = $fullDepName;
+					}
+				
+				}
+			}
+		}
+
+
+
+
+		close (ELFTRAN);
+	}
+	
+	return \@missingFiles;
+	
+}
+
+
+sub ResolveMissingDeps($) {
+  my $missingFiles = shift;
+  
+	my %addedIbys;
+
+	foreach my $depInfo (@$missingFiles) {
+	
+	  my $expectedDepPath = makeFullFileName $depInfo->[0];
+	
+		# find an IBY file than contains this dependancy
+		my $ibyFile = FindIby($depInfo->[0]);
+		
+		if (defined $ibyFile) {
+			print "\nFound $depInfo->[0] in $ibyFile\n";
+		} elsif (-f $expectedDepPath) {
+			if (Query("\nCan't find IBY file for $depInfo->[0] based on components exports.\nSearch all of $romIncludeDir instead?", "yn") == 0) {
+				print "Not implemented yet, sorry!\n";
+			}
+		} else {
+	    print "IBY file for $depInfo->[0] not found, and $expectedDepPath does not exist.\n";
+	  }
+		
+		my $lineToAdd = undef;
+		if (defined $ibyFile) {
+		
+			if ($addedIbys{$ibyFile}) {
+				print "$ibyFile already included.\n";
+			} else {
+		
+				my $continue;
+				
+				do {
+					$continue = 0;			
+					my $option = Query("Do you want to include whole (I)BY file, just the one (f)ile or (n)either? (or (v)iew the IBY contents)", "ifnv");
+					if ($option==0) {
+						$addedIbys{$ibyFile}=1;
+
+						my $romIncludeMatchStr = $romIncludeDir;
+						$romIncludeMatchStr =~ s|^\w\:\\||;
+						$romIncludeMatchStr =~ s|\\|\\\\|g;
+						my $shortIby = $ibyFile;
+						$shortIby =~ s|.*$romIncludeMatchStr||i;
+						$shortIby =~ s|^\\*||;
+						$lineToAdd = "#include \"$shortIby\"";
+					} elsif ($option==1) {
+						$lineToAdd = "file=ABI_DIR\\DEBUG_DIR\\$depInfo->[0]\t\\sys\\bin\\$depInfo->[0]";
+					} elsif ($option==3) {
+						$continue=1;
+						
+						open IBYFILE, "<$ibyFile" or die "ERROR: Can't open $ibyFile: $!\n";					
+						print "$ibyFile:\n";
+						while (<IBYFILE>) {
+							print;
+						}
+						print "\n";
+					}
+				} while ($continue);
+			}
+		} elsif (-f $expectedDepPath) {
+		  if (Query("\nIBY file for $depInfo->[0] not found; include single file?", "yn")==0) {
+			  $lineToAdd = "file=ABI_DIR\\DEBUG_DIR\\$depInfo->[0]\t\\sys\\bin\\$depInfo->[0]";
+			}
+		} else {
+		  # perhaps we could search in \release\$main\$build for a binary with the required UID3 value.
+		  # might be worth implementing later?
+		  print "WARNING: $expectedDepPath does not exist, manual resolution of dependancy likely needed.\n";
+		}
+		
+		
+		
+		if (defined $lineToAdd) {
+			open OBYFILE, ">>$obyName.oby" or die "Can't append to $obyName.oby: $!\n";
+			print "Adding line:\n";
+			print "$lineToAdd\n";
+			print OBYFILE "$lineToAdd\n";
+			close OBYFILE;
+		}
+		
+	}
+	
+	print "\n";
+
+}
+
+sub FindIby($) {
+	my $file = shift;
+	my $fullFile = makeFullFileName $file;
+	return undef unless (-f $fullFile);
+	my $cmd = "bininfo $fullFile";
+	print "$cmd\n" if ($verbose);
+	
+	my @ibys;
+	my $comp = undef;
+	
+	if (open BININFO, "$cmd |") {
+		while (my $line = <BININFO>) {
+			if ($line =~ m/^Component\:\s*(.*)$/) {
+				$comp = trim($1);
+				print "$comp owns $fullFile\n" if ($verbose>1);
+			}
+		}
+		close (BININFO);
+		
+		return undef unless defined ($comp);
+
+		$cmd = "bininfo $comp";
+		print "$cmd\n" if ($verbose);
+		if (open BININFO2, "$cmd |") {
+			while (my $line = <BININFO2>) {
+				if ($line =~ m/^File\s+Status\s*$/ ) {
+					# ignore header line
+				} elsif ($line =~ m/^\s*$/ ) {
+					# ignore emptry line
+				} elsif ($line =~ m/^(.*?)\s+\w+\s*$/ ) {
+					my $file = trim($1);
+					if ($file =~ m/\.iby$/i) {
+						push @ibys, $file;
+					}
+				} else {
+					print "WARNING: could not parse bininfo output '$line'\n" if ($verbose);
+				}
+			}
+			close BININFO2;	
+		
+		} else {
+			print "WARNING: could not run '$cmd': $!\n";
+			return undef;
+		}
+		
+		
+	} else {
+		print "WARNING: could not run '$cmd': $!\n";
+		return undef;
+	}
+	
+	my $num = scalar(@ibys);
+	print "$comp owns $num IBY file(s)\n" if ($verbose);
+	
+	return undef if ($num == 0);
+	return $ibys[0] if ($num == 1);
+	
+	my $compSubName;
+	if ($comp =~ m/.*_(.*)/ ) {
+		$compSubName = $1;
+	} else {
+		$compSubName = $comp;
+	}
+	
+	my $chosenIby = undef;
+	
+	foreach my $iby (@ibys) {
+		if ($iby =~ m/\\$compSubName\.iby$/i) {
+			$chosenIby = $iby;
+			print "Choosing IBY file $iby for component $comp based on name\n" if ($verbose);
+			last;
+		}
+	}
+	
+	return $chosenIby if ((defined $chosenIby) && (CheckIbyContains($chosenIby, $file)));
+	
+	# last resort: the first iby file that contains this file
+	
+	foreach my $iby (@ibys) {
+		return $iby if (CheckIbyContains($iby, $file));
+	}
+	
+	return undef;	
+	
+}
+
+sub CheckIbyContains($$) {
+	my $iby = shift;
+	my $file = shift;
+	print "Checking for $file in $iby\n" if ($verbose>1);
+	open IBYFILE, "<$iby" or return 0;
+	
+	my $found = 0;
+	while (my $line = <IBYFILE>) {
+		if ($line =~ m/\\$file\s/i) {
+			$found = 1;
+			last;
+		}
+	}
+	
+	close IBYFILE;
+	
+	print "$iby contains $file\n" if ($found && $verbose);
+	print "$iby does not contain $file\n" if ((!$found) && $verbose);
+		
+	return $found;
+}
+
+sub headerInfo($) {
+	my $file = shift;
+	my $cmd = "elftran -dump h $file";
+	print "running: $cmd\n" if ($verbose);
+	open ELFTRANUID, "$cmd|" or die "Couldn't run $cmd: $!\n";
+	
+	my ($flags, $uid1, $uid2, $uid3) = (undef, undef, undef, undef);
+	while (my $line = <ELFTRANUID>) {
+		if ($line =~ m/^Uids:\s+([\da-f]{8})\s+([\da-f]{8})\s+([\da-f]{8})\s+\(([\da-f]{8})\)$/ ) {
+			($uid1, $uid2, $uid3) = ($1, $2, $3);
+		} elsif ($line =~ m/^Flags:\s+([\da-f]{8})$/i) {
+			$flags = $1;
+		}
+	}
+	close (ELFTRANUID);
+	return ($flags, $uid1, $uid2, $uid3);
+}
+
+
+
+sub trim($) {
+	my $str= shift;
+	$str =~ s/^\s*//g;
+	$str =~ s/\s*$//g;
+	return $str;
+}
+
+sub Query($$) {
+	my $question = shift;
+	my $options = shift;
+	local $" = '/';
+	#" fix syntax highlighting from above in CW
+	my @options = split(//, $options);
+	while (1) {
+		print "$question [@options] ";
+		my $response = lc <STDIN>;
+		chomp $response;
+
+		if (length($response)==1) {
+			if ($options =~ m/$response/g) {
+				return pos($options)-1;
+			}
+		}
+	}
+  
+}
+
+sub makeFullFileName($) {
+  my $depName = shift;
+  return "${epocroot}epoc32\\release\\$main\\$build\\$depName"
+}
+
+__END__
+
+=head1 NAME
+
+BaseRom - A tool to help you build a base ROM with selected user-side binaries.
+
+=head1 SYNOPSIS
+
+baserom [options] F<romname>
+
+options:
+
+=over
+
+=item -V variant
+
+Use the specified variant; defaults to C<h4hrp>. (note capital V).
+
+=item -t target
+
+Use the specified target architecture; defaults to C<armv5>.
+
+=item -b build
+
+Use the specified build; defaults to C<udeb>.
+
+=item -e F<\epocroot\>
+
+Use specified epocroot path instead of environment variable epocroot.
+
+=item -i F<\rom\include\directory>
+
+Use the specified directory to search for IBY files. Defaults to F<\epoc32\rom\include>.
+
+=item -o F<base.oby>
+
+Use the specified OBY file as the basis for the ROM. Defaults to F<tshell.oby>.
+
+=item -h
+
+help
+
+=item -v
+
+verbose (-vv very verbose)
+
+=item -x extraInclude
+
+If specified this file is included whenever preprocessing IBYs. It also prevents this file from being processed for dependancies itself. This option is needed when building an toolkit rom and should be set to C<-x fsh_config.iby>.
+
+=back
+
+=head1 DESCRIPTION
+
+The script is written to help you determine the dependancies that need to be included in a ROM to be able to use
+specific functionality. It also builds the appropriate OBY file.
+
+To use it:
+
+=over
+
+=item 1
+
+do a C<getsource base_e32> if you don't already have the source
+
+=item 2
+
+create a file F<myrom.oby> in F<\src\cedar\generic\base\e32\rombuild\>. In this, include the top level IBY file (or executables, etc) that 
+you need to include in your ROM. Use OBY syntax that is used by the main rombuild tool (i.e. not the base one), for example:
+
+	#include <mmf.iby>
+	file=ABI_DIR\BUILD_DIR\MyTestHarness.exe	sys\bin\MyTestHarness.exe
+
+=item 3
+
+run C<baserom myrom>. This will cause the script to create a new OBY file based on F<tshell.oby> called F<tshell_myrom.oby>.
+It will also copy any required IBY files from the default ROM include directory (F<\epoc32\rom\include> by default) into a new directory
+called F<myrom>. The format of the IBY files is converted for the base ROM building tool.
+
+=item 4
+
+The script will the check the dependancies for the executables in your ROM. Any files that are missing will be listed, and it will give
+you the option of attempting to resolve the dependancies.
+
+=item 5
+
+If you choose the resolve the dependancies, the script will search for appropriate IBY files and ask you whether you want to include
+the whole IBY file in your ROM, or just include the 1 dependancy via a C<file=> statement.
+
+=item 6
+
+Once you have worked through all the dependancies, it will start again from step 3, allowing you to iteratively resolve all your
+dependancies. Some often have to be resolved by hand, for example binaries that have a different name depending upon the variant 
+that you are building for.
+
+=item 7
+
+When you are done, it will tell you the command to use to build the ROM.
+
+=back
+
+=head1 NOTES
+
+=head2 Resolving dependancies
+
+Generally, when choosing whether or not to include an entire IBY file for a dependancy, you need to use to use some judgement. Including
+the whole IBY file has the benefit that you won't end up including a user-side DLL for a server but not the server itself. You should
+do this if you actually need to use the services provided by that server (ECOM is usually a good example of this).
+
+Including just the dependancy DLL is good if you only need to include it to satisfy linking requirements, but you never actually need to
+call into that DLL (i.e. to stop the rom build failing). For example, if your code links to F<c32.dll> but never actually uses it, it's best
+to just include that one file rather than including F<c32.iby>.
+
+Always including the whole IBY file generally results in the dependancies growing very fast until you are including pretty much the whole OS.
+
+Including F<wserv.iby> can cause problems in a C<tshell> ROM, as then you'll end up with two files trying to be F<EwSrv.exe> in the ROM.
+
+Generally, after a few iterations you can resolve most of the dependancies in your ROM, and those that remain must be done by hand, or can
+be ignored.
+
+=head3 Manually Resolving dependancies
+
+Some dependancies the script will fail to resolve automatically. For example, something that links to the screen driver F<ScDv.dll> will
+cause problems because F<ScDv.dll> doesn't exist in F<\epoc32\release\armv5\udeb> or similar places - it's actually called F<_omapqvga_scdv.dll>
+for the H4, and other things for other platforms.
+
+Generally, when the script has finished resolving dependancies automatically, you can work these out by yourself. In the example of F<ScDv.dll>, 
+looking in F<\epoc32\rom\include\base_h4hrp.iby> does the trick:
+
+	define   SCDV_DLL                _omapqvga_scdv.dll
+
+Then you can manually include the following line in your F<myrom.oby> file:
+
+	file=ABI_DIR\DEBUG_DIR\_omapqvga_scdv.dll \sys\bin\ScDv.dll
+
+The same trick for other files should work. After editing F<myrom.oby> you need to run the script on it again to update the generated OBY file.
+
+=head2 Finding IBY files
+
+When finding an IBY file for a given file, the tool does the following:
+
+=over
+
+=item 1
+
+determine the CBR component that owns the file, using C<bininfo>
+
+=item 2
+
+use C<bininfo> again to find a list of IBY files owned by that component.
+
+=item 3
+
+If it owns just 1 IBY file, use that if it includes the file we're looking for. Otherwise,
+
+=item 4
+
+Find the IBY file whose name closely matches the components name For example, for the component C<graphics_wserv> it will prefer
+an IBY file called F<wserv.iby>, or F<graphics_wserv.iby>. If one matches on this basis, use it. Otherwise,
+
+=item 5
+
+Use the first IBY file owned by the component that contains the file needed.
+
+=back
+
+=head1 COPYRIGHT
+
+Copyright (c) 2009 - 2010 Accenture. All rights reserved.
+
+=cut

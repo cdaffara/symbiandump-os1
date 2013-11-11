@@ -1,0 +1,92 @@
+
+How to convert a .CFG CommDB configuration file to the new XML format
+=====================================================================
+
+
+1. Installing the CommDB Editor and Utilities
+---------------------------------------------
+
+The process to convert a CommDB configuration file in the .CFG format to the new XML format
+requires the installation of the "cxmled" component in your Symbian OS directory. Currently
+this component can be found in the GT167 project branch in Perforce:
+
+\\EPOC\Development\Networking\projects\GT167\commdb-xml\comms-infras\commdb\cxmled
+
+Once this component is installed you need to open a command-line shell and then
+go to the "cxmled\group" directory. In that directory issue the commands:
+
+  bldmake bldfiles
+  abld export
+
+These commands will copy the binary Java files and utilities to the \epoc32\tools\ directory
+of your Symbian OS installation. It will also copy all the XML Schema files which define
+the structure of CommDB to the \epoc32\tools\commdb-schema\ directory. 
+
+You can only perform the conversion process if your computer has the Java Runtime Version 1.4
+or higher installed. If this is not already installed you can obtain it from Sun's web site:
+
+  http://java.sun.com/
+
+For more details on the requirements for using the CommDB Editor and the conversion utility
+read the file:
+
+\\EPOC\Development\Networking\projects\GT167\commdb-xml\comms-infras\commdb\cxmled\group\ReadMe.txt
+
+
+2. Conversion Process
+---------------------
+
+The conversion process is simple. You need to use the command-line and enter the directory
+which contains the CFG file to modify. Then issue the following command:
+
+  cfg2xml -mode:file filename.cfg
+
+where "filename.cfg" is assumed to be the name of the .CFG file to convert. Once the execution
+is completed file "filename.xml" will be created in the same directory. If the directory
+contains more than one CFG files and you wish to convert them all then you can issue the
+command:
+
+  cfg2xml -mode:dir .\
+
+This command will convert all CFG files to the XML format. However, note that it will also
+convert all CFG files encountered in any subdirectory which happens to be under the working
+directory. As a result, this command can be used to modify many CFG files located in various
+subdirectories at any depth in one go.
+
+If you need to examine the XML file you can view it on any text or XML editor, load it on 
+any web browser or alternatively load it on the CommDB Editor using the "Import XML" menu
+option.
+
+
+3. Using the XML configuration file
+-----------------------------------
+
+In order to use the XML configuration file to run test cases you also need to build the new
+dual-mode CED utility currently located at:
+
+\\EPOC\Development\Networking\projects\GT167\commdb-xml\comms-infras\commdb\ced
+
+Since this version of CED parses an XML file, you also need to build the XML Framework library
+which can be obtained from:
+
+\\EPOC\master\common\generic\syslibs\xml\
+
+Furthermore, you need to modify the script files which call CED so that they use the XML
+configuration file instead of the original CFG file. If for example, the script file has the
+command:
+
+  ced -i c:\ced.cfg ced.log
+
+you need to modify it to the following:
+
+  ced -i c:\test.xml ced.log
+
+Finally, you need to make sure that the XML configuration file is now exported to the appropriate
+directory rather than the CFG file and that means a modification of the "bld.inf" and "*.iby" files
+which perform the exporting.
+
+
+-- 
+Panos Asproulis (01/12/2003)
+
+

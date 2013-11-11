@@ -1,0 +1,66 @@
+// Copyright (c) 1999-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef PWRCLI_IBY
+#define PWRCLI_IBY
+
+REM PwrCli
+
+file=ABI_DIR\BUILD_DIR\powermgrcli.dll 	System\Libs\Powermgrcli.dll
+file=ABI_DIR\BUILD_DIR\shutdownsrv.dll	System\Libs\shutdownsrv.dll
+file=ABI_DIR\BUILD_DIR\shutdownsrvs.exe	System\Programs\shutdownsrvs.exe
+
+
+/**
+KShtdwnTimeoutBase and KShtdwnTimeoutClient are patchable constants.
+They are time values in microseconds to calculate the timeout to limit the 
+time waited by the server for its clients in the system to complete MSaveObserver 
+event processing.
+
+The timeout is calculated as:
+KShtdwnTimeoutBase + KShtdwnTimeoutClient * numClients,
+where numClients is the number of connecting clients.
+
+If the timeout value is;
+-1, the timer is not used, the server will wait for all client's registration 
+    before executing the shutdown;
+0,  the timer expires immediately, the server will execute the shutdown immediately, 
+    not waiting for any client's re-registration.
+other value greater than 0, the server will wait a certain period of time for the clients' registration 
+    and execute the shutdown if the timer expires or all clients re-register.
+
+These 2 patchable constants have default values:
+KShtdwnTimeoutBase = 1000000;
+KShtdwnTimeoutClient = 500000
+
+Licensees who wish to alter them will need to define these ROM build-time macros in their 
+product HRH or IBY files:
+SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTBASE 
+SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTCLIENT 
+
+The values of the macros must follow the rule:
+SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTBASE >= -1 and
+SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTCLIENT >= 0.
+
+Otherwise, the server panics with KErrNotSupported. 
+*/
+#ifdef SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTBASE
+    patchdata shutdownsrv.dll@KShtdwnTimeoutBase SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTBASE
+#endif
+#ifdef SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTCLIENT
+    patchdata shutdownsrv.dll@KShtdwnTimeoutClient SYMBIAN_PWRCLI_PATCHDATA_KSHTDWNTIMEOUTCLIENT 
+#endif
+
+#endif

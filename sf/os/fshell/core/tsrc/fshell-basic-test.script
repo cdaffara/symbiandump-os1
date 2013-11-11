@@ -1,0 +1,171 @@
+#!fshell
+# fshell-basic-test.script
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+# Syntax: fshell fshell-basic-test.script
+# Tests fundamental fshell primitives.
+# Start with comments with awkward things in > && < in; I suppose ' "
+
+var ARG_COUNT == 0 || error -6 "fshell-basic-test should not be called with any arguments"
+
+# Check the basics -  environment variables, export, var
+export TEST testing
+var TEST == testing || error
+
+export TEST
+var TEST not-defined || error
+
+# Test multistage pipelines
+# Pipeline operators are right-associative, ie "x || y && z" means "x || (y && z)" and *NOT* (x || y) && z
+export TEST 1 && var TEST == 2 && error
+export TEST 1 && var TEST == 2 || var TEST add 3
+var TEST == 4 || error
+export TEST 1 && var TEST == 2 || var TEST add 3 && var TEST == 4 || error # As above but all in one line
+var NONEXISTANT not-defined || var NONEXISTANT defined && error
+
+# Test that an env var can be expanded to a whole pipeline stage
+export TEST_CMD "export TEST_CMD_COMPLETED 1"
+$TEST_CMD
+var TEST_CMD_COMPLETED == 1 || error
+
+# Now we know that works, use it to give ourselves better error reporting
+# Apparently an env var can't expand to more than one pipeline stage, which is why we have to wrap this in fshell -e
+var KEEP_GOING not-defined && export Error 'fshell -e "echo ^"Test failed, env is:^" && env && error"'
+var KEEP_GOING defined && export Error 'error -39 "Test failure in $SCRIPT_NAME at line $SCRIPT_LINE"'
+
+# Check we've defined the things we're supposed to in a script
+var SCRIPT_PATH defined || $Error
+var SCRIPT_NAME == fshell-basic-test.script || $Error
+var SCRIPT_LINE == 48 || error -39 "SCRIPT_LINE isn't 48, it's $SCRIPT_LINE" # Remember to update this if you change the script above this point!
+var 0 == $SCRIPT_PATH$SCRIPT_NAME || $Error
+export DOLLAR_SCRIPT_LINE_VALUE $SCRIPT_LINE
+var DOLLAR_SCRIPT_LINE_VALUE == 50 || $Error
+
+# Test pipes, redirection
+
+echo -n "Testing pipes" | export -s TEST
+var TEST == "Testing pipes" || $Error
+
+# Check export -s can cope with complex stuff
+echo -n "" | export -s TEST
+var TEST == "" || $Error
+echo -n "a^r^nb" | export -s TEST
+var TEST == "a^r^nb" || $Error
+
+# Check echo's handling of newlines is correct
+echo --no-newline "Hello world!" | export -s TEST
+var TEST == "Hello world!" || $Error
+echo "Hello world!" | export -s TEST
+var TEST == "Hello world!^r^n" || $Error
+echo "Hello world!^r^n" | export -s TEST
+# If there's already a newline, echo shouldn't add another
+var TEST == "Hello world!^r^n" || $Error
+
+# Check that hashes, ampersands etc can be quoted ok
+export TEST "something ^x3e somewhere ^x26^x26 something else ^x23 with comment^x0d^x0a"
+echo "something > somewhere && something else # with comment^r^n" | export -s RESULT
+var RESULT == "$TEST" || $Error
+var TEST == "$RESULT" || $Error # Check it's a reflexive relationship
+echo something^ ^>^ somewhere^ ^&^&^ something^ else^ ^#^ with^ comment^r^n | export -s RESULT
+var RESULT == "$TEST" || $Error
+var TEST == "$RESULT" || $Error # Check it's a reflexive relationship
+export "#" "Let's define ^$# just for the fun of it"
+var "#" == "Let's define ^$# just for the fun of it" || $Error
+
+# Test hashes inside single quotes
+var '#' == 'Let^'s define $# just for the fun of it' || $Error # Balance ' for my struggling text editor syntax highlighter
+
+# Check that 2>&1 works as expected
+echo --stderr --no-newline Hello 2>&1 | export -s TEST
+var TEST == Hello || $Error
+
+echo "SHOULDN'T SEE THIS ON STDOUT (1)" > NUL
+echo "SHOULDN'T SEE THIS ON STDOUT (2)" > /dev/null
+
+echo --stderr "SHOULDN'T SEE THIS ON STDERR (1)" 2> NUL
+echo --stderr "SHOULDN'T SEE THIS ON STDERR (2)" 2> /dev/null
+
+exists /dev/null && $Error # Check we didn't actually create a file called /dev/null
+variant wins || exists NUL && $Error # Check we didn't actually create a file called NUL. Don't do this check on wins because apparently NUL gets passed through to the underlying Win32 file system, on which NUL is valid... it really shouldn't do that!
+
+# Check we can use &| to continue past an error
+echo -n "" &| export OK 1
+var OK defined || $Error
+export OK
+error -39 "Shouldn't ever see this!" 2>NUL &| export OK 1
+var OK defined || $Error
+export OK
+
+export FILE c:\fshell-basic-test.txt
+rm $FILE 2>/dev/null &| echo -n "" # I don't like using "&| echo" syntax to indicate don't care if it fails. Probably rm -f should be quiet like unix version
+exists $FILE && $Error
+echo -n "Testing file redirection" > c:\fshell-basic-test.txt
+exists $FILE || $Error
+
+# The redirect stdin operation doesn't get used much
+export -s FILECONTENTS < $FILE
+var FILECONTENTS == "Testing file redirection" || $Error
+
+# Check doing the same thing via a pipe-line also works
+cat -e utf-8 $FILE | export -s FILECONTENTS
+var FILECONTENTS == "Testing file redirection" || $Error
+
+rm $FILE # clean up
+
+# Test that source works, takes arguments ok, and inherits environment correctly
+source $SCRIPT_PATH\setenv.script SOMETHING 1234
+var SOMETHING == 1234 || $Error
+source $SCRIPT_PATH\addenv.script SOMETHING 4321
+var SOMETHING == 5555 || $Error
+
+source $SCRIPT_PATHsetenv.script SOMETHING # Check that the \ isn't required after the $SCRIPT_PATH
+var SOMETHING not-defined || $Error
+
+# Check that source hasn't nuked our vars
+var SCRIPT_NAME == fshell-basic-test.script || $Error
+var 0 == $SCRIPT_PATH$SCRIPT_NAME || $Error
+var ARG_COUNT defined || $Error
+var ARG_COUNT == 0 || $Error
+# And that none of the sources we just ran have polluted $1 etc with their arguments
+var 1 not-defined || $Error
+
+# Ambiguous variable expansion - appears to be done by longest prefix match
+export AA bb
+export AAAA bbbb
+export AAA bbb
+echo -n $AAAa | export -s RESULT
+var RESULT == bbba || $Error
+echo -n $AAAAa | export -s RESULT
+var RESULT == bbbba || $Error
+
+# Ambiguous *nested* variable expansion. Evil!
+export ANEST correct
+export INNER NEST
+echo -n $A$INNER | export -s RESULT 
+var RESULT == correct || $Error
+export A aaa
+#TODO with $A defined this no longer works - is this reasonable? I'm guessing the string is expanded left-to-right.
+#echo $A$INNER | export -s RESULT # I'd like this to expand to $ANEST then to "correct" but it expands to aaaNEST
+
+# Check what characters are allowed in an environment variable name - I'm assuming |&$^#;"' aren't a good idea
+export AWKWARD-!£%*()_+=/\[]{}:@ "really awkward thing"
+echo -n "Evil $AWKWARD-!£%*()_+=/\[]{}:@." | export -s RESULT
+var RESULT == "Evil really awkward thing." || $Error
+
+# Test that errors reported from scripts are reported with correct line numbers
+export EXPECTED_ERR "Error: Aborted ^"$SCRIPT_PATHprinterror.script^" at line 17 : KErrNotFound (-1)^r^n"
+
+fshell $SCRIPT_PATHprinterror.script 2>&1 | export -s PRINTERR
+var PRINTERR == "$EXPECTED_ERR" || $Error
+
+source $SCRIPT_PATHprinterror.script 2>&1 | export -s PRINTERR
+var PRINTERR == "$EXPECTED_ERR" || $Error

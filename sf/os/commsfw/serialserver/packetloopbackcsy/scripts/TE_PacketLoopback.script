@@ -1,0 +1,184 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! Tests for packet loopback CSY
+
+PRINT Setup Configuration
+
+RUN_UTILS MakeReadWrite c:\loopback.ini
+RUN_UTILS CopyFile z:\TestData\configs\testloopback.ini c:\loopback.ini
+
+LOAD_SUITE TE_PacketLoopback
+
+START_TESTCASE			NET-PacketLoopbackCSY-0101
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0101
+//! @SYMTestCaseDesc Test that two different sets of loopback ports can read/write to their corresponding loopback port
+//! @SYMPREQ 398
+//! @SYMTestActions Open 4 ports, then write and read to each of them
+//! @SYMTestExpectedResults Reads and writes complete successfully
+//! @SYMTestPriority Low
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep1
+END_TESTCASE			NET-PacketLoopbackCSY-0101
+
+START_TESTCASE			NET-PacketLoopbackCSY-0102
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0102
+//! @SYMTestCaseDesc Test that writes are successfully queued and sent
+//! @SYMPREQ 398
+//! @SYMTestActions Open 2 ports, and write 2 packets sequentially to the other port
+//! @SYMTestExpectedResults Both writes are completed successfully
+//! @SYMTestPriority Low
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep2
+END_TESTCASE			NET-PacketLoopbackCSY-0102
+
+START_TESTCASE			NET-PacketLoopbackCSY-0103
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0103
+//! @SYMTestCaseDesc Test all different combinations of reading/writing
+//! @SYMPREQ 398
+//! @SYMTestActions Test the following orders: Read/write/data sent, Write/read/data sent, Write/data sent/read
+//! @SYMTestExpectedResults All data is sent successfully
+//! @SYMTestPriority Low
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep3
+END_TESTCASE			NET-PacketLoopbackCSY-0103
+
+START_TESTCASE			NET-PacketLoopbackCSY-0104
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0104
+//! @SYMTestCaseDesc Test reading/writing to an un-opened port, or a port whose loopback port is un-opened
+//! @SYMPREQ 398
+//! @SYMTestActions Read then write to an un-opened port
+//! @SYMTestExpectedResults Requests fail with KErrNotReady
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep4
+END_TESTCASE			NET-PacketLoopbackCSY-0104
+
+START_TESTCASE			NET-PacketLoopbackCSY-0105
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0105
+//! @SYMTestCaseDesc Test filling up the read and write queues
+//! @SYMPREQ 398
+//! @SYMTestActions Write more packets than the buffer size, then wait
+//! @SYMTestExpectedResults The entries written after the buffer was full are not completed
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep5
+END_TESTCASE			NET-PacketLoopbackCSY-0105
+
+START_TESTCASE			NET-PacketLoopbackCSY-0106
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0106
+//! @SYMTestCaseDesc Test reading an entry with too small a read buffer
+//! @SYMPREQ 398
+//! @SYMTestActions Read an entry with a buffer that is too small
+//! @SYMTestExpectedResults The read completes with error KErrOverflow
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep6
+END_TESTCASE			NET-PacketLoopbackCSY-0106
+
+START_TESTCASE			NET-PacketLoopbackCSY-0107
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0107
+//! @SYMTestCaseDesc Test issuing write with too large of a buffer
+//! @SYMPREQ 398
+//! @SYMTestActions Issue a write with a buffer that is larger than an IP packets max size
+//! @SYMTestExpectedResults The write completes with KErrArgument
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep7
+END_TESTCASE			NET-PacketLoopbackCSY-0107
+
+START_TESTCASE			NET-PacketLoopbackCSY-0108
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0108
+//! @SYMTestCaseDesc Test wrapping around the queue by issuing more writes than the queue size
+//! @SYMPREQ 398
+//! @SYMTestActions Issue more writes than the queue size
+//! @SYMTestExpectedResults Writes complete successfully
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep8
+END_TESTCASE			NET-PacketLoopbackCSY-0108
+
+START_TESTCASE			NET-PacketLoopbackCSY-0109
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0109
+//! @SYMTestCaseDesc Test read cancel
+//! @SYMPREQ 398
+//! @SYMTestActions Issue a read and cancel the request
+//! @SYMTestExpectedResults The request completes with result KErrCancelled
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep9
+END_TESTCASE			NET-PacketLoopbackCSY-0109
+
+START_TESTCASE			NET-PacketLoopbackCSY-0110
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0110
+//! @SYMTestCaseDesc Test flow control
+//! @SYMPREQ 398
+//! @SYMTestActions Start flow control then issue a write on 1 port and read on the opposite loopback port
+//! @SYMTestExpectedResults The read does not complete because flow control is on
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep10
+END_TESTCASE			NET-PacketLoopbackCSY-0110
+
+START_TESTCASE			NET-PacketLoopbackCSY-0111
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0111
+//! @SYMTestCaseDesc Test setting read result
+//! @SYMPREQ 398
+//! @SYMTestActions Set the next read result then issue a read, then set the next write result and issue a write
+//! @SYMTestExpectedResults The read and write complete with the configured result
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep11
+END_TESTCASE			NET-PacketLoopbackCSY-0111
+
+START_TESTCASE			NET-PacketLoopbackCSY-0112
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0112
+//! @SYMTestCaseDesc Test setting read result
+//! @SYMPREQ 398
+//! @SYMTestActions Set the next read result then issue a read, then set the next write result and issue a write
+//! @SYMTestExpectedResults The read and write complete with the configured result
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep12
+END_TESTCASE			NET-PacketLoopbackCSY-0112
+
+START_TESTCASE			NET-PacketLoopbackCSY-0113
+//! @SYMTestCaseID		NET-PacketLoopbackCSY-0113
+//! @SYMTestCaseDesc Test setting read result
+//! @SYMPREQ 398
+//! @SYMTestActions Set the next read result then issue a read, then set the next write result and issue a write
+//! @SYMTestExpectedResults The read and write complete with the configured result
+//! @SYMTestPriority Low 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 30 TE_PacketLoopback LoopbackTestStep13
+END_TESTCASE			NET-PacketLoopbackCSY-0113
+
+RUN_UTILS DeleteFile c:\loopback.ini
+RUN_UTILS CopyFile z:\TestData\configs\loopback.ini c:\loopback.ini
+

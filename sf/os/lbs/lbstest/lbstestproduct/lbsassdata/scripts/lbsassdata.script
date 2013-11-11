@@ -1,0 +1,478 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsAssDataTestServer -SharedData
+
+PRINT Run LbsAssDataTestServer
+PRINT
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt 
+	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+// Reset admin then select the privacy controller (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_ResetDefaultAdmin
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 030 LbsAssDataTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-AssistanceData-0101
+
+//!@SYMTestCaseID			LBS-AssistanceData-0101
+//!@SYMTestCaseDesc			Empty GPS assistance data cache test
+//!
+//!@SYMTestActions			1. Connect to the location server.
+//!					2. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!					   receive a position update request.
+//!					3. Within the A-GPS test module attempt to read some assistance data, and verify result
+//!					   as below.
+//!					   Note: call GetAssistanceDataItem(), from within RequestLocationUpdate().
+//!					4. Close the server connection.
+//!
+//!@SYMTestExpectedResults	Verify the correct not found error (KErrNotFound) is returned for step 3.
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.06
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0040
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0040
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0101
+
+
+
+//START_TESTCASE LBS-AssistanceData-0002
+
+//!@SYMTestCaseID			LBS-AssistanceData-0002
+//!@SYMTestCaseDesc			A-GPS module creation and destruction
+//!
+//!@SYMTestActions			1. Start LBS sub-system, verify the creation of the test module.
+//!							2. Shutdown the LBS sub-system, verify the destruction of the test module.
+//!
+//!@SYMTestExpectedResults	Ensure the correct creation and destruction of the test module as per steps 1 and 2.
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Not Implemented. Note: start and shutdown of LBS sub-system may not be enough to
+//!							create and destroy the module. For example MLbsLocationSourceGpsObserver::Shutdown()
+//!							may have to called by the module.
+
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+//RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0001
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+//END_TESTCASE LBS-AssistanceData-0002
+
+
+
+START_TESTCASE LBS-AssistanceData-0102
+
+//!@SYMTestCaseID			LBS-AssistanceData-0102
+//!@SYMTestCaseDesc			Verify a single batch of GPS assistance data
+//!
+//!@SYMTestActions			1. Configure the network simulator to deliver a single subset of assistance data. The
+//!					   subset data should be chosen to ensure only one batch is delivered to the A-GPS
+//!					   test module.
+//!					2. Connect to the location server.
+//!					3. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!					   request assistance data as a result of the position update request.
+//!					   Note: use RequestAssistanceData().
+//!					4. Wait for the "assistance data arrived" event within the A-GPS test module, then read
+//!					   and verify the assistance data.
+//!					   Note: implement AssistanceDataEvent() and call GetAssistanceDataItem().
+//!					5. Process the position update produced as a result of the MO-LR, close the server
+//!					   connection.
+//!
+//!@SYMTestExpectedResults	Verify the assistance data in step 4 against the configured network simulator data.
+//!							Also ensure the correct assistance data information is logged. Note: use the RDataReader
+//!							class; the TEF test step will need to verify the data via the A-GPS test module in some
+//!							manner
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!@SYMREQ					REQ928.05
+//!@SYMREQ					REQ928.06
+//!@SYMREQ					REQ928.10
+//!@SYMPREQ					PREQ89
+//!@SYMREQ					REQ89.06
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0010
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0010
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0102
+
+
+
+//START_TESTCASE LBS-AssistanceData-0004
+
+//!@SYMTestCaseID			LBS-AssistanceData-0004
+//!@SYMTestCaseDesc			Verify multiple batches of GPS assistance data
+//!
+//!@SYMTestActions			1. Configure the network simulator to deliver a single subset of assistance data. The
+//!								subset data should be chosen to ensure multiple batches are delivered to the A-GPS
+//!								test module.
+//!							2. Connect to the location server.
+//!							3. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!								request assistance data as a result of the position update request.
+//!								Note: use RequestAssistanceData().
+//!							4. Wait for the "assistance data arrived" event within the A-GPS test module, then read
+//!								and verify the assistance data.
+//!								Note: implement AssistanceDataEvent() and call GetAssistanceDataItem().
+//!							5. Repeat step 4 until all assistance data as been processed.
+//!							6. Process the position update produced as a result of the MO-LR, close the server
+//!								connection.
+//!
+//!@SYMTestExpectedResults	Verify the assistance data in steps 4 and 5 against the configured network simulator data.
+//!							Also ensure the correct assistance data information is logged.
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!@SYMREQ					REQ928.05
+//!@SYMREQ					REQ928.06
+//!@SYMREQ					REQ928.10
+//!@SYMPREQ					PREQ89
+//!@SYMREQ					REQ89.06
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented.
+
+// may not be possible to test, we may not have this level of control when using the netsim
+
+//END_TESTCASE LBS-AssistanceData-0004
+
+
+
+//START_TESTCASE LBS-AssistanceData-0005
+
+//!@SYMTestCaseID			LBS-AssistanceData-0005
+//!@SYMTestCaseDesc			Cancel assistance data request test	PREQ 928
+//!
+//!@SYMTestActions			1. Connect to the location server.
+//!					2. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!					   request assistance data as a result of the position update request.
+//!					   Note: use RequestAssistanceData().
+//!					3. Invoke the cancel by passing 0 for the aDataItemMask parameter to the
+//!					   RequestAssistanceData() function.
+//!
+//!@SYMTestExpectedResults	Verify no assistance data was not received, AssistanceDataEvent() was not called.
+//!				Note: Cancel may result in a AssistanceDataEvent() being called, if so verify by looking
+//!				for a MO-LR release from the network simulator.
+//!@SYMREQ				REQ928.04
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Removed - because of new behaviour as a result of CR946.
+//
+//							In the past assistance data could be cancel by cancelling the current MOLR being processed by the 
+//							protocol module, assistance data can now be cancelled without cancelling the MOLR, however this test
+//							case and the test module does not support this. 
+
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+//RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+//RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0012
+//RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0012
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+//END_TESTCASE LBS-AssistanceData-0005
+
+
+
+START_TESTCASE LBS-AssistanceData-0103
+
+//!@SYMTestCaseID			LBS-AssistanceData-0103
+//!@SYMTestCaseDesc			Verify unsolicited GPS assistance data
+//!
+//!@SYMTestActions			1. Configure the network simulator to deliver a single subset of assistance data. The
+//!								subset data should be chosen to ensure only one batch is delivered to the A-GPS
+//!								test module.
+//!							2. Invoke a MT-LR using the network simulator. This will cause the A-GPS test module to receive an unsolicited batch of GPS assistance data.
+//!							3. Wait for the "assistance data arrived" event within the A-GPS test module, then read and verify the assistance data.
+//!								Note: implement AssistanceDataEvent() and call GetAssistanceDataItem().
+//!							4. Process the position update produced as a result of the MT-LR, using the network simulator.
+//!								Note: may have to process the privacy and MT-LR position up via the network/privacy API.
+//!
+//!@SYMTestExpectedResults	Verify the assistance data in step 3 against the configured network simulator data.
+//!							Note the unsolicited data may result in a log entry as per REQ928.10 - check.
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.05
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0020
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0020
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0103
+
+
+START_TESTCASE LBS-AssistanceData-0104
+
+//!@SYMTestCaseID			LBS-AssistanceData-0104
+//!@SYMTestCaseDesc			Verify the GPS assistance data time stamp
+//!
+//!@SYMTestActions			1. Configure the network simulator to deliver a single subset of assistance data. The
+//!								subset data should be chosen to ensure only one batch is delivered to the A-GPS
+//!								test module.
+//!							2. Connect to the location server.
+//!							3. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!								request assistance data as a result of the position update request.
+//!								Note: use RequestAssistanceData().
+//!							4. Wait for the "assistance data arrived" event within the A-GPS test module, then read
+//!								and verify the assistance data time stamp.
+//!								Note: implement AssistanceDataEvent() and call GetAssistanceDataItemTimeStamp().
+//!							5. Process the position update produced as a result of the MO-LR, close the server
+//!								connection.
+//!
+//!@SYMTestExpectedResults	Verify the assistance data time stamp in step 4 falls between request time and current time.
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0030
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0030
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0104
+
+
+
+START_TESTCASE LBS-AssistanceData-0105
+
+//!@SYMTestCaseID			LBS-AssistanceData-0105
+//!@SYMTestCaseDesc			Request GPS assistance data when no network available
+//!
+//!@SYMTestActions			1. Configure network simulation to ensure it does not deliver assistance data.
+//!							2. Connect to the location server.
+//!							3. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!								receive a position update request.
+//!							4. Within the A-GPS test module attempt to read some assistance data, and verify result
+//!								as below.
+//!								Note: call GetAssistanceDataItem(), from within RequestLocationUpdate().
+//!							5. Close the server connection.
+//!
+//!@SYMTestExpectedResults	Verify the correct data not available error is returned for step 3.
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!@SYMREQ					REQ928.05
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Not Implemented.
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0041
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0041
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0105
+
+
+
+START_TESTCASE LBS-AssistanceData-0106
+
+//!@SYMTestCaseID			LBS-AssistanceData-0106
+//!@SYMTestCaseDesc			Request multiple items of GPS assistance data when not all of the itmes are available.
+//!
+//!@SYMTestActions			1. Configure the network simulator to deliver 2 items of assistance data.
+//!							2. Connect to the location server.
+//!							3. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!								request assistance data as a result of the position update request. Request 3 items
+//!								of assistance data.
+//!								Note: use RequestAssistanceData() with a suitable mask value.
+//!							4. Wait for the "assistance data arrived" event within the A-GPS test module, then read
+//!								and verify the assistance data.
+//!								Note: implement AssistanceDataEvent() and call GetAssistanceDataItem().
+//!							5. Process the position update produced as a result of the MO-LR, close the server
+//!								connection.
+//!
+//!@SYMTestExpectedResults	Verify the assistance data in steps 4. Ensure only 2 items of assistance data are given,
+//! 						and a error is reported for the 3rd requested item. Also ensure the correct assistance data
+//!							information is logged.
+//!
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!@SYMREQ					REQ928.05
+//!@SYMREQ					REQ928.10
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0042
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0042
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0106
+
+
+
+START_TESTCASE LBS-AssistanceData-0107
+
+//!@SYMTestCaseID			LBS-AssistanceData-0107
+//!@SYMTestCaseDesc			Request assistance data, upper boundary test
+//!
+//!@SYMTestActions			1. Connect to the location server.
+//!					2. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!					   receive a position update request.
+//!					3. Pass the EAssistanceDataPositionGpsUtcModel + 0x200 (to ensure an unknown bit is set)
+//!					   for the aDataItemMask parameter to the RequestAssistanceData() function.
+//!					   Note: call from RequestLocationUpdate().
+//!
+//!@SYMTestExpectedResults	Verify the bad request results in the correct assistance data event call with
+//!							a KErrNotFound err given. 
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsAssDataTestServer LbsStep_StartLbs
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0050
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0050
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0107
+
+
+
+START_TESTCASE LBS-AssistanceData-0108
+
+//!@SYMTestCaseID			LBS-AssistanceData-0108
+//!@SYMTestCaseDesc			Get assistance data item, upper boundary test
+//!
+//!@SYMTestActions			1. Connect to the location server.
+//!					2. Invoke a MO-LR using the self locate API. This will cause the A-GPS test module to
+//!					   request assistance data as a result of the position update request.
+//!					   Note: use RequestAssistanceData().
+//!					3. Wait for the "assistance data arrived" event within the A-GPS test module,
+//!					   from here attempt to get assistance using a invalid item flag.
+//!					   Note: implement AssistanceDataEvent() and call GetAssistanceDataItem().
+//!
+//!@SYMTestExpectedResults	Verify the call fails in step 3.
+//!@SYMPREQ					PREQ928
+//!@SYMREQ					REQ928.03
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsassdata.ini LBS-Ass-Data
+
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0051
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsAssDataStep_Main c:\testdata\configs\lbsassdata.ini LBS-Ass-Data-0051
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-AssistanceData-0108
+
+
+
+START_TESTCASE LBS-AssistanceData-0109
+
+//!@SYMTestCaseID			LBS-AssistanceData-0109
+//!@SYMTestCaseDesc			Place holder for Assistance Data Reuse test
+//!@SYMTestActions			1. ---.
+//!
+//!@SYMTestExpectedResults	
+//!@SYMPREQ					PREQ 928
+//!@SYMREQ					REQ 928.08
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented - need to determine how this maybe tested from an integration test case.
+
+END_TESTCASE LBS-AssistanceData-0109
+
+
+
+START_TESTCASE LBS-AssistanceData-0110
+
+//!@SYMTestCaseID			LBS-AssistanceData-0110
+//!@SYMTestCaseDesc			Place holder for Assistance Data Security test
+//!@SYMTestActions			1. ---.
+//!
+//!@SYMTestExpectedResults	
+//!@SYMPREQ					PREQ 928
+//!@SYMREQ					REQ 928.09
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Not Implemented - need to determine how this maybe tested, it's a mmp file build time issue, runtime dll loading issue.
+
+END_TESTCASE LBS-AssistanceData-0110
+
+
+RUN_TEST_STEP 010 LbsAssDataTestServer LbsStep_ResetDefaultAdmin
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsAssDataTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

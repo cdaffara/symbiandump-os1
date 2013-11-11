@@ -1,0 +1,78 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsHybridMTLRTestServer -SharedData
+
+PRINT Run LbsHybridMTLRTestServer
+
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+//	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini  c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_ResetDefaultAdmin
+
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbs_mtlr.ini PrivHandler
+
+// Use hybrid protocol module
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_SetupProtocolStub
+
+RUN_TEST_STEP 030 LbsHybridMTLRTestServer LbsStep_StartLbs
+
+
+
+START_TESTCASE LBS-HybridMTLR-UEAssistedMTLR-Timeout-0001
+//!@SYMTestCaseID LBS-HybridMTLR-UEAssistedMTLR-Timeout-0001
+
+//!@SYMTestCaseDesc	MTLR Request received
+//!			GPS Module generates an accurate position in UE Assisted Mode
+//!			Protocol Module simulates a timeout waiting for network MC Release
+//!			See: lbshybridmtlr/documentation/mtlr.htm#HybridMTLRAssistAccurateMCTimeout
+//!
+//!
+//!@SYMTestActions	
+//!			See test step Sequence inline comments
+//!
+//!
+//!@SYMTestExpectedResults	Sequence as per specified by FSM and UML Seq diagram is Followed
+//!@SYMPREQ					PREQ1624
+//!@SYMREQ					REQ1624.xyz
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsHybridMTLRTestServer LbsStep_InstallScheduler
+
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 120 LbsHybridMTLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_mtlr.ini HybridUEAssistedMTLRGPSOK
+
+RUN_TEST_STEP 300 LbsHybridMTLRTestServer LbsHybridUEAssistedMTLRTimeout
+
+END_TESTCASE LBS-HybridMTLR-UEAssistedMTLR-Timeout-0001
+
+
+
+RUN_TEST_STEP 020 LbsHybridMTLRTestServer LbsStep_StopLbs
+
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini

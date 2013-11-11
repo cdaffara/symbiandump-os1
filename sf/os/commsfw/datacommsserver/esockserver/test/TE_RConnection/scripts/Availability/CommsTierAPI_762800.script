@@ -1,0 +1,110 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Running BEARER_MOBILITY_762800
+PRINT Title: TODO
+PRINT Synopsis: TODO
+
+// Set up the commdb database the way it's needed
+CED -i z:\testdata\configs\BearerMobility\762800.ced.xml c:\BearerMobility.ced.log
+
+// Load the test suite and esock
+LOAD_SUITE te_esockteststepsSuite -SharedData
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+// Start our test case
+START_TESTCASE			COMINF-ESOCK-RConnection-Availability-0901
+//! @SYMTestCaseID		COMINF-ESOCK-RConnection-Availability-0901
+
+
+
+// Start with
+// 3 little bearers (bearer1, bearer2 and bearer3)
+// 2 snaps snap1 (bearer1), snap2 (bearer2, bearer3)
+
+// PHASE 1
+// We need a connection to socket server to create connections with
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\BearerMobility\
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\BearerMobility\
+
+// Create conn1, conn2 and conn3 on which with which we will count open connections
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\BearerMobility\
+
+// Create and connect to the comms manager
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRCommsManagerServerStep z:\testdata\configs\BearerMobility\
+RUN_TEST_STEP 100 te_esockteststepsSuite OpenRCommsManagerServerStep z:\testdata\configs\BearerMobility\
+
+// Select the comms tier we are interested in and confirm no bearers connected to start with
+RUN_TEST_STEP 100 te_esockteststepsSuite SelectRCommsManagerTierStep z:\testdata\configs\BearerMobility\
+
+
+
+// PHASE 2
+// Connect conn1 on bearer1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\
+
+// Count number of connections at link tier and compare with expected
+// Count number of connections at IP tier and compare with expected
+RUN_TEST_STEP 100 te_esockteststepsSuite GetRConnMgrBearerCountStep z:\testdata\configs\BearerMobility\
+
+
+// PHASE 3
+// Connect conn2 on bearer2
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\
+
+// Count number of connections at link tier and compare with expected
+// Count number of connections at IP tier and compare with expected
+RUN_TEST_STEP 100 te_esockteststepsSuite GetRConnMgrBearerCountStep z:\testdata\configs\BearerMobility\
+
+
+// PHASE 4
+// Disconnect bearer1
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\BearerMobility\
+
+// Count number of connections at link tier and compare with expected
+// Count number of connections at IP tier and compare with expected
+RUN_TEST_STEP 100 te_esockteststepsSuite GetRConnMgrBearerCountStep z:\testdata\configs\BearerMobility\
+
+
+// PHASE 5
+// Connect conn3 on bearer3
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\BearerMobility\
+
+// Count number of connections at link tier and compare with expected
+// Count number of connections at IP tier and compare with expected
+RUN_TEST_STEP 100 te_esockteststepsSuite GetRConnMgrBearerCountStep z:\testdata\configs\BearerMobility\
+
+
+// PHASE 6
+// Disconnect bearer3
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\BearerMobility\
+
+// Count number of connections at link tier and compare with expected
+// Count number of connections at IP tier and compare with expected
+
+
+END_TESTCASE			COMINF-ESOCK-RConnection-Availability-0901
+
+
+// Clean up
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed NET_BMOBILITY_762800
+
+
+

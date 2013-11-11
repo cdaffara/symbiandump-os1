@@ -1,0 +1,184 @@
+SETUPPRJ.BAT
+============
+SETUPPRJ will create a BLD.BAT file in the GROUP directory and
+read the LI.PRJ file in other second-level directories, creating
+a BLD.BAT in each which will provide commands for building any
+.BAT, .PL and .PM files to \epoc32\tools.
+SETUPPRJ will also create \E32TOOLP\GROUP\E32TOOLP.REL
+
+PERLPREP.BAT
+============
+PERLPREP strips "use strict;" debugging lines out
+of .PL and .PM files and perl warning generation -w flag out of .BAT
+files.  It is used for REL builds of E32TOOLP.
+
+RELEASING E32TOOLP
+==================
+make changes to source
+change release.txt - update the date and "made by" details
+add any new files which contain a version number to setver.bat
+(remember perl files can use the service in E32TPVER.PM).
+cd \e32toolp\group
+run setver [version] to apply the latest version number.
+cd \e32toolp
+cvs commit to commit the version changes
+cd \e32toolp\group
+do setupprj to create the batch and .rel file
+do bld clean
+do bld rel
+Prep the tree for release to PVCS:
+cd \
+perl \tools\pvcs-release.pl -f e32toolp
+Tag the modules you're releasing:
+cd \e32toolp
+cvs tag E32TOOLPvNNN
+Move the Latest-Release tag to the new files:
+cvs rtag -d Latest-Release e32toolp
+cvs rtag -r E32TOOLPvNNN Latest-Release e32toolp
+cd \e32toolp\group
+Create a vdiff.lis file with mnt difsrc <previous release>
+do set vcsid=BASETEAM
+do mnt lock  to make sure BASETEAM has the lock for all li.prj files
+do mnt putsrc
+do mnt versrc
+do mnt putrel
+do set vcsid=<your vcsid>
+cd \e32toolp
+Tag the release as complete (on the main branch)
+	cvs tag Release-NNN-complete
+go to the root of a clean drive
+getrel e32toolp tools <version>
+check it basically works - eg bldmake, makmake /mmp
+rd /s /q epoc32
+pgetbld e32toolp group
+setupprj
+bld rel
+mnt valid
+check \e32toolp\valid.lis
+update Lotus Notes
+update tlmakmak.rtf
+
+OTHER INFO
+==========
+CASE SENSITIVITY
+	Perl pattern-matching is twice as quick if it's done case-sensitive - keep
+	all data uppercase except when it's actually being outputted - at that point
+	it  can be formatted by doing something like ucfirst lc ...
+	This is important so that pattern-matching done on data can assume
+	uppercase.
+
+CPP
+	cpp assumes with -M and -MG that missing user headers live in the same directory as the
+	source while missing system headers live in the first system include directory specified.
+	This is not in fact true.  CPP always searches the directory containing the source file
+	for headers if no user include path is specified explicitly.  Then, and only then, if the
+	-MG option is specified to -M cpp will just bang out the missing files without a path,
+	whether or not they exist in the current directory or not.  This means that if cpp is
+	invoked in a makefile, (this probably applies to gcc too), cpp will fail unless these headers
+	without a path exist in the working directory. 
+
+	cpp doesn't replace lines of text within #defines within other #defines 
+	with blank space if the lines aren't applicable for the current set of
+	macros.  This can upset makmake's reporting of correct line numbers for errors.
+
+	cpp documentation states that a space is put at the end of a macro expansion
+	"most of the time".  We need to strip this back out after cpp has done its
+	preprocessing in prepfile.pm.  By expanding macros to themselves with three
+	leading underscores we can tell where a macro has been expanded and strip
+	the space added.
+
+MAKMAKE MODULE DESIGN
+	the IDE/CL modules should provide
+	a complete list of possible build variants and be designed in such a way that a particular
+	implementation would not have to use all the builds if it didn't want to.  I think this
+	will be the case already.  So, for example, if MISA could not do RELGDB the the CL_ARM code
+	should never assume that all builds are required (except DEB or REL, which we must insist upon as a
+	default in some cases).
+
+
+QUOTES IN MAKEFILES
+
+	Must be consistent with quotes round long filenames.  If remove quotes round .in
+	file as a target to appease ar, the target will not be found and relgdb will not
+	build.  It seems that without the quotes the filename is parsed so the leading .\
+	on the front of the relgdb paths no longer makes a difference so rel and relgdb
+	targets are considered the same.  This means that rules for the rel and relgdb .in
+	file, if it is around this target that the quotes are removed, and all subsequent
+	dependencies and rules, will be done for each source file - eg gcc looks like it
+	will be called twice with different flags.  For the relgdb build nmake will complain
+	that it doesn't know how to build the .in file because it sees it as a dependency of
+	the main target with quotes and doesn't recognise it as the same thing appearing later
+	as a target without quotes because the .\ is parsed out.  The rel build doesn't complain
+	because it has no preceding .\ to parse out.  In short, filenames without quotes are parsed and
+	amount to the same thing as filenames with quotes if the only difference between the two is the
+	quotes and not the path itself.
+
+
+COMPILER FLAGS
+==============
+
+ALL BUILDS
+/nologo    - dont display the banner
+/Zp4       - Zp[n] - pack structs on n-byte boundary (whatever that means) /W4        - top level warnings
+/Fo<file>  - specifies object file (left blank so base name taken from .cpp     
+file)
+/c         - compile only, don't link because we'll be linking later
+
+SPECIAL CASES
+
+/ML     - Use run-time library -> Single-threaded       (WINS exe release) /MD     - Use run-time library -> Multi-threaded DLL    (WINS dll release)
+these two flags have "d" appended for debug builds so that the respective debug run-time library is used instead.  These flags are probably unnecessary for all projects not using Win32 libraries but MSVC puts them in by default, and it doesn't do any harm to have them I don't think
+
+/O1     - minimum size optimisation (WINS release)
+/Ob1    - disable inline function expansion (WINS release)  (reason uncertain!)
+
+/Od     - disable optimisations (WINS debug)
+
+/Zi     - generate debugging info into program database (WINS debug)
+
+/FR     - generate browse info (WINS debug)
+
+/Fd<file>     - name program database (WINS debug)
+
+/X      - suppresses searching of include directories specified by environmental
+include variable (so used for all projects not using Win32 services)
+
+
+LINKER FLAGS
+============
+
+ALL BUILDS
+/nologo                 - suppress startup banner /subsystem:windows      - MSVC always puts this in anyway /machine:IX86           - ditto
+/out:<file>             - specifies filename for target /WARN:3                 - top-level warnings
+/nodefaultlib           - don't use Win32 libraries (if any are being used then 
+they are listed before this flag and so are not        
+affected by it)
+
+SPECIAL CASES
+/baseaddress:<hex num>  - base address for DLLs, specified by user /entry:"_E32Startup"    - EPOC32 entry point for EXEs /entry:"_E32Dll"        - EPOC32 entry point for DLLs
+
+/incremental:no         - (WINS release) - presumably so a full-link is always  
+performed
+/incremental:yes        - (WINS debug)  - presumably to save time linking-fully 
+when working on a project
+
+/dll                    - (WINS dll targets)
+
+/pdb<file>              - (WINS debug) <file> names program database
+
+/deffile:<file>         - (WINS dll targets) <file> specifies a def file to     
+refer to if one is specified by the user
+
+/implib:<file>          - specifies name of import library to be created for dll
+targets if one is to be created
+
+/debug                  - (WINS debug)  generates debugging information
+
+
+SOURCES OF INFORMATION FOR MAKMAKE ETC
+======================================
+NMAKE Reference in MSVC help
+Cygnus help files in R:\gcc\help - eg cpp.hlp
+Lotus notes - Epoc Software Design - Development Environment - suggestions
+for better build procedures
+Perl newsgroups

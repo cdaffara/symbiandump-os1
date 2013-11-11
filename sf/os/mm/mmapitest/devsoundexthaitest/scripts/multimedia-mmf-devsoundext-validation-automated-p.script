@@ -1,0 +1,236 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description: 
+//
+//
+//! @file
+//! @SYMTestSuiteName multimedia-mmf-devsoundext-validation-automated-p
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+//
+// Tests all public elements of the CMMFDevSound
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: CMMFDevSound
+// The tests are fully automated.
+//
+
+
+
+LOAD_SUITE t_devsoundext
+
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0013
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0013
+//!@SYMAPI
+//!                CMMFDevSound::InitializeL(MDevSoundObserver{ref}, TFourCC, TMMFState)
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings{ref})
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities{ref})
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::Stop()
+//!                
+//!@SYMAuthor			fperez
+//!@SYMCreationDate		7/28/2008 
+//!@SYMTestCaseDesc		G.729AB playback unexpected events
+//!@SYMTestActions
+//!                1. Create Devsound instance
+//!                2. Initialize DevSound (Mode = EMMFStatePlaying; FourCC = G729)
+//!                3. Set Priority (Priority = {Priority,PriorityNormal}; Preference = {PriorityPreference,PriorityPreferenceQuality};PriorityState=EMMFStatePlaying)
+//!                4. Capabilities
+//!                5. Set Configuration(Channels = EMMFMono; Rate = EMMFSampleRate8000Hz)
+//!                6. Stop 5 seconds
+//!                7. OpenFile (Filename = {drive,mmc}\multimedia\mmf\devsound\G729AB\G729AB_8k_8kbps_mono_dtx_on.bin)   
+//!                8. Play 10 seconds              
+//!                9. Stop for 5 seconds (Pause=TRUE)                
+//!                10. FileStartPosition                    
+//!                11. Stop 5 seconds                   
+//!                12. Stop for 5 seconds (Pause=TRUE)             
+//!                13. Play 10 seconds                
+//!                14. Stop                                  
+//!                15. CloseFile                
+//!                16. Delete devsound instance
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Plays a G.729AB file with unexpected events. A stop ocurrs before the play
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	60	t_devsoundext	\multimedia\mmf\devsound\multimedia-mmf-devsoundext-validation-automated-p.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSoundExt-P-0013-0001-InitializeL_command02
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-P-0013-0001-SetPrioritySettings_command03
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-P-0013-0001-SetConfigL_command05
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSoundExt-P-0013-0001-OpenFile_command07
+		COMMAND		devsound1		PlayInitL
+		ASYNC_DELAY  10000000 
+		COMMAND		devsound1		Stop			MULTIMEDIA-MMF-DevSoundExt-P-0013-0001-Stop_command09
+		DELAY  5000000 
+		COMMAND		devsound1		FileStartPosition
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		Stop			MULTIMEDIA-MMF-DevSoundExt-P-0013-0001-Stop_command12
+		DELAY  5000000 
+		COMMAND		devsound1		PlayInitL
+		ASYNC_DELAY  10000000 
+		COMMAND		devsound1		Stop
+		COMMAND		devsound1		CloseFile
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0013
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0016
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0016
+//!@SYMAPI
+//!                void InitializeL(MDevSoundObserver {ref}, TFourCC , TMMFState )
+//!@SYMAuthor			jpacho
+//!@SYMCreationDate		8/11/2008 
+//!@SYMTestCaseDesc		Audio routing - Audio playback with different output preferences
+//!@SYMTestActions
+//!                1. Create DevSound instance
+//!                2. Create AudioOutput instance (DevSoundInstanceName = devsound1)
+//!                3. Open file (Filename = {drive,mmc}\multimedia\mmf\devsound\MP3\MP3_44.1k_128kbps_st_Test3.mp3)   
+//!                4. Initialize DevSound (Mode = EMMFStatePlaying; FourCC = MP3)    
+//!                5. Set Priority (Priority = {Priority,PriorityAudioPlayback}; Preference = {PriorityPreference,PriorityPreferenceAudioPlayback};PriorityState=EMMFStatePlaying) 
+//!                6. Capabilities   
+//!                7. Set Configuration (Channels = EMMFStereo; Rate = EMMFSampleRate44100Hz)   
+//!                8. Set audio output (AudioOutput = Output_Public)    
+//!                9.Start play for 10s    
+//!                10. Set audio output (AudioOutput = Output_Private)  .5                                           
+//!                11. Set audio output (AudioOutput = Output_NoOutput) .5                                      
+//!                12. Set audio output (AudioOutput = Output_Public) .5                                              
+//!                13. Set audio output (AudioOutput = Output_Private) .5                                            
+//!                14. Set audio output (AudioOutput = Output_Public) 1s                                               
+//!                15. Stop playing                                  
+//!                16. Close file                        
+//!                17. Destroy AudioOutput instance                
+//!                18. Destroy DevSound instance
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults  step 9 play the sound without error callback.
+//!                         All the setting steps execute successufully. 
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	90	t_devsoundext	\multimedia\mmf\devsound\multimedia-mmf-devsoundext-validation-automated-p.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CAudioOutput		audiooutput1
+		COMMAND		devsound1		NewL
+		COMMAND		audiooutput1		NewL			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-NewL_command02
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-OpenFile_command03
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-InitializeL_command04
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetPrioritySettings_command05
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetConfigL_command07
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetAudioOutput_command08
+		COMMAND		devsound1		PlayInitL
+		ASYNC_DELAY  10000000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetAudioOutput_command10
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetAudioOutput_command11
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetAudioOutput_command12
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetAudioOutput_command13
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0016-0001-SetAudioOutput_command14
+		DELAY  1000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		audiooutput1		~
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0016
+
+
+
+
+START_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0017
+
+//!@SYMTestCaseID		MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0017
+//!@SYMAPI
+//!                void InitializeL(MDevSoundObserver {ref},TFourCC , TMMFState )
+//!@SYMAuthor			jpacho
+//!@SYMCreationDate		8/11/2008 
+//!@SYMTestCaseDesc		Audio routing - Audio playback with different output preferences when accessory is used
+//!@SYMTestActions
+//!                1. Create DevSound instance
+//!                2. Create AudioOutput instance (DevSoundInstanceName = devsound1)
+//!                3. Open file (Filename = {drive,mmc}\multimedia\mmf\devsound\MP3\MP3_44.1k_128kbps_st_Test3.mp3) 
+//!                4. Initialize DevSound (Mode = EMMFStatePlaying; FourCC = MP3)          
+//!                5. Set Priority (Priority = {Priority,PriorityAudioPlayback}; Preference = {PriorityPreference,PriorityPreferenceAudioPlayback};PriorityState=EMMFStatePlaying) 
+//!                6. Capabilities                  
+//!                7. Set Configuration (Channels = EMMFStereo; Rate = EMMFSampleRate44100Hz)     
+//!                8. Set audio output (AudioOutput = Output_Private)   
+//!                9.Start play for 10s                    
+//!                10. Set audio output (AudioOutput = Output_Public)  .5                                            
+//!                11. Set audio output (AudioOutput = Output_NoOutput) .5                                     
+//!                12. Set audio output (AudioOutput = Output_Private) .5                                            
+//!                13. Set audio output (AudioOutput = Output_All) .5                                                   
+//!                14. Set audio output (AudioOutput = Output_Private) 1s                                         
+//!                15. Stop playing                                 
+//!                16. Close file                                       
+//!                17. Destroy AudioOutput instance                   
+//!                18. Destroy DevSound instance
+//!@SYMTestStatus		Verified
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults  step 9 play the sound without error callback.
+//!                         All the setting steps execute successufully. 
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	90	t_devsoundext	\multimedia\mmf\devsound\multimedia-mmf-devsoundext-validation-automated-p.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CAudioOutput		audiooutput1
+		COMMAND		devsound1		NewL
+		COMMAND		audiooutput1		NewL			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-NewL_command02
+		COMMAND		devsound1		OpenFile			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-OpenFile_command03
+		COMMAND		devsound1		InitializeL			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-InitializeL_command04
+		OUTSTANDING
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetPrioritySettings_command05
+		COMMAND		devsound1		Capabilities
+		COMMAND		devsound1		SetConfigL			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetConfigL_command07
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetAudioOutput_command08
+		COMMAND		devsound1		PlayInitL
+		ASYNC_DELAY  10000000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetAudioOutput_command10
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetAudioOutput_command11
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetAudioOutput_command12
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetAudioOutput_command13
+		DELAY  500000 
+		COMMAND		audiooutput1		SetAudioOutput			MULTIMEDIA-MMF-DevSoundExt-P-0017-0001-SetAudioOutput_command14
+		DELAY  1000000 
+		COMMAND		devsound1		Stop
+		DELAY  5000000 
+		COMMAND		devsound1		CloseFile
+		COMMAND		audiooutput1		~
+		COMMAND		devsound1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA-MMF-DEVSOUNDEXT-VALIDATION-AUTOMATED-PLAYBACK-0017

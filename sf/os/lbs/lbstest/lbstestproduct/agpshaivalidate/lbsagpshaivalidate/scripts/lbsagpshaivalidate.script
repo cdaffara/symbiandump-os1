@@ -1,0 +1,777 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// It requires a ROM with LBS and the AGPS Integration Module Under test.
+// See SGL.GT0348.75.HAIValidationSuite_User_Guide.doc for details.
+// 
+//
+
+//! @file
+//! @SYMTestSuiteName		LBS-AGPSHAI-Validate
+//! @SYMScriptTestEnvironment	This test script can run on an emulator or on a terget device. 
+//! @SYMScriptPurpose		To verify 3rd party AGPS Hardware Adaption Interface modules to be integrated with Symbian's LBS system
+//! @SYMScriptDependencies    LbsAGPSHAIValidateTestServer.exe, lbsagpshaivalidate.ini
+//! @SYMScriptInfo		see lbsagpshaivalidate.ini for details of configurable values
+//! @SYMScriptAutomation	
+//! @SYMScriptAuthor		Lorna McNeill
+//! @SYMScriptCreationDate	03/10/2006
+
+
+LOAD_SUITE LbsAGPSHAIValidateTestServer -SharedData
+
+PRINT Run LbsAGPSHAIValidateTestServer
+PRINT
+
+//! delete any agpsintegmodule.ini file on C:
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+//! delete the previous test debug log
+RUN_UTILS DeleteFile \logs\LbsTestLogs\lbstest.txt
+
+//! Change LBSRoot's central rep file so that it doesn't load other lbs processes:
+RUN_TEST_STEP 60 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_RootCenRepMod
+
+//! Start LBS
+RUN_TEST_STEP 60 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_StartLbs
+
+//! Get Module info for the HAI module under test:
+RUN_TEST_STEP 60 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_GetModuleInfo
+
+START_TESTCASE LBS-AgpsHaiValidate-0001
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0001
+//!@SYMTestCaseDesc		Load and Unload the HAI Module.
+//!
+//!					- Load the HAI module.
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	- ECOM finds a module with the specified interface. Loads and unloads without error.
+//!					
+//!
+//!@SYMCR    			CR0803 
+//!
+//!@SYMPREQ				PREQ784			
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 120 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0001
+
+END_TESTCASE LBS-AgpsHaiValidate-0001
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0002
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0002
+//!@SYMTestCaseDesc		'immediate' location request with long max fix time and default accuracy.
+//!
+//!					- Load the HAI module.
+//!					- Request a location update from the HAI module with 'immediate' target time and long max fix time, say 3 minutes (default accuracy).
+//!					- Verify the following 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- After maxfix time passes, wait for a short time to make sure no stray updates (warn/fail depending on target time)
+//!					- Log the last update received for manual inspection.
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- Module reports device status 'Active' at some point during each request
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//!					
+//!
+//!@SYMCR    			CR0803 
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028				
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0002
+
+END_TESTCASE LBS-AgpsHaiValidate-0002
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0003
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0003
+//!@SYMTestCaseDesc		non-immediate location request with long max fix time (default accuracy)
+//!
+//!@SYMTestActions		As for LBS-AGPS-HAI-Validate-0002 except use non-immediate target time in config file:
+//!					- Load the HAI module.
+//!					- Request a location update from the HAI module with a non-immediate target time, say a minute from now, and long (say 3 mins) max fix time (default accuracy for module).
+//!					- Verify the following 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- After maxfix time passes, wait for a short time to make sure no stray updates (warn/fail depending on target time)
+//!					- Log the last update received for manual inspection.
+//!					- Unload the HAI module.
+//!					
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- Module reports device status 'Active' at some point during each request
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//! 
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028				
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0003
+
+END_TESTCASE LBS-AgpsHaiValidate-0003
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0004
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0004
+//!@SYMTestCaseDesc		Request a second location at different, earlier, target time. 
+//!
+//!@SYMTestActions			
+//!					- Load the HAI module
+//!					- Request a location update from the HAI module with specified 'distant' target time, say 3 minutes from now (default max fix time and accuracy).
+//!					- After a short delay (before first target time reached), say 30s, request another location update from the HAI module with an earlier target time, say 1 minute from now.
+//!					- Verify 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- Flag a warning if, after second request started, updates are received for the first request.
+//!					- Log the last update received for manual inspection.
+//!					- After maxfix time passes, wait for a short time to make sure no stray updates are received.
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- Module reports device status 'Active' at some point during each request
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//!					-  Specifically, the second request implicitly cancels the first (verified using target times).
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0004
+
+END_TESTCASE LBS-AgpsHaiValidate-0004
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0005
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0005
+//!@SYMTestCaseDesc		Request a second location at different, later, target time before first targettime reached
+//!
+//!@SYMTestActions			
+//!					- As for LBS-AGPS-HAI-Validate-0004 except second request has later target time than first:
+//!					- Load the HAI module
+//!					- Request a location update from the HAI module with specified 'distant' target time, say 1 minute from now, (default max fix time and accuracy for module).
+//!					- Request another location update (before first target time reached) from the HAI module with a later target time, say 3 minutes from now.
+//!					- Verify 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- Flag a warning if, after second request started, updates are received for the first request.
+//!					- Log the last update received for manual inspection.
+//!					- After maxfix time passes, wait for a short time to make sure no stray updates are received.
+//!					- Unload the HAI module.
+//!					
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- Module reports device status 'Active' at some point during each request.
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//!					-  Specifically, the second request implicitly cancels the first (verified using target times).
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0005
+
+END_TESTCASE LBS-AgpsHaiValidate-0005
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0006
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0006
+//!@SYMTestCaseDesc		Request with low accuracy requirement implicitly cancelled by a second location at same target time with higher accuracy.
+//!
+//!@SYMTestActions			
+//!					- As for LBS-AGPS-HAI-Validate-0004 except second request has same target time as first, but higher accuracy:
+//!					- Load the HAI module
+//!					- Request a location update from the HAI module with specified 'distant' target time, say 1 minute from now, and low accuracy, say 100m (default max fix time for module).
+//!					- After a short delay (before first target time reached), say 30s, request another location update  from the HAI module with a higher accuracy, say 10m.
+//!					- Verify 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- Flag a warning if, after second request started, updates are received for the first request.
+//!					- Log the last update received for manual inspection.
+//!					- After maxfix time passes, wait for a short time to make sure no stray updates are received.
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- Module reports device status 'Active' at some point during each request.
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//!					- Specifically, we should see that the module returns an update with the higher accuracy (assuming normal data quality is reported) before updates stop being received.
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0006
+
+END_TESTCASE LBS-AgpsHaiValidate-0006
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0007
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0007
+//!@SYMTestCaseDesc		Request with low accuracy requirement implicitly cancelled by a second location at same target time with lower accuracy.
+//!
+//!@SYMTestActions			
+//!					- As for LBS-AGPS-HAI-Validate-0006 except second request has lower rather than higher accuracy.
+//!					- Load the HAI module
+//!					- Request a location update from the HAI module with specified 'distant' target time, say 1 minute from now, and high accuracy, say 10m (default max fix time for module).
+//!					- After a short delay (before first target time reached), say 30s, request another location update  from the HAI module with a lower accuracy, say 100m.
+//!					- Verify 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- Flag a warning if, after second request started, updates are received for the first request.
+//!					- Log the last update received for manual inspection.
+//!					- After maxfix time passes, wait for a short time to make sure no stray updates are received.
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- Module reports device status 'Active' at some point during each request.
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//!					- Specifically, we should see that no updates are received after the new, lower, accuracy is reached.
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0007
+
+END_TESTCASE LBS-AgpsHaiValidate-0007
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0008
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0008
+//!@SYMTestCaseDesc		Request an 'immediate' location with default maxfix time, then on maxfix time, request further 'immediate' update(s) with shorter maxfixtime (> TTNF)
+//!
+//!@SYMTestActions			
+//!					- Load the HAI module
+//!					- Request an 'immediate' location update from the HAI module with default maxfix time and accuracy
+//!					- After max fix time passes, request (configurable number of) further location updates with short (~TTNF), say 5secs, maxfix time
+//!					- Verify 'standard checks' for all requests:
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- Unload the HAI module
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request.
+//!						- Module reports device status 'Active' at some point during each request. 
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0009
+
+END_TESTCASE LBS-AgpsHaiValidate-0008
+
+
+PRINT The device should be put into a Cold State (no cached data) before running this test, or a false positive may result 
+START_TESTCASE LBS-AgpsHaiValidate-0009
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0009
+//!@SYMTestCaseDesc		'immediate' location request with max fix time = TTFF + processing time (default accuracy).
+//!
+//!					- As for LBS-AGPS-HAI-Validate-0002 except use maxfixtime of TTFF and check that we get update of module's expected accuracy before maxfixtime:
+//!					- Load the HAI module.
+//!					- Request a location update from the HAI module with 'immediate' target time and max fix time = TTFF + 0.5secs (default accuracy).
+//!					- Verify the following 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- Flag a warning if an update *of expected accuracy* not recevied within a short time of TTFF (ie by maxfix time)
+//!					  	Note that above *could* genuinely be due to bad conditions, so don't fail test.
+//!					- Log the last update received for manual inspection.
+//!					- Unload the HAI module.
+//!					
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results:
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request.
+//!						- Module reports device status 'Active' at some point during each request. 
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested. 
+//!					- Update of expected accuracy received within a short time of TTFF 
+//!					
+//!
+//!@SYMCR    			CR0803 
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6022
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0010
+
+END_TESTCASE LBS-AgpsHaiValidate-0009
+
+PRINT The device should be put into a Cold State (no cached data) before running this test, or a false positive may result 
+START_TESTCASE LBS-AgpsHaiValidate-0010
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0010
+//!@SYMTestCaseDesc		'far off' location request with very short max fix time (default accuracy).
+//!
+//!					Note: The purpose of this test is to catch a module that doesn't start getting fixes until the (distant) target time even when the maxfix time is short 
+//!
+//!					- As for LBS-AGPS-HAI-Validate-0002 except use target time >> TTFF (and short maxfix time)
+//!					- Load the HAI module.
+//!					- Request a location update from the HAI module with target time >> TTFF and short max fix time, say 30s (default accuracy).
+//!					- Verify the following 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- Verify that a fix *of expected accuracy* is produced by maxfix time (ie NOT at TTFF after target time). Flag a warning if not.
+//!					- Log the last update received for manual inspection.
+//!					- Unload the HAI module.				
+//!
+//!@SYMTestExpectedResults	- 'Standard' Results 
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested.
+//!					- An update of expected accuracy (per module info) is received shortly after the target time
+//!					
+//!
+//!@SYMCR    			CR0803 
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6022				 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0011
+
+END_TESTCASE LBS-AgpsHaiValidate-0010
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0011
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0011
+//!@SYMTestCaseDesc		request location with low accuracy 
+//!
+//!@SYMTestActions			
+//!					- As for LBS-AGPS-HAI-Validate-0002, but with low accuracy that is less accurate than expected accuracy given in module info
+//!					- Load the HAI module.
+//!					- Request a location update from the HAI module with immediate target time, long max fix time, say 4 mins, and very low accuracy, say 50m.
+//!					- Verify the following 'standard checks':
+//!						- An update is received shortly (within a few seconds) after the target time (warn of possible hardware issue if not)
+//!						- Any updates received have the appropriate target time (that of last request). 
+//!						  	if not, then warn if legal unsollicited request (targettime = 0) and fail if illegal unsollicited request.
+//!						- Any update received is appropriate for the last reported data quality (eg if 'normal' data quality, update should meet module's expected accuracy)
+//!						- If an update is received which matches the last requested accuracy, no further updates are recevied (warn of possible power/perf issues if so).
+//!						- Some update (potentially empty/partial depending on data quality reported) was received before maxfix time. 
+//!						- The update returned meets the module's expected accuracy (reported in module info) if normal data quality was reported at some point during the valid update window.
+//!						- When any update is recevied, the current module status is EDeviceActive 
+//!					- After maxfix time passes, wait for a short time to make sure no stray updates (warn/fail depending on target time)
+//!					- Log the last update received for manual inspection.
+//!					- Unload the HAI module.				
+//!
+//!@SYMTestExpectedResults	
+//!@SYMTestExpectedResults	- 'Standard' Results 
+//!						- No location returned before targettime or after max fix time. 
+//!						- A location of some kind is returned before maxfix time for any request. 
+//!						- If data quality loss is not reported during request, then last location received should have meaningful lat + long.
+//!						- If reported data quality is 'normal' throughout valid location update window and device status is OK, then last location returned satisfies the default accuracy for the module.
+//!						- Once position returned which satisfies requested accuracy, no further locations are returned.
+//!						- Targettime for any returned location matches the last requested.
+//!					- particularly we're checking that the module stops producing updates when the non-default accuracy is reached
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6013, REQ6015, REQ6016, REQ6022, REQ6023, REQ6028
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0012
+
+END_TESTCASE LBS-AgpsHaiValidate-0011
+
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0012
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0012
+//!@SYMTestCaseDesc		Make an immediate request with very high accuracy and long maxfix time and then cancel it.
+//!
+//!@SYMTestActions			
+//!					- Load the HAI module
+//!					- Request an 'immediate' location update from the HAI module with a far-off max fix time, say 3 mins, and high accuracy, say 2 metres)
+//!					- Cancel the request after a few seconds
+//!					- Flag a warning if locations are still being returned after, say, 1 minute (configurable)
+//!					- Unload the HAI module
+//!
+//!
+//!@SYMTestExpectedResults	Locations stop being received after a certain time (say 1 minute, configurable) (way before the max fix time)
+//!					
+//!
+//!@SYMCR    			CR0803 
+//!
+//!@SYMPREQ				PREQ784
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0013
+
+END_TESTCASE LBS-AgpsHaiValidate-0012
+
+START_TESTCASE LBS-AgpsHaiValidate-0013
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0013
+//!@SYMTestCaseDesc		Verify that HAI module reports its status on loading and 'settles' to 'Inactive'
+//!
+//!					- Load the HAI module.
+//!					- Start a short timer (10s, say). Log warning if no device status reported (may be 'initialising' while doing self-test).
+//!					- If 'Inactive' state not yet reported, start a longer timer (order of minutes - configurable).
+//!					- Verify that 'Inactive' reported.
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	The HAI module reports at least one device status change and must eventually report 'Inactive' state
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6017, REQ6026				 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Not Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0014
+
+END_TESTCASE LBS-AgpsHaiValidate-0013
+
+START_TESTCASE LBS-AgpsHaiValidate-0014
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0014
+//!@SYMTestCaseDesc		Verify that HAI module reports 'Active' device state during location update and drops back to 'Inactive' when no outstanding requests.
+//!
+//!					- Load the HAI module.
+//!					- Request a single location update from the HAI module with 'immediate' target time, low accuracy, say 100m and long maxfix, say 4 mins.
+//!						(this is to maximise the chances of getting an accurate position before maxfix time)
+//!					- When any update is recevied, verify that the current module status is EDeviceActive
+//!					- If/When accurate update is received, Start a 'long' (order of 2 mins, configurable) timer and verify that 'Inactive' status is reported before timer expires. 
+//!					- Warn that test result is inconclusive if accurate position not received or 'inactive' timer not fired (re-run test)
+//!					- Unload the HAI module
+//!						
+//!
+//!@SYMTestExpectedResults	
+//!					- The HAI module reported device status 'Active' at some point
+//!					- Status eventually dropped back to 'Inactive' 
+//!					- Other, intermediate, statuses may be reported but these are not compulsory.
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6017, REQ6026
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0015
+
+END_TESTCASE LBS-AgpsHaiValidate-0014
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0015
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0015
+//!@SYMTestCaseDesc		Verify that the HAI module drops back to a low power state when the next location is a long way off.  
+//!				
+//!					- Load the HAI module.
+//!					- Request a location update from the HAI module with 'immediate' target time and specified max time, say 1 min and low accuracy, say 100m.
+//!						(this is to maximise the chances of getting )
+//!					- When the request has completed, request another location that is a long way off (say 10 mins, configurable).
+//!					- If the device does not drop into a low power status ('Standby' or 'Ready') within a short time (configurable) of the first request completing, log a warning.
+//!					- Unload the HAI module.
+//!						
+//!
+//!@SYMTestExpectedResults	
+//!					- The HAI module reported device status 'Active' at some point 
+//!					- The HAI module reports a move to a low power state (not compulsory, but advised)
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6017, REQ6026				 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0016
+
+END_TESTCASE LBS-AgpsHaiValidate-0015
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0016
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0016
+//!@SYMTestCaseDesc		Verify that the HAI module reports its data quality status on loading and settles to 'normal' quality
+//!
+//!					- Load the HAI module.
+//!					- Verify that some data quality status is reported within 10 seconds.
+//!					- Log warning if 'normal' data quality status not reported after TTFF.
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	HAI module reports its quality status on loading. Eventually reports a quality status of 'normal'
+//!
+//!
+//!@SYMPREQ				PREQ784
+//!@SYMREQ				REQ6018, REQ6027	 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 120 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0017
+
+END_TESTCASE LBS-AgpsHaiValidate-0016
+
+START_TESTCASE LBS-AgpsHaiValidate-0017
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0017
+//!@SYMTestCaseDesc		Advise module to go into 'On' power mode
+//!
+//!					- Load the HAI module.
+//!					- Advise the module to go into 'On' power mode (local apps actively requesting location info).
+//!					- Warn if the HAI module does not report device status 'Ready' after a short time (few seconds).
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	HAI module reports device status 'Ready'.
+//!
+//!
+//!@SYMPREQ			PREQ784
+//!@SYMREQ			REQ6025 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2 or 3
+//!@SYMTestStatus			Not Implemented.
+
+RUN_TEST_STEP 120 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0018
+
+END_TESTCASE LBS-AgpsHaiValidate-0017
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0018
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0018
+//!@SYMTestCaseDesc		Advise module to go into 'Standy' power mode while no outstanding location requests
+//!
+//!					- Load the HAI module.
+//!					- Advise the module to go into 'Standby' power mode (local apps connected but none actively requesting location info).
+//!					- Warn if the HAI module does not report device status 'Standby' or 'Ready' after a short time (few seconds).
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	HAI module reports device status 'Standby' or 'Ready'.
+//!
+//!
+//!@SYMPREQ			PREQ784
+//!@SYMREQ			REQ6025 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2 or 3
+//!@SYMTestStatus			Not Implemented.
+
+RUN_TEST_STEP 120 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0019
+
+END_TESTCASE LBS-AgpsHaiValidate-0018
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0019
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0019
+//!@SYMTestCaseDesc		Advise module to go into 'Off' power mode while no outstanding location requests.
+//!
+//!					- Load the HAI module.
+//!					- Advise the module to go into 'Off' power mode (no local apps connected / no locations expected).
+//!					- Warn if the HAI module does not report device status 'Inactive' after a short time (few seconds).
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	HAI module reports device status 'Inactive'.
+//!
+//!
+//!@SYMPREQ			PREQ784
+//!@SYMREQ			REQ6025 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2 or 3
+//!@SYMTestStatus			Not Implemented.
+
+RUN_TEST_STEP 120 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0020
+
+END_TESTCASE LBS-AgpsHaiValidate-0019
+
+
+START_TESTCASE LBS-AgpsHaiValidate-0020
+
+//!@SYMTestCaseID			LBS-AgpsHaiValidate-0020
+//!@SYMTestCaseDesc		Advise module to go into 'Close' power mode while no outstanding location requests, then request a location.
+//!
+//!					- Load the HAI module.
+//!					- Advise the module to 'Close' (no local apps connected / no locations expected).
+//!					- Warn if the HAI module does not request to be Shutdown after a short time.
+//!					- After the module has requested to be shutdown, request a location (immediate, default TTFF and accuracy).
+//!					- Verify that a location is returned before the maxfix time (TTFF).
+//!					- Unload the HAI module.
+//!
+//!@SYMTestExpectedResults	HAI module requests to be shutdown. When location is requested, it is retrieved as normal.
+//!
+//!
+//!@SYMPREQ			PREQ784
+//!@SYMREQ			REQ6025 
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		2 
+//!@SYMTestStatus			Not Implemented.
+
+RUN_TEST_STEP 600 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_Main \testdata\configs\lbsagpshaivalidate.ini LBS-AGPS-HAI-Validate-0021
+
+END_TESTCASE LBS-AgpsHaiValidate-0020
+
+//! Stop LBS
+RUN_TEST_STEP 60 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_StopLbs
+
+//! Reset LBSRoot's centarl rep file
+RUN_TEST_STEP 60 LbsAGPSHAIValidateTestServer LbsAGPSHAIValidateStep_RootCenRepReset
+

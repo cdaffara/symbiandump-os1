@@ -1,0 +1,1213 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Create appropiate test status
+// 
+//
+
+//! @file
+//! @test
+//! @internalComponent - Internal Symbian test code 
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_createnew.script
+
+
+
+LOAD_SUITE tdscstore_server
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0005
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDesc		DSC database can be created successfully on first use and can be opened and closed successfully
+//! @SYMTestActions			Precondition: DSC database does not exist
+//!							Call OpenL(), Close() and IsOpened().
+//! @SYMTestExpectedResults 	DSC database shall be created, opened and closed successfully.
+
+RUN_UTILS DeleteFile 		c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0005
+RUN_TEST_STEP 			100 tdscstore_server OpenCloseDscDatabase
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0005
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0007
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDesc		AN existing DSC database can be opened successfully.
+//! @SYMTestActions			Precondition: DSC database exists
+//!							Call OpenL() and Close().
+//! @SYMTestExpectedResults 	DSC database opened successfully.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0007
+RUN_UTILS MkDir 			c:\tdscstore_avoid_connection_in_preamble_token\
+RUN_TEST_STEP 				100 tdscstore_server OpenDscDatabase 			z:\sysstarttest\ini\tdscstore_api.ini 
+RUN_UTILS DeleteDirectory 	c:\tdscstore_avoid_connection_in_preamble_token\
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0007
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0009
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDesc		Test the connection to DSC database which has not been opened.
+//! @SYMTestActions			Call IsOpened().
+//! @SYMTestExpectedResults 	Return EFalse. Session is not connected.
+
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0009
+RUN_UTILS MkDir 				c:\tdscstore_avoid_connection_in_preamble_token\
+RUN_TEST_STEP !error=-18		100 tdscstore_server ConnectedDsc 				z:\sysstarttest\ini\tdscstore_api.ini 
+RUN_UTILS DeleteDirectory 		c:\tdscstore_avoid_connection_in_preamble_token\
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0009
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0010
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDesc		IsOpened() should return ETrue on an open session. 
+//! @SYMTestActions			1.Call OpenL() to open the session to DSC database.
+//!							2.Call IsOpened() should return ETrue
+//!							3.Call Close() to close the session
+//! @SYMTestExpectedResults 	Return ETrue. Session is connected.
+
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0010
+RUN_TEST_STEP 			100 tdscstore_server ConnectedDsc 	z:\sysstarttest\ini\tdscstore_api.ini 
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0010
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0011
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Remove existing DSC database.
+//! @SYMTestCaseDesc		Add a new DSC.The default value of DscId is KDefaultSymbianDsc. 
+//! @SYMTestActions			1.Call OpenL() to open a session to DSC database
+//!							2.DscExistsL() return EFalse
+//!							3.Call CreateDscL() to create a new DSC 
+//!							4.DscExistsL() return ETrue
+//!							5.Close the session.
+//! @SYMTestExpectedResults 	DscId is added to the database.
+
+RUN_UTILS DeleteFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0011
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0011
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0012
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Adding a DSC which is already in the database should fail. 
+//! @SYMTestActions			Precondition: DscId exists in DSC database 
+//!							1.Call OpenL() to open a session to DSC database
+//!							2.DscExistsL() return ETrue
+//!							3.Call CreateDscL()  should leave with KErrAlreadyExists
+//!							4.Call Close() to close the session.
+//! @SYMTestExpectedResults 	DscId can not be added to the database. Leave with KErrAlreadyExists.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0012
+RUN_TEST_STEP 				100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-11 	100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-11 	100 tdscstore_server CreateDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0012
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0013
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting an existing DSC.
+//! @SYMTestActions			Precondition: DscId exists in DSC database 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() return ETrue
+//!							4. Call DeleteDscL() to delete DSC
+//!							5. DscExistsL() return EFalse
+//!							6. ItemExistsL() return EFalse
+//!							7. Close the session.
+//! @SYMTestExpectedResults 	DscId is deleted and all items in DscId are deleted too. 
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0013
+RUN_TEST_STEP 				100 tdscstore_server DscExist		 	z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP 				100 tdscstore_server DeleteDsc 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0013
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0014
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Delete a non-existing DSC. 
+//! @SYMTestActions			Precondition: DscId does not exist in DSC database 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return EFalse
+//!							3. Call DeleteDscL() to delete non-existing DscId
+//!							4. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound. 
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0014
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1 	100 tdscstore_server DeleteDsc 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0014
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0015
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Check a DSC exists
+//! @SYMTestActions			Precondition: DscId exists in DSC database 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. Call DscExistsL() should return ETrue
+//!							3. Call Close() to close the session.
+//! @SYMTestExpectedResults 	The default value of aDscId is KDefaultSymbianDsc. 
+								Return ETrue for the existing DscId
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0015
+RUN_TEST_STEP 			100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 			100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0015
+
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0016
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Remove existing DSC database.
+//! @SYMTestCaseDesc		Check a DSC does not exist
+//! @SYMTestActions			Precondition: DscId does not exist in DSC database 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. Call DscExistsL() should return EFalse
+//!							3. Call Close() to close the session.
+//! @SYMTestExpectedResults 	The default value of DscId is KDefaultSymbianDsc. 
+								Return EFalse for non-existent DSC
+
+RUN_UTILS DeleteFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0016
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0016
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0017
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Add a new item at the beginning of the DSC. 
+//! @SYMTestActions			Precondition: item does not exist in DSC
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() should return EFalse
+//!							4. Call AddItemL() to add the item at the beginning.
+//!							5. ItemExistsL() should return ETrue
+//!							6. Close the session.
+//! @SYMTestExpectedResults 	item is added at the beginning of the DSC
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0017
+RUN_TEST_STEP 		 		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP 				100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0017
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0018
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Add a new item at the end of the DSC 
+//! @SYMTestActions			Precondition: item does not exist in DSC. Default value of position is ELast
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() should return EFalse
+//!							4. Call AddItemL() to add the item.
+//!							5. ItemExistsL() should return ETrue
+//!							6. Close the session.
+//! @SYMTestExpectedResults 	item is added at the end of DSC
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0018
+RUN_TEST_STEP 			 	100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_3_DefaultUid_UT
+RUN_TEST_STEP 				100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_3_DefaultUid_UT
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_3_DefaultUid_UT
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0018
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0019
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Add an item to non-existing DSC should leave.  
+//! @SYMTestActions			Precondition: Dsc does not exist. 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() should return EFalse
+//!							3. Call AddItemL() to add the item should leave
+//!							4. Close the session.
+//! @SYMTestExpectedResults 	Unable to add. Leave with  KErrNotFound.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0019
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0019
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0020
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Add an existing item to the DSC should leave
+//! @SYMTestActions			Precondition: item exists in DSC
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() return ETrue
+//!							4. Call AddItemL() to add the item should leave.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Unable to add. Leave with  KErrAlreadyExists. 
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0020
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP !error=-11	100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0020
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0021
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Same item can be added to different DSCs.
+//! @SYMTestActions			Precondition: item exists in Dsc1, does not exist in Dsc2 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL(Dsc1) return ETrue
+//!							3. Set item.DscId=Dsc1
+//!							4. ItemExistsL(item) should return ETrue
+//!							4. Set item.DscId=Dsc2
+//!							5. DscExistsL(Dsc2) return ETrue
+//!							6. ItemExistsL(item) should return EFalse
+//!							7. Call AddItemL(item) to add the item to Dsc2.
+//!							8. ItemExistsL() should return ETrue
+//!							9. Call Close() to close the session.
+//! @SYMTestExpectedResults 	The item is added to the the 2nd DSC, Dsc2
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0021
+RUN_TEST_STEP 			 	100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DSC1
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP  !error=-1 	100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP 				100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0021
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0022
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Unable to add an item whose filename is NULL
+//! @SYMTestActions
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. Call AddItemL() to add item will leave
+//!							4. Close the connection
+//! @SYMTestExpectedResults 	The item can not be added to the DSC. Leave with KErrArgument
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0022
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-6		100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_5_DefaultUid_ErrArgument
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0022
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0023
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Check the existence of an existing DSC item by file name and arguments
+//! @SYMTestActions			Precondition: item exists in Dsc
+//!							File name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. Call ItemExistsL() should return ETrue
+//!							4. Close the session.
+//! @SYMTestExpectedResults 	Return ETrue for existing item
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0023
+RUN_TEST_STEP   		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0023
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0024
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Check the existence of a non-existing DSC item by file name and arguments
+//! @SYMTestActions			Precondition: item does not exist in DSC
+//!							File name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							4. Call ItemExistsL() should return EFalse
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Return EFalse for non-existing item.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0024
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0024
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0025
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Check the existence of a DSC item in a non-existing DSC 
+//! @SYMTestActions			Precondition: DSC does not exist
+//							File name is not NULL
+//							1. Call OpenL() to open a session to DSC database
+//							2. DscExistsL() return EFalse
+//							3. Call ItemExistsL() will return EFalse.
+//							4. Close the session.
+//! @SYMTestExpectedResults 	Return EFalse for non-existing item
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0025
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0025
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0026
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Check the existence of an existing DSC item by Item Id
+//! @SYMTestActions			Precondition: item exists in DscId, check the existence by Item ID while file name is NULL
+//!							1. OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() should return ETrue
+//!							4. Close the session.
+//! @SYMTestExpectedResults 	Return ETrue for existing item
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0026
+RUN_TEST_STEP 			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1_ItemId
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0026
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0027
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Check the existence of a non-existing DSC item by Item Id
+//! @SYMTestActions			Precondition: item does not exist in DSC, check the existence by item ID while file name is NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() should return EFalse
+//!							4. Close the session.
+//! @SYMTestExpectedResults 	Return EFalse for non-existing item.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0027
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_ItemId
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0027
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0028
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting an existing item from a DSC by file name and arguments
+//! @SYMTestActions			Precondition: item exists in DSC, file name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() return ETrue
+//!							4. DeleteItemL() to remove the item.
+//!							5. ItemExistsL() return EFalse
+//!							6. Close the session.
+//! @SYMTestExpectedResults 	The item is deleted from the aDscId
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0028
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP 				100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0028
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0029
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting a non-existing item from a DSC by file name and arguments
+//! @SYMTestActions			Precondition: item does not exist in DSC, file name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() return EFalse
+//!							4. Call DeleteItemL() to remove the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0029
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP !error=-1		100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0029
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0030
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting an item from a non-existing DSC by file name and arguments
+//! @SYMTestActions			Precondition: DSC does not exist
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return EFalse
+//!							3. Call DeleteItemL() to remove the item.
+//!							4. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0030
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0030
+
+
+	
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0031
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting an existing item from a DSC by Item ID
+//! @SYMTestActions			Precondition: item exists in DSC. Delete the item by Item ID while file name is NULL
+//!							1. OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. Call ItemExistsL() return ETrue
+//!							4. Call DeleteItemL() to remove the item.
+//!				5. Call ItemExistsL() return EFalse
+//!				6. Close the session.
+//! @SYMTestExpectedResults 	The item is deleted from the DSC
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0031
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP 				100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1_ItemId
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0031
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0032
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting a non-existing item from a DSC by Item ID
+//! @SYMTestActions			Precondition: item does not exist in DscId. Delete the item by Item ID while file name is NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() return EFalse
+//!							4. DeleteItemL() to remove the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0032
+RUN_TEST_STEP   			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP !error=-1		100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_ItemId
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0032
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0033
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting an item from a non-existing DSC by Item ID
+//! @SYMTestActions			Precondition:  DSC does not exist. Delete the item by Item ID while file name is NULL
+//!						1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return EFalse
+//!							3. Call DeleteItemL() to remove the item.
+//!							4. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0033
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist	 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC2_ItemId
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0033
+
+
+	
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0034
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Deleting an item which exists in two DSC from the 1st DSC, won’t affect the same 
+//!							item in the 2nd DSC 
+//! @SYMTestActions			1. Call OpenL() to open a session to DSC database
+//!							2. Dsc1, DSC2 exists
+//!							3. item exists in Dsc1, DSC2
+//!							7. DeleteItemL() to remove the item from DSC1
+//!							9. item exists in DSC2 
+//!							11. item does not exist in Dsc1 
+//!							12. Close the session.
+//! @SYMTestExpectedResults 	The item is removed from 1st DSC, the 2nd  DSC is not affected.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0034
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP 				100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0034
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0035
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Update an item in the DSC using filename
+//! @SYMTestActions			Precondition: item exists in DscId, file name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistL() return ETrue. item is located by file name and arguments
+//!							4. Call UpdateItemL() to update the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	The item is updated accordingly.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0035
+RUN_TEST_STEP 			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 			100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP 			100 tdscstore_server UpdateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0035
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0036
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		updating a non-existing item in the DSC shall leave 
+//! @SYMTestActions			Precondition: item does not exist in DSC 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistL() return EFalse 
+//!							4. Call UpdateItemL() to update the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0036
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP !error=-1		100 tdscstore_server UpdateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0036
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0037
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Updating an item in the non-existing DSC shall leave 
+//! @SYMTestActions			Precondition: DSC does not exist
+//!							1. Call OpenL() to open a session to DSC database
+//!							3. DscExistL() return EFalse
+//!							4. Call UpdateItemL() to update the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0037
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server UpdateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0037
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0039
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Update an item in the DSC using itemid
+//! @SYMTestActions			Precondition: item with specified Item Id exists in DSC.
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistL() return ETrue
+//!							4. Call UpdateItemL() to update the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	The item is updated accordingly.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0039
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 				100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+RUN_TEST_STEP 				100 tdscstore_server UpdateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1_ItemId
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0039
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0040
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Read an existing item from DSC by file name and arguments
+//! @SYMTestActions			Precondition: item exists in Dsc, file name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							3. DscExistsL() return ETrue
+//!							4. ItemExistsL() return ETrue
+//!							5. Call ReadItemL(item) to read the item.
+//!							6. Close the session.
+//! @SYMTestExpectedResults 	item is updated with the information retrieved from the DSC.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0040
+RUN_TEST_STEP 			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DSC1
+RUN_TEST_STEP 			100 tdscstore_server ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DSC1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0040
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0041
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Read a non-existing item from DSC by file name and arguments
+//! @SYMTestActions			Precondition: item does not exist in Dsc, file name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() return EFalse
+//!							4. ReadItemL() to read the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0041
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP !error=-1		100 tdscstore_server ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0041
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0042
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Read an item from a non-existing DSC by file name and arguments
+//! @SYMTestActions			Precondition: Dsc does not exist, file name is not NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return EFalse
+//!							3. Call ReadItemL() to read the item.
+//!							4. Close the session.		
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0042
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0042
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0043
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Read an existing item from DSC by Item ID
+//! @SYMTestActions			Precondition: item with specified Item Id exists in DSC, file name is  NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL(item) return ETrue
+//!							4. Call ReadItemL(item) to read the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	item is updated with the information retrieved from the DSC. 
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0043
+RUN_TEST_STEP 			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DSC1
+RUN_TEST_STEP 			100 tdscstore_server ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DSC1_ItemId
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0043
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0044
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Read a non-existing item from DSC by Item ID
+//! @SYMTestActions			Precondition: item with specified Item Id does not exist in DSC, file name is  NULL
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. ItemExistsL() return EFalse
+//!							4. Call ReadItemL() to read the item.
+//!							5. Close the session.
+//! @SYMTestExpectedResults 	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0044
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscItemExist 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_UT
+RUN_TEST_STEP !error=-1		100 tdscstore_server ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_2_DefaultUid_ItemId
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0044
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0045
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Open an existing DSC for enumerating 
+//! @SYMTestActions			Precondition: DSC exists
+//!							1. OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. EnumOpenLC() to open the DSC.
+//!							4. EnumClose() to close DSC.
+//!							5. Close() to Close the session.
+//! @SYMTestExpectedResults 	DSC is opened and closed successfully for enumeration. The default value of DSC is KDefaultSymbianDsc
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0045
+RUN_TEST_STEP 			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server EnumOpenDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 			100 tdscstore_server EnumOpenDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0045
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0046
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Unable to open a non-existing DSC for enumerating 
+//! @SYMTestActions			Precondition: DSC does not exist 
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return EFalse
+//!							3. EnumOpenLC() should leave
+//!							4. Call Close() to close the session
+//! @SYMTestExpectedResults 	Leave with KErrNotFound.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0046
+RUN_TEST_STEP !error=-1		100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+RUN_TEST_STEP !error=-1		100 tdscstore_server EnumOpenDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0046
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0047
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Enumerating items from the opened DSC  
+//! @SYMTestActions			1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. Call EnumOpenLC() to open DSC
+//!							4. Call EnumReadNextL() to read the item.
+//!							5. Repeat 4 until return NULL
+//!							6. EnumClose();
+//!							7. Close the session.
+//! @SYMTestExpectedResults 	Return the pointer to the item according to the sequence in DSC. When reaching the end, NULL pointer will be returned. 
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0047
+RUN_TEST_STEP 			100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP 			100 tdscstore_server EnumDscItems 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0047
+
+
+	
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0048
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Enumerating items in the DSC without open Enum
+//! @SYMTestActions			1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. Call EnumReadNextL() to read the item should leave
+//!							4. Call Close() to close the session
+//! @SYMTestExpectedResults 	Leave with KErrNotReady  
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0048
+RUN_UTILS MkDir 			c:\tdscstore_avoid_connection_in_preamble_token\
+RUN_TEST_STEP !error=-18	100 tdscstore_server EnumDscItems 				z:\sysstarttest\ini\tdscstore_api.ini DSC_1
+RUN_UTILS DeleteDirectory 	c:\tdscstore_avoid_connection_in_preamble_token\
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0048
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0049
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Multiple sessions can read DSC database at the same time 
+//! @SYMTestActions			Precondition: Dsc exists. Two process run concurrently
+//!						1st process:
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue	
+//!							3. OpenL() to open a session to DSC database
+//!							4. EnumOpenLC() to open a Dsc
+//!							5. EnumReadNextL() to enumerate items.
+//!							6. EnumClose() to close the DSC
+//!							7. Close() to close the session
+//!						2nd Process:	
+//!							1. OpenL() to open a session to DSC database
+//!							2. ReadItemL() to read from the Dsc
+//!							3. Call Close() to close the session.
+//! @SYMTestExpectedResults 	Both sessions shall be able to read
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0049
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+CONCURRENT
+RUN_TEST_STEP 				100 tdscstore_server EnumDscItems 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_1
+RUN_TEST_STEP				100 tdscstore_server ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DSC1
+CONSECUTIVE
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0049
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0050
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Reading DSC should block another session’s attempt to write to DSC  
+//! @SYMTestActions			Precondition: DSC exists. Two process run concurrently
+//!						1st process:
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue	
+//!							3. OpenL() to open a session to DSC database
+//!							4. EnumOpenLC() to open a Dsc
+//!							5. EnumReadNextL() to enumerate items.
+//!							6. EnumClose() to close the DSC
+//!							7. Close() to close the session
+//!						2nd Process:	
+//!							1. OpenL() to open a session to DSC database
+//!							2. UpdateItemL() to read from the Dsc
+//!							3. Call Close() to close the session.
+//! @SYMTestExpectedResults 	UpdatetemL will leave with KErrLocked
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0050
+RUN_TEST_STEP 				100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+CONCURRENT
+RUN_TEST_STEP 				100 tdscstore_server EnumDscItems 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-22	100 tdscstore_server UpdateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+CONSECUTIVE
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0050
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0051
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Without open a session to DSC database, no APIs can be executed 
+//! @SYMTestActions			1. Call CreateDscL() 
+//!							2. Call DeleteDscL() 
+//!							3. Call DscExistsL() 
+//!    						4. Call AddItemL().
+//!							5. Call ItemExistL() 
+//!							6. Call EnumOpenLC() 
+//!       					7. Call EnumReadNextL() 
+//!							8. Call ReadItemL() 
+//!							9. Call UpdateItemL() 
+//!							10. Call DeleteItemL() 
+//! @SYMTestExpectedResults	Each test action should leave with KErrNotReady.
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0051
+RUN_UTILS MkDir 			c:\tdscstore_avoid_connection_in_preamble_token\
+RUN_TEST_STEP !error=-18	100 tdscstore_server CreateDsc 					z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server DeleteDsc 					z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server DscExist 					z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server CreateDscItem	 			z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server DscItemExist 				z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid	
+RUN_TEST_STEP !error=-18	100 tdscstore_server ReadDscItem 				z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server UpdateDscItem 				z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server DeleteDscItem		 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server EnumOpenDsc 				z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-18	100 tdscstore_server EnumReadNextDscItem		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_UTILS DeleteDirectory 	c:\tdscstore_avoid_connection_in_preamble_token\
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0051
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0052
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		When DSC is opened for enumeration, most APIs not related to enumeration are not allowed to executed.
+//! @SYMTestActions			1. Call OpenL() to open a session to DSC database
+//!							2. Call EnumOpenLC() 
+//!							3. Call EnumOpenLC() again will leave. 
+//!							4. Call AddItemL(), ReadItemL(), UpdateItemL(), DeleteItemL(), CreateDscL(), DeleteDscL(), 			 
+//!							5. Call EnumClose() 
+//!							6. Call Close() to close the connection
+//! @SYMTestExpectedResults	Test step 3, 4 should leave with KErrLocked.
+							They should, be they don't....the API only supports single thread...so doesn't
+							prevent concurrent access. Expected results have been tweaked!
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0052
+CONCURRENT
+RUN_TEST_STEP 				100 tdscstore_server EnumOpenDsc		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server EnumOpenDsc 		z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-11	100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid	
+RUN_TEST_STEP 				100 tdscstore_server ReadDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-22	100 tdscstore_server UpdateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-22	100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_1_DefaultUid
+RUN_TEST_STEP !error=-22	100 tdscstore_server CreateDsc 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP !error=-22	100 tdscstore_server DeleteDsc 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+CONSECUTIVE
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0052
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0057
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Get the description for an existing DSC  
+//! @SYMTestActions			1. Call OpenL() to open a session to DSC database
+//!							2. Call GetDscDescriptionL() to get the description
+//!							3. Call Close() to close the connection
+//! @SYMTestExpectedResults	Return with description
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0057
+RUN_TEST_STEP	 			100 tdscstore_server GetDscDescriptions 	z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server GetDscDescriptions 	z:\sysstarttest\ini\tdscstore_api.ini Dsc_1	
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0057
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0038
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies	Restore DSC database,c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup
+//! @SYMTestCaseDesc		Get the descriptions for a non-existing  DSC  
+//! @SYMTestActions			1. Call OpenL() to open a session to DSC database
+//!							2. Call GetDscDescriptionL () to get the descriptions
+//!							3. Call Close() to close the connection
+//! @SYMTestExpectedResults	Leave with KErrNotFound
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0038
+RUN_TEST_STEP !Error=-1	 	100 tdscstore_server GetDscDescriptions 	z:\sysstarttest\ini\tdscstore_api.ini Dsc_2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0038
+
+
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0058
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies
+//! @SYMTestCaseDesc		Establish that the database can be interrogated to find the maximum query-string length 
+//! @SYMTestActions			1. Call RDscStore::MaxStringLength()
+//!							2. Compare with KDscStoreMaxStringLength 
+//! @SYMTestExpectedResults	Pass
+
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0058
+RUN_TEST_STEP	100 tdscstore_server CheckMaxQueryStringLength 	
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0058
+
+//! @SYMTestCaseID 			DEVSRVS-SYSSTART-DSCSTORE-0059
+//! @SYMPREQ 				PREQ871
+//! @SYMTestType			UT
+//! @SYMTestPriority		Critical
+//! @SYMTestStatus 			Implemented
+//! @SYMTestCaseDependencies
+//! @SYMTestCaseDesc		Set the number of retries to be attempted by SysMon when an app launched by the AMAStarter fails
+//! @SYMTestActions			Precondition: item does not exist in DSC. Default value of position is ELast
+//!							1. Call OpenL() to open a session to DSC database
+//!							2. DscExistsL() return ETrue
+//!							3. Create a DSCItem with NoOfRetries = 0, does not leave
+//!							4. Delete the DSCItem
+//!							5. Create a DSCItem with NoOfRetries = 1, does not leave
+//!							6. Delete the DSCItem
+//!							7. Create a DSCItem with NoOfRetries = -1, leaves with KErrArgument (-6)
+//!							8. Create a DSCItem with NoOfRetries = 2, leaves with KErrArgument (-6)
+//!							9. Close the session.
+//! @SYMTestExpectedResults 	As described above
+
+RUN_UTILS CopyFile 	c:\private\100012a5\DBS_2000836D_DBS_DSC.db.testbackup c:\private\100012a5\DBS_2000836D_DBS_DSC.db
+START_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0059
+RUN_TEST_STEP 			 	100 tdscstore_server DscExist 			z:\sysstarttest\ini\tdscstore_api.ini Dsc_DefaultUid
+RUN_TEST_STEP 				100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_6_Retry0
+RUN_TEST_STEP 				100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_6_Retry0
+RUN_TEST_STEP 				100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_6_Retry1
+RUN_TEST_STEP 				100 tdscstore_server DeleteDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_6_Retry1
+RUN_TEST_STEP !Error=-6		100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_6_Retry-1
+RUN_TEST_STEP !Error=-6		100 tdscstore_server CreateDscItem 		z:\sysstarttest\ini\tdscstore_api.ini AMC_6_Retry2
+END_TESTCASE DEVSRVS-SYSSTART-DSCSTORE-0059
+
+
+
+
+//!
+//!	Restore previous status
+//!
+RUN_SCRIPT z:\sysstarttest\ini\tdscstore_dscdb_deletenew.script

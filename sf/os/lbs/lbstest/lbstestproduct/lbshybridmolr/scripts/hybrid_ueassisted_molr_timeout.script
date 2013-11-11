@@ -1,0 +1,129 @@
+//! @File
+//! @SYMTestSuiteName         hybrid_ueassisted_molr_timeout.script
+//! @SYMScriptTestEnvironment
+
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+PRINT Run LbsHybridMOLRTestServer
+
+// Before we start LBS:
+//	Select the hybrid test A-GPS integration module.
+//	Select the sim tsy configuration file.
+//	Select the test lbs profile.ini to switch on client extended timeout.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	CopyFile c:\testdata\configs\lbsprofile_timeout_on.ini c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_ResetDefaultAdmin
+
+// Use hybrid protocol module.
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+
+// Start LBS.
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+
+START_TESTCASE                LBS-HybridMOLR-UEAssistedMOLR-Timeout-0001
+//! @SYMTestCaseID              LBS-HybridMOLR-UEAssistedMOLR-Timeout-0001
+//! @SYMTestCaseDesc            UE-Based MOLR with extended client timeout on, and best position reference.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Switch on client extended timeout in the lbs profile.ini. 
+//!				2. Select the accuray values as below: client request = 50, 1000 metres as per profile network request = 100 metres ?? gps pos = 2000 metres network ref pos = 1000 metres network final pos = 100 metres 
+//!				3. Start a normal (non hybrid) MOLR. 
+//!				4. Test protocol module delivers the final network position after client timeout seconds. 
+//!				5. Complete the MOLR.
+//! @SYMTestExpectedResults     The client will be delivered the final network position with KPositionQualityLoss  For full test details see the code inline comments.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini HybridUEAssistedMOLRTimeOut_On_RefBest
+RUN_TEST_STEP 240 LbsHybridMOLRTestServer LbsHybridUEAssistedMOLRTimeOut c:\testdata\configs\lbs_molr.ini HybridUEAssistedMOLRTimeOut_On_RefBest
+END_TESTCASE                  LBS-HybridMOLR-UEAssistedMOLR-Timeout-0001
+
+
+// Re-start LBS.
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-HybridMOLR-UEAssistedMOLR-Timeout-0002
+//! @SYMTestCaseID              LBS-HybridMOLR-UEAssistedMOLR-Timeout-0002
+//! @SYMTestCaseDesc            UE-Based MOLR with extended client timeout on, and best position A-GPS.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Switch on client extended timeout in the lbs profile.ini. 
+//!				2. Select the accuray values as below: client request = 50, 1000 metres as per profile network request = 100 metres ?? gps pos = 80 metres network ref pos = 1000 metres network final pos = 100 metres 
+//!				3. Start a normal (non hybrid) MOLR. 
+//!				4. Test protocol module delivers the final network position after client timeout seconds. 
+//!				5. Complete the MOLR.
+//! @SYMTestExpectedResults     The client will be delivered the A-GPS position with KPositionQualityLoss  For full test details see the code inline comments.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini HybridUEAssistedMOLRTimeOut_On_GpsBest
+RUN_TEST_STEP 240 LbsHybridMOLRTestServer LbsHybridUEAssistedMOLRTimeOut c:\testdata\configs\lbs_molr.ini HybridUEAssistedMOLRTimeOut_On_GpsBest
+END_TESTCASE                  LBS-HybridMOLR-UEAssistedMOLR-Timeout-0002
+
+// Re-start LBS with test lbs profile.ini to switch off client extended timeout.
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+RUN_UTILS CopyFile c:\testdata\configs\lbsprofile_timeout_off.ini c:\private\10282253\lbs\lbsprofile.ini
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StartLbs
+
+START_TESTCASE                LBS-HybridMOLR-UEAssistedMOLR-Timeout-0003
+//! @SYMTestCaseID              LBS-HybridMOLR-UEAssistedMOLR-Timeout-0003
+//! @SYMTestCaseDesc            UE-Based MOLR with extended client timeout off, and best position reference.
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Switch off client extended timeout in the lbs profile.ini. 
+//!				2. Select the accuray values as below: client request = 50, 1000 metres as per profile network request = 100 metres ?? gps pos = 2000 metres network ref pos = 1000 metres network final pos = 100 metres 
+//!				3. Start a normal (non hybrid) MOLR. 
+//!				4. Test protocol module delivers the final network position after client timeout seconds. 
+//!				5. The client will not recv the final network position. 
+//!				6. Complete the MOLR.
+//! @SYMTestExpectedResults     The client will be delivered the A-GPS position with KPositionQualityLoss  For full test details see the code inline comments.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+RUN_TEST_STEP 120 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini HybridUEAssistedMOLRTimeOut_Off_RefBest
+RUN_TEST_STEP 240 LbsHybridMOLRTestServer LbsHybridUEAssistedMOLRTimeOut c:\testdata\configs\lbs_molr.ini HybridUEAssistedMOLRTimeOut_Off_RefBest
+END_TESTCASE                  LBS-HybridMOLR-UEAssistedMOLR-Timeout-0003
+
+// Stop LBS.
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+
+PREFIX RUN_UTILS
+// Re-select the real A-GPS integration module.
+DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Re-select the profile ini
+RUN_UTILS DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+
+// Delete network registration status text file
+DeleteFile c:\config.txt
+REMOVE_PREFIX
+
+

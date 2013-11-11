@@ -1,0 +1,71 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+*
+*/
+#if !defined PAGED_ROM
+#define PAGED_ROM
+#endif
+
+#if !defined EFFICIENT_ROM_PAGING
+// Uncomment next line if efficient rom paging is wanted.
+//#define EFFICIENT_ROM_PAGING
+#endif
+
+#if !defined USE_CODE_PAGING
+// Uncomment next line if code paging is wanted
+#define USE_CODE_PAGING
+#endif
+
+#if !defined USE_DATA_PAGING
+// Uncomment next line if Writable Data Paging is wanted.
+//#define USE_DATA_PAGING
+#endif
+
+#if !defined CODE_PAGING_FROM_ROFS
+// Uncomment next line if code paging from primary rofs is wanted
+#define CODE_PAGING_FROM_ROFS
+#endif
+
+
+// uncomment next line if device DP configuration wanted
+externaltool=configpaging
+
+#if defined EFFICIENT_ROM_PAGING
+externaltool=efficient_rom_paging
+#endif
+
+ROM_IMAGE[0] {
+//                 Min       Max        Young/Old    NAND page read   NAND page read
+//                 live      live       page ratio   delay            CPU overhead 
+//                 pages     pages                   (microseconds)   (microseconds)
+//
+demandpagingconfig 256       512        3            0                0
+
+pagingoverride defaultpaged
+
+#if defined USE_CODE_PAGING
+codepagingpolicy defaultpaged
+#endif
+
+#if defined USE_DATA_PAGING
+datapagingpolicy defaultpaged
+#endif
+}
+
+#if defined CODE_PAGING_FROM_ROFS
+ROM_IMAGE[1] {
+pagingoverride defaultpaged
+}
+#endif

@@ -1,0 +1,112 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// gsastartupcmdlist7_target.rss
+// Modified default resource file to test graphics wserv
+// Modifications:
+// - customized for running the wserv tests using wshell
+// 
+//
+
+
+#include <ssm/ssmcmd.rh>
+#include <ssm/ssmsubstates.hrh>
+#include <ssm/cmdpersistreboots.rh>
+#include <ssm/cmdpersistreboots.hrh>
+
+UID2 KUidSsmCommandListResourceFile
+
+// SSM_COMMAND_LIST_ROOT must be the first resource in a command list resource file.
+// The SSM relies on this having a resource ID of 1.
+RESOURCE SSM_COMMAND_LIST_ROOT
+	{
+	command_list_mapping = r_command_list_mapping;
+	}
+
+RESOURCE SSM_COMMAND_LIST_MAPPING r_command_list_mapping
+	{
+	mappings =
+		{
+		SSM_COMMANDLISTID_TO_RESOURCEID
+			{
+			command_list_id = ESsmStartupSubStateCriticalStatic;
+			resource_id = r_critical_static_commands;
+			}
+		};
+	}
+
+
+RESOURCE SSM_COMMAND_LIST r_critical_static_commands
+   	{
+	commands =
+		{
+		r_increment_boot_count
+		, r_command_publish_system_state
+		, r_command_ssmutilsrv
+		, r_command_sysagt2svr
+		, r_command_fbserv
+		, r_command_wserv
+		};
+	}
+
+
+RESOURCE SSM_START_PROCESS_INFO r_command_ssmutilsrv
+	{
+	severity = ECmdCriticalSeverity;
+	name = "ssmutilsrv.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	retries = 2;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_sysagt2svr
+	{
+	severity = ECmdCriticalSeverity;
+	name = "SysAgt2Svr.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	retries = 2;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_fbserv
+	{
+	severity = ECmdCriticalSeverity;
+	name = "fbserv.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	retries = 1;
+	}
+
+RESOURCE SSM_START_PROCESS_INFO r_command_wserv
+	{
+	severity = ECmdCriticalSeverity;
+	name = "wserv.exe";
+	execution_behaviour = ESsmWaitForSignal;
+	}
+
+RESOURCE SSM_PUBLISH_SYSTEM_STATE r_command_publish_system_state
+	{
+	severity = ECmdCriticalSeverity;
+	}
+
+RESOURCE SSM_START_CUSTOM_COMMAND r_increment_boot_count
+	{
+	severity = ECmdCriticalSeverity;
+	execution_behaviour = ESsmWaitForSignal;
+	dllname = "cmncustomcmds.dll";
+	ordinal = 1; // Persist reboots custom command is at ordinal 1
+	dll_data = r_increment;
+	}
+
+RESOURCE SSM_COMMAND_PERSIST_REBOOTS r_increment
+	{
+	val = EIncrementBootCount;
+	}
+	

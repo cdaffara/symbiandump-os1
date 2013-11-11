@@ -1,0 +1,431 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Contains tests to run on a platform where both ports available and a cable is in place.
+// 
+//
+
+LOAD_SUITE te_c32
+
+//!@file
+//!@SYMTestCaseID SERCOM/C32/NA/0001
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Initializes the c32 drivers
+//!@SYMTestPriority High
+//!@SYMTestActions Loads LDD and PDD files and leaves them in memory at the end of the test
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestInit
+
+//!@SYMTestCaseID SERCOM/C32/NA/0002
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Attempts to start C32 twice
+//!@SYMTestPriority High
+//!@SYMTestActions Starts c32 - serial communications server twice 
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestDoubleStart
+
+//!@SYMTestCaseID SERCOM/C32/NA/0003
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Checks opening and closing of communication ports
+//!@SYMTestPriority High
+//!@SYMTestActions Opens and closes ports 
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestOpen
+
+//!@SYMTestCaseID SERCOM/C32/NA/0004
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Check opening and closing ports with PlatSec, only run this test if PlatSec enabled
+//!@SYMTestPriority High
+//!@SYMTestActions Opens and closes ports with PlatSec 
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestPlatSecOpenPortDummy
+
+//!@SYMTestCaseID SERCOM/C32/NA/0005
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests the information services
+//!@SYMTestPriority High
+//!@SYMTestActions Gets information on: number of loaded comms modules, and on serial ports  
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+//RUN_TEST_STEP 100 te_c32 TestInfo
+
+//!@SYMTestCaseID SERCOM/C32/NA/0006
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test that double reads panics
+//!@SYMTestPriority High
+//!@SYMTestActions Opens and attempts to read port twice
+//!@SYMTestExpectedResults Pass if panic is raised
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestDoubleRead
+
+//!@SYMTestCaseID SERCOM/C32/NA/0007
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test thread is panicked if it tries to set configuration 
+//!@SYMTestPriority High
+//!@SYMTestActions Opens communication port, attempts to read data from the port, tries to read configuration of the port, and at the end attempts to set serial port configuration 
+//!@SYMTestExpectedResults Pass if panic is raised
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestConfigPanic
+
+//!@SYMTestCaseID SERCOM/C32/NA/0008
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test attempts to write with a bad descriptor, the test should panic
+//!@SYMTestPriority High
+//!@SYMTestActions Opens communication port, creates TBuf8C descriptor, fills in the buffer with data, scribbles on type part of descriptor, and tries to write corrupted descriptor to the port
+//!@SYMTestExpectedResults Pass if panic is raised
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestBadDescriptorPanic
+
+//!@SYMTestCaseID SERCOM/C32/NA/0009
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test reading on a port from another thread doesn't panic us..
+//!@SYMTestPriority High
+//!@SYMTestActions Opens communication port, and writes a data to the port
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestBusyReturn
+
+//!@SYMTestCaseID SERCOM/C32/NA/0010
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test cancel works...and doesn't panic
+//!@SYMTestPriority High
+//!@SYMTestActions Opens communication port, reads from comm port, cancels reading, performs one more time the same action as before, and at the end tries to cancel non existent request
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestCancel
+
+//!@SYMTestCaseID SERCOM/C32/NA/0011
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test setting and getting config
+//!@SYMTestPriority High
+//!@SYMTestActions Opens two comm sessions, reads config for both opened comm ports, checks that config for both ports is the same, and then checks that changing one changes the other 
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestGetSetConfig
+
+//!@SYMTestCaseID SERCOM/C32/NA/0012
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test time outs...
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm port session, sets new comm port configuration (with handshaking on), attepmts to read and write (with timeout), then closes the session, opens the comm port session one more time, tries to read with timeout but just after read request the ReadCancel() is called
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestTimeOut
+
+//!@SYMTestCaseID SERCOM/C32/NA/0013
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test opening a port from a thread panicking the thread
+//!@SYMTestPriority High
+//!@SYMTestActions Creates a thread, then panics the thread and attepmts to open and close a serial comm port in Exclusive Thread, in the next step it does the same thing but in the Shared Thread
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestThreadPanic
+
+//!@SYMTestCaseID SERCOM/C32/NA/0014
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test Buffered comm server options
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm port, enables buffering, checks buffered comm server options  
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT 
+RUN_TEST_STEP 100 te_c32 TestBufferOptions
+
+//!@SYMTestCaseID SERCOM/C32/NA/0015
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test connecting under OOM (Out Of Memory) situation
+//!@SYMTestPriority High
+//!@SYMTestActions Connects to the comms server in a loop where the heap allocation failure is simulated.
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT 
+RUN_TEST_STEP 100 te_c32 TestOOMConnection
+
+//!@SYMTestCaseID SERCOM/C32/NA/0016
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test creating ports under OOM (Out Of Memory)
+//!@SYMTestPriority High
+//!@SYMTestActions Opens serial comm ports in a loop where the heap allocation failure is simulated.
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestOOMPortCreation
+
+//!@SYMTestCaseID SERCOM/C32/NA/0017
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test SetSignals panic bug
+//!@SYMTestPriority High
+//!@SYMTestActions Opens serial comm port, reads from serial port, sets RS232 output lines to DTR and RTS (SetSignals), calls ReadCancel(), and  closes comm port
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestSetSignalsPanicBug
+
+//!@SYMTestCaseID SERCOM/C32/NA/0018
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test Starting Thread within C32 Process
+//!@SYMTestPriority High
+//!@SYMTestActions Creates thread in serial communication process
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestStartServerThread
+
+//!@SYMTestCaseID SERCOM/C32/NA/0019
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests capabilities of comm ports in version 2
+//!@SYMTestPriority High
+//!@SYMTestActions Tests capabilities of comm ports in version 2
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestCapsV02
+
+//!@SYMTestCaseID SERCOM/C32/NA/0020
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test that the RComm::Open can handle more than 0-9 comports
+//!@SYMTestPriority High
+//!@SYMTestActions Test that the RComm::Open can handle more than 0-9 comports
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestOpenPortsWithHighNumbers
+
+//!@SYMTestCaseID SERCOM/C32/NA/0021
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test that attempts to allocate a timer under OOM conditions
+//!@SYMTestPriority High
+//!@SYMTestActions Trying to handle a global timer allocation failure, and test global timer allocation success
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestTimerAllocation
+
+//!@SYMTestCaseID SERCOM/C32/NA/0022
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests read from and write to comm ports
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, and performs reading and writing of comm ports
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestReadWrite
+
+//!@SYMTestCaseID SERCOM/C32/NA/0022
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests read from and write to comm ports
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, and performs reading and writing of comm ports
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+//HEAP_MARK
+RUN_TEST_STEP 100 te_c32 TestReadWrite2
+//HEAP_MARKEND
+
+//!@SYMTestCaseID SERCOM/C32/NA/0023
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests of setting and clearing RS232 output lines (DTR and RTS)
+//!@SYMTestPriority High
+//!@SYMTestActions Opens ports, and checks signaling
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestSignalLines
+
+//!@SYMTestCaseID SERCOM/C32/NA/0024
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests Query Receive Buffer method
+//!@SYMTestPriority High
+//!@SYMTestActions Opens ports, and gets the number of bytes currently waiting in the driver’s input buffer of opened comm ports
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestQueryreceiveBuffer
+
+//!@SYMTestCaseID SERCOM/C32/NA/0025
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests Write 0 functionality
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, ans writes zero to them
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestWrite0
+
+//!@SYMTestCaseID SERCOM/C32/NA/0026
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test ReadOneOrMore function
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, configures them, writes to comm ports, and reads from comm ports using ReadOneOrMore
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestReadOneOrMore
+
+//!@SYMTestCaseID SERCOM/C32/NA/0027
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test buffered Read and write
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, and performs buffered read and write
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestBufferReadWrite
+
+//!@SYMTestCaseID SERCOM/C32/NA/0028
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test Buffered ReadOneOrMore function 
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, and performs buffered ReadOneOrMore
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestBufferreadOneOrMore
+
+//!@SYMTestCaseID SERCOM/C32/NA/0029
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test notification of signals changing
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, and checks if the client is notified when one of the output lines signals change
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestNotifySignals
+
+//!@SYMTestCaseID SERCOM/C32/NA/0030
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test notification of data being newly available to be read
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, checks if the client is notified when data is available to be read from the input buffer, writes data, and reads data
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestRxDataAvailable
+
+
+//!@SYMTestCaseID SERCOM/C32/NA/0031
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test that sending 'Hello' is not received as 'ello'
+//!@SYMTestPriority High
+//!@SYMTestActions Opens comm ports, and tests that sending 'Hello' is not received as 'ello' in time out situation
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestHelloEllo
+
+//!@SYMTestCaseID SERCOM/C32/NA/0032
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test for listing available serial comm ports
+//!@SYMTestPriority High
+//!@SYMTestActions Attempts to open all available comm ports as DTE and DCE
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 Lsc32ListAvailablePorts
+
+//!@SYMTestCaseID SERCOM/C32/NA/0033
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests number of loaded CSY modules
+//!@SYMTestPriority High
+//!@SYMTestActions Gets how many comms module (CSYs) are loaded using NumPort() function call
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 Lsc32ListNumberOfLoadedCSYs
+
+//!@SYMTestCaseID SERCOM/C32/NA/0034
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests loading and unloading comms module
+//!@SYMTestPriority High
+//!@SYMTestActions Loads and unload comms module
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 Lsc32LoadUnloadCsy
+
+//!@SYMTestCaseID SERCOM/C32/NA/0035
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Test that gets port info for all comms modules loaded
+//!@SYMTestPriority High
+//!@SYMTestActions Gets port info for all comms modules loaded
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+//RUN_TEST_STEP 100 te_c32 Lsc32GetPortInfo
+
+//!@SYMTestCaseID SERCOM/C32/NA/0036
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Calls every C32 API methods as DTE and DCE, will panic if errors occurs on received parameters or return values
+//!@SYMTestPriority High
+//!@SYMTestActions Calls every C32 API methods DTE and DCE, will panic if errors occurs on received parameters return values
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 300 te_c32 DummyTest
+
+//!@SYMTestCaseID SERCOM/C32/NA/0037
+//!@SYMREQ REQ0000
+//!@SYMTestCaseDesc Tests setting a comm port as a DCE
+//!@SYMTestPriority High
+//!@SYMTestActions Tests setting a comm port as a DCE 
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestDCEPort
+
+//!@file
+//!@SYMTestCaseID SERCOM/C32/NA/0038
+//!@SYMREQ CNON-67WJ2G
+//!@SYMTestCaseDesc Test Loopback
+//!@SYMTestPriority High
+//!@SYMTestActions Loads Loopback module, reads and writes some blocks of data
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestLoopback
+
+//!@SYMTestCaseID SERCOM/C32/NA/0039
+//!@SYMREQ DEF080077
+//!@SYMTestCaseDesc Ensure data written and read match each other
+//!@SYMTestPriority High
+//!@SYMTestActions Starts c32 - serial communications 
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestCorrectDataRead
+
+//!@SYMTestCaseID SERCOM/C32/NA/0040
+//!@SYMREQ DEF080077
+//!@SYMTestCaseDesc Test memory is reclaimed when ResetBuffers called
+//!@SYMTestPriority High
+//!@SYMTestActions Starts c32 - serial communications
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestResetBuffers
+
+//!@SYMTestCaseID SERCOM/C32/NA/0041
+//!@SYMREQ DEF080077
+//!@SYMTestCaseDesc Allocate new heap memory from heap for write buf 
+//!@SYMTestPriority High
+//!@SYMTestActions Starts c32 - serial communications 
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestAllocMoreWriteMem
+
+//!@SYMTestCaseID SERCOM/C32/NA/0042
+//!@SYMREQ DEF080077
+//!@SYMTestCaseDesc Ensures a write fail is handled correctly
+//!@SYMTestPriority High
+//!@SYMTestActions Starts c32 - serial communications
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestMemoryWriteFail
+
+//!@SYMTestCaseID SERCOM/C32/NA/0043
+//!@SYMREQ DEF080077
+//!@SYMTestCaseDesc Ensures a write fails once maximum buffer size is
+//!@                reached
+//!@SYMTestPriority High
+//!@SYMTestActions Starts c32 - serial communications
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestMaxBufferOverflow
+
+//!@SYMTestCaseID SERCOM/C32/NA/0044
+//!@SYMREQ DEF096709 
+//!@SYMTestCaseDesc Test various combinations of OpenWhenAvailable and its cancel function.
+//!@SYMTestPriority High
+//!@SYMTestActions Starts c32 - serial communications
+//!@SYMTestExpectedResults Pass, if any APIs fail the step will leave.
+//!@SYMTestType CT
+RUN_TEST_STEP 100 te_c32 TestOpenWhenAvailable
+
+RUN_SCRIPT z:\testdata\scripts\te_c32_test_unloadc32Forced.script

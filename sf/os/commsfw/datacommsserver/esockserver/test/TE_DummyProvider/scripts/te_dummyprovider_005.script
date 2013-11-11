@@ -1,0 +1,71 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Running CASE005
+PRINT Gets the MCPR to stop the control and data planes, whilst keeping itself alive.
+PRINT Gets the MCPR to restart the control and data planes, 
+PRINT first AP will fail to start, error handling will start the second AP.
+PRINT Uses RConnectionServ to monitor that connections are being stopped and started.
+PRINT Gets the MCPR to stop the control and data planes and let itself be removed.
+PRINT 
+
+//
+LOAD_SUITE te_esockteststepsSuite -SharedData
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE			COMINF-ESOCK-DummyProviders-005
+//! @SYMTestCaseID		COMINF-ESOCK-DummyProviders-005
+
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\te_dummyprovider_005.ini CreateConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\te_dummyprovider_005.ini ConnectConnectionServ1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite creatersocketservStep z:\testdata\configs\te_dummyprovider_005.ini CreateSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite connectrsocketservStep z:\testdata\configs\te_dummyprovider_005.ini ConnectSockSvr1
+
+RUN_TEST_STEP 100 te_esockteststepsSuite createrconnectionStep z:\testdata\configs\te_dummyprovider_005.ini CreateConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite openrconnectionStep z:\testdata\configs\te_dummyprovider_005.ini OpenConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite startrconnectionStep z:\testdata\configs\te_dummyprovider_005.ini StartConn1
+
+// TStop
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestAccessPointNotificationStep z:\testdata\configs\te_dummyprovider_005.ini APNotificationRequest1
+RUN_TEST_STEP 100 te_esockteststepsSuite CreatePublishSubscribeVar z:\testdata\configs\te_dummyprovider_005.ini CreatePublishSubscribeVarBlockingStop
+RUN_TEST_STEP 100 te_esockteststepsSuite checkpublishsubscribevar z:\testdata\configs\te_dummyprovider_005.ini CheckPublishSubscribeVarBlockingStop
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\te_dummyprovider_005.ini ReceiveNotificationBlockingStop1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\te_dummyprovider_005.ini ReceiveNotificationBlockingStop2
+
+// TStart
+RUN_TEST_STEP 100 te_esockteststepsSuite CreatePublishSubscribeVar z:\testdata\configs\te_dummyprovider_005.ini CreatePublishSubscribeVarStart
+RUN_TEST_STEP 100 te_esockteststepsSuite checkpublishsubscribevar z:\testdata\configs\te_dummyprovider_005.ini CheckPublishSubscribeVarStart
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\te_dummyprovider_005.ini ReceiveNotificationStart1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\te_dummyprovider_005.ini ReceiveNotificationStart2
+
+// Cancel the notification request
+RUN_TEST_STEP 100 te_esockteststepsSuite CancelAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_11_000.ini CancelAPNotifRequest1
+
+// TStop again to destroy the mesh completely.
+RUN_TEST_STEP 100 te_esockteststepsSuite CreatePublishSubscribeVar z:\testdata\configs\te_dummyprovider_005.ini CreatePublishSubscribeVarStop
+RUN_TEST_STEP 100 te_esockteststepsSuite checkpublishsubscribevar z:\testdata\configs\te_dummyprovider_005.ini CheckPublishSubscribeVarStop
+
+
+RUN_TEST_STEP 100 te_esockteststepsSuite closerconnectionStep z:\testdata\configs\te_dummyprovider_005.ini CloseConn1
+RUN_TEST_STEP 100 te_esockteststepsSuite closersocketservStep z:\testdata\configs\te_dummyprovider_005.ini CloseSockSvr1
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\te_dummyprovider_005.ini CloseConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+END_TESTCASE COMINF-ESOCK-DummyProviders-005
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+PRINT Completed CASE003

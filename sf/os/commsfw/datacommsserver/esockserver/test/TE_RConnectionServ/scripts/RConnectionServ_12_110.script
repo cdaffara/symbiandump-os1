@@ -1,0 +1,78 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName te_RConnectionServ
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+
+START_TESTCASE			COMINF-ESOCK-RConnectionServ-7601
+//! @SYMTestCaseID		COMINF-ESOCK-RConnectionServ-7601
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RConnectionServ::Connect()
+//RConnectionServ::AccessPointStatusQuery()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+// Start by unloading esock, reseting commsdat and reloading esock
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\TestData\configs\RConnectionServ\RConnectionServ.cfg -o c:\RConnectionServ.ced.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+// Connect at *link* tier
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini CreateConnServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini ConnectConnServ1
+
+// Request all changes to AP *restricted* status
+RUN_TEST_STEP 100 te_esockteststepsSuite RequestAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini APNotifRequest1
+
+// Make *link* AP *unrestricted* in commsdat and detect change
+RUN_TEST_STEP 100 te_esockteststepsSuite UpdateCommsdatRecordStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini CommsdatUpdate1
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini ReceiveNotif1
+
+// Make 2nd *link* AP *unrestricted* in commsdat and detect change
+RUN_TEST_STEP 100 te_esockteststepsSuite UpdateCommsdatRecordStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini CommsdatUpdate2
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini ReceiveNotif2
+
+// Make 1st *link* AP *restricted* again in commsdat and detect change
+RUN_TEST_STEP 100 te_esockteststepsSuite UpdateCommsdatRecordStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini CommsdatUpdate3
+RUN_TEST_STEP 100 te_esockteststepsSuite ReceiveAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini ReceiveNotif3
+
+// Cancel the notification request
+RUN_TEST_STEP 100 te_esockteststepsSuite CancelAccessPointNotificationStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini CancelAPNotifRequest1
+
+// Close and cleanup resources
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_12_110.ini CloseConnectionServ1
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// Shutdown
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			COMINF-ESOCK-RConnectionServ-7601
+
+
+
+
+

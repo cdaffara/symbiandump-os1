@@ -1,0 +1,195 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName lbsclientconcurrent
+//! @SYMScriptTestEnvironment TestExecute
+// Copyright (c) Symbian Software Ltd 2009.
+
+RUN_UTILS DeleteFile c:\private\101f401d\Logdbu.dat
+
+LOAD_SUITE LbsClientTestServer
+
+PRINT Run LbsClientTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+MkDir c:\private\10282253\
+MkDir c:\private\10282253\lbs\
+MkDir c:\private\10282253\lbs\locmods\
+CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+DeleteFile c:\private\10202be9\1028224b.cre
+DeleteFile c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+
+START_TESTCASE                LBS-Client-Concurrent-0001
+//! @SYMTestCaseID              LBS-Client-Concurrent-0001
+//! @SYMTestCaseDesc            Simultaneous NPUD and GLNPA from same client
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Issue NPUD
+//!								2. Issue GLKPA
+//! @SYMTestExpectedResults     NPUD and LastKnown Pos Area complete with no errors on both clients
+//! @SYMTestType                CIT
+//! @SYMCreationDate            04/4/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  juanmr
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0000
+CONCURRENT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0001
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0001
+CONSECUTIVE
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-Concurrent-0001
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-Concurrent-0002
+//! @SYMTestCaseID              LBS-Client-Concurrent-0002
+//! @SYMTestCaseDesc            Simultaneous GLKP and GLKPA from same client
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Issue GLKP
+//!								2. Issue GLKPA
+//! @SYMTestExpectedResults     LastKnownPosition and LastKnownPosArea complete with no errors on both clients
+//! @SYMTestType                CIT
+//! @SYMCreationDate            04/4/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  juanmr
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0000
+CONCURRENT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0002
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0002
+CONSECUTIVE
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-Concurrent-0002
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-Concurrent-0003
+//! @SYMTestCaseID              LBS-Client-Concurrent-0003
+//! @SYMTestCaseDesc            Two concurrent clients request GLKPA, one of them cancels
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Issue GLKPA
+//!								2. one of the tests (0031) issues CancelGLKPA, the other does not.
+//! @SYMTestExpectedResults     LastKnownPosArea complete with no errors on the client that did not cancel.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            04/4/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  juanmr
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0000
+CONCURRENT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0003
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0031
+CONSECUTIVE
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-Concurrent-0003
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-Concurrent-0004
+//! @SYMTestCaseID              LBS-Client-Concurrent-0004
+//! @SYMTestCaseDesc            Two clients clear the Location Monitor database simultaneously
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Request database deletion
+//! @SYMTestExpectedResults     The database is deleted without panics or crashes.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            04/4/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  juanmr
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0000
+CONCURRENT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0004
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0004
+CONSECUTIVE
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-Concurrent-0004
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-Concurrent-0005
+//! @SYMTestCaseID              LBS-Client-Concurrent-0005
+//! @SYMTestCaseDesc            Two clients clear the Location Monitor database, one of them cancels
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Request database deletion
+//!								2. One of the tests (0041) issues CancelGLKPA, the other does not.
+//! @SYMTestExpectedResults     The database is deleted without panics or crashes.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            04/4/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  juanmr
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0000
+CONCURRENT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0004
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0041
+CONSECUTIVE
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-Concurrent-0005
+
+DELAY 5000
+
+START_TESTCASE                LBS-Client-Concurrent-0006
+//! @SYMTestCaseID              LBS-Client-Concurrent-0006
+//! @SYMTestCaseDesc            Two clients clear the Location Monitor database, both cancel
+//! @SYMTestPriority            Medium
+//! @SYMTestActions             1. Request database deletion
+//!								2. Issue CancelGLKPA.
+//! @SYMTestExpectedResults     The database is deleted (depending on scheduling) without panics or crashes.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            04/4/2009
+//! @SymTestReq	REQ11527
+//! @SYMAuthor                  juanmr
+RUN_UTILS CopyFile c:\testdata\configs\lbsclientlastknownposareacommon.txt c:\config.txt
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StartLbs
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0000
+CONCURRENT
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0041
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_Concurrent c:\testdata\configs\lbsclientconcurrent.ini LBS-Client-Concurrent-0041
+CONSECUTIVE
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-Client-Concurrent-0006
+
+DELAY 5000

@@ -1,0 +1,72 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName te_RConnectionServ
+//! @SYMScriptTestEnvironment Standard Symbian HRP or emulator environment
+
+// Load the test suite
+LOAD_SUITE te_esockteststepsSuite -SharedData
+
+
+
+START_TESTCASE			COMINF-ESOCK-RConnectionServ-4101
+//! @SYMTestCaseID		COMINF-ESOCK-RConnectionServ-4101
+//!@SYMTestCaseDesc           	TODO_CDG
+//!@SYMPREQ                   	PREQ399
+//!@SYMAPI
+//RConnectionServ::Connect()
+//RConnectionServ::AccessPointStatusQuery()
+//!@SYMTestPriority           	Critical
+//!@SYMTestActions
+// TODO_CDG
+//!@SYMTestType               	CIT
+//!@SYMTestExpectedResults    	TODO_CDG
+
+// Start by unloading esock, reseting commsdat and reloading esock
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+CED -i z:\TestData\configs\RConnectionServ\RConnectionServ.cfg -o c:\RConnectionServ.cfg.log
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+// Create and connect to *link* and *network* tiers
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini CreateConnectionServLink
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini ConnectConnectionServLink
+
+RUN_TEST_STEP 100 te_esockteststepsSuite CreateRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini CreateConnectionServNetwork
+RUN_TEST_STEP 100 te_esockteststepsSuite ConnectRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini ConnectConnectionServNetwork
+
+// Perform queries at each tier for all don't cares
+RUN_TEST_STEP !Error=-6 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini InvalidAPQueryLink
+RUN_TEST_STEP !Error=-6 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini InvalidAPQueryNetwork
+
+// Now perform valid query to ensure still working
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini ValidAPQueryLink
+RUN_TEST_STEP 100 te_esockteststepsSuite AccessPointStatusQueryStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini ValidAPQueryNetwork
+
+// Close and cleanup resources
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini CloseConnectionServNetwork
+RUN_TEST_STEP 100 te_esockteststepsSuite CloseRConnectionServStep z:\testdata\configs\RConnectionServ\RConnectionServ_04_013.ini CloseConnectionServLink
+
+RUN_TEST_STEP 100 te_esockteststepsSuite cleanallStep
+
+// Shutdown
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+END_TESTCASE			COMINF-ESOCK-RConnectionServ-4101
+
+
+
+

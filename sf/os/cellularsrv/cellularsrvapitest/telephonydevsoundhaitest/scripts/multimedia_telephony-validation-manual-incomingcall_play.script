@@ -1,0 +1,153 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName multimedia_telephony-validation-manual-incomingcall_play
+//! @SYMScriptTestEnvironment This test script requires a basic ROM.
+// 
+// Tests all public elements of the RMobileCall, CMMFDevSound, Crepository, CAudioInput
+// classes as a means of confidence that the APIs work as expected.
+// 
+// The purpose is to provide a regression test suite of PublishedAll
+// APIs for: RMobileCall, CMMFDevSound, Crepository, CAudioInput
+// Voice Call tests are intended for semi-automatic testing because dialing/ answering calls require user interaction.
+//
+
+
+
+LOAD_SUITE t_etelmm_devsound
+
+
+
+
+
+START_TESTCASE MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-INCOMINGCALL_PLAY-0001
+
+//!@SYMTestCaseID		MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-INCOMINGCALL_PLAY-0001
+//!@SYMAPI
+//!                RLine::Open(RPhone{ref}; const TDesC{ref});
+//!                RLine::NotifyMobileLineStatusChange (TRequestStatus{ref}; RMobileCall::TMobileCallStatus{ref});
+//!                RCall::OpenExistingCall(RLine{ref}; const TDesC{ref});
+//!                RCall::GetCaps(TCaps{ref});
+//!                TCallInfo::AnswerIncomingCall(const TDesC8{ref});
+//!                RCall::Dial(TRequestStatus{ref} aStatus,const TTelNumberC{ref});
+//!                TCallInfo::HangUp(TRequestStatus{ref});
+//!                RCall::Close( )
+//!                RLine::Close( )
+//!                CMMFDevSound::SetPrioritySettings(const TMMFPrioritySettings )
+//!                CMMFDevSound::Capabilities()
+//!                CMMFDevSound::SetConfigL(const TMMFCapabilities )
+//!                CMMFDevSound::PlayInitL()
+//!                CMMFDevSound::Stop()
+//!@SYMAuthor			JPacho
+//!@SYMCreationDate		22/9/08
+//!@SYMTestCaseDesc		 Mobile Terminated Voice Call GSM (volume 50 percent)
+//!@SYMTestActions
+//!                1. Create first DevSound instance
+//!                2. Create second DevSound instance
+//!                3. Create telephony audio routing instance 
+//!                4. Get available outputs
+//!                5. Open telephony server
+//!                6. Open mobile phone (RTelServer = telserver1; Phone = 0)
+//!                7. Open line (Line = Voice1;RMobilePhone=mobilephone1)
+//!                8. Notify incoming call (Call = 1)
+//!                9. Open the existing call (RMobileLine=mobileline1;Call=1)
+//!                10. Get VoiceCall capabilities for the call (RMobileLine=mobileline1;Capabilities = VoiceCall;Call = 1)
+//!                11. Answer the incoming call (RMobileLine=mobileline1;Call = 1)
+//!                12. Answer the incoming call result (RMobileLine=mobileline1;Call = 1)
+//!                13. Initialize DevSound instance 2 (InitializeMode =EInitializeHwDeviceMode; Mode = EMMFStatePlaying; FourCC= MP3)
+//!                14. Initialize DevSound instance 1 (InitializeMode =EInitializeHwDeviceMode; Mode = EMMFStateRecording; FourCC= MP3)
+//!                15. Set priority settings DS instance 2 (Priority = {Priority, PriorityAudioPlayback}; Preference = {PriorityPreference, PriorityPreferenceAudioPlayback}; PriorityState=EMMFStatePlaying)
+//!                16. Set priority settings DS instance 1 (Priority = {Priority, PriorityAudioPlayback}; Preference = {PriorityPreference, PriorityPreferenceAudioPlayback}; PriorityState=EMMFStateRecording)
+//!                17. Get DS instance 2 capabilities
+//!                18. Set Configuration DS instance 2 (Channels = EMMFStereo; Rate = EMMFSampleRate44100Hz)
+//!                19. Get current output
+//!                20. Set telephony output (Output=EEarPiece)
+//!                21. Open file for play (Filename = {drive,mmc}\multimedia\mmf\devsound\mp3\MP3_44.1k_128kbps_st_Test3.mp3)
+//!                22. Start playing in DevSound instance 2
+//!                23. Set Volume instance 2 (Volume=50)
+//!                24. Stop play
+//!                25. Close file played
+//!                26. Destroy DevSound instance 1
+//!                27. Destroy DevSound instance 2
+//!                28. Get call duration (RMobileLine=mobileline1; Call = 1)
+//!                29. Hang up (RMobileLine=mobileline1; Call = 1)
+//!                30. Close call (RMobileLine=mobileline1; Call = 1)
+//!                31. Close line
+//!                32. Close mobile phone
+//!                33. Close telephony server
+//!                34. Destroy telephony routing instance
+//!@SYMTestStatus		On Work
+//!@SYMTestPriority		High
+//!@SYMTestExpectedResults
+//!                Function does not leave nor panic. Call is received and answered, then starts the play to the end, later stops the play and finally the call is hanged it up
+//!@SYMTestType			CIT
+
+	START_TEST_BLOCK	300	t_etelmm_devsound	\mixed_technology\telephony_devsound\multimedia_telephony-validation-manual-incomingcall_play.ini
+		CREATE_OBJECT	CMMFDevSound		devsound1
+		CREATE_OBJECT	CMMFDevSound		devsound2
+		CREATE_OBJECT	RTelServer		telserver1
+		CREATE_OBJECT	RMobilePhone		mobilephone1
+		CREATE_OBJECT	RMobileLine		mobileline1
+		CREATE_OBJECT	RMobileCall		mobilecall1
+		CREATE_OBJECT	CTelephonyAudioRouting		telephonyaudiorouting1
+		COMMAND		devsound1		NewL
+		COMMAND		devsound2		NewL
+		COMMAND		telephonyaudiorouting1		NewL
+		COMMAND		telephonyaudiorouting1		AvailableOutputs
+		COMMAND		telserver1		Connect
+		COMMAND		mobilephone1		Open			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-Open_command06
+		COMMAND		mobileline1		Open			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-Open_command07
+		COMMAND		mobileline1		NotifyIncomingCall			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-NotifyIncomingCall_command08
+		OUTSTANDING
+		COMMAND		mobilecall1		OpenExistingCall			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-OpenExistingCall_command09
+		COMMAND		mobilecall1		GetCaps			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-GetCaps_command10
+		COMMAND		mobilecall1		AnswerIncomingCall			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-AnswerIncomingCall_command11
+		OUTSTANDING
+		COMMAND		mobilecall1		AnswerIncomingCallPost			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-AnswerIncomingCallPost_command12
+		OUTSTANDING
+		DELAY  5000000 
+		COMMAND		devsound2		InitializeL			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-InitializeL_command13
+		OUTSTANDING
+		COMMAND		devsound1		InitializeL			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-InitializeL_command14
+		OUTSTANDING
+		COMMAND		devsound2		SetPrioritySettings			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-SetPrioritySettings_command15
+		COMMAND		devsound1		SetPrioritySettings			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-SetPrioritySettings_command16
+		COMMAND		devsound2		Capabilities
+		COMMAND		devsound2		SetConfigL			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-SetConfigL_command18
+		COMMAND		telephonyaudiorouting1		Output
+		COMMAND		telephonyaudiorouting1		SetOutputL			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-SetOutputL_command20
+		OUTSTANDING
+		DELAY  2500000 
+		COMMAND		devsound2		OpenFile			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-OpenFile_command21
+		COMMAND		devsound2		PlayInitL			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-PlayInitL_command22
+		OUTSTANDING
+		DELAY  2500000 
+		COMMAND		devsound2		SetVolume			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-SetVolume_command23
+		DELAY  10000000 
+		COMMAND		devsound2		Stop
+		COMMAND		devsound2		CloseFile
+		COMMAND		devsound1		~
+		COMMAND		devsound2		~
+		COMMAND		mobilecall1		GetCallDuration			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-GetCallDuration_command28
+		COMMAND		mobilecall1		HangUp			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-HangUp_command29
+		OUTSTANDING
+		COMMAND		mobilecall1		Close			MULTIMEDIA_TELEPHONY-IncomingCall_Play-0001-0001-Close_command30
+		COMMAND		mobileline1		Close
+		COMMAND		mobilephone1		Close
+		COMMAND		telserver1		Close
+		COMMAND		telephonyaudiorouting1		~
+	END_TEST_BLOCK
+END_TESTCASE MULTIMEDIA_TELEPHONY-VALIDATION-MANUAL-INCOMINGCALL_PLAY-0001

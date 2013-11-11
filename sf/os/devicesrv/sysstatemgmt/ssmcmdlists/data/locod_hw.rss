@@ -1,0 +1,249 @@
+/*
+* Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+* All rights reserved.
+* This component and the accompanying materials are made available
+* under the terms of "Eclipse Public License v1.0"
+* which accompanies this distribution, and is available
+* at the URL "http://www.eclipse.org/legal/epl-v10.html".
+*
+* Initial Contributors:
+* Nokia Corporation - initial contribution.
+*
+* Contributors:
+*
+* Description:
+* Command list for the Locod component
+*
+*/
+
+#include <ssm/conditionresourcetypes.rh>
+#include <ssm/ssmcmd.rh>
+
+#include "ssmsubstateext.hrh"
+
+// Identify command list type
+UID2 KUidSsmCommandListResourceFile
+
+// ---------------------------------------------------------------------------
+// r_entry_point
+// This must be the first resource
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_ROOT r_entry_point
+    {
+    command_list_mapping = r_map;
+    }
+
+// ---------------------------------------------------------------------------
+// r_map
+// Mapping of command list ids to resource ids.
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST_MAPPING r_map
+    {
+    mappings =
+        {
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateCharging;
+            resource_id = r_cmds_charging;
+            },
+        SSM_COMMANDLISTID_TO_RESOURCEID
+            {
+            command_list_id = ESsmStateNonCritical;
+            resource_id = r_cmds_noncritical;
+            }
+        };
+    }
+
+// ===========================================================================
+// Command lists in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmds_noncritical
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_COMMAND_LIST r_cmds_noncritical
+    {
+    commands =
+        {
+        r_cmd_connlogger,
+        r_cmd_provisioning,
+#ifndef SYMBIAN_EXCLUDE_SIP
+        r_cmd_sipprofilesrv,
+#endif // defined !SYMBIAN_EXCLUDE_SIP
+        r_cmd_remotelock,
+        r_cmd_hotspotsrv
+        };
+    }
+
+// ===========================================================================
+// Command items in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cmd_connlogger
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_connlogger
+    {
+    priority = 0xFFA7;
+    name = "z:\\sys\\bin\\dataconnectionlogger.exe";
+    execution_behaviour = ESsmFireAndForget;
+    monitor_info = r_mon_3_restarts_ignore;
+    }
+
+
+// ---------------------------------------------------------------------------
+// r_cmd_hotspotsrv
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_hotspotsrv
+    {
+    priority = 0xFFA7;
+    name = "hotspotserver.exe";
+    execution_behaviour = ESsmWaitForSignal;
+    timeout = 10000;
+    conditional_information = r_cond_protwlan_and_firstboot_or_deeprfs_or_normalrfs;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_provisioning
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_provisioning
+    {
+    priority = 0xFFA7;
+    name = "z:\\sys\\bin\\provisioningsc.exe";
+    execution_behaviour = ESsmFireAndForget; // -- does not call Rendezvous() --
+    conditional_information = r_cond_feat_smartcardprov;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_remotelock
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_START_PROCESS_INFO r_cmd_remotelock
+    {
+    priority = 0xFFA7;
+    name = "z:\\sys\\bin\\rlock.exe";
+    execution_behaviour = ESsmFireAndForget; // -- does not call Rendezvous() --
+    conditional_information = r_cond_feat_remotelock;
+    monitor_info = r_mon_3_restarts_ignore;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cmd_sipprofilesrv
+// ---------------------------------------------------------------------------
+//
+#ifndef SYMBIAN_EXCLUDE_SIP
+RESOURCE SSM_START_PROCESS_INFO r_cmd_sipprofilesrv
+    {
+    priority = 0xFFA7;
+    name = "z:\\sys\\bin\\sipprofilesrv.exe";
+    execution_behaviour = ESsmFireAndForget; // -- does not call Rendezvous() --
+    }
+#endif // !SYMBIAN_EXCLUDE_SIP
+
+// ===========================================================================
+// Conditional blocks in alphabetical order
+// ===========================================================================
+//
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_firstboot
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_firstboot
+    {
+    category		  = 0x101F8766; // KPSUidStartup
+    key           = 0x00000013; // KPSStartupFirstBoot
+    value         = 101;        // EPSStartupFirstBoot
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_protocolwlan
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_protocolwlan
+    {
+    feature_id = KFeatureIdProtocolWlan;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_remotelock
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_remotelock
+    {
+    feature_id = KFeatureIdRemoteLock;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_feat_smartcardprov
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_FEATURE_VALUE r_cond_feat_smartcardprov
+    {
+    feature_id = KFeatureIdSmartCardProv;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_firstboot_or_deeprfs
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_OR r_cond_firstboot_or_deeprfs
+    {
+    lhs = r_cond_ps_deep_rfs;
+    rhs = r_cond_ps_firstboot;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_firstboot_or_deeprfs_or_normalrfs
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_OR r_cond_firstboot_or_deeprfs_or_normalrfs
+    {
+    lhs = r_cond_ps_normal_rfs;
+    rhs = r_cond_firstboot_or_deeprfs;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_normal_rfs
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_normal_rfs
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000045;      // KPSStartupReason
+    value = ENormalRFSReset;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_ps_deep_rfs
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_PUB_SUB_VALUE r_cond_ps_deep_rfs
+    {
+    category = 0x101F8766; // KPSUidStartup
+    key = 0x00000045;      // KPSStartupReason
+    value = EDeepRFSReset;
+    }
+
+// ---------------------------------------------------------------------------
+// r_cond_protwlan_and_firstboot_or_deeprfs_or_normalrfs
+// ( protocol WLAN ) AND ( first boot OR deep RFS OR normal RFS )
+// ---------------------------------------------------------------------------
+//
+RESOURCE SSM_CND_LOGICAL_AND r_cond_protwlan_and_firstboot_or_deeprfs_or_normalrfs
+    {
+    lhs = r_cond_feat_protocolwlan;
+    rhs = r_cond_firstboot_or_deeprfs_or_normalrfs;
+    }
+
+// monitoring.rss contains resource definitions, so it may not be included
+// before entry point.
+#include "monitoring.rss"

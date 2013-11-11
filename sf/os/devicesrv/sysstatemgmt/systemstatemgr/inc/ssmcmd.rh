@@ -1,0 +1,450 @@
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#ifndef __SSMCMD_RH__
+#define __SSMCMD_RH__
+
+#include <ssm/ssmcmd.hrh>
+#include <dscstorecommondefs.hrh>
+
+/**
+The first resource in all command list resource files must be
+a SSM_COMMAND_LIST_ROOT resource.
+Identifies the resource format version a command list resource
+file was built with.
+Also identifies a resource containing mappings between command list ids
+requested by a policy and the resource containing the associated command list.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_COMMAND_LIST_ROOT
+	{
+	WORD version = ESsmInitialVersion; 	// Must not be changed
+	WORD reserved1 = 0; 				// Must not be changed
+	LLINK command_list_mapping; 		// SSM_COMMAND_LIST_MAPPING
+	}
+
+
+STRUCT SSM_COMMAND_LIST_MAPPING
+	{
+	STRUCT mappings[]; 					// SSM_COMMANDLISTID_TO_RESOURCEID
+	}
+
+
+STRUCT SSM_COMMANDLISTID_TO_RESOURCEID
+	{
+	LONG command_list_id = -1;
+	LLINK resource_id = -1;
+	}
+
+
+/**
+List of commands.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_COMMAND_LIST
+    {
+    LONG delay_between_commands = 0; // Delay between executing commands in milliseconds
+    LLINK commands[];
+    }
+
+
+/**
+Conditional reason information for including commands within command lists.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_SYMBIAN_CONDITIONAL_INFORMATION
+	{
+	LONG software_reason = EUnconditionalSoftwareReason;
+	LONG hardware_reason = EUnconditionalHardwareReason;
+	}
+
+/**
+Struct for publishing a system state change.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_PUBLISH_SYSTEM_STATE
+	{
+	LLINK conditional_information = 0; 						// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdPublishSystemState; 					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdPublishSystemStateInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdPublishSystemStateVersionWithPriority;	// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;						// Can have a higher severity defined in TCmdErrorSeverity
+	BYTE execution_behaviour = ESsmWaitForSignal;			// Can also be ESsmDeferredWaitForSignal or ESsmFireAndForget
+	BYTE direction = 2;										// The direction to traverse the domain state list (2=ETraverseDefault)
+	WORD retries = 0; 										// Number of times to retry on failure
+	BYTE failure_policy = 1;								// Whether to stop on failure or continue (0=ETransitionFailureStop, 1=ETransitionFailureContinue)
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE	
+	WORD priority = KDefaultCommandPriority;				// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+
+/**
+Struct for publishing a system-wide property change.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_PUBLISH_SYSTEM_WIDE_PROPERTY
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdPublishSwp; 					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdPublishSwpInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdPublishSwpVersionWithPriority;	// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	BYTE execution_behaviour = ESsmWaitForSignal;	// Can also be ESsmDeferredWaitForSignal or ESsmFireAndForget
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+
+/**
+Struct for starting a custom command.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_START_CUSTOM_COMMAND
+	{
+	LLINK conditional_information = 0; 					// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdCustomCommand; 					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdCustomCommandInitialVersion;		// Must be the third entry in this struct
+#else
+	WORD version = ECmdCustomCommandVersionWithPriority;		// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;					// Can have a higher severity defined in TCmdErrorSeverity
+	BYTE execution_behaviour = ESsmWaitForSignal;		// Can also be ESsmDeferredWaitForSignal or ESsmFireAndForget
+	LTEXT dllname = ""; 								// VALUE REQUIRED - DLL name
+	LONG ordinal = 1; 									// Ordinal number for the function
+	BYTE unload_on_finish = EUnloadOnCommandCompletion;	// Whether to unload dll on command completion or not at all
+	WORD retries = 0;									// Re-attempts to make if DLL fails to load or the DLL function returns an error code
+	LLINK dll_data = 0; 								// Optional data to be passed as a parameter to the custom command limited to KMaxDLLParams
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;			// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+/**
+Struct for starting AMAStarter with a particular DSC.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_START_AMA_STARTER
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdAMAStarter; 					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdAmaStarterInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdAmaStarterVersionWithPriority;	// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	BYTE execution_behaviour = ESsmWaitForSignal; 	// Can also be ESsmDeferredWaitForSignal or ESsmFireAndForget
+	LONG dsc_id = KDefaultSymbianDsc;				// DSC id for AMAStarter
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+/**
+Struct for checking that all preceding commands with execution_behaviour=ESsmDeferredWaitForSignal have finished.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_MULTIPLE_WAIT
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdMultipleWait; 				// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdMultipleWaitInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdMultipleWaitVersionWithPriority;	// This version supports priority of the command
+#endif	//SYMBIAN_SSM_FLEXIBLE_MERGE
+	LONG timeout = 0; 								// In milliseconds.
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+/**
+There must be at least one multiple wait command with priority lower than the deferred wait for command in the list
+*/
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif	//SYMBIAN_SSM_FLEXIBLE_MERGE
+	}
+
+/**
+Struct for setting the publish and subscribe key
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_SET_PUBLISH_AND_SUBSCRIBE
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdSetPAndSKey;					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdSetPAndSKeyInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdSetPAndSKeyVersionWithPriority;	// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	LONG category = 0;								// Category of the P&S key
+	LONG key = 0;									// P & S key
+	WORD value = 0;									// Value of P & S key
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+/**
+Struct for starting applications using Apparc.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_START_APP_INFO
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdStartApp;					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdStartAppInitialVersion;		// Must be the third entry in this struct
+#else
+	WORD version = ECmdStartAppVersionWithPriority;		// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	LTEXT name = "";								// VALUE REQUIRED - full path to the application
+	LTEXT args = "";								// Passed to the "Tail End" at the command line see CApaCommandLine. Maximum argument length allowed is 256 chars.
+	BYTE execution_behaviour = ESsmFireAndForget; 	// Can also be ESsmWaitForSignal or ESsmDeferredWaitForSignal
+	LONG timeout = 0;								// Time in milliseconds for every retry on failure
+	WORD retries = 0;  								// Number of times to retry on failure
+	BYTE viewless = 0;								// Set to 1 if app is viewless
+	BYTE background = 0;							// Set to 1 if app should be launched in the background
+	LLINK monitor_info = 0;  						// zero means no monitoring is required, SSM_MONITOR_INFO should be used if monitoring is required
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+/**
+Struct for starting processes.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_START_PROCESS_INFO
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdStartProcess;				// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdStartProcessInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdStartProcessVersionWithPriority;	// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	LTEXT name = "";								// VALUE REQUIRED - full path to the process
+	LTEXT args = "";								// Passed to the "Tail End" at the command line see CApaCommandLine. Maximum argument length allowed is 256 chars.
+	BYTE execution_behaviour = ESsmFireAndForget; 	// Can also be ESsmWaitForSignal or ESsmDeferredWaitForSignal
+	LONG timeout = 0;								// Time in milliseconds for every retry on failure
+	WORD retries = 0;  								// Number of times to retry on failure
+	LLINK monitor_info = 0;  						// zero means no monitoring is required, SSM_MONITOR_INFO should be used if monitoring is required
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+/**
+Struct for monitoring information.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_MONITOR_INFO
+	{
+	WORD type = ESsmMonitorInfo;					// Must be the first entry in this struct and must not be changed
+	WORD version = ESsmMonitorInfoInitialVersion;	// Must be the second entry in this struct
+	BYTE restart_policy=ESsmIgnoreOnFailure;		// OS Restart policy to be used if component restarting has failed
+	BYTE restart_mode;								// Restart mode when restart_policy=ESsmRestartOSWithMode
+	LONG timeout = 0;								// Delay in milliseconds between retries
+	WORD retries = 0;								// Number of times to attempt to restart a failed component
+	}
+
+/**
+Struct for waiting for apparc server to initialise.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_WAIT_FOR_APPARC_INIT
+	{
+	LLINK conditional_information = 0; 						// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdWaitForApparcInit; 					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdWaitForApparcInitInitialVersion;		// Must be the third entry in this struct
+#else
+	WORD version = ECmdWaitForApparcInitVersionWithPriority;		// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;						// Can have a higher severity defined in TCmdErrorSeverity
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;				// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+/**
+Struct for loading a State Utility Plugin (SUP).
+SUPs are typechecked using UID2 which must be set to KSsmUtilityPluginDllTypeUidValue.
+SUPs can only be loaded from ROM file system (Z:).
+
+@see MSsmUtility
+@see RSsmSusCli
+@publishedPartner
+@released
+*/
+STRUCT SSM_START_SSM_UTILITY_PLUGIN
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD  type = ESsmCmdLoadSup; 					// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD  version = ECmdLoadSupInitialVersion;		// Must be the third entry in this struct
+#else
+	WORD  version = ECmdLoadSupVersionWithPriority;		// This version supports priority of the command
+#endif
+	WORD  severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	BYTE  execution_behaviour = ESsmWaitForSignal;	// Can also be ESsmDeferredWaitForSignal or ESsmFireAndForget
+	LTEXT filename = ""; 							// VALUE REQUIRED - DLL filename only, no drive or path.
+	LONG  uid3 = 0;									// Optional DLL UID3. Use if you want to enforce UID3 is what you expect it to be.
+	LONG  ordinal = 1; 								// Ordinal number for the function: static MSsmUtility* NewL()
+	WORD  retries = 0; 								// Re-attempts to make if DLL fails to load or the DLL function returns an error code
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+	
+/**
+Struct for initiating a device restart or shutdown.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_POWER_OFF
+	{
+	LLINK conditional_information = 0; 			// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdPowerOff; 				// Must be the second entry in this struct and must not be changed
+	WORD version = ECmdPowerOffInitialVersion;	// Must be the third entry in this struct
+	WORD severity = ECmdIgnoreFailure;			// Can have a higher severity defined in TCmdErrorSeverity
+	WORD power_state = 0;						// VALUE REQUIRED - TPowerState value
+	}
+
+	
+/**
+Struct for requesting a system-wide property change.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_REQUEST_SYSTEM_WIDE_PROPERTY
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdReqSwProperty; 				// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdReqSwPropertyInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdReqSwPropertyVersionWithPriority;	// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	BYTE execution_behaviour = ESsmWaitForSignal;	// Can also be ESsmDeferredWaitForSignal or ESsmFireAndForget
+	LONG key = 0;									// VALUE REQUIRED - system-wide property key
+	LONG value = 0;									// VALUE REQUIRED - system-wide property value
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;		// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+	
+/**
+Struct for creating a system-wide property.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_CREATE_SYSTEM_WIDE_PROPERTY
+	{
+	LLINK conditional_information = 0; 			// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdCreateSwp; 				// Must be the second entry in this struct and must not be changed
+#ifndef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD version = ECmdCreateSwpInitialVersion;	// Must be the third entry in this struct
+#else
+	WORD version = ECmdCreateSwpVersionWithPriority;	// This version supports priority of the command
+#endif
+	WORD severity = ECmdIgnoreFailure;			// Can have a higher severity defined in TCmdErrorSeverity
+	LONG key = 0;								// VALUE REQUIRED - system-wide property UID key
+	LONG value = 0;								// Optional default value to set the key to
+	LTEXT filename = ""; 						// VALUE REQUIRED - name of the dll implementing the MSsmSwpPolicy interface - filename only, no drive, path or suffix.
+#ifdef SYMBIAN_SSM_FLEXIBLE_MERGE
+	WORD priority = KDefaultCommandPriority;	// The order of the command in the list - range can be from 0x00 to 0xffffu
+#endif
+	}
+
+	
+/**
+Struct for finalising drives.  Causes the RFs.FinaliseDrives() function to be called.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_FINALISE_DRIVES
+	{
+	LLINK conditional_information = 0; 				// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdFinaliseDrives; 				// Must be the second entry in this struct and must not be changed
+	WORD version = ECmdFinaliseDrivesInitialVersion;// Must be the third entry in this struct
+	WORD severity = ECmdIgnoreFailure;				// Can have a higher severity defined in TCmdErrorSeverity
+	}
+
+	
+/**
+Struct for persisting HAL attributes.  Causes the BaflUtils::PersistHAL() function to be called.
+
+@publishedPartner
+@released
+*/
+STRUCT SSM_PERSIST_HAL_ATTRIBUTES
+	{
+	LLINK conditional_information = 0; 						// Must be the first entry in this struct - Zero means command is unconditional
+	WORD type = ESsmCmdPersistHalAttributes;				// Must be the second entry in this struct and must not be changed
+	WORD version = ECmdPersistHalAttributesInitialVersion;	// Must be the third entry in this struct
+	WORD severity = ECmdIgnoreFailure;						// Can have a higher severity defined in TCmdErrorSeverity
+	}
+
+	
+
+
+#endif	// __SSMCMD_RH__
+
+

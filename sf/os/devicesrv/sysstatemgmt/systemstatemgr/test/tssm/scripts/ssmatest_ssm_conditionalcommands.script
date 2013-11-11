@@ -1,0 +1,50 @@
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+PRINT Run SsmStateConditionalCommandsStep tests
+RINT Run StartApp tests
+RUN_UTILS MkDir c:\private\
+RUN_UTILS MkDir c:\private\10205054\
+
+RUN_UTILS CopyFile z:\private\10205054\features.dat c:\private\10205054\features.dat
+
+PRINT Changing capability of tssm_server.exe as adaptation plugin dlls do not have enough capability to be loaded by tssm_server.exe
+//PRINT Set Capability of tssm_server.exe to PRINT WriteDeviceData (000000020)
+PRINT PowerMgmt (000000004) + ProtServ (000000100) + SwEvent (000001000) + WriteDeviceData (000000020) + ReadDeviceData (000000010)
+RUN_PROGRAM -1 setcap tssm_server.exe 00001134 tssm_servercapset
+
+LOAD_SUITE tssm_servercapset
+
+START_TESTCASE 			DEVSRVS-SSMA-SSM-0003
+//! @SYMTestCaseID 		DEVSRVS-SSMA-SSM-0003
+//! @SYMPREQ 			PREQ1871 REQ10367
+//! @SYMREQ			REQ9153
+//! @SYMTestCaseDesc		Checks that conditional commands are executed conditionally
+//!				Test the behaviour of condition evaluator with different set of conditions using 
+//!					Central repository, Feature mgr, PS with logical conditions
+//! @SYMTestType		CIT	
+//! @SYMTestPriority		Critical
+//! @SYMTestCaseDependencies	See tssm_statepolicy_conditionalcommands.cpp file
+//! @SYMTestActions		The test will a state plug-in dll which will consist of many conditional commands and a single command to publish the state
+//!				TestConditionEvaluatorL() 1.The test will request the state transition to the state 0091
+//!				2.The test will request a state change that will load ssm.state.policy.0091.dll, same will be used for constructing the command and execute.
+//!				3. Each condition will associate with a PS key ranging from EPropertyCondition1 to EPropertyCondition45 and test code will
+//!					define set the PS keys to value 0.
+//!				4.On successful completion of each condition respective PS key will set to value 1
+//! @SYMTestExpectedResults 	SsmServer correctly handles the conditional commands and the conditions are evaluated at execution time.
+//!				1.CreateAndExecuteCmd will complete with KErrorNone. 
+//!				2.Test that positive condition PS keys value should be equal to 1 and negative condition should be equal to 0 									
+RUN_TEST_STEP 100 tssm_servercapset SsmConditionalCommandsStep
+END_TESTCASE 			DEVSRVS-SSMA-SSM-0003

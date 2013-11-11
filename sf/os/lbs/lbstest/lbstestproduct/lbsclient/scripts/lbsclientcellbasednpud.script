@@ -1,0 +1,239 @@
+﻿//! @File
+//! @SYMTestSuiteName	lbsclientcellbasednpud.script
+//! @SYMScriptTestEnvironment
+
+// Copyright (c) 2008-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+// Delete lbs log
+RUN_UTILS DeleteFile c:\private\101f401d\Logdbu.dat
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	DeleteFile c:\private\10202be9\1028224b.cre 
+	DeleteFile c:\private\10202be9\persists\1028224b.cre
+    DeleteFile c:\private\10282253\lbs\lbsprofile.in
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-Client-CellBasedNPUD-0001
+
+//!@SYMTestCaseID			LBS-Client-CellBasedNPUD-0001
+//!@SYMTestCaseDesc			Request a cell-based location
+//!
+//!@SYMTestActions			
+//!					Open a sub-session using RPositioner::Open() and specifying the network module�s module id
+//!					Request Location Update.
+//!					Wait for location request to complete.
+//!					Verify that the location request is logged with appropriate details.                                                                                                                                                                 
+//!
+//!@SYMTestExpectedResults		Reference (cell-based) location retrieved and details logged
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMPREQ				PREQ89	
+//!@SYMREQ				REQ 89.03
+//!@SYMREQ				REQ 89.07
+//!@SYMREQ				REQ 89.09
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-CLIENT-CELLBASEDNPUD
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ClearLog
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos  c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_CellBasedNotifyPosUpdate c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 020 LbsClientTestServer LbsStep_VerifyLogInfo c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0001
+
+END_TESTCASE LBS-Client-CellBasedNPUD-0001
+
+
+START_TESTCASE LBS-Client-CellBasedNPUD-0002
+
+//!@SYMTestCaseID			LBS-Client-CellBasedNPUD-0002
+//!@SYMTestCaseDesc			Request a cell-based location and cancel before it completes
+//!
+//!@SYMTestActions			
+//!					Open a sub-session using RPositioner::Open() and specifying the network module�s module id
+//!					Request Location Update.
+//!					Cancel the update (should return KErrNone if cancel successfully sent to server, or KErrNotFound if too late)
+//!					Wait for location request to complete.
+//!
+//!@SYMTestExpectedResults		Request completes with KErrCancel (if cancel was successful) or KErrNone (if too late)
+//!					Request is logged with appropriate details.                                                                                                                                                                 
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMPREQ				PREQ89
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-CLIENT-CELLBASEDNPUD
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_CellBasedNotifyPosUpdate c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0002
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-CellBasedNPUD-0002
+
+
+
+
+
+START_TESTCASE LBS-Client-CellBasedNPUD-0004
+
+//!@SYMTestCaseID		LBS-Client-CellBasedNPUD-0004
+//!@SYMTestCaseDesc		Multiple sequential Location Update requests using Network
+//!
+//!@SYMTestActions		1. Request Location Update from Network
+//!				2. Wait for request to complete
+//!				3. Verify that request completed successfully
+//!				4. Repeat above a number of times (read from config)
+//!				5. Verify that location infos are as expected.
+//!				6. Verify that the location requests are logged?
+//!
+//!@SYMTestExpectedResults	All Requests complete successfully
+//!
+//!@SYMPREQ			PREQ786
+//!@SYMREQ 			REQ786.02
+//!@SYMREQ 			REQ786.07 
+//!@SYMPREQ			PREQ89
+//!@SYMREQ			REQ 89.03
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus		Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-CLIENT-CELLBASEDNPUD
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0004
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_CellBasedNotifyPosUpdate 	c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0004
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-CellBasedNPUD-0004
+
+START_TESTCASE LBS-Client-CellBasedNPUD-0005
+
+//!@SYMTestCaseID			LBS-Client-CellBasedNPUD-0005
+//!@SYMTestCaseDesc			Request a cell-based location and issue a cancel when the update is received
+//!
+//!@SYMTestActions			
+//!					Open a sub-session using RPositioner::Open() and specifying the network module�s module id
+//!					Request Location Update.
+//!					Wait for position update.
+//!					Cancel the update (should return KErrNotFound, as the request has already
+//!					been completed and the position data sent to the network by this point)
+//!
+//!@SYMTestExpectedResults	Request completes with KErrNone
+//!					Request is logged with appropriate details.                                                                                                                                                                 
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMPREQ				PREQ89
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-CLIENT-CELLBASEDNPUD
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_CellBasedNotifyPosUpdate c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0005
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-CellBasedNPUD-0005
+
+START_TESTCASE LBS-Client-CellBasedNPUD-0006
+
+//!@SYMTestCaseID			LBS-Client-CellBasedNPUD-0006
+//!@SYMTestCaseDesc			Request a cell-based location and issue a cancel before the update is received
+//!
+//!@SYMTestActions			
+//!					Open a sub-session using RPositioner::Open() and specifying the network module�s module id
+//!					Request Location Update.
+//!					Cancel the update
+//!
+//!@SYMTestExpectedResults	Request completes with KErrNone
+//!					Request is logged with appropriate details.                                                                                                                                                                 
+//!
+//!@SYMPREQ				PREQ786
+//!@SYMPREQ				PREQ89
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-CLIENT-CELLBASEDNPUD
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_CellBasedNotifyPosUpdate c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0006
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-CellBasedNPUD-0006
+
+START_TESTCASE LBS-Client-CellBasedNPUD-0003
+
+//!@SYMTestCaseID				LBS-Client-CellBasedNPUD-0003
+//!@SYMTestCaseDesc			Request a cell-based location, when network unavailable
+//!
+//!@SYMTestActions			
+//!						Open a sub-session using RPositioner::Open() and specifying the network module�s module id
+//!						Make network unavailable (tell NetSim to return error)
+//!						Request Location Update.
+//!						Wait for location request to complete.
+//!						Verify that the location request is logged with appropriate details.                                                                                                                                                                 
+
+//!
+//!@SYMTestExpectedResults		Request should complete with appropriate error code 
+//!
+//!@SYMPREQ					PREQ786
+//!@SYMPREQ					PREQ89
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			 	Implemented
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-CLIENT-CELLBASEDNPUD
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos	c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_CellBasedNotifyPosUpdate c:\testdata\configs\LbsClientCellbasedNPUD.ini LBS-NotifyPosUpdate-CellBased-0003
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Client-CellBasedNPUD-0003
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

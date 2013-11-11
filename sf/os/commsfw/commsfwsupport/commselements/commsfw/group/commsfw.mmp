@@ -1,0 +1,74 @@
+// Copyright (c) 2003-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// [RZ] I understand the need to supply a default transport with the MM productisation
+// but I'm uneasy with moving the whole of commsfw to the system domain. 
+// We should grab Tom and perhaps consider splitting this component between
+// transport and what's left and leave what's left as comms-infras/commsfw.
+// [MZ] Me too. It would be ideal if we managed to split it.
+// Would you have resorces to do that?
+// APIs used for inter-thread message passing.
+// commsfw.dll Provides classes for creating threads for CPMs to run it, and for communication between them.
+// 
+//
+
+/**
+ @file 
+*/
+
+#include "elements/cftransportmacro.h"
+/**
+Define SYMBIAN_ENABLE_NETWORKING_PERFMETRICS to enable the slow, low-volume logging of performance data. 
+Need to recompile COMMSFW + individual client projects
+*/
+MACRO SYMBIAN_ENABLE_NETWORKING_PERFMETRICS
+#include "comms-infras/commsdebugutility.mmh"
+
+
+
+TARGET        commsfw.dll
+TARGETTYPE    dll
+
+SOURCEPATH    ../src
+SOURCE        commschan.cpp
+SOURCE        cfshared.cpp
+SOURCE        cfutil.cpp
+SOURCE		  cfperfmetrics.cpp
+
+SOURCE        cftransport.cpp
+SOURCE        cftransporthook.cpp
+
+OS_LAYER_SYSTEMINCLUDE_SYMBIAN
+//USERINCLUDE   ../inc
+
+#include "cflog.mmh"
+
+LIBRARY euser.lib efsrv.lib
+
+#ifdef SYMBIAN_NETWORKING_CFTRANSPORT
+LIBRARY netmeta.lib
+LIBRARY netinterfaces.lib
+LIBRARY nodemessages.lib
+#endif
+
+
+DEFFILE commsfw.def
+
+CAPABILITY ALL -Tcb
+
+VENDORID 0x70000001
+
+UNPAGED
+
+SMPSAFE
+

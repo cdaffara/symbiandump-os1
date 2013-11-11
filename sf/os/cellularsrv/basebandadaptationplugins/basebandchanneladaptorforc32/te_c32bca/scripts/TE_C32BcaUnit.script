@@ -1,0 +1,618 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Unit tests C32Bca functionality. 
+// 
+//
+
+//! @file
+
+// Copy PKTLOOPBACK CSY configuration file.
+RUN_UTILS MakeReadWrite c:\loopback.ini
+RUN_UTILS DeleteFile c:\loopback.ini
+RUN_UTILS CopyFile z:\testdata\configs\te_c32Bca_loopback.ini c:\loopback.ini
+RUN_UTILS MakeReadWrite c:\loopback.ini
+
+//! Load the test suite.
+PRINT Loading C32Bca test suite...
+LOAD_SUITE TE_C32BcaSvr
+CONSECUTIVE
+
+//RUN_SCRIPT z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+// Populate CommDB with empty configuration (no ModemBearer, no IAP), such that it is unusable for the C32Bca
+CED -i z:\TestData\Configs\te_c32BcaUnitNoCommDb.xml
+
+//
+// Tests with unusable CommDB, such that when CED fails to produce one.
+//
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0101
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0101
+//! @SYMTestCaseDesc Tests C32Bca behavior in absense of valid CommDB database
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbNoChannelId z:\TestData\Configs\te_c32BcaUnitCommDb.ini NoCommDb1
+
+// After each test step, we wait for 1 second to let C32 thread recover all resources. If we do not do that, 
+// and attempt to use C32 again immediately after finishing the previous step, some of the test on hardware may fail.
+// This is an issue with timing/thread scheduling/race conditions on Lubbock and H2 only. The problem does not exist in
+// emulator tests.
+DELAY 1000 
+
+
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0101
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0102
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0102
+//! @SYMTestCaseDesc Tests C32Bca behavior in absense of valid CommDB database.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CNoChannelIdNoIapId z:\TestData\Configs\TE_C32BcaUnit.ini NoCommDbNoIapId
+DELAY 1000
+
+
+//
+// Tests with usable CommDB
+//
+
+//RUN_SCRIPT z:\TestData\scripts\te_esock_test_unloadesockForced.script
+// Populate CommDB with records that are usuable by C32Bca.
+// Some of these records have invalid settings.
+CED -i z:\TestData\Configs\te_c32BcaUnit.xml
+
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0102
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0103
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0103
+//! @SYMTestCaseDesc Test C32 Bca's correct handling of CommRole field in CommDB
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority Critical 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbModemCommRole z:\TestData\Configs\TE_C32BcaUnit.ini CommRoleDTE
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0103
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0104
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0104
+//! @SYMTestCaseDesc Test C32 Bca's correct handling of CommRole field in CommDB
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority Critical 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbModemCommRole z:\TestData\Configs\TE_C32BcaUnit.ini CommRoleDCE
+DELAY 1000
+
+
+
+
+//
+// Tests with Valid CommDB, which has some invalid records.
+// 
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0104
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0105
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0105
+//! @SYMTestCaseDesc Test C32Bca behaviour when CSY name and Port values are missing in CommDB.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbNoChannelId z:\TestData\Configs\TE_C32BcaUnit.ini MissingCsyMissingPort
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0105
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0106
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0106
+//! @SYMTestCaseDesc Test C32Bca behaviour when CSY name is valid, but Port name is missing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbNoChannelId z:\TestData\Configs\te_c32BcaUnitCommDb.ini EcuartCsyMissingPort
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0106
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0107
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0107
+//! @SYMTestCaseDesc Test C32Bca behaviour when CSY and Port fields in CommDB are present, but invalid.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbNoChannelId z:\TestData\Configs\TE_C32BcaUnit.ini InvalidCsyInvalidPort
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0107
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0108
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0108
+//! @SYMTestCaseDesc Test C32Bca behaviour when CommDB CSY field is valid, but Port is not.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbNoChannelId z:\TestData\Configs\te_c32BcaUnitCommDb.ini EcuartCsyInvalidPort
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0108
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0109
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0109
+//! @SYMTestCaseDesc Test C32Bca behaviour when CommDB field CSY is invalid, but PortName is valid.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbNoChannelId z:\TestData\Configs\TE_C32BcaUnit.ini InvalidCsyComm0
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0109
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0110
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0110
+//! @SYMTestCaseDesc Test C32Bca behaviour when the provisioned IAP ID value is invalid (IAP record does not exist).
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCommDbNoChannelId z:\TestData\Configs\TE_C32BcaUnit.ini InvalidIapId
+DELAY 1000
+
+
+
+//
+// Tests with valid CommDB records for C32Bca operations
+//
+
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0110
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0111
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0111
+//! @SYMTestCaseDesc Tests C32Bca when it is closed.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CClosedState1 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1 
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0111
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0112
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0112
+//! @SYMTestCaseDesc Tests C32Bca when it is closed.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CClosedState2 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0112
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0113
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0113
+//! @SYMTestCaseDesc Tests C32Bca when it is shutting down.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CShutdownState1 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0113
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0114
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0114
+//! @SYMTestCaseDesc Tests C32Bca when it is open.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr COpenState1 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0114
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0115
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0115
+//! @SYMTestCaseDesc Tests C32Bca when it is open.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr COpenState2 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0115
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0116
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0116
+//! @SYMTestCaseDesc Tests C32Bca when it is reading.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingState1 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1  
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0116
+
+START_TESTCASE NET-BasebandAdaptation-c32bca-0117
+//! @SYMTestCaseID NET-BasebandAdaptation-c32bca-0117
+//! @SYMTestCaseDesc Tests C32Bca when it is reading.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingState2 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1  
+DELAY 1000
+
+END_TESTCASE NET-BasebandAdaptation-c32bca-0117
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0118
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0118
+//! @SYMTestCaseDesc Tests C32Bca when it is reading.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingState3 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1  
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0118
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0119
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0119
+//! @SYMTestCaseDesc Tests C32Bca when it is writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CWritingState1 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1  
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0119
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0120
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0120
+//! @SYMTestCaseDesc Tests C32Bca when it is writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CWritingState2 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1  
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0120
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0121
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0121
+//! @SYMTestCaseDesc Tests C32Bca when it is writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CWritingState3 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0121
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0122
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0122
+//! @SYMTestCaseDesc Tests C32Bca when it is reading and writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingWritingState1 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0122
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0123
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0123
+//! @SYMTestCaseDesc Tests C32Bca when it is reading and writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingWritingState2 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0123
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0124
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0124
+//! @SYMTestCaseDesc Tests C32Bca when it is reading and writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingWritingState3 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0124
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0125
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0125
+//! @SYMTestCaseDesc Tests C32Bca when it is reading and writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingWritingState4 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0125
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0126
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0126
+//! @SYMTestCaseDesc Tests C32Bca when it is reading and writing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CReadingWritingState5 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0126
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0127
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0127
+//! @SYMTestCaseDesc Tests C32Bca when it is ioctl'ing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlingState1 z:\TestData\Configs\TE_C32BcaUnit.ini IoctlingState1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0127
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0128
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0128
+//! @SYMTestCaseDesc Tests C32Bca when it is ioctl'ing.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlingState2 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0128
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0129
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0129
+//! @SYMTestCaseDesc Tests C32Bca for packet boundary preservation.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CPacketBoundary1 z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1  
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0129
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0130
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0130
+//! @SYMTestCaseDesc Tests C32Bca Ioctl options.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlOption1  z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0130
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0131
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0131
+//! @SYMTestCaseDesc Tests C32Bca Ioctl options.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlOption2  z:\TestData\Configs\TE_C32BcaUnit.ini IoctlOption2
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0131
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0132
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0132
+//! @SYMTestCaseDesc Tests C32Bca invalid Ioctl options.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlInvalidOption z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0132
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0133
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0133
+//! @SYMTestCaseDesc Tests C32Bca Ioctl for serial port (using packetloopback.csy as current phone hardware does not support a serial driver).
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlSerialPort1 z:\TestData\Configs\TE_C32BcaUnit.ini CommRoleDTE
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0133
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0134
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0134
+//! @SYMTestCaseDesc Tests C32Bca Ioctl for serial port (using packetloopback.csy as current phone hardware does not support a serial driver).
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority Critical 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlSerialPort2 z:\TestData\Configs\TE_C32BcaUnit.ini CommRoleDTE
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0134
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0135
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0135
+//! @SYMTestCaseDesc Tests C32Bca Ioctl for serial port (using packetloopback.csy as current phone hardware does not support a serial driver).
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlSerialPort3 z:\TestData\Configs\TE_C32BcaUnit.ini CommRoleDTE
+DELAY 1000
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0135
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0136
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0136
+//! @SYMTestCaseDesc Tests C32Bca Ioctl for serial port.
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CIoctlSerialPort4 z:\TestData\Configs\TE_C32BcaUnit.ini SerialPortCommRole1
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0136
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0137
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0137
+//! @SYMTestCaseDesc Tests C32Bca ability to read hidden IAP records from CommDB
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CHiddenIAPRecord z:\TestData\Configs\TE_C32BcaUnit.ini HiddenIAPRecord
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0137
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0138
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0138
+//! @SYMTestCaseDesc Tests C32Bca Release functionality with Cleanup Stack
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CCleanupBcaRelease z:\TestData\Configs\TE_C32BcaUnit.ini BcaLoopback1
+
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0138
+
+START_TESTCASE          NET-BasebandAdaptation-c32bca-0139
+//! @SYMTestCaseID      NET-BasebandAdaptation-c32bca-0139
+//! @SYMTestCaseDesc Tests C32Bca Open functionality with different combination of ChannelId
+//! @SYMFssID NETWORKING/BCA
+//! @SYMTestActions Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc
+//! @SYMTestExpectedResults Refer to SGL.GT0233.603.C32Bca_Unit_test_spec.doc.
+//! @SYMTestPriority High 
+//! @SYMTestStatus Implemented
+//! @SYMTestType UT
+RUN_TEST_STEP 100 TE_C32BcaSvr CValidChannelId z:\TestData\Configs\TE_C32BcaUnit.ini ValidChannelId
+
+RUN_UTILS DeleteFile c:\loopback.ini
+
+//RUN_SCRIPT z:\TestData\scripts\te_esock_test_unloadesockForced.script
+END_TESTCASE            NET-BasebandAdaptation-c32bca-0139
+
+

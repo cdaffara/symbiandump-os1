@@ -1,0 +1,134 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         btgpspsy_locationrequest.script
+//! @SYMScriptTestEnvironment
+
+LOAD_SUITE ctlbsbtgpspsytestserver
+
+RUN_UTILS CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+
+START_TESTCASE                LBS-BTGPSPSY-LocationRequest-0001
+//! @SYMTestCaseID              LBS-BTGPSPSY-LocationRequest-0001
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY maintains the old behaviour of being able to retrieve stored information about an active and available BT GPS device from the new BT GPS Configuration API.  The PSY should be able to connect to the device and receive a location update.  The test also tests the standard BT pairing process as it is connecting to an unknown BT device.
+//! @SYMTestActions             1. Test should add one BT GPS device to the list.  This device should be an available BT device with the device type of unknown.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list still only contains the one valid BT GPS device and that the device type of this device has changed to a valid GPS device.
+//! @SYMTestExpectedResults     Test should receive location update and should update the device list to indicate the type of BT GPS device.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10796
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest01Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest01Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-LocationRequest-0001
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-LocationRequest-0002
+//! @SYMTestCaseID              LBS-BTGPSPSY-LocationRequest-0002
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains a number of devices.  The PSY should be able to connect to and receive a location request from the only available BT device at the top of the list.  The PSY should not need to edit the device list or look at the unavailable devices at the end of the list.  The device in the list is listed as a known device so the PSY should be able to connect directly to the device.
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  One available BT device should be added to the top of the list.  This device should be an available BT device with the device type of valid.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list to ensure no changes have been made.
+//! @SYMTestExpectedResults     Test should receive location update and should not make changes to the device list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10796
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest02Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest02Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-LocationRequest-0002
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-LocationRequest-0003
+//! @SYMTestCaseID              LBS-BTGPSPSY-LocationRequest-0003
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains a number of devices.  The only available device in the list should be at the end of the list.  The PSY should move through the list attempting to and failing to connect to the unavailable devices.  The PSY should then arrive at the end of the list and connect to and receive a location update from this device.  The PSY should edit the device list to move this valid device to the top of the list.
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  One available BT device should be added to the end of the list.  This device should be an available BT device with the device type of unknown.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list to ensure that the valid BT device has been moved to the top of the list.
+//! @SYMTestExpectedResults     Test should receive location update and should move the available BT device to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10796
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest03Pre
+RUN_TEST_STEP 300 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest03Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-LocationRequest-0003
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-LocationRequest-0004
+//! @SYMTestCaseID              LBS-BTGPSPSY-LocationRequest-0004
+//! @SYMTestCaseDesc            Tests to ensure the BT PSY is able to deal with a device list which contains a number of devices.  The only available device in the list should in the middle of the list.  The PSY should move through the list attempting to and failing to connect to the unavailable devices.  The PSY should then arrive at the available device and should be able to connect to and receive a location update from this device.  The PSY should edit the device list to move this valid device to the top of the list.
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  One available BT device should be added to the middle of the list.  This device should be an available BT device with the device type of valid.
+//!                             2. Test makes a location request and should get a position returned back to it.
+//!                             3. Test checks the list to ensure that the valid BT device has been moved to the top of the list.
+//! @SYMTestExpectedResults     Test should receive location update and should move the available BT device to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10796
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest04Pre
+RUN_TEST_STEP 300 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest04Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-LocationRequest-0004
+
+
+
+START_TESTCASE                LBS-BTGPSPSY-LocationRequest-0005
+//! @SYMTestCaseID              LBS-BTGPSPSY-LocationRequest-0005
+//! @SYMTestCaseDesc            Test ensures that the BT PSY is able to deal with the cached list of devices and ignores any updates made to the list after the connecting process is started.  It also tests to ensure the PSY is able to deal with a device being added by an application AND entered in the BT device selection dialog.
+//! @SYMTestActions             1. Test should add a number of BT devices to the device list.  All of the devices should be unavailable.
+//!                             2. Test makes a location request and the PSY should start to attempt to connect to the devices in the list.
+//!                             3. The test should add the valid device to the end of the device list.
+//!                             4. The PSY should ignore this change and after failing to connect to any device in the list, load the device selection dialog.  The test should enter the same device details into the device selection dialog.
+//!                             5. PSY should return a location response to the test.
+//!                             6. Test should check the device list to ensure the device only exists the device once and that it has been moved to the top of the list.
+//! @SYMTestExpectedResults     Test should receive location update and should contain the new device added to the top of the list.
+//! @SYMTestType                CIT
+//! @SYMCreationDate            8/12/2008
+//! @SYMAuthor                  JosephSpracklen
+//! @SYMTestStatus              3. Released
+//! @SYMPREQ                    PREQ2116
+//! @SYMREQ                     REQ10796
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver SetupBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest05Pre
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver BtGpsPsyLocationRequestStep
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver CheckBTGPSDeviceList c:\testdata\configs\setupdevicelist.ini LocRequest05Post
+RUN_TEST_STEP 100 ctlbsbtgpspsytestserver DeleteBTGPSDeviceList
+END_TESTCASE                  LBS-BTGPSPSY-LocationRequest-0005
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+
+

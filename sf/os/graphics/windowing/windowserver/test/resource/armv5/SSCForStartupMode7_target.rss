@@ -1,0 +1,109 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+#include "startup.rh"
+
+// This file has been based on
+// app-framework/sysstart/resource/armv5/SSCForStartupMode0_target.rss
+// It is customized for running the wserv tests using wshell.
+//
+// ENTRY POINT
+//
+
+// THIS MUST BE THE FIRST RESOURCE. The system relies on
+// this having a resource ID of 1
+
+RESOURCE STARTUP_ENTRY_POINT r_entry_point
+	{
+	entry_point = r_startup_state_critical_static; 
+	}
+//
+
+
+
+//
+// CRITICAL-STATIC startup state
+//
+RESOURCE STATE_INFO r_startup_state_critical_static
+	{
+	id = EStartupStateCriticalStatic;
+	name = "Critical Static";
+	command_list = r_critical_static_commands;
+	next = r_startup_state_critical_dynamic;
+	}
+
+RESOURCE COMMAND_ARRAY r_critical_static_commands
+	{
+	commands =
+		{
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\SysAgt2Svr.exe"; 
+			start_method = EWaitForStart;
+			no_of_retries_on_failure = 2;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\fbserv.exe";
+			start_method = EWaitForStart;
+			no_of_retries_on_failure = 1;
+			},
+		START_PROCESS_INFO
+			{
+			path = "Z:\\sys\\bin\\ewsrv.exe";
+			start_method = EWaitForStart;
+			}
+		};
+	}
+
+//
+// CRITICAL-DYNAMIC startup state
+//
+RESOURCE STATE_INFO r_startup_state_critical_dynamic
+	{
+	id = EStartupStateCriticalDynamic;
+	name = "Critical Dynamic";
+	command_list = r_critical_dynamic_commands;
+	next = r_startup_state_non_critical;
+	}
+
+RESOURCE COMMAND_ARRAY r_critical_dynamic_commands
+	{
+	commands =
+		{
+		};
+	}
+
+//
+// NON-CRITICAL startup state
+//
+RESOURCE STATE_INFO r_startup_state_non_critical
+	{
+	id = EStartupStateNonCritical;
+	name = "Non-critical";
+	command_list = r_non_critical_commands;
+	next = 0;	// No more state transitions
+	}
+
+RESOURCE COMMAND_ARRAY r_non_critical_commands
+	{
+	commands =
+		{
+		};
+	}
+
+
+
+

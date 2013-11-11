@@ -1,0 +1,1738 @@
+//
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @file
+//! @SYMTestSuiteName		base-bsp-serial-driver-stress_PORT<port>-<baud>
+//! @SYMScriptTestEnvironment	This test script requires a base port ROM
+
+/////////////////////////////////////////////////////////////////////
+// base-bsp-serial-driver-stress-PORT<port>-<baud>.script
+//
+//
+// Tests elements of the RBusDevComm
+// as a means of confidence that the HAI APIs work as expected.
+//
+// Tests are validated through environment settings found in the file t_serial.ini
+//
+// The purpose is to provide a regression test suite of publishedPartner APIs for RBusDevComm.
+// Negative testing is performed to confirm that correct errors are returned when incorrect parameters are given.
+// The tests are fully automated.
+/////////////////////////////////////////////////////////////////////
+
+LOAD_SUITE	t_serial
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_rtscts-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_rtscts-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= rtscts
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-none-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_rtscts-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_rtscts-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_rtscts-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= rtscts
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-none-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_rtscts-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_rtscts-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_rtscts-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= none
+//!					flow control	= rtscts
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-none-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_rtscts-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_rtscts-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_rtscts-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= none
+//!					flow control	= rtscts
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-none-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_rtscts-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_rtscts-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_rtscts-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= even
+//!					flow control	= rtscts
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-even-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_rtscts-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_rtscts-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_rtscts-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= even
+//!					flow control	= rtscts
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-even-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_rtscts-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_rtscts-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_rtscts-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= even
+//!					flow control	= rtscts
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-even-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_rtscts-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_rtscts-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_rtscts-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= even
+//!					flow control	= rtscts
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-even-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_rtscts-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_rtscts-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_rtscts-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= odd
+//!					flow control	= rtscts
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-odd-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_rtscts-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_rtscts-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_rtscts-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= odd
+//!					flow control	= rtscts
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-odd-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_rtscts-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_rtscts-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_rtscts-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= odd
+//!					flow control	= rtscts
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-odd-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_rtscts-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_rtscts-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_rtscts-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= odd
+//!					flow control	= rtscts
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-odd-rtscts-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeRtsCts
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_rtscts-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_xonxoff-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_xonxoff-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= xonxoff
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-none-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_xonxoff-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_xonxoff-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_xonxoff-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= xonxoff
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-none-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_none_xonxoff-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_xonxoff-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_xonxoff-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= none
+//!					flow control	= xonxoff
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-none-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_xonxoff-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_xonxoff-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_xonxoff-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= none
+//!					flow control	= xonxoff
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-none-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityNone
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_none_xonxoff-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_xonxoff-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_xonxoff-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= even
+//!					flow control	= xonxoff
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-even-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_xonxoff-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_xonxoff-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_xonxoff-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= even
+//!					flow control	= xonxoff
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-even-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_even_xonxoff-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_xonxoff-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_xonxoff-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= even
+//!					flow control	= xonxoff
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-even-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_xonxoff-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_xonxoff-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_xonxoff-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= even
+//!					flow control	= xonxoff
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-even-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityEven
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_even_xonxoff-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_xonxoff-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_xonxoff-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= odd
+//!					flow control	= xonxoff
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-odd-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_xonxoff-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_xonxoff-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_xonxoff-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= odd
+//!					flow control	= xonxoff
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-1-odd-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop1
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_1_odd_xonxoff-2002
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_xonxoff-2001
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_xonxoff-2001
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref});
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref})
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= odd
+//!					flow control	= xonxoff
+//!				3. Send data to com port without specifying the length of the data
+//!				4. Read data from com port without specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-odd-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2001-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_xonxoff-2001
+
+
+START_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_xonxoff-2002
+//! @SYMTestCaseID		BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_xonxoff-2002
+//! @SYMAPI			RBusDevComm::Write(TRequestStatus {ref}, const TDesC8 {ref}, TInt);
+//!				RBusDevComm::Read(TRequestStatus {ref}, TDesC8 {ref}, TInt)
+//! @SYMAuthor			Louis Henry Nayegon
+//! @SYMCreationDate		10/04/2008
+//! @SYMTestCaseDesc		Echo large amount of data read from a file to/from the Serial Echo Server
+//! @SYMTestActions		1. Create RBusDevComm object, save original configuration and configure to echo server startup settings
+//!					port		= com<port>
+//!					baud rate	= 9600
+//!					data bits	= 8
+//!					stop bits	= 1
+//!					parity		= none
+//!					flow control	= none
+//!				2. Change configuration
+//!					baud rate	= <baud>
+//!					data bits	= 8
+//!					stop bits	= 2
+//!					parity		= odd
+//!					flow control	= xonxoff
+//!				3. Send data to com port specifying the length of the data
+//!				4. Read data from com port specifying the length of the data
+//!				5. Restore configuration
+//!				6. Destroy the object
+//! @SYMTestStatus		Implemented
+//! @SYMTestPriority		High
+//! @SYMTestExpectedResults	Data read should be as expected
+//! @SYMTestType		CIT
+	START_TEST_BLOCK	60		t_serial			\base\serial\base-bsp-serial-driver-stress-PORT<port>-<baud>.ini
+		CREATE_OBJECT	RBusDevComm	busDevComm
+		CREATE_OBJECT	TCommConfigV01	configSave
+		CREATE_OBJECT	TCommConfigV01	config
+		COMMAND		busDevComm	new
+		COMMAND		configSave	new
+		COMMAND		config		new
+		COMMAND		busDevComm	Open				BASE-BSP-SERIAL-DRIVER-PORT<port>-Open
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Config				BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-ECHO-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-ECHO-iDataBits
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-ECHO-iStopBits
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-ECHO-iParity
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-ECHO-iHandshake
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-<baud>-8-2-odd-xonxoff-Write_config
+		OUTSTANDING
+		COMMAND		config		iRate				BASE-BSP-SERIAL-DRIVER-iRate
+		COMMAND		config		iDataBits			BASE-BSP-SERIAL-DRIVER-EData8
+		COMMAND		config		iStopBits			BASE-BSP-SERIAL-DRIVER-EStop2
+		COMMAND		config		iParity				BASE-BSP-SERIAL-DRIVER-EParityOdd
+		COMMAND		config		iHandshake			BASE-BSP-SERIAL-DRIVER-HandshakeXonXoff
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-Config
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-ECHO-Read_config
+		OUTSTANDING
+
+		COMMAND		busDevComm	Read				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Read
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-STRESS-8-2002-Write
+		OUTSTANDING
+
+		COMMAND		busDevComm	Write				BASE-BSP-SERIAL-DRIVER-ECHO-Write-Reset
+		OUTSTANDING
+		COMMAND		busDevComm	SetConfig			BASE-BSP-SERIAL-DRIVER-ECHO-ConfigSave
+		COMMAND		busDevComm	Close
+		COMMAND		config		~
+		COMMAND		configSave	~
+		COMMAND		busDevComm	~
+	END_TEST_BLOCK
+END_TESTCASE			BASE-BSP-SERIAL-DRIVER-STRESS_PORT<port>_<baud>_8_2_odd_xonxoff-2002

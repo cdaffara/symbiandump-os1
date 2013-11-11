@@ -1,0 +1,90 @@
+# fzip.cif
+# 
+# Copyright (c) 2010 Accenture. All rights reserved.
+# This component and the accompanying materials are made available
+# under the terms of the "Eclipse Public License v1.0"
+# which accompanies this distribution, and is available
+# at the URL "http://www.eclipse.org/legal/epl-v10.html".
+# 
+# Initial Contributors:
+# Accenture - Initial contribution
+#
+
+==name fzip
+
+==short-description
+
+Compress and decompress files.
+
+==long-description
+
+Generates compressed archives of files or extracts files from a compressed archive. Both 'zip' and 'gzip' file formats are support ('zip' is used by default).
+
+==argument filename zipfile optional
+
+The zip archive to create or extract. If the zipfile argument is not specified when creating a zip, the first C<file> argument's name is used with a .zip or .gz extension appended.
+
+==option bool v verbose
+
+Enables additional reporting of information regarding the zip/unzip process.
+
+==option bool u unzip
+
+Extract files from the specified zipfile.
+
+==option filename d directory
+
+The directory to extract files into. Must be used in conjunction with C<--unzip>. If not specified, the current working directory is used.
+
+==option bool r recurse
+
+Include sub-directories and any files contained therein when archiving.
+
+==option filename f file multiple
+
+A file or directory to add to the zipfile. Only applicable when creating a new archive. If a directory is specified then it and any files contained immediately within that directory are archived. Use --recurse to archive all sub-directories and files within the directory. 
+
+==option enum t compression-type
+
+==enum-value zip
+
+PK Zip format (the default if not specified).
+
+==enum-value gzip
+
+GNU Zip format. Note, this format can only handle a single file.
+
+==option bool o overwrite
+
+By default fzip will exit with an error if a file it is creating already exists on disk. Use this flag to silently overwrite instead.
+
+==copyright
+
+Copyright (c) 2008-2010 Accenture. All rights reserved.
+
+==smoke-test
+
+export TESTDATA "This is some test data for fzip"
+echo -n "$TESTDATA" > test.txt
+rm test.txt.zip $Silent &| echo -n ""
+
+# Test zip
+fzip --file test.txt
+exists test.txt.zip || $Error
+rm test.txt
+
+# Test unzip
+fzip --unzip test.txt.zip
+exists test.txt || $Error
+cat -b test.txt | export -s RESULT
+var RESULT == "$TESTDATA" || $Error
+
+# Test that we don't overwrite files unless --overwrite is specified
+fzip --file test.txt $Silent &| var ? == "-11" || $Error
+fzip --file test.txt --overwrite
+
+fzip --unzip test.txt.zip $Silent &| var ? == "-11" || $Error
+fzip --unzip test.txt.zip --overwrite
+
+rm test.txt
+rm test.txt.zip

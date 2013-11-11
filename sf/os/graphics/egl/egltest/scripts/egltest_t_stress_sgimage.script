@@ -1,0 +1,413 @@
+// Copyright (c) 2010 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+////////////////////////////////////////////////////////////////////
+// egltest_t_stress_sgimage.script
+//
+// EGL stress tests accessing rsgimage objects shared across
+// processes.
+//
+////////////////////////////////////////////////////////////////////
+
+//! @SYMTestSuiteName			egltest_t_stress_sgimage
+PRINT Run Stress Tests
+LOAD_SUITE egltestserver
+
+//! @SYMTestCaseID GRAPHICS-EGL-0427
+//! @SYMPREQ 2637
+//! @SYMCreationDate 03/11/2009
+//! @SYMTestCaseDependencies egltest_t_stress_sgimage.script
+//! @SYMTestType IT
+//! @SYMTestCaseDesc
+//! Functional test – Open the same RSgImage from multiple processes
+//! 
+//! @SYMTestPurpose
+//! To determine that multiple processes can open the same RSgImage simultaneously and accurately read its contents.
+//! 
+//! @SYMTestActions
+//! Environmental settings:
+//! •   Image Size: w32 h32
+//! •   List of simulated load: 0%, 30% 50% and 70%
+//! •   List of pixel formats
+//! ESgPixelFormatARGB_8888_PRE
+//! •   Client process priorities - all the same
+//! 
+//! The creation of RSgImages and launching of processes is along the lines of the method outlined in GRAPHICS-EGL-RSGIMAGE_LITE-0406
+//! The Number of client processes is configurable, suggested values are in parentheses.
+//! 
+//! For each simulated CPU load
+//!     From the main process:
+//!     Start SimLoadApp
+//!     Open the RSgDriver
+//!     Create an RSgImage
+//! Create a pixmap surface from the RSgImage and populate with known data content (e.g. by using vgClear to paint the surface blue)
+//! 
+//!     Spawn N (100) client processes and pass the RSgImage drawable ID to each one.
+//!     Signal all client processes to start by use of a semaphore
+//! 
+//!     From each client process:
+//!     Open RSgDriver
+//!     Open RSgImage using the drawable ID passed from the main process
+//!     Create EGLImage and then a VGImage
+//!     Close the RSgImage and the EGLImage
+//!     Create a pixmap surface
+//! 
+//!     Repeat 100 times
+//!         Copy the VGImage to the pixmap surface
+//!         Access the pixel data of the pixmap surface (e.g. by using vgReadPixels) and verify that it matches that populated by the main process
+//! 
+//!     Destroy the pixmap surface
+//!     Close VGImage and RSgDriver
+//!     Exit
+//! 
+//!     Main Process:
+//!     Repeat 100 times
+//!         Access the pixel data of the pixmap surface (e.g. by using vgReadPixels) and verify that it matches that populated initially
+//! 
+//!     Wait until all client processes exit and test the exit code
+//!     Destroy the pixmap surface
+//!     Close the RSgImage
+//!    Kill SimLoadApp
+//!     Exit
+//! 
+//! @SYMTestStatus Implemented
+//! @SYMTestPriority 1
+//! @SYMTestExpectedResults
+//! All processes should run to completion and terminate with KErrNone
+
+//!The suffix on the test case id denotes the level of the simulated
+//!load on the processor 000 -> 0% 030 -> 30% 050 -> 50% 070 -> 70%
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-000
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadOnly-000
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-000
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-030
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadOnly-030
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-030
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-050
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadOnly-050
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-050
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-070
+RUN_TEST_STEP 400 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadOnly-070
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0427-070
+
+
+//! @SYMTestCaseID GRAPHICS-EGL-0425
+//! @SYMPREQ 2637
+//! @SYMCreationDate 03/08/2009
+//! @SYMTestCaseDependencies egltest_t_stress_sgimage.script
+//! @SYMTestType IT
+//! @SYMTestCaseDesc
+//! Stress test – Create and open 100 RSgImages in a specific format under various CPU load
+//! 
+//! @SYMTestPurpose
+//! To determine that the system can cope with a large number of RSgImages being accessed at the same time
+//! 
+//! @SYMTestActions
+//! Environmental settings:
+//! •   Image Size: w32 h32
+//! •   List of simulated load: 0%, 30% 50% and 70%
+//! •   List of pixel format: ESgPixelFormatARGB_8888_PRE
+//! •   Client process priorities - all the same
+//! 
+//! The creation of RSgImages and launching of processes is along the lines of the method outlined in GRAPHICS-EGL-RSGIMAGE_LITE-0406
+//! The Number of client processes is configurable, suggested values are in parentheses.
+//! 
+//! Main process:
+//! For each simulated CPU load
+//!     In the main process
+//!     Start SimLoadApp
+//! 
+//!     Open the RSgDriver
+//!     Create N (100) RSgImages with no content
+//!     For each RSgImage
+//!         Create EGLImage and then VGImage
+//!         Close EGLImage and RSgImage
+//!     End loop
+//!     Spawn N (100) client processes and pass a unique RSgImage drawable ID to each one.
+//! 
+//!     From each client process:
+//!     Open RSgDriver
+//!     Open RSgImage using the drawable ID passed from the main process
+//!     Create EGLImage and then a VGImage
+//!     Close the RSgImage and the EGLImage
+//!     Create pixmap surface
+//! 
+//!     Main Process:
+//!     Repeat 1000 times
+//!         Update each VGImage data using vgImageSubData
+//!     End loop
+//! 
+//!     From each client process:
+//!     Repeat 100 times
+//!         Draw VGImage using vgDrawImage into the pixmap surface
+//!     End loop
+//!     Destroy pixmap surface
+//!     Close VGImage and RSgDriver
+//!     Exit
+//! 
+//!     Main Process:
+//!     Wait until all client processes exit
+//!     Close all VGImages and the RSgDriver
+//!     Kill SimLoadApp
+//!     Exit
+//! 
+//! @SYMTestStatus Implemented
+//! @SYMTestPriority 1
+//! @SYMTestExpectedResults
+//! All processes should run to completion and terminate correctly with KErrNone
+
+//!The suffix on the test case id denotes the level of the simulated
+//!load on the processor 000 -> 0% 030 -> 30% 050 -> 50% 070 -> 70%
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-000
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressVGImage-000
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-000
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-030
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressVGImage-030
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-030
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-050
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressVGImage-050
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-050
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-070
+RUN_TEST_STEP 400 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressVGImage-070
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0425-070
+
+//! @SYMTestCaseID GRAPHICS-EGL-0426
+//! @SYMPREQ 2637
+//! @SYMCreationDate 03/08/2009
+//! @SYMTestCaseDependencies egltest_t_stress_sgimage.script
+//! @SYMTestType IT
+//! @SYMTestCaseDesc
+//! Stress test – Create and open 100 RSgImages in different pixel format under various CPU loads
+//! 
+//! @SYMTestPurpose
+//! To determine that the system can cope with a large number of RSgImages being accessed at the same time
+//! 
+//! @SYMTestActions
+//! Environmental settings:
+//! •   Image Size: w64 h64
+//! •   List of simulated load: 0%, 30% 50% and 70%
+//! •   List of pixel format: ARGB_8888_PRE, ARGB_8888, XRGB_8888 and RGB_565
+//! •   Client process priorities - all the same
+//! 
+//! The creation of RSgImages and launching of processes is along the lines of the method outlined in GRAPHICS-EGL-RSGIMAGE_LITE-0406
+//! The Number of client processes is configurable, suggested values are in parentheses.
+//! 
+//! Main process:
+//! For each simulated CPU load and each pixel format
+//!     In the main process
+//!     Start SimLoadApp
+//! 
+//!     Open the RSgDriver
+//!     Create N (100) RSgImages with no content
+//!     For each RSgImage
+//!         Create EGL pixmap surface
+//!         Close RSgImage
+//!     End loop
+//!     Spawn N (100) client processes and pass a unique RSgImage drawable ID to each one.
+//! 
+//!     From each client process:
+//!     Open RSgDriver
+//!     Open RSgImage using the drawable ID passed from process A
+//!     Create EGLImage and then a VGImage
+//!     Close the RSgImage and the EGLImage
+//!     Create pixmap surface
+//! 
+//!     Main Process:
+//!     Repeat 1000 times
+//!         Update each EGL pixmap surface using vgClear with different colour
+//!         each time
+//!     End loop
+//! 
+//!     From each client process:
+//!     Repeat 1000 times
+//!        Draw VGImage using vgDrawImage into pixmap surface
+//!    End loop
+//!    Destroy pixmap surface
+//!    Close VGImage and RSgDriver
+//!    Exit
+//!
+//!    Main process:
+//!    Wait until all client processes exit
+//!    Close all EGL pixmap surfaces and the RSgDriver
+//!    Kill SimLoadApp
+//!    Exit
+//!
+//! @SYMTestStatus Implemented
+//! @SYMTestPriority 1
+//! @SYMTestExpectedResults
+//! All processes should run to completion and terminate with KErrNone
+
+//!The suffix on the test case id denotes the level of the simulated
+//!load on the processor 000 -> 0% 030 -> 30% 050 -> 50% 070 -> 70%
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-000
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressPixmapSurface-000
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-000
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-030
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressPixmapSurface-030
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-030
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-050
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressPixmapSurface-050
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-050
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-070
+RUN_TEST_STEP 400 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressPixmapSurface-070
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0426-070
+
+//! @SYMTestCaseID GRAPHICS-EGL-0428
+//! @SYMPREQ 2637
+//! @SYMCreationDate 03/11/2009
+//! @SYMTestCaseDependencies egltest_t_stress_sgimage.script
+//! @SYMTestType IT
+//! @SYMTestCaseDesc
+//! Functional test – Open the same RSgImage from multiple processes
+//! Note: As data integrity cannot be guaranteed on all implementations, the pixel value checking aspects of this test can be regarded as optional.
+//! 
+//! @SYMTestPurpose
+//! To determine that multiple processes can open the same RSgImage simultaneously and modify its content.
+//! 
+//! @SYMTestActions
+//! Environmental settings:
+//! •   Image Size: w1024 h1024
+//! •   List of simulated load: 0%, 30% 50% and 70%
+//! •   List of pixel formats
+//! ESgPixelFormatARGB_565
+//! •   Client process priorities - all the same
+//! 
+//! The creation of RSgImages and launching of processes is along the lines of the method outlined in GRAPHICS-EGL-RSGIMAGE_LITE-0406
+//! The Number of client processes is configurable, suggested values are in parentheses.
+//! 
+//! For each simulated CPU load
+//!     From the main process:
+//!     Start SimLoadApp
+//!     Open the RSgDriver
+//!     Create an RSgImage
+//!     Create a pixmap surface from the RSgImage and populate with known data content (e.g. by using vgClear to paint the surface blue)
+//! 
+//!     Spawn N (100) client processes and pass the RSgImage drawable ID to each one.
+//!     Signal all client processes to start by use of a semaphore
+//! 
+//!     From each client process:
+//!     Open RSgDriver
+//!     Open RSgImage using the drawable ID passed from the main process
+//!     Create EGLImage and then a VGImage
+//!     Close the RSgImage and the EGLImage
+//! 
+//!     Loop until exit condition met
+//!     Start loop:
+//!         Read the data from the VGImage into a local buffer using vgGetSubImageData
+//!         Read the data from the beginning of the buffer one pixel at time
+//!         Test that the pixel colour is either blue or red.
+//!         Locate the first blue pixel in the buffer and paint it red
+//!         Copy the buffer back to the VGImage using vgSubImageData
+//!         Exit conditiom - no blue pixels can be found:
+//!     End loop:
+//! 
+//!     Close VGImage and RSgDriver
+//!     Exit
+//! 
+//!     Main Process:
+//!     Loop until exit condition met
+//!    Start loop:
+//!         Read the data from the pixmap surface into a local buffer using vgReadPixels
+//!         Read the data from the beginning of the buffer one pixel at time
+//!         Test that the pixel colour is either blue or red.
+//!         Locate the first blue pixel in the surface and paint it red
+//!         Copy the buffer back to the surface using vgWritePixels
+//!        Exit condition - no blue pixels can be found:
+//!     End loop:
+//! 
+//!     Wait until all client processes exit and test the exit code
+//!     Destroy the pixmap surface
+//!     Close the RSgImage and RSgDriver
+//!     Kill SimLoadApp
+//!     Exit
+//! 
+//! @SYMTestStatus Implemented
+//! @SYMTestPriority 1
+//! @SYMTestExpectedResults
+//! All processes should run to completion and terminate with KErrNone
+
+//!The suffix on the test case id denotes the level of the simulated
+//!load on the processor 000 -> 0% 030 -> 30% 050 -> 50% 070 -> 70%
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-000
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteSingleImage-000
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-000
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-030
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteSingleImage-030
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-030
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-050
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteSingleImage-050
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-050
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-070
+RUN_TEST_STEP 400 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteSingleImage-070
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0428-070
+
+//! @SYMTestCaseID GRAPHICS-EGL-0437
+//! @SYMPREQ 2637
+//! @SYMCreationDate 03/11/2009
+//! @SYMTestCaseDependencies egltest_t_stress_sgimage.script
+//! @SYMTestType IT
+//! @SYMTestCaseDesc
+//! Stress test – Access multiple RSgImages from multiple processes
+//! Note: As data integrity cannot be guaranteed on all implementations, the pixel value checking aspects of this test can be regarded as optional.
+//! 
+//! @SYMTestPurpose
+//! To determine that multiple processes can open RSgImages simultaneously and modify their contents.
+//! 
+//! @SYMTestActions
+//! Environmental settings:
+//! •   Image Size: w1024 h1024
+//! •   List of simulated load: 0%, 30% 50% and 70%
+//! 
+//! •   List of pixel formats
+//! ESgPixelFormatARGB_8888
+//! •   Client process priorities - all the same
+//! 
+//! This test case differs from GRAPHICS-EGL-0428 in that
+//! 1.  The environmental settings differ
+//! 2.  In GRAPHICS-EGL-0428, the main and client processes all read and write to a single RSgImage, but in this test case, the main process reads and writes to 10 RSgImages and the (100) client processes each access a single unique RSgImage each
+//! 
+//! @SYMTestStatus Implemented
+//! @SYMTestPriority 1
+//! @SYMTestExpectedResults
+//! All processes should run to completion and terminate with KErrNone
+
+//!The suffix on the test case id denotes the level of the simulated
+//!load on the processor 000 -> 0% 030 -> 30% 050 -> 50% 070 -> 70%
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-000
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteMultiImage-000
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-000
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-030
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteMultiImage-030
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-030
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-050
+RUN_TEST_STEP 200 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteMultiImage-050
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-050
+
+START_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-070
+RUN_TEST_STEP 400 egltestserver	Stress		z:\egltest\egltest_stress_sgimage.ini StressReadWriteMultiImage-070
+END_TESTCASE 	GRAPHICS-EGL-RSGIMAGE_LITE-0437-070

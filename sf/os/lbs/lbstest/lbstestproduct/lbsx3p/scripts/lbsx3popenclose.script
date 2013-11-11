@@ -1,0 +1,257 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsX3PTestServer -SharedData
+
+PRINT Run LbsX3PTestServer
+PRINT
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+        CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt 
+REMOVE_PREFIX
+
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_ResetDefaultAdmin 
+RUN_TEST_STEP 030 LbsX3PTestServer LbsStep_StartLbs
+
+START_TESTCASE LBS-X3P-OpenClose-0001
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0001
+//!@SYMTestCaseDesc			Connect multiple clients to  Transmit Position server
+//!					
+//!@SYMTestActions			1. Connect to multiple servers
+//!							3. Disconnect from all servers
+//!					
+//!@SYMTestExpectedResults	Connect and Closes all complete successfully. 
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-ConnectClose-0001
+
+END_TESTCASE LBS-X3P-OpenClose-0001
+
+
+START_TESTCASE LBS-X3P-OpenClose-0002
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0002
+//!@SYMTestCaseDesc			Connect multiple clients to  Transmit Position server
+//!					
+//!@SYMTestActions			1. Connect to transmit Position Server
+//!							3. Close the server
+//!					
+//!@SYMTestExpectedResults	Connect and Close should complete successfully. 
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-ConnectClose-0002
+
+END_TESTCASE LBS-X3P-OpenClose-0002
+
+
+START_TESTCASE LBS-X3P-OpenClose-0003
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0003
+//!@SYMTestCaseDesc			Connect multiple clients to  Transmit Position server
+//!					
+//!@SYMTestActions			1. Connect to transmit Position Server
+//!							2. Connect to the same server again
+//!					
+//!@SYMTestExpectedResults	Second Connect() should panic. 
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP !PanicCode=5 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-ConnectClose-0003
+
+END_TESTCASE LBS-X3P-OpenClose-0003
+
+
+START_TESTCASE LBS-X3P-OpenClose-0004
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0004
+//!@SYMTestCaseDesc			Create multiple transmit server sub-sessions
+//!					
+//!@SYMTestActions			1. Connect to server 
+//!							2. create multiple sessions
+//!							3. Close all subsession and then server
+//!					
+//!@SYMTestExpectedResults	All open close should work fine
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-OpenClose-0001
+
+END_TESTCASE LBS-X3P-OpenClose-0004
+
+
+START_TESTCASE LBS-X3P-OpenClose-0005
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0005
+//!@SYMTestCaseDesc			Create multiple transmit server sub-sessions
+//!					
+//!@SYMTestActions			1.Connect to server 
+//!							2.Create a single RLbsTransmitPosition objects and open a sub-session on it
+//!							3.Attempt to open the sub-session again.
+//!					
+//!@SYMTestExpectedResults	Second open() panics 
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP !PanicCode=5 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-OpenClose-0002 
+
+END_TESTCASE LBS-X3P-OpenClose-0005
+
+
+START_TESTCASE LBS-X3P-OpenClose-0006
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0006
+//!@SYMTestCaseDesc			Disconnect from Transmit Position server while there is a sub-session open
+//!					
+//!@SYMTestActions			1.RLbsTransmitPositionServer::Connect()
+//!							2.RLbsTransmitPosition::Open()
+//!							3.RLbsTransmitPositionServer::Close()
+//!					
+//!@SYMTestExpectedResults	Close should be fine ().
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 120 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-OpenClose-0003
+
+END_TESTCASE LBS-X3P-OpenClose-0006
+
+
+START_TESTCASE LBS-X3P-OpenClose-0007
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0007
+//!@SYMTestCaseDesc			Multiple clients and multiple sub-sessions per client
+//!					
+//!@SYMTestActions			1.Create multiple RLbsTransmitPositionServer objects and connect to them
+//!					 		   RLbsTransmitPositionServer::Connect()
+//!							2.For each connection, create multiple sub-sessions (RLbsTransmitPosition objects) and open them:
+//!					  		   RLbsTransmitPosition::Open()
+//!							3.Close all sub-sessions and disconnect from all servers:
+//!					  		  RLbsTransmitPositionServer::Close()
+//!					
+//!@SYMTestExpectedResults	No panics/errors
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-OpenClose-0004
+
+END_TESTCASE LBS-X3P-OpenClose-0007
+
+
+START_TESTCASE LBS-X3P-OpenClose-0008
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0008
+//!@SYMTestCaseDesc			Do not connect to server and try to open session
+//!					
+//!@SYMTestActions			1. Create a server object but do not connect to server
+//!					 		2. Try to open a session
+//!					
+//!@SYMTestExpectedResults	Opening session should panic
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP !PanicCode=6 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-OpenClose-0005
+
+END_TESTCASE LBS-X3P-OpenClose-0008
+
+
+START_TESTCASE LBS-X3P-OpenClose-0009
+
+//!@SYMTestCaseID			LBS-X3P-OpenClose-0009
+//!@SYMTestCaseDesc			Closing session without opening it
+//!					
+//!@SYMTestActions			1. Create a RLbsTransmitPosition object but do not open session
+//!					 		2. Try to close session with this object
+//!					
+//!@SYMTestExpectedResults	--TBD
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-OpenClose-0006
+
+END_TESTCASE LBS-X3P-OpenClose-0009
+
+
+START_TESTCASE LBS-X3P-OpenClose-0010
+
+//!@SYMTestCaseID		LBS-X3P-OpenClose-0010
+//!@SYMTestCaseDesc		Get the version of Transmit Position server
+//!					
+//!@SYMTestActions		1. Connect to server
+//!						2. Get the version of server
+//!					
+//!@SYMTestExpectedResults	Should return valid version
+//!					
+//!@SYMPREQ					PREQ163
+//!@SYMTestType				CIT
+//!@SYMTestPriority			2
+//!@SYMTestStatus			Implemented
+	
+RUN_TEST_STEP 010 LbsX3PTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 060 LbsX3PTestServer LbsX3PStep_OpenClose c:\testdata\configs\lbsx3popenclose.ini LBS-X3P-Version-0001
+
+END_TESTCASE LBS-X3P-OpenClose-0010
+
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsX3PTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt

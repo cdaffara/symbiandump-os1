@@ -1,0 +1,182 @@
+// Copyright (c) 2005-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// UmtsGprsScpr Config 2 QoS Removed component integration tests.
+// /////////CONFIGURATION 2 TEST CASES///////////////////
+//
+
+//! @file 
+
+
+PRINT Run all Configuration 2 QoS Removed Test Cases
+
+// Ensure that the default config is present if no cleverer one has been put there already
+RUN_SCRIPT z:\testdata\scripts\exec_esock_default_to_config_1.script
+
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+CED -i z:\testdata\configs\te_UmtsGprsScpr.xml ced.log
+
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\te_umtsgprsscpr_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\te_umtsgprsscpr_config.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\TE_UmtsGprsScprLoopbackCSY.ini c:\loopback.ini
+
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0601
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0601
+//! @SYMTestCaseDesc Opening of RSubConnection in ECreateNew with out QoS and GuQoS.
+//! @SYMFssID
+//! @SYMTestActions Open a RSubConnection in ECreateNew mode
+//! @SYMTestExpectedResults Fails with KErrNotSupported.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig2Case1.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0601
+
+///////THE FOLLOWING TEST CASES RE-USES CASES 1,2,3,4,6,7,8 FROM CONFIG1
+///////CONFIRMS CERTAIN FUNCTIONALTIES ARE INDEPENDENT OF QOS AND GUQOS
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0602
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0602
+//! @SYMTestCaseDesc Sanity check: successfully activate Primary context.
+//! @SYMFssID
+//! @SYMTestActions Open a RSubConnection in EAttachToDefault mode. SIMTSY verifies the Default QoS parameters it receives
+//! @SYMTestExpectedResults  Primary PDP context is activated, RSubConnection opened returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case1.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0602
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0603
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0603
+//! @SYMTestCaseDesc Setting generic QoS on the Primary Context
+//! @SYMFssID
+//! @SYMTestActions Open a RSubConnection in EAttachToDefault mode. SIMTSY verifies the QoS set from it receives.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SetParameters returns KErrNone and CSubConGenericEventParamsGranted is received.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case2.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0603
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0604
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0604
+//! @SYMTestCaseDesc Setting R99/R4 QoS on the Primary Context
+//! @SYMFssID
+//! @SYMTestActions Open a RSubConnection in EAttachToDefault mode. SIMTSY verifies the QoS it receives.
+//! @SYMTestExpectedResults  Primary PDP context is activated, SetParameters returns KErrNone and CSubConGenericEventParamsGranted is received.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case3.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0604
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0605
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0605
+//! @SYMTestCaseDesc Network changes the R99/R4 QoS on the Primary Context.
+//! @SYMFssID
+//! @SYMTestActions Trigger an NetworkQoSChange event in Simtsy, new negotiated QoS is sent back for the Primary context and updated.
+//! @SYMTestExpectedResults New QoS values of Primary context matches that sent from Simtsy.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case4.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0605
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0606
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0606
+//! @SYMTestCaseDesc R99/R4 QoS Validation: Set maximum allowed MaxBitrate
+//! @SYMFssID
+//! @SYMTestActions Prepare QoS set with MaxBitRate set to 2048 and set QoS on the Primary context.
+//! @SYMTestExpectedResults Notification CSubConGenericEventParamsGranted is received. Simtsy returns KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case6.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0606
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0607
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0607
+//! @SYMTestCaseDesc R99/R4 QoS Validation: Set out of range MaxBitRate
+//! @SYMFssID
+//! @SYMTestActions Prepare QoS set with MaxBitRate set to 16384 and set QoS on the Primary context.
+//! @SYMTestExpectedResults Simtsy rejects the QoS, Notification CSubConGenericEventParamsRejected is received. Simtsy returns KErrCorrupt.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case7.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0607
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0608
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0608
+//! @SYMTestCaseDesc Concurreny check: 2 clients both trying to set qos on the Primary context.
+//! @SYMFssID
+//! @SYMTestActions Issue 2 setparameters calls on 2 subconnections in EAttachToDefault mode (on the same connection) concurrently, a delay is introduced in Simtsy for the processing of the 1st setparameters.
+//! @SYMTestExpectedResults While 1 call is still waiting for the Notification, 2nd setparameters call is rejected with KErrInUse.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case8.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0608
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0609
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0609
+//! @SYMTestCaseDesc Default QoS Priority check: Create default context while default qos (qospolicies.ini) is missing and commdb qos is present.
+//! @SYMFssID
+//! @SYMTestActions Open a RConnection.
+//! @SYMTestExpectedResults  Default QoS from commdb is used. Verfied by Simtsy.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig2Case9.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0609
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0610
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0610
+//! @SYMTestCaseDesc Default QoS Priority check: Create default context while default qos (qospolicies.ini) is missing AND commdb qos is also missing.
+//! @SYMFssID
+//! @SYMTestActions Open a RConnection.
+//! @SYMTestExpectedResults Fails with KErrCorrupt.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+CED -i z:\testdata\configs\te_UmtsGprsScpr_NoDefaults.xml ced.log
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case10.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0610
+
+START_TESTCASE			NET-UMTS-UmtsGprsSCPR-0611
+//! @SYMTestCaseID		NET-UMTS-UmtsGprsSCPR-0611
+//! @SYMTestCaseDesc Default QoS Priority check: Create default context while default qos (qospolicies.ini) is missing and commdb qos is invalid.
+//! @SYMFssID
+//! @SYMTestActions Open a RConnection.
+//! @SYMTestExpectedResults Fails with KErrCorrupt.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+CED -i z:\testdata\configs\te_UmtsGprsScpr_InvalidDefault.xml ced.log
+RUN_SCRIPT Z:\TestData\Scripts\te_UmtsGprsScprConfig1Case10.script
+END_TESTCASE			NET-UMTS-UmtsGprsSCPR-0611
+
+
+PRINT Complete_TEST_CASE_ID_PLACEHOLDER_Tests
+

@@ -1,0 +1,903 @@
+// Copyright (c) 2006-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsConflictTestServer -SharedData
+
+PRINT Run LbsConflictTestServer
+PRINT
+
+// Before we start LBS, select the test A-GPS integration module to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	// Re-select the profile ini
+ 	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+// Reset admin (reset will give us the EGpsPreferTerminalBased).
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_ResetDefaultAdmin
+// Select MTLR privacy controller.
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_SetPrivacyHandler c:\testdata\configs\lbsconflict.ini LBS-Conflict
+
+RUN_TEST_STEP 030 LbsConflictTestServer LbsStep_StartLbs
+
+
+START_TESTCASE LBS-Conflict-0001
+
+//!@SYMTestCaseID	LBS-Conflict-0001
+//!@SYMTestCaseDesc	Tests the behaviour when a self locate requests is pre-empted
+//!					by a X3P request (which has higher priority). The self locate request should 
+//!					be terminated with a KErrPositionHighPriorityReceived and the X3P
+//!					request should succeed with KErrNone and a return a valid postion.
+//!
+//!@SYMTestActions	1.	Client (the test) does a self locate request using NotifyPositionUpdate
+//!					2.	When the RegisterLcsMoLr has started(i.e. in netsim's NotifyRegisterLcsMoLr 
+//!						callback) the client (test) requests using 
+//!						TransmitPosition with priority=2 (PUSH), address= "01233567456".
+//!					3.	Check that a ReleaseLcsMoLr is sent to netsim	with error 
+//!						KErrPositionHighPriorityReceived.
+//!					4.	Check RegisterLcsMoLr is sent to netsim. Also check that it contains
+//!						the correct destination, "01233567456".
+//!					5.	Check MeasurementControlLocation is received from netsim
+//!					6.	Check MeasurementReportLocation sent to netsim with a valid position
+//!					7.	Check FacilityLcsMoLrResult is received from netsim with a valid position
+//!					8.	Check ReleaseLcsMoLr sent to netsim
+//!						At end of the test check that the following (9 and 10) have occurred (in any order!).
+//!					9.	Check self locate client request has completed with KErrPositionHighPriorityReceived 
+//!						and lat and long is set to NaN in returned in the position
+//!					10.	Check X3P client request has completed with KErrNone and that the 
+//!						position is correct. 
+//! 
+
+//!		Client:NotifyPositionUpdate						->LBS
+//!																	RegisterLcsMoLr("01233567456")		->NET
+//!		Client:TransmitPosition(PUSH)					->LBS
+//!																	ReleaseLcsMoLr(KEPHPR)				->NET
+//!																	RegisterLcsMoLr						->NET
+//!																	ProcessMeasurementControlLocation	<-NET
+//!																	MeasurementReportLocation			->NET
+//!																	FacilityLcsMoLrResult				<-NET
+//!																	ReleaseLcsMoLr						->NET
+//!		Client:RunL(NotifyPositionUpdate(pos,KEPHPR))	<-LBS
+//!		Client:RunL(TransmitPosition(pos,KErrNone))		<-LBS
+//!
+//!	KEPHPR=KErrPositionHighPriorityReceived
+
+//! Above, Client:RunL(NotifyPositionUpdate(pos,KerrNone indicates the completion of the asynchronous 
+//! NotifyPositionUpdate request ans "pos" is the returned postion.
+
+//!
+//!@SYMTestExpectedResults	Verify the positions and return codes and netsim callbacks occur in correct order.
+//!@SYMPREQ					PREQ163
+//!@SYMREQ					REQ163.5975
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_selflocatex3ppush
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0001
+
+
+
+START_TESTCASE LBS-Conflict-0002
+
+//!@SYMTestCaseID	LBS-Conflict-0002
+//!@SYMTestCaseDesc	Tests the behaviour when X3P with priority 2 (PUSH) request is interrupted
+//!					by a self locate request. The X3P request should not be pre-empted and should
+//!					complete with KErrNone and a valid position shouild be sent. 
+//!					A self locate request should not be made and the client's request should 
+//!					be rejected with a KErrServerBusy.
+//!
+//!@SYMTestActions	1.	Client (the test) does a X3P request using TransmitPosition (PUSH)
+//!					2.	After the MO-LR has been sent out by netsim (i.e. in NotifyRegisterLcsMoLr 
+//!						callback) the client (test) requests a self location using NotifyPositionUpdate.
+//!					3.	Check MeasurementControlLocation received from network
+//!					4.	Check MeasurementReportLocation sent to network
+//!					5.	Check FacilityLcsMoLrResult is received from netsim with a valid position
+//!					6.	Check ReleaseLcsMoLr sent to network
+//!						At end of the test check that the following (7 and 8) has ocurred:
+//!					7.	Check self locate client request kas completed with KErrServerBusy
+//!						and lat long is NaN is returned in the postion
+//!					8.	Check X3P client request has completed with KErrNone and that returned 
+//!						position is correct. 
+//! 
+//!		Client:TransmitPosition(PUSH)							->LBS
+//!																			RegisterLcsMoLr("89089089")	->NET
+//!		Client:NotifyPositionUpdate								->LBS
+//!																			MeasurementControlLocation	<-NET
+//!																			MeasurementReportLocation	->NET
+//!																			FacilityLcsMoLrResult		<-NET
+//!																			ReleaseLcsMoLr				->NET
+//!		Client:RunL(NotifyPositionUpdate(pos,KErrServerBusy))	->LBS
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS
+//!
+//!		Note:"KEPHPR"is short hand for "KErrPositionHighPriorityReceived" 
+//!@SYMTestExpectedResults	Verify the positions and return codes and netsim callbacks occur in correct order.
+//!@SYMPREQ					PREQ163
+//!@SYMREQ					REQ163.5975
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStepx3ppushselflocate
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+END_TESTCASE LBS-Conflict-0002
+
+
+START_TESTCASE LBS-Conflict-0003
+
+//!@SYMTestCaseID	LBS-Conflict-0003
+//!@SYMTestCaseDesc	Tests the behaviour when X3P with priority 0 (MENU) request is interrupted
+//!					by a X3P with priority 2 (PUSH). The X3P MENU request should be pre-empted and should
+//!					complete with KErrPositionHighPriority.and a valid position should not be sent. 
+//!					The X3P PUSH request shoulsd complete with KerrNone and a valid position should be sent.
+//!
+//!@SYMTestActions	1.	Client (the test) does a X3P request using TransmitPosition (MENU,"12121212")
+//!					2.	After the MO-LR has been sent out by netsim (i.e. in NotifyRegisterLcsMoLr 
+//!						callback) the client (test) requests a X3P (PUSH,"45454545") using TransmitPosition 
+//!						(using a new RLbsTransmitPosition subsession).
+//!					3	Check that a ReleaseLcsMoLr is sent to netsimwith error 
+//!						KErrPositionHighPriorityReceived.
+//!					4.	Check RegisterLcsMoLr sent to network (using netsim callback check 
+//!						destination ="12121212") 
+//!					3.	Check MeasurementControlLocation received from network
+//!					4.	Check MeasurementReportLocation sent to network
+//!					5.	Check FacilityLcsMoLrResult is received from netsim with a valid position
+//!					6.	Check ReleaseLcsMoLr sent to network
+//!						At end of the test check that the following (7 and 8) have ocurred:
+//!					7.	Check X3P MENU has completed with KErrPositionHighPriorityReceived 
+//!						and lat long is NaN is returned in the position.
+//!					8.	Check X3P PUSH client request has completes with KErrNone after X3P MENU request 
+//!						completes and that the returned position is correct. 
+//!
+//!		Client:TransmitPosition(MENU)						->LBS
+//!																		RegisterLcsMoLr				->NET
+//!		Client:TransmitPosition(PUSH)						->LBS
+//!																		ReleaseLcsMoLR(KEPHPR)		->NET
+//!																		RegisterLcsMoLr				->NET
+//!																		MeasurementControlLocation	<-NET
+//!																		MeasurementReportLocation	->NET
+//!																		FacilityLcsMoLrResult		<-NET
+//!																		ReleaseLcsMoLr				->NET
+//!		Client:RunL(TransmitPosition(MENU,pos,KEPHPR))		->LBS
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))	->LBS
+//!		KEPHPR=KErrPositionHighPriorityReceived
+//!
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ					PREQ163
+//!@SYMREQ					REQ163.5975
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_X3PMenuPush
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0003
+
+
+
+START_TESTCASE LBS-Conflict-0004
+
+//!@SYMTestCaseID	LBS-Conflict-0004
+//!@SYMTestCaseDesc	Tests the behaviour when an ongoing Emergency MT-LR is interrupted
+//!					by a X3P with priority 2 (PUSH). The Emergency MT-LR should NOT be aborted 
+//!					and should complete OK.	The X3P PUSH request should be rejected with KErrServerBusy.
+//!
+//!@SYMTestActions			
+//!					1.	Use RLbsNetSimTest::SetEmergenyStatus() to set state to emergency
+//!					2.	Using netsim, call StartNetworkLocationRequest to start a privacy request.
+//!					3.	When the LbsPrivacyCntroller callback MLbsPrivacyObserver::ProcessNetworkLocationRequest
+//!						is called request a X3P (PUSH,"45454545") using TransmitPosition
+//!						then respond to the privacy request using 
+//!						CLbsPrivacyController::RespondNetworkLocationRequest(ERequestAccepted) 
+//!					4.	Using netsim callback check correct ReleaseLcsLocationNotification is sent
+//!					5.	Check MeasurementReportLocation sent to network - check position OK.
+//!					6.	Check that X3P PUSH client request completes (is rejected)with KErrServerBusy.
+
+//!		Client:SetEmergenyStatus(EMERGENCY)						->LBS
+//!																		StartNetworkLocationRequest			->NET
+//!																		ProcessNetworkLocationRequest		<-NET
+//!		Client:TransmitPosition(PUSH)							->LBS
+//!		Client:RespondNetworkLocationRequest(accept)			->LBS
+//!																		ReleaseLcsLocationNotification		->NET
+//!																		ProcessMeasurementControlLocation	<-NET
+//!																		MeasurementReportLocation			->NET
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrServerBusy))	->LBS
+//!		Client:SetEmergenyStatus(NOT EMERGENCY)					->LBS
+//!
+
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ					PREQ436
+//!@SYMREQ					REQ436.5997
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_MTLRX3PPush
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0004
+
+
+START_TESTCASE LBS-Conflict-0005
+
+//!@SYMTestCaseID	LBS-Conflict-0005
+//!@SYMTestCaseDesc	Tests the behaviour when X3P with priority 2 (PUSH) request is interrupted
+//!			by a X3P with priority 1 (TIMER). The X3P PUSH request should be completed
+//!			with KErrNone a valid position should be expected. 
+//!			The X3P TIMER request should be queued and it should complete with KerrNone 
+//!			after the X3P PUSH request completes, and a valid position is expected.
+//!
+//!@SYMTestActions	1.	Client (the test) does a X3P request using TransmitPosition (PUSH, "01223 123456"). 
+//!			2.	After the MO-LR has been sent out by netsim (i.e. in NotifyRegisterLcsMoLr 
+//!				callback) the client (test) requests a X3P (TIMER) using TransmitPosition 
+//!				(note a new RLbsTransmitPosition subsession is used).
+//!			3.	Check MeasurementControlLocation for X3P(PUSH) received from network
+//!			4.	Check MeasurementReportLocation for X3P(PUSH) sent to network
+//!			5.	Check FacilityLcsMoLrResult for X3P(PUSH) is received from netsim with the expected vposition
+//!			6.	Check ReleaseLcsMoLr for X3P(PUSH) sent to network
+//!			7.	Check RegisterLcsMoLr for X3P(TIMER) sent to network (using netsim callback check destination ="9876543") 
+//!			8.	Check MeasurementControlLocation for X3P(TIMER) received from network
+//!			9.	Check MeasurementReportLocation for X3P(TIMER) sent to network
+//!			10.	Check FacilityLcsMoLrResult for X3P(TIMER) is received from netsim with a valid position
+//!			11.	Check ReleaseLcsMoLr for X3P(TIMER) sent to network			
+//!	
+//!			At end of the test check that the following (12 and 13) have ocurred:
+//!			12.	Check X3P PUSH client request completes with KErrNone and that returned 
+//!				position is correct. Checks that it completes before X3P TIMER request.
+//!			13.	Check X3P TIMER has completed with KErrNone and that returned 
+//!				position is correct. 
+//! 
+//!	Client:TransmitPosition(PUSH)				->LBS
+//!										RegisterLcsMoLr			->NET
+//!	Client:TransmitPosition(TIMER)				->LBS
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!										RegisterLcsMoLr			->NET
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!	Client:RunL(TransmitPosition(PUSH,pos,KErrNone))	->LBS
+//!	Client:RunL(NotifyPositionUpdate(TIMER,pos,KErrNone))	->LBS
+//!
+
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ					PREQ163
+//!@SYMREQ					REQ163.5975
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_X3PPushTimer
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0005
+
+START_TESTCASE LBS-Conflict-0006
+
+//!@SYMTestCaseID	LBS-Conflict-0006
+//!@SYMTestCaseDesc	Tests the behaviour when X3P with priority (TIMER=1) request is interrupted
+//!					by a X3P with priority (PUSH=2). The X3P (TIMER) request should be pre-empted and should
+//!					and queued. The X3P PUSH request should completeD with KErrNone and then the
+//!					queued X3P (TIMER) request should be taken off the queue and be done.
+//!					It also should complete with KErrNone. 
+//!					
+//!@SYMTestActions	1. Client (the test) does a X3P(TIMER) request using TransmitPosition (TIMER,"12121212")
+//!					2. After the MO-LR has been sent out by netsim (i.e. in netsim's 
+//!					NotifyRegisterLcsMoLr callback) the client (test) requests a X3P (PUSH,"45454545") 
+//!					using TransmitPosition - using a new RLbsTransmitPosition subsession.
+//!					3.Check that a ReleaseLcsMoLr is sent to netsimwith error 
+//!					KErrPositionHighPriorityReceived.
+//!					4.Check RegisterLcsMoLr sent to network (using netsim callback check 
+//!					the destination is that of the PUSH, "45454545") 
+//!					5.Check MeasurementControlLocation received from network
+//!					6.Check MeasurementReportLocation sent to network
+//!					7.Check FacilityLcsMoLrResult is received from netsim with a valid position
+//!					8.Check ReleaseLcsMoLr sent to network
+//!					9.Check client X3P (PUSH) request is satisfied and that the position is correct.
+//!					10.Check RegisterLcsMoLr sent and that destination = "12121212.
+//!					11.Check MeasurementControlLocation received from network
+//!					12.Check MeasurementReportLocation sent to network
+//!					13.Check FacilityLcsMoLrResult is received from netsim with a valid position
+//!					14.Check ReleaseLcsMoLr sent to network
+//!					15.Check client X3P (TIMER) request is satisfied and that the position is correct.
+//!
+//!	Client:TransmitPosition(TIMER)					->LBS
+//!															RegisterLcsMoLr("12121212")							->NET
+//!	Client:TransmitPosition(PUSH)					->LBS
+//!															MeasurementControlLocation							<-NET
+//!															ReleaseLcsMoLr(KErrPositionHighPriorityReceived)	->NET
+//!															//or ABOVEarrives here:MeasurementControlLocation	<-NET
+//!															RegisterLcsMoLr										->NET
+//!															MeasurementControlLocation							<-NET
+//!															MeasurementReportLocation							->NET
+//!															FacilityLcsMoLrResult								<-NET
+//!															ReleaseLcsMoLr										->NET
+//!	Client:RunL(TransmitPosition(PUSH,pos,KErrNone))->LBS
+//!															RegisterLcsMoLr										->NET
+//!															MeasurementControlLocation							<-NET
+//!															MeasurementReportLocation							->NET
+//!															FacilityLcsMoLrResult								<-NET
+//!															ReleaseLcsMoLr										->NET
+//!	Client:RunL(TransmitPosition(TIMER,pos,KErrNone))->LBS
+
+
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ					PREQ163
+//!@SYMREQ					REQ163.5975
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_X3PTimerPush
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0006
+
+
+START_TESTCASE LBS-Conflict-0007
+
+//!@SYMTestCaseID			LBS-Conflict-0007
+//!@SYMTestCaseDesc			
+//!					Test 0007 is the same as spy 0001 execept for step 1a. Which
+//!					ensures that the client is tracking by SetUpdateInterval(60).
+//!					This tests the behaviour when a tracking self locate request 
+//!					(the first in the sequence)
+//!					is pre-empted by a X3P request (which has higher priority). 
+//!					The self locate request should 
+//!					be terminated with a KErrPositionHighPriorityReceived and the X3P
+//!					request should succeed with KErrNone and a return a valid postion.
+//!
+//!@SYMTestActions	1. Client (the test) does a self locate request using NotifyPositionUpdate
+//!					2. When the RegisterLcsMoLr has started
+//!					(i.e. in netsim's NotifyRegisterLcsMoLr callback) 
+//!					the client (test) requests using X3PTransmitPosition (say, priority=2 (PUSH).
+//!					3.Check that a ReleaseLcsMoLr is sent to netsim. 
+//!					with error KErrPositionHighPriorityReceived.
+//!					4.Check RegisterLcsMoLr (X3P MoLr has a valid telephone number)
+//!					is sent to netsim
+//!					5.Check MeasurementControlLocation is received from netsim
+//!					6.Check MeasurementReportLocation sent to netsim with a valid position
+//!					7.Check FacilityLcsMoLrResult is received from netsim with a valid position
+//!					8.Check ReleaseLcsMoLr sent to netsim
+//!					At end of the test check that the following (9 and 10) has ocurred:
+//!					9.Check self locate client request kas completed with KErrPositionHighPriorityReceived 
+//!					and lat long is NaN is returned in the postion
+//!					10.Check X3P client request has completed with KErrNone and that returned 
+//!					position is correct. 
+//! 
+
+//!		Client:SetUpdateInterval(interval=60 seconds)	->LBS
+//!		Client:NotifyPositionUpdate->LBS
+//!																RegisterLcsMoLr									->NET
+//!		Client:TransmitPosition(PUSH)					->LBS
+//!
+//!																ReleaseLcsMoLr(KErrPositionHighPriorityReceived)->NET
+//!																RegisterLcsMoLr									->NET
+//!																ProcessMeasurementControlLocation				<-NET
+//!																MeasurementReportLocation						->NET
+//!																FacilityLcsMoLrResult							<-NET
+//!																ReleaseLcsMoLr									->NET
+//!		Client:RunL(NotifyPositionUpdate(pos,KEPHPR))	<-LBS
+//!		Client:RunL(TransmitPosition(pos,KErrNone))		<-LBS
+
+//!
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ					PREQ163
+//!@SYMREQ					REQ163.5975
+//!@SYMCR					CR0946
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_selflocatex3ppush c:\testdata\configs\lbsconflict.ini LBS-Conflict-0007
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0007
+
+
+
+//START_TESTCASE LBS-Conflict-0008
+
+// Obsolete after QAT86/69
+
+
+//!@SYMTestCaseID	LBS-Conflict-0008
+//!@SYMTestCaseDesc			
+//!					Tests that LBS tracking state correctly changes to "not tracking"
+//!					when a sole tracking client cancels tracking by cancelling a tracking
+//!					NotifyPositionUpdate request.
+
+//!					To test the state a X3P(TIMER) request is made. The test checks that the 
+//!					X3P completes with KErrNone..
+//!					Note that whist in the tracking state a X3P(TIMER) would be rejected 
+//!					with KErrServerBusy.
+//!
+//!					Note these three tests can all be implemented in the same .cpp file. 
+//!					They differ only in the	way tracking is stopped. 
+//!					See "// this action causes end of tracking" in the three tests below.
+//!
+//!@SYMTestActions	
+//!					1.	Client sets update interval say, to 30 seconds - thus tracking is enabled.
+//!					2.	Client (the test) does a self locate request using NotifyPositionUpdate		
+//!					4.	Client waits for request to complete (with KerrNone and a valid position).
+//!					5	Client does a second self locate request (using NotifyPositionUpdate)
+//!					6.	Client cancels the request
+//!					7   Client waits for the request to be cancelled
+//!					8.	Client does a X3P (TIMER) request.
+//!					9.	Client waits for X3P request to complete with KErrNone
+//!					
+
+//!		Client:SetUpdateOptions(interval=30 seconds)			->LBS
+//!		Client:NotifyPositionUpdate								->LBS
+//!		Client:RunL(NotifyPositionUpdate(KErrNone))				<-LBS	// when it completes
+//!		Client:NotifyPositionUpdate								->LBS
+//!		Client:RPositioner::Cancel()							<-LBS	// this action causes end of tracking
+//!		Client:RunL(NotifyPositionUpdate(KErrCancel))			<-LBS	// when it completes
+
+//!		Client:TransmitPosition(TIMER)							->LBS
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS
+
+
+//!
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMCR					CR0946
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+//RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+//RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+//RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_canceltracking c:\testdata\configs\lbsconflict.ini LBS-Conflict-0010
+//RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+//END_TESTCASE LBS-Conflict-0008
+
+
+START_TESTCASE LBS-Conflict-0008
+//!@SYMTestCaseID	LBS-Conflict-0008
+//!@SYMTestCaseDesc			
+//!					Tests that LBS tracking state correctly changes to "not tracking".
+//!					when a sole tracking client cancels tracking by calling 
+//!					SetUpdateOptions(interval=0)
+
+//!					To test the state a X3P(TIMER) request is made. The test checks that the 
+//!					X3P completes with KErrNone..
+//!					Note that whist in the tracking state a X3P(TIMER) would be rejected 
+//!					with KErrServerBusy.
+//!
+//!
+//!@SYMTestActions	
+//!					1.	Client sets update interval say, to 30 seconds - thus tracking is enabled.
+//!					2.	Client (the test) does a self locate request using NotifyPositionUpdate		
+//!					3.	Client waits for request to complete (with KerrNone and a valid position).
+//!					4.	Client sets update options. Interval=0. This stops tracking
+//!					8.	Client does a X3P (TIMER) request.
+//!					9.	Client waits for X3P request to complete with KErrNone
+//!					
+
+//!		Client:SetUpdateOptions(interval=30 seconds)			->LBS
+//!		Client:NotifyPositionUpdate								->LBS
+//!		Client:RunL(NotifyPositionUpdate(KErrNone))				<-LBS	// when it completes
+//!		Client:NotifyPositionUpdate								->LBS
+//!		Client:RPositioner::SetUpdateOptions(interval=0)		<-LBS	// this action causes end of tracking
+
+//!		Client:TransmitPosition(TIMER)							->LBS
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS	// checks that tracking is stopped
+
+//!
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMCR					CR0946
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_canceltracking c:\testdata\configs\lbsconflict.ini LBS-Conflict-0011
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0008
+
+START_TESTCASE LBS-Conflict-0009
+//!@SYMTestCaseID	LBS-Conflict-0009
+//!@SYMTestCaseDesc			
+//!					Tests that LBS tracking state correctly changes to "not tracking".
+//!					when a sole tracking client cancels tracking by closing the subsession
+
+//!					To test the state a X3P(TIMER) request is made. The test checks that the 
+//!					X3P completes with KErrNone..
+//!					Note that whist in the tracking state a X3P(TIMER) would be rejected 
+//!					with KErrServerBusy.
+//!
+//!
+//!@SYMTestActions	
+//!					1.	Client sets update interval say, to 30 seconds - thus tracking is enabled.
+//!					2.	Client (the test) does a self locate request using NotifyPositionUpdate		
+//!					3.	Client waits for request to complete (with KerrNone and a valid position).
+//!					4.	Client closes subsession. This stops tracking
+
+//!					5.	Client does a X3P (TIMER) request.
+//!					6.	Client waits for X3P request to complete with KErrNone
+//!					
+
+//!		Client:SetUpdateOptions(interval=30 seconds)			->LBS
+//!		Client:NotifyPositionUpdate								->LBS
+//!		Client:RunL(NotifyPositionUpdate(KErrNone))				<-LBS
+//!		Client:RPositioner::Close								<-LBS	// this action causes end of tracking
+
+//!		Client:TransmitPosition(TIMER)							->LBS
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS	// checks that tracking is stopped
+//!
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMCR					CR0946
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_canceltracking c:\testdata\configs\lbsconflict.ini LBS-Conflict-0012
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0009
+
+
+START_TESTCASE LBS-Conflict-0010
+//!@SYMTestCaseID	LBS-Conflict-0010
+//!@SYMTestCaseDesc			
+//!					Tests that LBS tracking state correctly changes to "not tracking".
+//!					after a conflict.
+//!					The tracking self locate request is terminated by a X3P push conflict.
+//!					A X3P occurs whilst tracking with a self locate request currently active. 
+//!					cf Test 0014 where a NPUD request is NOT outstanding when the X3P happens.
+
+//!					To test the state a X3P(TIMER) request is made. The test checks that the 
+//!					X3P completes with KErrNone and not KErrServerBusy.
+//!					Note that whist in the tracking state a X3P(TIMER) would be rejected 
+//!					with KErrServerBusy.
+
+//!					1.	Client sets update interval say, to 4 seconds - thus tracking is enabled.
+//!					2.	Client (the test) does a self locate request using NotifyPositionUpdate		
+//!					4.	Client waits for request to complete (RunL() with KerrNone 
+//!						and a valid position).
+//!					5	In the MoLr release of the first NPUD the client does a second
+//!						self locate request and then issues a X3P (PUSH) request
+//!					6	Client waits for self X3P (PUSH)request to complete with KErrNone
+//!					7.	In RunL of above request completing client does a X3P (TIMER)
+//!						request.
+//!					8.	Client waits for X3P (TIMER)request to complete with KErrNone
+
+//!		Client:SetUpdateOptions(interval=4 seconds)			->LBS
+//!		Client:NotifyPositionUpdate								->LBS
+//!		Client:RunL(NotifyPositionUpdate(KErrNone))				<-LBS	// when it completes
+//!		Client:NotifyPositionUpdate								->LBS	// request now outstanding!
+//!		The next steps replaces original test 0009!	
+//!		Client:TransmitPosition(PUSH)							->LBS
+//!		Client:RunL(NotifyPositionUpdate(KErrHighPriorityRec))	<-LBS	// conflict! // this action causes end of tracking
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS	
+//!		Client:TransmitPosition(TIMER)							->LBS
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS	// checks that tracking is stopped
+//!
+//!
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMCR					CR0946
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_canceltrackingconflict c:\testdata\configs\lbsconflict.ini LBS-Conflict-0013
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0010
+
+
+START_TESTCASE LBS-Conflict-0011
+//!@SYMTestCaseID	LBS-Conflict-0011
+//!@SYMTestCaseDesc			
+//!					Tests that LBS tracking state correctly changes to "not tracking".
+//!					after a conflict.
+//!					The tracking self locate request is terminated by a X3P push conflict.
+
+//!					A X3P occurs whilst a self locate tracking request is not
+//!					currently active. cf Test 0013 where a NPUD request is outstanding.
+
+//!					To test the state a X3P(TIMER) request is made. The test checks that the 
+//!					X3P completes with KErrNone..
+//!					Note that whist in the tracking state a X3P(TIMER) would be rejected 
+//!					with KErrServerBusy.
+
+//!	1.	Client sets update interval say, to 4 seconds - thus tracking is enabled.
+//!	2.	Client (the test) does a self locate request using NotifyPositionUpdate		
+//!	3.	Client waits for request to complete (with KerrNone and a valid position).
+//!	4   	Client issues a X3P (PUSH) request (in MoLr release callback) then does a 
+//!		second tracking NPDU - conflict!
+//!	5	Client waits for second self locate request to complete with KErrServerBusy
+//!	6	Client waits for X3P (PUSH) to complete with KErrNone
+//!	7.	Client does a X3P (TIMER) request in RunL of X3P (PUSH).
+//!	8.	Client waits for X3P (TIMER) request to complete with KErrNone
+
+//!		Client:SetUpdateOptions(interval=4 seconds)			->LBS
+//!		Client:NotifyPositionUpdate								->LBS
+//!		Client:RunL(NotifyPositionUpdate(KErrNone))				<-LBS	// when it completes
+//!		Client:NotifyPositionUpdate								->LBS	// no request currently outstanding!
+//!		The next steps replaces original test 0008!	
+//!		Client:TransmitPosition(PUSH)							->LBS
+//!		Client:RunL(NotifyPositionUpdate(KErrHighPriorityRec))	<-LBS	// conflict! this action causes end of tracking
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS	
+//!		Client:TransmitPosition(TIMER)							->LBS
+//!		Client:RunL(TransmitPosition(PUSH,pos,KErrNone))		->LBS	// checks that tracking is stopped
+//!
+//!
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMCR					CR0946
+//!
+//!@SYMTestType				CIT
+//!@SYMTestPriority			1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 020 LbsConflictTestServer LbsConflictStep_canceltrackingconflictb c:\testdata\configs\lbsconflict.ini LBS-Conflict-0014
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0011
+
+
+START_TESTCASE LBS-Conflict-0012
+
+//!@SYMTestCaseID	LBS-Conflict-0012
+//!@SYMTestCaseDesc	Tests the behaviour when X3P with priority 2 (PUSH) request is interrupted
+//!			by a X3P with priority 8 (MENU). The X3P PUSH request should be completed
+//!			with KErrNone a valid position should be expected. 
+//!			The X3P MENU request should be queued and it should complete with KerrNone 
+//!			after the X3P PUSH request completes, and a valid position is expected.
+//!
+//!@SYMTestActions	1.	Client (the test) does a X3P request using TransmitPosition (PUSH, "01223 123456"). 
+//!			2.	After the MO-LR has been sent out by netsim (i.e. in NotifyRegisterLcsMoLr 
+//!				callback) the client (test) requests a X3P (MENU) using TransmitPosition 
+//!				(note a new RLbsTransmitPosition subsession is used).
+//!			3.	Check MeasurementControlLocation for X3P(PUSH) received from network
+//!			4.	Check MeasurementReportLocation for X3P(PUSH) sent to network
+//!			5.	Check FacilityLcsMoLrResult for X3P(PUSH) is received from netsim with the expected vposition
+//!			6.	Check ReleaseLcsMoLr for X3P(PUSH) sent to network
+//!			7.	Check RegisterLcsMoLr for X3P(MENU) sent to network (using netsim callback check destination ="9876543") 
+//!			8.	Check MeasurementControlLocation for X3P(MENU) received from network
+//!			9.	Check MeasurementReportLocation for X3P(MENU) sent to network
+//!			10.	Check FacilityLcsMoLrResult for X3P(MENU) is received from netsim with a valid position
+//!			11.	Check ReleaseLcsMoLr for X3P(MENU) sent to network			
+//!	
+//!			At end of the test check that the following (12 and 13) have ocurred:
+//!			12.	Check X3P PUSH client request completes with KErrNone and that returned 
+//!				position is correct. Checks that it completes before X3P MENU request.
+//!			13.	Check X3P MENU has completed with KErrNone and that returned 
+//!				position is correct. 
+//! 
+//!	Client:TransmitPosition(PUSH)				->LBS
+//!										RegisterLcsMoLr			->NET
+//!	Client:TransmitPosition(MENU)				->LBS
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!										RegisterLcsMoLr			->NET
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!	Client:RunL(TransmitPosition(PUSH,pos,KErrNone))	->LBS
+//!	Client:RunL(NotifyPositionUpdate(MENU,pos,KErrNone))	->LBS
+//!
+
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ				PREQ163
+//!@SYMREQ				REQ163.5975
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 060 LbsConflictTestServer LbsConflictStep_X3PPushMenu
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0012
+
+
+
+START_TESTCASE LBS-Conflict-0013
+
+//!@SYMTestCaseID	LBS-Conflict-0013
+//!@SYMTestCaseDesc	Tests the behaviour when X3P with priority 2 (PUSH) request is interrupted
+//!			by a X3P with priority 2 (PUSH). The first X3P PUSH request should be completed
+//!			with KErrNone a valid position should be expected. 
+//!			The second X3P PUSH request should be queued and it should complete with KerrNone 
+//!			after the first X3P PUSH request completes, and a valid position is expected.
+//!
+//!@SYMTestActions	1.	Client (the test) does a X3P request using TransmitPosition (PUSH, "01223 123456"). 
+//!			2.	After the MO-LR has been sent out by netsim (i.e. in NotifyRegisterLcsMoLr 
+//!				callback) the client (test) requests another X3P (PUSH) using TransmitPosition 
+//!				(note a new RLbsTransmitPosition subsession is used).
+//!			3.	Check MeasurementControlLocation for X3P(PUSH) received from network
+//!			4.	Check MeasurementReportLocation for X3P(PUSH) sent to network
+//!			5.	Check FacilityLcsMoLrResult for X3P(PUSH) is received from netsim with the expected vposition
+//!			6.	Check ReleaseLcsMoLr for X3P(PUSH) sent to network
+//!			7.	Check RegisterLcsMoLr for X3P(PUSH2) sent to network (using netsim callback check destination ="9876543") 
+//!			8.	Check MeasurementControlLocation for X3P(PUSH2) received from network
+//!			9.	Check MeasurementReportLocation for X3P(PUSH2) sent to network
+//!			10.	Check FacilityLcsMoLrResult for X3P(PUSH2) is received from netsim with a valid position
+//!			11.	Check ReleaseLcsMoLr for X3P(PUSH2) sent to network			
+//!	
+//!			At end of the test check that the following (12 and 13) have ocurred:
+//!			12.	Check X3P PUSH client request completes with KErrNone and that returned 
+//!				position is correct. Checks that it completes before X3P TIMER request.
+//!			13.	Check X3P PUSH2 has completed with KErrNone and that returned 
+//!				position is correct. 
+//! 
+//!	Client:TransmitPosition(PUSH)				->LBS
+//!										RegisterLcsMoLr			->NET
+//!	Client:TransmitPosition(PUSH2)			->LBS
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!										RegisterLcsMoLr			->NET
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!	Client:RunL(TransmitPosition(PUSH,pos,KErrNone))	->LBS
+//!	Client:RunL(NotifyPositionUpdate(PUSH2,pos,KErrNone))	->LBS
+//!
+
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ				PREQ163
+//!@SYMREQ				REQ163.5975
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 060 LbsConflictTestServer LbsConflictStep_X3PPushPush
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0013
+
+
+
+START_TESTCASE LBS-Conflict-0014
+
+//!@SYMTestCaseID	LBS-Conflict-0014
+//!@SYMTestCaseDesc	Tests the behaviour when X3P with priority 8 (MENU) request is interrupted
+//!			by another X3P with same priority 8 (MENU). The first X3P(MENU) request should be completed
+//!			with KErrNone a valid position should be expected. 
+//!			The second X3P MENU request should be queued and it should complete with KerrNone 
+//!			after the X3P MENU request completes, and a valid position is expected.
+//!
+//!@SYMTestActions	1.	Client (the test) does a X3P request using TransmitPosition (MENU, "01223 123456"). 
+//!			2.	After the MO-LR has been sent out by netsim (i.e. in NotifyRegisterLcsMoLr 
+//!				callback) the client (test) requests another X3P (MENU) using TransmitPosition 
+//!				(note a new RLbsTransmitPosition subsession is used).
+//!			3.	Check MeasurementControlLocation for X3P(MENU) received from network
+//!			4.	Check MeasurementReportLocation for X3P(MENU) sent to network
+//!			5.	Check FacilityLcsMoLrResult for X3P(MENU) is received from netsim with the expected vposition
+//!			6.	Check ReleaseLcsMoLr for X3P(MENU) sent to network
+//!			7.	Check RegisterLcsMoLr for X3P(MENU2) sent to network (using netsim callback check destination ="9876543") 
+//!			8.	Check MeasurementControlLocation for X3P(MENU2) received from network
+//!			9.	Check MeasurementReportLocation for X3P(MENU2) sent to network
+//!			10.	Check FacilityLcsMoLrResult for X3P(MENU2) is received from netsim with a valid position
+//!			11.	Check ReleaseLcsMoLr for X3P(MENU2) sent to network			
+//!	
+//!			At end of the test check that the following (12 and 13) have ocurred:
+//!			12.	Check X3P MENU client request completes with KErrNone and that returned 
+//!				position is correct. Checks that it completes before X3P TIMER request.
+//!			13.	Check X3P MENU2 has completed with KErrNone and that returned 
+//!				position is correct. 
+//! 
+//!	Client:TransmitPosition(MENU)				->LBS
+//!										RegisterLcsMoLr			->NET
+//!	Client:TransmitPosition(MENU2)			->LBS
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!										RegisterLcsMoLr			->NET
+//!										MeasurementControlLocation	<-NET
+//!										MeasurementReportLocation	->NET
+//!										FacilityLcsMoLrResult		<-NET
+//!										ReleaseLcsMoLr			->NET
+//!	Client:RunL(TransmitPosition(MENU,pos,KErrNone))	->LBS
+//!	Client:RunL(NotifyPositionUpdate(MENU2,pos,KErrNone))	->LBS
+//!
+
+//!@SYMTestExpectedResults	Verify the correct positions and netsim callbacks.
+//!@SYMPREQ				PREQ163
+//!@SYMREQ				REQ163.5975
+//!
+//!@SYMTestType			CIT
+//!@SYMTestPriority		1
+//!@SYMTestStatus			Implemented.
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_InstallScheduler
+
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsconflict.ini LBS-Conflict
+RUN_TEST_STEP 060 LbsConflictTestServer LbsConflictStep_X3PMenuMenu
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_VerifyLogInfo
+
+END_TESTCASE LBS-Conflict-0014
+
+
+
+RUN_TEST_STEP 010 LbsConflictTestServer LbsStep_ResetDefaultAdmin
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsConflictTestServer LbsStep_StopLbs
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+

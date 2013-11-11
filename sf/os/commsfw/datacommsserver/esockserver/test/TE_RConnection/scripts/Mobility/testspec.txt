@@ -1,0 +1,108 @@
+todo
+	update all tests with socket data to use payload colouring
+	update all of my tests with data path test to close and reopen socket on migration
+	active object based event handling for mobility scenarios a la rconnectionserv
+	preq1523
+			RConnectionServ tests with availabilty controlled by sim tsy
+	iby!
+
+tests
+	Basic scenarios
+		NET_BMOBILITY_760600 Open and close mobility extension
+		NET_BMOBILITY_760610 Register and cancel an established mobility extension
+		NET_BMOBILITY_760620 Open, No register, Simulate AP going down, Close
+		NET_BMOBILITY_760630 Open, Register, AP down, Receive PreferredCarierAvailable, do not reregister, IgnorePreferredCarrier(), Close()
+		NET_BMOBILITY_760640 NET_BMOBILITY_760630, but MigrateToPreferredCarrier() instead of IgnorePreferredCarrier()
+		NET_BMOBILITY_760650 NET_BMOBILITY_760640 but also receive the NewCarierActive before Close()
+		NET_BMOBILITY_760660 NET_BMOBILITY_760650 but also accept the new carrier before Close()
+		NET_BMOBILITY_760670 NET_BMOBILITY_760650 but reject instead
+		NET_BMOBILITY_760680 NET_BMOBILITY_760670 but also do not reregister and wait for timeout. Then Close()
+		NET_BMOBILITY_760690 Reject new preference but old has become available again ensure it is reoffered
+		NET_BMOBILITY_760700 NET_BMOBILITY_760690 but continue and complete fall back to original carrier
+		NET_BMOBILITY_760705 IVAN - must add
+		NET_BMOBILITY_760710 Rejecting preferred carrier should result in less preferred being offered back - accept
+		NET_BMOBILITY_760720 NET_BMOBILITY_760710 but with socket and tx/rx between mobility events
+		NET_BMOBILITY_760730 Newly connected backup then becomes unavailable. Wait thru timeout for preferred (as there isn't one!)
+		NET_BMOBILITY_760740 ?
+
+		NET_BMOBILITY_761100 Connected preferred becomes available, migrate but close mobext immediately, then close and stop conn
+		NET_BMOBILITY_761110 Preferred is active and less preferred also available, preferred (active) becomes unavailable, ignore, sockets should timeout
+		NET_BMOBILITY_761120 Don't understand this one! TODO_CDG a) 4 is active b) 4 goes down c) app migrates d) test sockets - work ok e) app rejects f) test sockets - should timeout
+		NET_BMOBILITY_761130 Preferred is active, goes down, app migrates to backup, we stop the connection before accepting new carrier
+
+	No mobility
+		NET_BMOBILITY_760750 - Explicit IAP connection. Ensure when new bearer made available (perhaps one that would be preferred on default SNAP) that no migration offered
+		NET_BMOBILITY_760760 - Explicit SNAP connection with a single preference. Ensure when each of other link tier bearers are made available that no mobility is ever offered
+		NET_BMOBILITY_760765 - Explicit SNAP connection with multiple preferences. No registration. Preferred becomes avail. Wait thru timeout. Ensure still connected on original bearer.
+		NET_BMOBILITY_760770 - Make less preferred bearer available and ensure it is not offered
+		NET_BMOBILITY_760800 - Make preferred bearer available but no registration. Wait thru timeout and socket still connected on original bearer.
+
+	Stop connection
+		NET_BMOBILITY_760810 - Stop connection before closing mobility
+		NET_BMOBILITY_760815 - Stop connection before closing mobility after also having registered
+		NET_BMOBILITY_760820 - Stop connection during migration - after preferred carrier available
+		NET_BMOBILITY_760825 - Stop connection during migration - after migrate
+		NET_BMOBILITY_760830 - Stop connection during migration - after new carrier active
+	
+	Open/Close - Negative tests
+		NET_BMOBILITY_761140 - open on unopened connection
+		NET_BMOBILITY_761150 - open on an open but unstarted connection
+		NET_BMOBILITY_761403 - Attempt to open on a sub-connection - KErrNotSupported
+		
+	Active object based API tests
+		NET_BMOBILITY_761402 - NET_BMOBILITY_760660 but with AO API
+	
+	Multiple changes and multiple bearers
+		Flip several times between preferred and unpreferred with sockets
+		Test with 3 bearers rather than just two
+		NET_BMOBILITY_761406 - Switch from preferred, to less preferred to least preferred and back again
+
+	Interaction with idle timers
+		NET_BMOBILITY_761200 - Idle timers timeout after registration
+			Start a connection, Open Mob extension, Register for events, Wait for idle timers to expire, -> the registration will be completed with KErrAbort
+		NET_BMOBILITY_761210 - Idle timers timeout during bearer state change
+			Start Connection, Open extension, Register, Simulate current down, wait for idle timers, Migrate,
+			test sockets, Register, Accept, wait for idle timers -> the registration will be completed with KErrAbort 
+
+	Blacklisting
+		NET_BMOBILITY_761220 - Confirm no blacklisting. Flip-flopping
+			1) Start conn on 5 (4 is down)
+			2) Open, register
+			3) 4 up
+			4) Migrate
+			5) Reject
+			6) 4 down
+			7) 4 up
+			8) we should receive PreferredCarrier again
+
+
+
+
+
+
+	Other potentially valid tests
+		Try to open on a subconnection (this requires changes to esockteststeps)
+		TCP sockets? Necessary?
+		Mixing of RConnectionServ and RMobility
+			02_000 - Queries of availability during migration
+			02_010 - Notification of availability and connection status changes during migration
+		Try opening the extension api during async start of connection - KErrNotReady??
+	
+		Multiple clients
+			Connected on same snap (2 prefs as in preceeding tests)
+				Preferred become available (connected on less preferred)
+					NET_BMOBILITY_761202 - 1 migrates then accepts, 2 migrates then accepts
+					NET_BMOBILITY_761205 - 1 migrates then rejects, 2 migrates then accepts
+					NET_BMOBILITY_7612xx - 1 ignores, 2 migrates then accepts
+
+					Preferred becomes unavailable (less preferred available for migration)
+						1 migrates then accepts, 2 migrates then accepts
+						1 migrates then rejects, 2 migrates then accepts
+						1 ignores, 2 migrates then accepts
+
+				One on SNAP with 2 prefs, Other on IAP
+
+				One on SNAP1, Other on SNAP2 with opposite pref
+
+				One on SNAP1, Other on SNAP2 with entirely different prefs
+

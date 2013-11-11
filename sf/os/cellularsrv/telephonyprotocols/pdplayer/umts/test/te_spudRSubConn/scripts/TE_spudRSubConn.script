@@ -1,0 +1,185 @@
+// Copyright (c) 2004-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+// Secondary PDP-context UMTS Driver integration tests with RSubConnection
+//
+
+//! @file
+
+// Configure CommDB for the tests
+run_script z:\TestData\scripts\te_esock_test_unloadesockForced.script
+ced -i z:\TestData\Configs\spudRSubConnPpp_loopback.xml
+run_script z:\TestData\scripts\te_esock_test_loadesock.script
+
+LOAD_SUITE TE_SpudRSubConnSvr
+
+
+
+RUN_UTILS  MkDir c:\simtsy\
+RUN_UTILS  MkDir c:\private\
+RUN_UTILS  MkDir c:\private\101F7989\
+RUN_UTILS  MkDir c:\private\101F7989\esock\
+
+RUN_UTILS  MakeReadWrite c:\simtsy\config.txt
+RUN_UTILS  MakeReadWrite c:\config.txt
+RUN_UTILS  MakeReadWrite c:\loopback.ini
+RUN_UTILS  MakeReadWrite c:\qospolicies.ini
+RUN_UTILS  MakeReadWrite c:\private\101F7989\esock\qospolicies.ini
+
+RUN_UTILS  DeleteFile c:\simtsy\config.txt
+RUN_UTILS  DeleteFile c:\config.txt
+RUN_UTILS  DeleteFile c:\loopback.ini
+RUN_UTILS  DeleteFile c:\qospolicies.ini
+RUN_UTILS  DeleteFile c:\private\101F7989\esock\qospolicies.ini
+
+RUN_UTILS  CopyFile z:\TestData\Configs\spudRSubConnPPP_config.txt c:\simtsy\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\spudRSubConnPPP_config.txt c:\config.txt
+RUN_UTILS  CopyFile z:\TestData\Configs\spudRSubConnPPP_pcktloopback.ini c:\loopback.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\spudRSubConnPPP_qospolicies.ini c:\qospolicies.ini
+RUN_UTILS  CopyFile z:\TestData\Configs\spudRSubConnPPP_qospolicies.ini c:\private\101F7989\esock\qospolicies.ini
+
+
+
+START_TESTCASE          NET-Spud-RSubConn-0101
+//! @SYMTestCaseID      NET-Spud-RSubConn-0101
+//! @SYMTestCaseDesc Send Use RSubConnection API to send UDP packets over the primary and the secondary PDP contexts. 
+//! @SYMFssID 
+//! @SYMTestActions Explicity start SPUD. Open RSubConnection to activate a secondary ctx. Send data over primary & secondary.
+//! @SYMTestActions Connected socket is added to secondary ctx.
+//! @SYMTestExpectedResults  All operations succeed with KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+CONCURRENT
+RUN_TEST_STEP 69 TE_SpudRSubConnSvr CLoopbackPpp1 z:\testdata\configs\spudRSubConnPPP_loopback.ini LoopbackPppUdp1
+RUN_TEST_STEP 69 TE_SpudRSubConnSvr CLoopbackPpp1 z:\testdata\configs\spudRSubConnPPP_loopback.ini LoopbackPppUdp3
+RUN_TEST_STEP 60 TE_SpudRSubConnSvr CUdp1 z:\testdata\configs\spudRSubConnPPP.ini UdpEcho1
+END_TESTCASE            NET-Spud-RSubConn-0101
+
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+START_TESTCASE          NET-Spud-RSubConn-0102
+//! @SYMTestCaseID      NET-Spud-RSubConn-0102
+//! @SYMTestCaseDesc Same as TE_SpudRSubConn_01, but QoS Parameters are set explicitly on the secondary pdp context. 
+//! 				 QoS parameters are passed via the QoS framework, GUQoS and SPUD to SIM TSY unchanged.
+//! @SYMFssID 
+//! @SYMTestActions same as TE_SpudRSubConn_01, but set QoS parameters explicitly.
+//!                 SIM TSY verifies the QoS parameters requested are correct (i.e. not modified in transit)
+//! @SYMTestExpectedResults  All operations succeed with KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+CONCURRENT
+RUN_TEST_STEP 69 TE_SpudRSubConnSvr CLoopbackPpp1 z:\testdata\configs\spudRSubConnPPP_loopback.ini LoopbackPppUdp1
+RUN_TEST_STEP 69 TE_SpudRSubConnSvr CLoopbackPpp1 z:\testdata\configs\spudRSubConnPPP_loopback.ini LoopbackPppUdp3
+RUN_TEST_STEP 60 TE_SpudRSubConnSvr CUdp1 z:\testdata\configs\spudRSubConnPPP.ini UdpEcho2
+END_TESTCASE            NET-Spud-RSubConn-0102
+
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE          NET-Spud-RSubConn-0103
+//! @SYMTestCaseID      NET-Spud-RSubConn-0103
+//! @SYMTestCaseDesc Verify that SPUD correctly handles a scenario where GUQoS attempts to send on a context when 
+//! 				 the Context's lower NIF is Down.
+//! @SYMFssID 
+//! @SYMTestActions 1. Create Primary PDP Context, and bring up the lower NIF. 2. Make the lower NIF for the context to 
+//!                 report LinkLayerDown (by causing the peer PPP to send TerminateRequest). SIM TSY is configured to pause
+//!                 on deletion long enough to allow GUQoS sufficient time to attempt a send before the context is deleted.
+//!                 3. Send a packet on the context. Verify the packet was sent OK. 
+//! @SYMTestExpectedResults  All operations succeed with KErrNone. There is no panics (Spudman panics when GUQoS sends on down lower NIF)
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+RUN_TEST_STEP 90 TE_SpudRSubConnSvr CUpperFlowOnLowerNifDown z:\testdata\configs\spudRSubConnPPP.ini UpperFlowLowerNifDown1
+END_TESTCASE            NET-Spud-RSubConn-0103
+
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+
+
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE          NET-Spud-RSubConn-0104
+//! @SYMTestCaseID      NET-Spud-RSubConn-0104
+//! @SYMTestCaseDesc Verify that SPUD with PPP lower NIF correctly RConnection::Stop with EStopNormal, and can be restarted. 
+//! @SYMFssID 
+//! @SYMTestActions 1. Create Primary PDP Context, and bring up the lower NIF.  Stop Spud with EStopNormal. Restart Spud.
+//! @SYMTestExpectedResults  All operations succeed with KErrNone. There is no panics. Spud can be re-started.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+CONSECUTIVE
+RUN_TEST_STEP 90 TE_SpudRSubConnSvr CSpudPppPrimaryStop z:\testdata\configs\spudRSubConnPPP.ini SpudRestartAfterNormalStop
+DELAY 4000
+RUN_TEST_STEP 90 TE_SpudRSubConnSvr CSpudPppPrimaryStop z:\testdata\configs\spudRSubConnPPP.ini SpudRestartAfterNormalStop
+DELAY 4000
+RUN_TEST_STEP 90 TE_SpudRSubConnSvr CSpudPppPrimaryStop z:\testdata\configs\spudRSubConnPPP.ini SpudRestartAfterNormalStop
+DELAY 4000
+END_TESTCASE            NET-Spud-RSubConn-0104
+
+
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+
+
+START_TESTCASE          NET-Spud-RSubConn-0105
+//! @SYMTestCaseID      NET-Spud-RSubConn-0105
+//! @SYMTestCaseDesc Verify that SPUD with PPP lower NIF correctly RConnection::Stop with EStopAuthoritative, and can be restarted. 
+//! @SYMFssID 
+//! @SYMTestActions 1. Create Primary PDP Context, and bring up the lower NIF.  Stop Spud with EStopAuthoritative. Restart Spud.
+//! @SYMTestExpectedResults  All operations succeed with KErrNone. There is no panics. Spud can be re-started.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+CONSECUTIVE
+DELAY 24000
+RUN_TEST_STEP 90 TE_SpudRSubConnSvr CSpudPppPrimaryStop z:\testdata\configs\spudRSubConnPPP.ini SpudRestartAfterAuthStop
+DELAY 4000
+RUN_TEST_STEP 90 TE_SpudRSubConnSvr CSpudPppPrimaryStop z:\testdata\configs\spudRSubConnPPP.ini SpudRestartAfterAuthStop
+DELAY 4000
+RUN_TEST_STEP 90 TE_SpudRSubConnSvr CSpudPppPrimaryStop z:\testdata\configs\spudRSubConnPPP.ini SpudRestartAfterAuthStop
+DELAY 4000
+END_TESTCASE            NET-Spud-RSubConn-0105
+
+
+
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script
+RUN_SCRIPT z:\TestData\scripts\te_esock_test_loadesock.script
+
+
+START_TESTCASE 			NET-Spud-RSubConn-0106
+//! @SYMTestCaseID		NET-Spud-RSubConn-0106
+//! @SYMTestCaseDesc Send Use RSubConnection API to send UDP packets over the primary and the secondary PDP contexts. 
+//! @SYMFssID 
+//! @SYMTestActions Explicity start SPUD. Open RSubConnection to activate a secondary ctx. Send data over primary & secondary.
+//! @SYMTestActions Socket is open explicitly on secondary ctx.
+//! @SYMTestExpectedResults  All operations succeed with KErrNone.
+//! @SYMTestPriority Critical
+//! @SYMTestStatus Implemented
+//! @SYMTestType CIT
+CONCURRENT
+RUN_TEST_STEP 69 TE_SpudRSubConnSvr CLoopbackPpp1 z:\testdata\configs\spudRSubConnPPP_loopback.ini LoopbackPppUdp1
+RUN_TEST_STEP 69 TE_SpudRSubConnSvr CLoopbackPpp1 z:\testdata\configs\spudRSubConnPPP_loopback.ini LoopbackPppUdp3
+RUN_TEST_STEP 60 TE_SpudRSubConnSvr CUdp2 z:\testdata\configs\spudRSubConnPPP.ini UdpEcho1
+END_TESTCASE			NET-Spud-RSubConn-0106
+
+RUN_SCRIPT Z:\TestData\Scripts\te_esock_test_stopallinterfaces.script
+RUN_SCRIPT Z:\TestData\scripts\te_esock_test_unloadesockForced.script

@@ -1,0 +1,105 @@
+//! @File
+//! @SYMTestSuiteName         autonomous_molr_futile_ignore_accuracy.script
+//! @SYMScriptTestEnvironment
+
+// Copyright (c) 2007-2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+
+LOAD_SUITE LbsHybridMOLRTestServer -SharedData
+
+PRINT Run LbsHybridMOLRTestServer
+
+// Before we start LBS, select the test Hybrid A-GPS integration module to use.
+// Make sure the default profile is used, rather than one from the c drive
+PREFIX RUN_UTILS
+	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\ctagpshybridmoduledatasource.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+	CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+REMOVE_PREFIX
+
+// Select autononmous modes.
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetAutonomousMode
+// Use hybrid protocol module.
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_SetupProtocolStub
+
+
+START_TESTCASE                LBS-HybridMOLR-AutonomousMOLR-FutileIgnoreAccuracy-0001
+//! @SYMTestCaseID              LBS-HybridMOLR-AutonomousMOLR-FutileIgnoreAccuracy-0001
+//! @SYMTestCaseDesc            Performing location request with ignore accuracy enabled and the module will return a futile error
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. The Ignore Accuracy Setting is enabled 2. Client generates request through TInt RPositioner::Open(RPositionServer& aPosServer). 3. The module returns incomplete positions and futile error
+//! @SYMTestExpectedResults     The TRequestStatus is KPositionQualityLoss when the position is received
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+PREFIX RUN_UTILS
+	CopyFile c:\private\10202be9\1028224b.cre c:\private\10202be9\1028224b.bak
+	CopyFile c:\testdata\configs\1028224b_ignacc_on.cre c:\private\10202be9\1028224b.cre
+    CopyFile c:\testdata\configs\1028224b_ignacc_on.cre c:\private\10202be9\persists\1028224b.cre
+REMOVE_PREFIX
+// Start up LBS.
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini AutonomousFutile
+RUN_TEST_STEP 480 LbsHybridMOLRTestServer LbsAutonomousMolrFutile c:\testdata\configs\lbs_molr.ini AutonomousFutile
+// Shutdown LBS.
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-HybridMOLR-AutonomousMOLR-FutileIgnoreAccuracy-0001
+
+
+
+START_TESTCASE                LBS-HybridMOLR-AutonomousMOLR-FutileIgnoreAccuracy-0002
+//! @SYMTestCaseID              LBS-HybridMOLR-AutonomousMOLR-FutileIgnoreAccuracy-0002
+//! @SYMTestCaseDesc            Performing location request with ignore accuracy disabled and the module will return a futile error
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. The Ignore Accuracy Setting is disabled
+//!                             2. Client generates request through TInt RPositioner::Open(RPositionServer aPosServer).
+//!                             3. The module returns futile error
+//! @SYMTestExpectedResults     The TRequestStatus is KPositionCalculationFutile when the position is received
+//! @SYMTestType                CIT
+//! @SYMCreationDate            28/8/2008
+//! @SYMAuthor                  alans
+PREFIX RUN_UTILS
+	CopyFile c:\testdata\configs\1028224b_ignacc_off.cre c:\private\10202be9\1028224b.cre
+    CopyFile c:\testdata\configs\1028224b_ignacc_off.cre c:\private\10202be9\persists\1028224b.cre
+
+REMOVE_PREFIX
+// Start up LBS.
+RUN_TEST_STEP 030 LbsHybridMOLRTestServer LbsStep_StartLbs
+RUN_TEST_STEP 010 LbsHybridMOLRTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_SetUpPsy c:\testdata\configs\lbs_molr.ini LBS-MOLR
+// Configure Hybrid AGps module options
+RUN_TEST_STEP 20 LbsHybridMOLRTestServer LbsStep_ConfigHybridModule c:\testdata\configs\lbs_molr.ini AutonomousFutile
+RUN_TEST_STEP 480 LbsHybridMOLRTestServer LbsAutonomousMolrFutile c:\testdata\configs\lbs_molr.ini AutonomousFutile
+// Shutdown LBS.
+RUN_TEST_STEP 020 LbsHybridMOLRTestServer LbsStep_StopLbs
+END_TESTCASE                  LBS-HybridMOLR-AutonomousMOLR-FutileIgnoreAccuracy-0002
+
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+
+// Delete network registration status text file
+RUN_UTILS DeleteFile c:\config.txt
+
+// Restore the original CenRep file
+RUN_UTILS CopyFile c:\private\10202be9\1028224b.bak c:\private\10202be9\1028224b.cre
+RUN_UTILS CopyFile c:\private\10202be9\1028224b.bak c:\private\10202be9\persists\1028224b.cre
+

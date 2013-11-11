@@ -1,0 +1,99 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         lbsclientmultireq.script
+//! @SYMScriptTestEnvironment
+
+
+LOAD_SUITE LbsClientTestServer -SharedData
+
+PRINT Run LbsClientTestServer
+PRINT
+
+//Before we start LBS, select the test A-GPS integration module and network reg status txt file to use.
+PREFIX RUN_UTILS
+	MkDir c:\private\10282253\
+	MkDir c:\private\10282253\lbs\
+	MkDir c:\private\10282253\lbs\locmods\
+	CopyFile c:\testdata\configs\xtestmodule.ini c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+    CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+	DeleteFile c:\private\10282253\lbs\lbsprofile.ini
+REMOVE_PREFIX
+
+RUN_TEST_STEP 030 LbsClientTestServer LbsStep_StartLbs
+
+// Autonomous mode means each set of position data in the ini file is used in turn (PDEF111711)
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetAutonomousMode
+
+START_TESTCASE                LBS-Client-MultiReq-0001
+//! @SYMTestCaseID              LBS-Client-MultiReq-0001
+//! @SYMTestCaseDesc            Make multiple requests of different types on same subsession
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Setup Test-GPS-module.
+//!                             2. Set Requestor details.
+//!                             3. Open a subsession
+//!                             4. Request and wait for a location update to populate cache
+//!                             5. Request a last known position
+//!                             6. Request a location update
+//!                             7. Verify that both requests succeed and that location info are returned as expected.
+//! @SYMTestExpectedResults     Location requests will both complete with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            21/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientmultireq.ini LBS-MultiReq
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmultireq.ini LBS-MultiReq-0001
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_MultiReq c:\testdata\configs\lbsclientmultireq.ini LBS-MultiReq-0001
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-MultiReq-0001
+
+
+
+START_TESTCASE                LBS-Client-MultiReq-0002
+//! @SYMTestCaseID              LBS-Client-MultiReq-0002
+//! @SYMTestCaseDesc            Cancel one of two outstanding requests
+//! @SYMTestPriority            Critical
+//! @SYMTestActions             1. Setup Test-GPS-module.
+//!                             2. Set Requestor details.
+//!                             3. Open a subsession
+//!                             4. Request a location update
+//!                             5. Request a last known position
+//!                             6. Cancel the last known position
+//!                             7. Verify that the location update request succeeds and the last known position request is cancelled.
+//!                             8. Verify that location update info is as expected
+//! @SYMTestExpectedResults     Location requests will both complete with KErrNone
+//! @SYMTestType                CIT
+//! @SYMCreationDate            21/8/2008
+//! @SYMAuthor                  alans
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_InstallScheduler
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_SetUpPsy c:\testdata\configs\lbsclientmultireq.ini LBS-MultiReq
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_CreateVerifyPosInfos c:\testdata\configs\lbsclientmultireq.ini LBS-MultiReq-0002
+RUN_TEST_STEP 120 LbsClientTestServer LbsClientStep_MultiReq c:\testdata\configs\lbsclientmultireq.ini LBS-MultiReq-0002
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyPosInfos
+//RUN_TEST_STEP 010 LbsClientTestServer LbsStep_VerifyLogInfo
+END_TESTCASE                  LBS-Client-MultiReq-0002
+
+
+RUN_TEST_STEP 010 LbsClientTestServer LbsStep_ResetDefaultAdmin
+
+PRINT Stop LBS
+RUN_TEST_STEP 020 LbsClientTestServer LbsStep_StopLbs
+
+
+// Re-select the real A-GPS integration module.
+RUN_UTILS DeleteFile c:\private\10282253\lbs\locmods\agpsintegmodule.ini
+

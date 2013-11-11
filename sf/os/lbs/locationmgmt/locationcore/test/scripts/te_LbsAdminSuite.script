@@ -1,0 +1,197 @@
+//
+// Copyright (c) 2009 Nokia Corporation and/or its subsidiary(-ies).
+// All rights reserved.
+// This component and the accompanying materials are made available
+// under the terms of "Eclipse Public License v1.0"
+// which accompanies this distribution, and is available
+// at the URL "http://www.eclipse.org/legal/epl-v10.html".
+//
+// Initial Contributors:
+// Nokia Corporation - initial contribution.
+//
+// Contributors:
+//
+// Description:
+//
+//! @File
+//! @SYMTestSuiteName         Lbs-Admin
+//! @SYMScriptTestEnvironment TestExecute Admin.script
+
+PRINT Run all te_LbsAdmin Suite Tests
+
+//
+LOAD_SUITE te_LbsAdminSuite
+
+
+PREFIX RUN_UTILS
+CopyFile c:\testdata\configs\lbstestconfig.txt c:\config.txt
+DeleteFile c:\private\10202be9\1028224b.cre 
+DeleteFile c:\private\10202be9\persists\1028224b.cre 
+REMOVE_PREFIX
+
+CONCURRENT
+
+
+START_TESTCASE                LBS-Admin-0001
+//! @SYMTestCaseID              LBS-Admin-0001
+//! @SYMTestCaseDesc            Not Available
+//! @SYMTestPriority            High
+//! @SYMTestActions             Not Available
+//! @SYMTestExpectedResults     Not Available
+//! @SYMTestType                UT
+//! @SYMCreationDate            8/4/2008
+CONCURRENT
+RUN_TEST_STEP 100 te_LbsAdminSuite LbsAdminObserverStep
+RUN_TEST_STEP 100 te_LbsAdminSuite LbsAdminModifierStep
+CONSECUTIVE
+
+//
+// Backward compatibility test. This test is divided in two test step, with some cleaning in between.
+//
+
+// Delete the current cenrep files.
+RUN_UTILS DeleteFile c:\private\10202be9\1028224B.cre
+RUN_UTILS DeleteFile c:\private\10202be9\persists\1028224B.cre
+// Install test cenrep file.
+RUN_UTILS CopyFile c:\testdata\configs\legacy\1028224B.cre c:\private\10202be9\1028224B.cre
+
+// First backward compatibility step
+RUN_TEST_STEP 100 te_LbsAdminSuite BackwardCompatibilityTestStep  c:\testdata\configs\te_LbsAdminSuite.ini NewLTest
+
+// Second backward compatibility step
+RUN_TEST_STEP 100 te_LbsAdminSuite BackwardCompatibilityTestStep  c:\testdata\configs\te_LbsAdminSuite.ini ResetTest
+
+// Delete the current cenrep files.
+RUN_UTILS DeleteFile c:\private\10202be9\1028224B.cre
+RUN_UTILS DeleteFile c:\private\10202be9\persists\1028224B.cre
+
+//
+// End of backward compatibility test.
+//
+
+//
+// Unsupported Set() call test
+//
+
+RUN_TEST_STEP 100 te_LbsAdminSuite UnsupportedSetCalStep
+
+//
+// End of unsupported Set() call test
+//
+
+//
+// Out of range test
+//
+
+// The following lines save the current centrep entry, then replace it by an older centrep entry
+
+
+// Delete the current cenrep files.
+RUN_UTILS DeleteFile c:\private\10202be9\1028224B.cre
+RUN_UTILS DeleteFile c:\private\10202be9\persists\1028224B.cre
+// Install test cenrep file.
+RUN_UTILS CopyFile c:\testdata\configs\outofrange\1028224B.cre c:\private\10202be9\1028224B.cre
+
+// Run the test step
+RUN_TEST_STEP 100 te_LbsAdminSuite OutOfRangeStep
+
+// Delete the current cenrep files.
+RUN_UTILS DeleteFile c:\private\10202be9\1028224B.cre
+RUN_UTILS DeleteFile c:\private\10202be9\persists\1028224B.cre
+
+//
+//End of out of range test
+//
+
+RUN_TEST_STEP 100 te_LbsAdminSuite LbsAdminErrorCheckStep
+END_TESTCASE   LBS-Admin-0001
+
+PREFIX RUN_UTILS
+DeleteFile c:\private\10202be9\1028224b.cre 
+DeleteFile c:\private\10202be9\persists\1028224b.cre 
+REMOVE_PREFIX
+
+START_TESTCASE                LBS-Admin-MultPM-0001
+//! @SYMTestCaseID              LBS-Admin-MultPM-0001
+//! @SYMTestCaseDesc            Nothing set, but we should get default PM (RRC) for Home&Roaming
+//! @SYMTestPriority            High
+//! @SYMTestActions             Dont SET anything using API, then call GET.
+//! @SYMTestExpectedResults     We should get 0x10281d70 as the default PM
+//! @SYMTestType                Sym-TEF
+//! @SYMCreationDate            07-05-2009
+RUN_TEST_STEP 010 te_LbsAdminSuite MultipleProtocolModules c:\testdata\configs\te_LbsAdminsuite.ini testcase01
+END_TESTCASE   LBS-Admin-MultPM-0001
+
+PREFIX RUN_UTILS
+DeleteFile c:\private\10202be9\1028224b.cre 
+DeleteFile c:\private\10202be9\persists\1028224b.cre 
+REMOVE_PREFIX
+
+
+START_TESTCASE                LBS-Admin-MultPM-0002
+//! @SYMTestCaseID              LBS-Admin-MultPM-0002
+//! @SYMTestCaseDesc            Basic SET and GET for Home&Roaming using lower boundary UID value.
+//! @SYMTestPriority            High
+//! @SYMTestActions             SET 0x00000000 and GET value again.
+//! @SYMTestExpectedResults     We should GET 0x00000000 back when the setting is read.
+//! @SYMTestType                Sym-TEF
+//! @SYMCreationDate            07-05-2009
+RUN_TEST_STEP 010 te_LbsAdminSuite MultipleProtocolModules c:\testdata\configs\te_LbsAdminsuite.ini testcase02
+END_TESTCASE   LBS-Admin-MultPM-0002
+
+PREFIX RUN_UTILS
+DeleteFile c:\private\10202be9\1028224b.cre 
+DeleteFile c:\private\10202be9\persists\1028224b.cre 
+REMOVE_PREFIX
+
+START_TESTCASE                LBS-Admin-MultPM-0003
+//! @SYMTestCaseID              LBS-Admin-MultPM-0003
+//! @SYMTestCaseDesc            Input boundary check, SET nothing, GET something.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Dont SET a first PM. Try to retrieve this entry.
+//! @SYMTestExpectedResults     SET should blank the array. 
+//! @SYMTestType                UT
+//! @SYMCreationDate            07-05-2009
+RUN_TEST_STEP 010 te_LbsAdminSuite MultipleProtocolModules c:\testdata\configs\te_LbsAdminsuite.ini testcase03
+END_TESTCASE   LBS-Admin-MultPM-0003
+
+PREFIX RUN_UTILS
+DeleteFile c:\private\10202be9\1028224b.cre 
+DeleteFile c:\private\10202be9\persists\1028224b.cre 
+REMOVE_PREFIX
+
+START_TESTCASE                LBS-Admin-MultPM-0004
+//! @SYMTestCaseID              LBS-Admin-MultPM-0004
+//! @SYMTestCaseDesc            Input boundary check. Set UID 0xFFFFFFFF for home&roaming.
+//! @SYMTestPriority            High
+//! @SYMTestActions             SET as above, read the values back using GET.
+//! @SYMTestExpectedResults     We should read the valid UID FFFFFFFF back.
+//! @SYMTestType                Sym-TEF
+//! @SYMCreationDate            07-05-2009
+RUN_TEST_STEP 010 te_LbsAdminSuite MultipleProtocolModules c:\testdata\configs\te_LbsAdminsuite.ini testcase04
+END_TESTCASE   LBS-Admin-MultPM-0004
+
+PREFIX RUN_UTILS
+DeleteFile c:\private\10202be9\1028224b.cre 
+DeleteFile c:\private\10202be9\persists\1028224b.cre 
+REMOVE_PREFIX
+
+START_TESTCASE                LBS-Admin-MultPM-0005
+//! @SYMTestCaseID              LBS-Admin-MultPM-0005 
+//! @SYMTestCaseDesc            SET adn GET max arry of 10 UIDS using upper and lower bounds.
+//! @SYMTestPriority            High
+//! @SYMTestActions             Initialise array of 10 PM UIDs using upper and lower bound values. SET and GET them.
+//! @SYMTestExpectedResults     The retrieved array should match the set array.
+//! @SYMTestType                Sym-TEF
+//! @SYMCreationDate            07-05-2009
+RUN_TEST_STEP 010 te_LbsAdminSuite MultipleProtocolModules c:\testdata\configs\te_LbsAdminsuite.ini testcase05
+END_TESTCASE   LBS-Admin-MultPM-0005
+
+PREFIX RUN_UTILS
+DeleteFile c:\private\10202be9\1028224b.cre 
+DeleteFile c:\private\10202be9\persists\1028224b.cre 
+REMOVE_PREFIX
+
+PRINT Complete_te_LbsAdmin_Tests
+
+
